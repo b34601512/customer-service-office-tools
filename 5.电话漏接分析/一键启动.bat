@@ -1,14 +1,8 @@
 @echo off
 setlocal EnableExtensions DisableDelayedExpansion
 
-rem 通过新窗口启动，避免直接修改当前控制台窗口状态导致窗口被锁定。
-if /i not "%~1"=="--check" if /i not "%~1"=="--launcher-maximized" (
-    start "" /max "%ComSpec%" /d /c call "%~f0" --launcher-maximized %*
-    exit /b
-)
-rem shift makes %0 become old %1, so %~dp0 would degrade to cwd; pin script dir before shift
+rem Run directly in the current console. Never spawn another window.
 set "LAUNCHER_DIR=%~dp0"
-if /i "%~1"=="--launcher-maximized" shift
 set "BACKEND_DIR="
 for /d %%D in ("%LAUNCHER_DIR%*") do (
     if exist "%%~fD\cli.py" set "BACKEND_DIR=%%~fD"

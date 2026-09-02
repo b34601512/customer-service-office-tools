@@ -97,9 +97,9 @@ class TuiApp {
     return Math.max(14, this.output.rows || process.stdout.rows || 24);
   }
 
-  // 帧布局固定为：标题 1 + 状态 2 + 菜单 1 + 分隔 1 + 页脚 1 + 底边 1 = 7 行。
+  // 帧布局固定为：标题 1 + 状态 2 + 菜单 1 + 分隔 1 + 联系方式 1 + 版权 1 + 页脚 1 + 底边 1 = 9 行。
   get contentHeight() {
-    return Math.max(4, this.rows - 7);
+    return Math.max(4, this.rows - 9);
   }
 
   lastFrameLines = null;
@@ -383,6 +383,10 @@ class TuiApp {
       // 内容页负责按表格列宽组织文本；保留完整行，避免公共渲染层再次截断造成列错位。
       lines.push(contentLine === undefined ? fit("", columns) : fit(contentLine, columns, false));
     }
+
+    // 作者与版权信息：放在公共外框中，所有页面统一显示。
+    lines.push(ansi.colorize(fit("作者：黎路遥 ｜ 微信：luyao2089 ｜ 官网：luyao2089.cc", columns), "gray"));
+    lines.push(ansi.colorize(fit("版权所有 © 黎路遥，保留所有权利", columns), "gray"));
 
     // 页脚
     let footerText = "";

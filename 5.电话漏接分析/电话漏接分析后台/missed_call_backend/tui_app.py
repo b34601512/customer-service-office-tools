@@ -113,8 +113,8 @@ class TuiApp:
 
     @property
     def content_height(self) -> int:
-        # 标题 1 + 状态 2 + 菜单 1 + 分隔 1 + 页脚 1 + 底边 1 = 7 行
-        return max(4, self.rows - 7)
+        # 标题 1 + 状态 2 + 菜单 1 + 分隔 1 + 联系方式 1 + 版权 1 + 页脚 1 + 底边 1 = 9 行
+        return max(4, self.rows - 9)
 
     def start(self) -> None:
         if self.running:
@@ -369,6 +369,8 @@ class TuiApp:
         for content_line in content_lines:
             lines.append(_fit(content_line, columns, truncate=False))
 
+        lines.append(colorize(_fit("作者：黎路遥 ｜ 微信：luyao2089 ｜ 官网：luyao2089.cc", columns), "gray"))
+        lines.append(colorize(_fit("版权所有 © 黎路遥，保留所有权利", columns), "gray"))
         footer_text = page.footer(self) if page and hasattr(page, "footer") else ""
         footer = footer_text or "↑↓选择 回车执行 ←→/数字键切页 9退出页 Ctrl+C直接退出"
         lines.append(colorize(_fit(footer, columns), "gray"))
