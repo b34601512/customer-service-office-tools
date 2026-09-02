@@ -1,13 +1,13 @@
 // 课件制作助手 TUI（薄壳）：只负责菜单/输入/输出，业务全部走 src/services。
 const { execFile } = require('child_process');
-const { makeUi } = require('./ui');
-const { createWorkspace } = require('../services/paths');
-const { loadConfig, saveConfig } = require('../services/config');
-const { listChatFiles, writeChat, reviewFileFor } = require('../services/chatStore');
-const { listPages, pickCandidates, fetchJdSummaryAndChat } = require('../services/jdFetch');
-const { parseImportText, importFromFile } = require('../services/importers');
-const { makeChat } = require('../services/chatSchema');
-const { generateCourseware } = require('../services/courseworkService');
+const { makeUi } = require('./tui/ui');
+const { createWorkspace } = require('./services/paths');
+const { loadConfig, saveConfig } = require('./services/config');
+const { listChatFiles, writeChat, reviewFileFor } = require('./services/chatStore');
+const { listPages, pickCandidates, fetchJdSummaryAndChat } = require('./services/jdFetch');
+const { parseImportText, importFromFile } = require('./services/importers');
+const { makeChat } = require('./services/chatSchema');
+const { generateCourseware } = require('./services/courseworkService');
 
 const APP = '客服培训课件制作助手 v0.1';
 
