@@ -1,13 +1,16 @@
 {
   "name": "chat-courseware-workbench",
   "version": "0.1.0",
-  "description": "13号客服培训课件制作助手：取数自动化(京东/手动导入) + AI解析数据文件 + 程序出片自检",
-  "main": "src/startTui.js",
+  "description": "13号客服培训课件制作：AI驱动流水线：取数命令 + AI解析SKILL + 程序出片自检",
+  "main": "src/cli.js",
   "type": "commonjs",
   "private": true,
   "scripts": {
-    "start": "node src/startTui.js",
-    "test": "node --test tests/"
+    "fetch:list": "node src/cli.js fetch:list",
+    "fetch:save": "node src/cli.js fetch:save",
+    "import": "node src/cli.js import",
+    "generate": "node src/cli.js generate",
+    "test": "node --test \"tests/*.test.js\""
   },
   "license": "UNLICENSED"
 }

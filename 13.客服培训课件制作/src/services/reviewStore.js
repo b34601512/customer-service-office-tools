@@ -28,7 +28,7 @@ function blankReview(chat, base) {
     outputName: `${sanitize(chat.meta.customer || chat.meta.window || '课件')}.html`,
     overlays: [],
     insights: {},
-    _templateHint: '由 AI 按「给AI的解析提示词模板.md」填写：overlays 挂到消息下标 i，insights 提供 <details> 解析块'
+    _templateHint: '由 AI 按 SKILL.md 契约填写：overlays 挂到消息下标 i，insights 提供 <details> 解析块'
   };
 }
 

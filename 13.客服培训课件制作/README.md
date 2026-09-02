@@ -8,20 +8,21 @@
 [步骤1·程序] 取数：从京东抓取 / 手动导入 → 标准聊天记录文件
              runtime/chat/<基名>.chat.json
 [步骤2·AI]   读聊天记录 + 场景意图 → 产出"解析数据文件"
-             runtime/review/<基名>.review.json   （按「给AI的解析提示词模板.md」填写）
+             runtime/review/<基名>.review.json   （按 SKILL.md 填写）
 [步骤3·程序] 生成课件：读两个文件 → 成品 HTML + 铁律自检
              runtime/outputs/<月份>/<文件名>.html
 ```
 
-> 说明：AI 不再每次全程陪跑，只负责"挑教学点 + 写当时 vs 建议话术"（可变内容）；
-> 样式、渲染、格式与铁律自检全部由程序保证。AI 也可不经界面，直接调用 `src/services/*` 完成步骤 2/3（与 TUI 同一套业务真源）。
+> 说明：AI 全程驱动，但只负责"挑教学点 + 写当时 vs 建议话术"（可变内容）；
+> 样式、渲染、格式与铁律自检全部由程序保证。AI 通过 `src/cli.js` 命令或直接 require `src/services/*` 完成全部步骤（唯一业务真源，无界面层）。
 
-## 使用方式
+## 使用方式（AI 驱动，无界面）
 
-1. 双击 `启动课件制作助手.bat` 打开控制台。
-2. 主菜单选 **1 从京东抓取** 或 **2 导入聊天记录** 取数。
-3. 让 AI 按解析提示词模板填好 `.review.json`。
-4. 主菜单选 **3 生成课件**，程序出片并打印自检报告。
+所有命令在 `D:\桌面\办公软件\13.客服培训课件制作` 目录下执行，做法看 **SKILL.md**：
+
+1. 取数：`node src/cli.js fetch:list/fetch:save`（京东）或 `node src/cli.js import <文件>`（手动）。
+2. AI 按 SKILL.md 契约写解析文件 `runtime/review/<基名>.review.json`。
+3. 出片自检：`node src/cli.js generate`。
 
 ## 京东抓取（步骤1·程序）
 
@@ -29,7 +30,7 @@
   ```
   chrome.exe --remote-debugging-port=9222 --user-data-dir="C:\Users\<用户>\AppData\Local\Google\Chrome\User Data" --restore-last-session
   ```
-- 首次可在「5 设置」里配好调试端口/页面标题匹配/接口地址，之后不用每次提供。
+- 配置在 `runtime/config/config.json`（调试端口/页面标题匹配/接口地址/每页条数；不入库），模板见 `config.example.json`。
 - 抓取接口：`kf.jd.com/chatLog/queryList.action`（单日/窄窗口查询，多页自动翻取）。
 - 程序列出会话供你选择；抓完会打印前若干条，**请通读确认会话主题与教学场景匹配**再继续（见铁律 8）。
 
@@ -43,12 +44,13 @@
   ```
 - **从文件**：支持 `.json`（标准聊天记录 或 京东原始 JSON）、`.txt`/`.md`。
 
-## 架构（UI 与业务分离）
+## 架构（业务唯一真源，无界面层）
 
-- `src/services/*`：全部业务真源（纯逻辑，不含界面）：抓取、转换、导入、存储、渲染、自检、生成编排。
-- `src/tui/*`：薄壳，只负责菜单/输入/输出，业务全部调用 services。
-- 未来 AI 无界面自动运行 = 直接 require `src/services/courseworkService.js` 等，与 TUI 走同一套逻辑。
+- `src/services/*`：全部业务真源（纯逻辑，无界面）：抓取、转换、导入、存储、渲染、自检、生成编排。
+- `src/cli.js`：命令入口（AI 驱动），只做参数解析与输出，业务全部调用 services。
+- `SKILL.md`：AI 指导书（流程四步 + 解析契约 + 铁律 + 验收清单）。
 - 规则文件：`runtime/config/config.json`（真值，不入库）；`config.example.json` 为模板。
+- 原 TUI 版（启动 bat 菜单）已归档至 `历史资料备份/TUI版备份/`，不再维护。
 
 ## 铁律速览（AI 制作解析时务必遵守）
 
@@ -64,12 +66,11 @@
 
 ```
 （13.客服培训课件制作/ 第一层）
-├─ 启动课件制作助手.bat
-├─ AGENTS.md / README.md / 给AI的解析提示词模板.md
+├─ SKILL.md                     # AI 指导书（流程/契约/铁律/验收）
+├─ AGENTS.md / README.md
 ├─ config.example.json          # 配置模板（复制为 runtime/config/config.json）
 ├─ src/
-│  ├─ startTui.js               # TUI 入口（薄壳）
-│  ├─ tui/ui.js                 # 输入输出原语
+│  ├─ cli.js                    # 命令入口（AI 驱动）
 │  └─ services/                 # 业务真源（无界面）
 │     ├─ paths.js config.js chatSchema.js
 │     ├─ jdFetch.js jdConvert.js importers.js
@@ -78,7 +79,7 @@
 │     └─ courseworkService.js   # 生成编排（单一真源入口）
 ├─ tests/                       # node --test
 ├─ runtime/                     # 本地数据（不入库）：chat/ review/ outputs/ config/
-└─ 历史资料备份/                # 旧方法/旧脚本/旧成品（本地归档，不入库）
+└─ 历史资料备份/                # 旧方法/旧脚本/旧成品（本地归档，不入库；含 TUI版备份）
 ```
 
 ## 常见问题

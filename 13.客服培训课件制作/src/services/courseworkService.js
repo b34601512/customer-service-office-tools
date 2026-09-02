@@ -29,7 +29,7 @@ async function generateCourseware(ws, { chatFile, reviewFile, outputName } = {})
       status: 'needReview',
       chatFile,
       reviewPath,
-      message: '还没有 AI 解析文件。已生成空白模板，请让 AI 按「给AI的解析提示词模板.md」填写后重试。'
+      message: '还没有 AI 解析文件。已生成空白模板，请让 AI 按 SKILL.md 契约填写后重试。'
     };
   }
 
