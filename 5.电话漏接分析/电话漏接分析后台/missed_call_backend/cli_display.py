@@ -11,11 +11,12 @@ from typing import Iterable, Sequence
 
 ANSI_RESET = "\033[0m"
 ANSI_COLORS = {
-    "green": "\033[92m",
-    "yellow": "\033[93m",
-    "red": "\033[91m",
-    "blue": "\033[94m",
-    "cyan": "\033[96m",
+    "green": "\033[32m",
+    "yellow": "\033[33m",
+    "red": "\033[31m",
+    "blue": "\033[34m",
+    "cyan": "\033[36m",
+    "gray": "\033[90m",
     "muted": "\033[90m",
     "bold": "\033[1m",
     "brightRed": "\033[91m",
@@ -64,8 +65,8 @@ def configure_terminal() -> None:
         sys.stdin.reconfigure(encoding="utf-8")
     except (AttributeError, OSError):
         pass
-    if os.name == "nt":
-        os.system("")
+    # TUI 进入时会直接设置 Windows ANSI 输出模式；这里不再调用 os.system，
+    # 避免启动阶段额外创建一个 cmd 并干扰当前窗口宿主。
     COLOR_OUTPUT_ENABLED = bool(sys.stdout.isatty())
 
 
@@ -151,7 +152,14 @@ def print_title(title: str, subtitle: str = "") -> None:
 
 def print_message(message: str, message_type: str = "info") -> None:
     """打印统一的提示信息。"""
-    color_name = {"success": "green", "warning": "yellow", "error": "red"}.get(message_type, "cyan")
+    color_name = {
+        "info": "cyan",
+        "success": "green",
+        "warning": "yellow",
+        "error": "red",
+        "muted": "muted",
+        "bold": "bold",
+    }.get(message_type, "cyan")
     print(colorize(message, color_name))
 
 

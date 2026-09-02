@@ -22,12 +22,9 @@ if /i "%~1"=="--check" (
     echo CLI_PATH=%CD%\cli.py
     exit /b 0
 )
-echo [START] Starting phone missed-call CLI...
-python cli.py
-set "EXIT_CODE=%ERRORLEVEL%"
-if not "%EXIT_CODE%"=="0" (
-    echo.
-    echo Startup failed. Check the run log in this folder.
-    pause
-)
-exit /b %EXIT_CODE%
+echo [START] Opening maximized phone missed-call CLI...
+rem Start one independent window directly; do not call this batch file recursively.
+start "" /max /D "%BACKEND_DIR%" python.exe cli.py
+set "START_CODE=%ERRORLEVEL%"
+if not "%START_CODE%"=="0" echo Startup failed: Python window could not be started.
+exit /b %START_CODE%

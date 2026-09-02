@@ -19,19 +19,11 @@ const TUI启动器列表 = [
   "../12.店铺指标数据自动更新/启动控制台.bat",
 ];
 
-test("所有 TUI/CLI 批处理入口都使用统一的最大化重拉起方式", () => {
-  for (const 相对路径 of TUI启动器列表) {
+test("所有交互式 TUI 批处理入口都使用独立最大化窗口且不递归", () => {
+  for (const 相对路径 of TUI启动器列表.filter((路径) => !路径.includes("10.自动报量"))) {
     const 源码 = fs.readFileSync(path.join(根目录, 相对路径), "utf8");
-    assert.match(
-      源码,
-      /start "" \/max "%ComSpec%" \/d \/c call "%~f0" --launcher-maximized %\*/,
-      `${相对路径} 缺少最大化重拉起命令`,
-    );
-    assert.match(
-      源码,
-      /if \/i "%~1"=="--launcher-maximized" shift/,
-      `${相对路径} 缺少最大化启动标记消费逻辑`,
-    );
+    assert.match(源码, /start "" \/max \/D /, `${相对路径} 缺少独立最大化启动命令`);
+    assert.doesNotMatch(源码, /call "%~f0"|--launcher-maximized/, `${相对路径} 仍存在自递归启动逻辑`);
   }
 });
 

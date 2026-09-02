@@ -106,6 +106,8 @@ async function startTuiRuntime(dependencies = {}) {
     process.exit(0);
   }
   process.once("SIGTERM", () => requestExit("SIGTERM"));
+  process.once("SIGBREAK", () => requestExit("SIGBREAK"));
+  process.once("SIGHUP", () => requestExit("SIGHUP"));
   // TUI 原始模式下 Ctrl+C 由框架拦截并弹出确认；SIGINT 作为兜底。
   process.once("SIGINT", () => requestExit("SIGINT"));
 

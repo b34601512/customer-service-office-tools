@@ -1,32 +1,32 @@
 @echo off
 setlocal EnableExtensions DisableDelayedExpansion
-if /i not "%~1"=="--launcher-maximized" (
-    start "" /max "%ComSpec%" /d /c call "%~f0" --launcher-maximized %*
-    exit /b
-)
-if /i "%~1"=="--launcher-maximized" shift
-chcp 65001>nul
-title 发票自动化总控制台
-cd /d "%~dp0"
 
-set "NODE_EXE=%~dp0runtime\node\node.exe"
+rem Start one independent maximized window; never call this batch file recursively.
+set "PROJECT_DIR=%~dp0"
+set "NODE_EXE=%PROJECT_DIR%runtime\node\node.exe"
 if exist "%NODE_EXE%" goto NODE_READY
 where node.exe >nul 2>nul
 if errorlevel 1 goto NODE_MISSING
 set "NODE_EXE=node.exe"
 
 :NODE_READY
-
-"%NODE_EXE%" "%~dp0tui\总入口TUI.js"
-set "EXIT_CODE=%ERRORLEVEL%"
-if "%EXIT_CODE%"=="0" exit /b 0
-
-echo.
-echo [错误] 总控制台启动失败，退出码：%EXIT_CODE%
-pause
-exit /b %EXIT_CODE%
+set "ENTRY_FILE="
+for %%F in ("%PROJECT_DIR%tui\*TUI.js") do (
+    if exist "%%~fF" set "ENTRY_FILE=%%~fF"
+)
+if not defined ENTRY_FILE goto ENTRY_MISSING
+title Invoice Automation Console
+start "" /max /D "%PROJECT_DIR%" "%NODE_EXE%" "%ENTRY_FILE%"
+set "START_CODE=%ERRORLEVEL%"
+if not "%START_CODE%"=="0" echo [ERROR] The TUI window could not be started. Exit code: %START_CODE%.
+exit /b %START_CODE%
 
 :NODE_MISSING
-echo [错误] 未找到 Node.js，无法启动总入口。
+echo [ERROR] Node.js was not found. Cannot start the main entry.
+pause
+exit /b 1
+
+:ENTRY_MISSING
+echo [ERROR] TUI entry file was not found in the tui folder.
 pause
 exit /b 1

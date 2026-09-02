@@ -1,10 +1,6 @@
 @echo off
 setlocal EnableExtensions DisableDelayedExpansion
-if /i not "%~1"=="--launcher-maximized" (
-    start "" /max "%ComSpec%" /d /c call "%~f0" --launcher-maximized %*
-    exit /b
-)
-if /i "%~1"=="--launcher-maximized" shift
+rem Start one independent maximized window; never call this batch file recursively.
 chcp 65001 >nul
 title Store Metric CLI v0.01
 pushd "%~dp0"
@@ -20,8 +16,7 @@ if errorlevel 1 (
   pause
   exit /b 1
 )
-node.exe "%~dp0src\cli\startCli.js"
-set "programExitCode=%errorlevel%"
+start "" /max /D "%~dp0" node.exe "%~dp0src\cli\startCli.js"
+set "START_CODE=%ERRORLEVEL%"
 popd
-if not "%programExitCode%"=="0" pause
-exit /b %programExitCode%
+endlocal & exit /b %START_CODE%

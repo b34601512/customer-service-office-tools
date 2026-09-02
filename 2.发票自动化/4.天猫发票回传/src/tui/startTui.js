@@ -111,14 +111,15 @@ function 创建TUI(选项 = {}) {
 if (require.main === module) {
   最大化当前控制台窗口();
   const { app, dispose } = 创建TUI();
-  process.once("SIGINT", () => {
+  const 安全退出 = () => {
+    app.stop();
     dispose();
     process.exit(0);
-  });
-  process.once("SIGTERM", () => {
-    dispose();
-    process.exit(0);
-  });
+  };
+  process.once("SIGINT", 安全退出);
+  process.once("SIGBREAK", 安全退出);
+  process.once("SIGHUP", 安全退出);
+  process.once("SIGTERM", 安全退出);
   app.start();
 }
 

@@ -161,10 +161,13 @@ if (require.main === module) {
     退出中 = true;
     // 退出 JD 控制台时关闭 JD 页面；下载中心服务继续持有诺诺会话，避免下次启动重新登录。
     await 关闭全部浏览器上下文().catch(() => {});
+    app.stop();
     dispose();
     process.exit(0);
   };
   process.once("SIGINT", 处理退出);
+  process.once("SIGBREAK", 处理退出);
+  process.once("SIGHUP", 处理退出);
   process.once("SIGTERM", 处理退出);
   app.start();
 }

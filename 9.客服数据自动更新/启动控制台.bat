@@ -1,10 +1,6 @@
 @echo off
 setlocal EnableExtensions DisableDelayedExpansion
-if /i not "%~1"=="--launcher-maximized" (
-    start "" /max "%ComSpec%" /d /c call "%~f0" --launcher-maximized %*
-    exit /b
-)
-if /i "%~1"=="--launcher-maximized" shift
+rem Start one independent maximized window; never call this batch file recursively.
 chcp 65001 >nul
 title Customer Performance CLI v1.0.1
 pushd "%~dp0"
@@ -16,8 +12,7 @@ if errorlevel 1 (
   endlocal
   exit /b 1
 )
-node.exe "%~dp0src\cli\startCli.js"
-set "applicationExitCode=%ERRORLEVEL%"
-if not "%applicationExitCode%"=="0" pause
+start "" /max /D "%~dp0" node.exe "%~dp0src\cli\startCli.js"
+set "START_CODE=%ERRORLEVEL%"
 popd
-endlocal & exit /b %applicationExitCode%
+endlocal & exit /b %START_CODE%

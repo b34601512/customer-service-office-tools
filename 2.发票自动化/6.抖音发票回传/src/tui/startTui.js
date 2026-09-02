@@ -147,6 +147,8 @@ if (require.main === module) {
     process.exit(0);
   };
   process.once("SIGINT", 安全退出);
+  process.once("SIGBREAK", 安全退出);
+  process.once("SIGHUP", 安全退出);
   process.once("SIGTERM", 安全退出);
   app.start();
 }

@@ -15,18 +15,18 @@ if errorlevel 1 goto install_failed
 if errorlevel 1 goto install_failed
 
 echo.
-echo 依赖安装完成。
+echo Dependencies installed successfully.
 pause
 exit /b 0
 
 :venv_failed
 echo.
-echo 创建独立 Python 环境失败，请检查 Python 是否已安装。
+echo Failed to create the Python environment. Check that Python is installed.
 pause
 exit /b 1
 
 :install_failed
 echo.
-echo 依赖安装失败，请检查 Python 环境或网络。
+echo Dependency installation failed. Check Python and network access.
 pause
 exit /b 1

@@ -1,41 +1,50 @@
 @echo off
 setlocal EnableExtensions DisableDelayedExpansion
-if /i not "%~1"=="--launcher-maximized" (
-    start "" /max "%ComSpec%" /d /c call "%~f0" --launcher-maximized %*
-    exit /b
-)
-rem shift makes %0 become old %1, so %~dp0 would degrade to cwd; pin script dir before shift
+rem Run directly in the current console. Never spawn another window.
 set "LAUNCHER_DIR=%~dp0"
-if /i "%~1"=="--launcher-maximized" shift
 chcp 65001 >nul
 set "PYTHONUTF8=1"
 set "AUTO_REPORT_PYTHON_EXE="
+set "AUTO_REPORT_DIR="
+set "AUTO_REPORT_ENTRY="
 
 for /f "delims=" %%I in ('where python 2^>nul') do if not defined AUTO_REPORT_PYTHON_EXE set "AUTO_REPORT_PYTHON_EXE=%%I"
+for /d %%D in ("%LAUNCHER_DIR%*") do if exist "%%~fD\requirements.txt" set "AUTO_REPORT_DIR=%%~fD"
+for %%F in ("%AUTO_REPORT_DIR%\*CLI.py") do if exist "%%~fF" set "AUTO_REPORT_ENTRY=%%~fF"
 
 if not defined AUTO_REPORT_PYTHON_EXE (
-    echo 未找到Python，请先安装Python后重试。
+    echo Python was not found. Please install Python first.
+    pause
+    exit /b 1
+)
+if not defined AUTO_REPORT_DIR (
+    echo The auto-report project folder was not found.
+    pause
+    exit /b 1
+)
+if not defined AUTO_REPORT_ENTRY (
+    echo The auto-report CLI entry file was not found.
     pause
     exit /b 1
 )
 
 "%AUTO_REPORT_PYTHON_EXE%" -c "import openpyxl; from PIL import Image; import playwright" >nul 2>&1
 if errorlevel 1 (
-    echo 首次运行，正在安装自动报量所需组件...
-    "%AUTO_REPORT_PYTHON_EXE%" -m pip install --disable-pip-version-check -r "%LAUNCHER_DIR%自动报量CLI\requirements.txt"
+    echo Installing required auto-report packages...
+    "%AUTO_REPORT_PYTHON_EXE%" -m pip install --disable-pip-version-check -r "%AUTO_REPORT_DIR%\requirements.txt"
     if errorlevel 1 (
-        echo 组件安装失败，请检查网络后重新运行。
+        echo Package installation failed. Please check the network and retry.
         pause
         exit /b 1
     )
 )
 
-"%AUTO_REPORT_PYTHON_EXE%" "%LAUNCHER_DIR%自动报量CLI\自动报量CLI.py"
+"%AUTO_REPORT_PYTHON_EXE%" "%AUTO_REPORT_ENTRY%"
 set "AUTO_REPORT_EXIT_CODE=%ERRORLEVEL%"
 if not "%AUTO_REPORT_EXIT_CODE%"=="0" (
     echo.
-    echo 程序异常退出，错误码：%AUTO_REPORT_EXIT_CODE%
-    echo 请保留本窗口内容，方便排查。
+    echo The program exited with code: %AUTO_REPORT_EXIT_CODE%
+    echo Keep this window open for troubleshooting.
     pause
 )
 

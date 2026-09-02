@@ -74,6 +74,7 @@ class TUI应用 {
     this.onExitRequest = 选项.onExitRequest || (() => {});
     this.onGlobalKey = 选项.onGlobalKey || null;
     this.running = false;
+    this.terminalStarted = false;
     this.renderQueued = false;
     this.escapeBuffer = "";
     this.escapeTimer = null;
@@ -121,6 +122,7 @@ class TUI应用 {
     }
     process.stdin.resume();
     this.running = true;
+    this.terminalStarted = true;
     this.lastFrameLines = null;
     // 进入备用屏幕并禁用自动换行：任何一行恰好写满列宽都不会被终端折行，避免画面上下跳动。
     this.output.write(
@@ -136,7 +138,7 @@ class TUI应用 {
   }
 
   stop() {
-    if (!this.running) {
+    if (!this.terminalStarted) {
       return;
     }
     this.running = false;
@@ -157,6 +159,7 @@ class TUI应用 {
       process.stdin.setRawMode(false);
     }
     process.stdin.pause();
+    this.terminalStarted = false;
   }
 
   requestRender() {

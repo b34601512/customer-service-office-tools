@@ -1,10 +1,6 @@
 @echo off
 setlocal EnableExtensions DisableDelayedExpansion
-if /i not "%~1"=="--launcher-maximized" (
-    start "" /max "%ComSpec%" /d /c call "%~f0" --launcher-maximized %*
-    exit /b
-)
-if /i "%~1"=="--launcher-maximized" shift
+rem Start one independent maximized window; never call this batch file recursively.
 rem Customer Service Timeout Supervisor - TUI launcher (English-only)
 rem Double-click this file to open the terminal UI control center.
 chcp 65001 >nul
@@ -17,10 +13,7 @@ if errorlevel 1 (
   exit /b 1
 )
 
-node src\controlCenter\startControlCenter.js --tui
-if errorlevel 1 (
-  echo.
-  echo [ERROR] The program exited with an error. Press any key to close.
-  pause >nul
-)
-endlocal
+start "" /max /D "%~dp0" node.exe src\controlCenter\startControlCenter.js --tui
+set "START_CODE=%ERRORLEVEL%"
+if not "%START_CODE%"=="0" echo [ERROR] The TUI window could not be started. Exit code: %START_CODE%.
+endlocal & exit /b %START_CODE%

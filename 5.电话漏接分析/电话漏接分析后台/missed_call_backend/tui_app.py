@@ -76,7 +76,13 @@ class TuiApp:
         self.output = output or sys.stdout
         self.current_page_index = 0
         self.running = False
+        self._terminal_started = False
         self._old_termios: Any = None
+        self._windows_console_handler: Any = None
+        self._windows_console_input_handle: Any = None
+        self._windows_console_input_mode: int | None = None
+        self._windows_console_output_handle: Any = None
+        self._windows_console_output_mode: int | None = None
         self._last_output = ""
         self._render_requested = False
         self._toast = ""
@@ -116,12 +122,87 @@ class TuiApp:
         # 标题 1 + 状态 2 + 菜单 1 + 分隔 1 + 联系方式 1 + 版权 1 + 页脚 1 + 底边 1 = 9 行
         return max(4, self.rows - 9)
 
+    def _handle_windows_console_control(self, control_type: int) -> int:
+        """接收 Windows 控制台关闭事件，让主循环走统一的 finally 清理路径。"""
+        # CTRL_C_EVENT=0、CTRL_BREAK_EVENT=1、CTRL_CLOSE_EVENT=2，
+        # CTRL_LOGOFF_EVENT=5、CTRL_SHUTDOWN_EVENT=6。
+        if control_type in (0, 1, 2, 5, 6):
+            self.running = False
+            if control_type in (2, 5, 6) and hasattr(self.application, "_console_close_requested"):
+                self.application._console_close_requested = True
+            return 1
+        return 0
+
+    def _configure_windows_console_modes(self) -> None:
+        """进入 TUI 时关闭 QuickEdit，并开启 Windows ANSI 输出；退出时恢复。"""
+        if os.name != "nt":
+            return
+        try:
+            import ctypes
+
+            kernel32 = ctypes.windll.kernel32
+            handler_type = ctypes.WINFUNCTYPE(ctypes.c_int, ctypes.c_uint)
+            handler = handler_type(self._handle_windows_console_control)
+            if kernel32.SetConsoleCtrlHandler(handler, True):
+                self._windows_console_handler = handler
+            # STD_INPUT_HANDLE=-10，STD_OUTPUT_HANDLE=-11。
+            input_handle = kernel32.GetStdHandle(-10)
+            input_mode = ctypes.c_uint()
+            if input_handle and kernel32.GetConsoleMode(input_handle, ctypes.byref(input_mode)):
+                # ENABLE_PROCESSED_INPUT/LINE_INPUT/ECHO_INPUT/MOUSE_INPUT/INSERT/QUICK_EDIT。
+                disable_input_flags = 0x0001 | 0x0002 | 0x0004 | 0x0010 | 0x0020 | 0x0040
+                next_input_mode = (input_mode.value | 0x0080) & ~disable_input_flags
+                if kernel32.SetConsoleMode(input_handle, next_input_mode):
+                    self._windows_console_input_handle = input_handle
+                    self._windows_console_input_mode = input_mode.value
+
+            output_handle = kernel32.GetStdHandle(-11)
+            output_mode = ctypes.c_uint()
+            if output_handle and kernel32.GetConsoleMode(output_handle, ctypes.byref(output_mode)):
+                # ENABLE_VIRTUAL_TERMINAL_PROCESSING=0x0004。
+                next_output_mode = output_mode.value | 0x0004
+                if kernel32.SetConsoleMode(output_handle, next_output_mode):
+                    self._windows_console_output_handle = output_handle
+                    self._windows_console_output_mode = output_mode.value
+        except (AttributeError, OSError, TypeError):
+            # Windows Terminal 伪控制台可能不提供传统句柄；此时保留 ANSI/按键的现有路径。
+            return
+
+    def _restore_windows_console_modes(self) -> None:
+        """恢复进入 TUI 前的 Windows 控制台模式。"""
+        if os.name != "nt":
+            return
+        try:
+            import ctypes
+
+            kernel32 = ctypes.windll.kernel32
+            if self._windows_console_handler is not None:
+                kernel32.SetConsoleCtrlHandler(self._windows_console_handler, False)
+            if self._windows_console_input_handle is not None and self._windows_console_input_mode is not None:
+                kernel32.SetConsoleMode(self._windows_console_input_handle, self._windows_console_input_mode)
+            if self._windows_console_output_handle is not None and self._windows_console_output_mode is not None:
+                kernel32.SetConsoleMode(self._windows_console_output_handle, self._windows_console_output_mode)
+        except (AttributeError, OSError, TypeError):
+            pass
+        finally:
+            self._windows_console_handler = None
+            self._windows_console_input_handle = None
+            self._windows_console_input_mode = None
+            self._windows_console_output_handle = None
+            self._windows_console_output_mode = None
+
     def start(self) -> None:
         if self.running:
             return
+        self._configure_windows_console_modes()
+        self._terminal_started = True
         self.running = True
         cli_display.COLOR_OUTPUT_ENABLED = True
-        self.output.write("\x1b[?1049h\x1b[2J\x1b[?25l")
+        self.output.write("\x1b[?1049h\x1b[2J\x1b[?25l\x1b[?7l")
+        try:
+            self.output.flush()
+        except (AttributeError, OSError):
+            pass
         if os.name != "nt" and hasattr(sys.stdin, "fileno") and sys.stdin.isatty():
             import termios
             import tty
@@ -133,19 +214,26 @@ class TuiApp:
         self.render()
 
     def stop(self) -> None:
-        if not self.running:
+        """无论 running 当前值如何，都恢复 TUI 进入前的终端状态。"""
+        if not self._terminal_started:
             return
         self.running = False
-        if self._old_termios is not None:
-            import termios
-
-            termios.tcsetattr(sys.stdin.fileno(), termios.TCSADRAIN, self._old_termios)
-            self._old_termios = None
-        self.output.write("\x1b[0m\x1b[?25h\x1b[?1049l")
         try:
+            if self._old_termios is not None:
+                import termios
+
+                termios.tcsetattr(sys.stdin.fileno(), termios.TCSADRAIN, self._old_termios)
+                self._old_termios = None
+        except (AttributeError, OSError):
+            self._old_termios = None
+        try:
+            self.output.write("\x1b[0m\x1b[?7h\x1b[?25h\x1b[?1049l")
             self.output.flush()
         except (AttributeError, OSError):
             pass
+        finally:
+            self._restore_windows_console_modes()
+            self._terminal_started = False
 
     def request_render(self) -> None:
         """请求主循环在下一次空闲轮询时刷新，供后台加载线程完成后使用。"""
@@ -190,6 +278,8 @@ class TuiApp:
                 self.page.on_enter(self)
 
     def run(self) -> None:
+        if not sys.stdin.isatty():
+            raise RuntimeError("TUI 界面需要真实终端输入；请在终端窗口中启动。")
         self.start()
         try:
             while self.running:

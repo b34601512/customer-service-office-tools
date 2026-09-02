@@ -68,15 +68,17 @@ class CliApplication:
         self.maintenance_runner: PeriodicMaintenanceRunner | None = None
         self.is_running = True
         self.signal_handlers: dict[int, Any] = {}
+        self._console_close_requested = False
 
     def run(self) -> None:
         """启动 CLI、进入菜单并确保退出时完成清理。"""
         configure_terminal()
+        has_interactive_terminal = sys.stdout.isatty() and sys.stdin.isatty()
         self.prepare_runtime()
         self.register_exit_signals()
         try:
             self.refresh_result()
-            if sys.stdout.isatty():
+            if has_interactive_terminal:
                 self.run_tui()
             else:
                 self.main_menu_loop()
@@ -147,11 +149,22 @@ class CliApplication:
         raise KeyboardInterrupt
 
     def cleanup_runtime(self) -> None:
-        """停止维护线程并关闭本程序启动的浏览器。"""
+        """停止维护线程并关闭本程序启动的浏览器；清理失败不能阻断主进程退出。"""
         if self.maintenance_runner:
-            self.maintenance_runner.stop()
-        close_download_browser_windows()
-        write_log("退出后台", "CLI", "已清理本程序打开的浏览器窗口")
+            try:
+                self.maintenance_runner.stop()
+            except Exception as error:
+                write_log("退出清理失败", "运行维护", f"停止维护器失败：{type(error).__name__}: {error}")
+        if self._console_close_requested:
+            # Windows 关闭窗口时系统只给控制台进程很短的收尾时间，不能再等待 PowerShell。
+            write_log("退出后台", "CLI", "收到控制台关闭请求，跳过外部浏览器清理")
+            return
+        try:
+            close_download_browser_windows()
+            write_log("退出后台", "CLI", "已清理本程序打开的浏览器窗口")
+        except Exception as error:
+            # 浏览器清理只是收尾动作；即使 PowerShell 超时，也必须允许用户正常关闭 CLI。
+            write_log("退出清理失败", "自动下载浏览器", f"关闭浏览器失败：{type(error).__name__}: {error}")
 
     def refresh_result(self) -> None:
         """读取最新结果；原始行已包含在结果中，不再二次打开 Excel。"""

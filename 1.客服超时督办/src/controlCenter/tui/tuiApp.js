@@ -90,6 +90,7 @@ class TuiApp {
     this.needsLoginConfirm = false;
     this.exitConfirmPending = false;
     this.running = false;
+    this.terminalStarted = false;
     this.renderQueued = false;
     this.escapeBuffer = "";
     // 输出流可注入（测试用 mock），默认写真实终端。
@@ -136,6 +137,7 @@ class TuiApp {
     }
     process.stdin.resume();
     this.running = true;
+    this.terminalStarted = true;
     this.lastFrameLines = null;
     // 进入备用屏幕并禁用自动换行：任何一行恰好写满列宽都不会被终端折行，避免画面上下跳动。
     this.output.write(
@@ -151,7 +153,7 @@ class TuiApp {
   }
 
   stop() {
-    if (!this.running) {
+    if (!this.terminalStarted) {
       return;
     }
     this.running = false;
@@ -167,6 +169,7 @@ class TuiApp {
       process.stdin.setRawMode(false);
     }
     process.stdin.pause();
+    this.terminalStarted = false;
   }
 
   requestRender() {
