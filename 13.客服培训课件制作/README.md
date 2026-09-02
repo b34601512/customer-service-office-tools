@@ -63,8 +63,9 @@
 ## 目录
 
 ```
-课件制作助手/
+（13.客服培训课件制作/ 第一层）
 ├─ 启动课件制作助手.bat
+├─ AGENTS.md / README.md / 给AI的解析提示词模板.md
 ├─ config.example.json          # 配置模板（复制为 runtime/config/config.json）
 ├─ src/
 │  ├─ startTui.js               # TUI 入口（薄壳）
@@ -76,7 +77,8 @@
 │     ├─ renderCourseware.js selfCheck.js
 │     └─ courseworkService.js   # 生成编排（单一真源入口）
 ├─ tests/                       # node --test
-└─ runtime/                     # 本地数据（不入库）：chat/ review/ outputs/ config/
+├─ runtime/                     # 本地数据（不入库）：chat/ review/ outputs/ config/
+└─ 历史资料备份/                # 旧方法/旧脚本/旧成品（本地归档，不入库）
 ```
 
 ## 常见问题
