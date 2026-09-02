@@ -132,6 +132,12 @@ tools/git-secret-store.json
 # store 重建时的旧备份也不入库
 tools/git-secret-store.json.bak
 
+# 运行真值配置彻底不入库：仓库只保留 *.example.* 模板，复制改名后填值即可
+**/project-config/platform-config.json
+5.电话漏接分析/电话漏接分析后台/download_config.json
+5.电话漏接分析/电话漏接分析后台/agent_mapping.json
+5.电话漏接分析/电话漏接分析后台/complaint_config.json
+
 # 业务截图与图片不入库（源码仓库只收代码）
 *.png
 *.jpg
