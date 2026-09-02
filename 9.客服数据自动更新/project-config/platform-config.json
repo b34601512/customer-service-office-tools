@@ -1,0 +1,1156 @@
+{
+  "workbook": {
+    "path": ""
+  },
+  "kdocsDataDetailSync": {
+    "documentUrl": "",
+    "syncWebhookUrl": "",
+    "syncApiToken": "",
+    "filterWebhookUrl": "",
+    "filterApiToken": "",
+    "customerServiceNameWebhookUrl": "",
+    "customerServiceNameApiToken": ""
+  },
+  "tmall": {
+    "stores": [
+      {
+        "key": "tmall1",
+        "includedInSummary": true,
+        "displayName": "天猫1店",
+        "platformStoreId": "",
+        "platformStoreName": "",
+        "username": "",
+        "password": "",
+        "downloadDir": "",
+        "usesGlobalExportDateRange": true,
+        "exportDateRange": {
+          "start": {
+            "type": "custom_date",
+            "offsetDays": 0,
+            "customDate": "2026-08-01"
+          },
+          "end": {
+            "type": "custom_date",
+            "offsetDays": 0,
+            "customDate": "2026-08-31"
+          }
+        },
+        "reportProfiles": {
+          "performance": {
+            "key": "performance",
+            "displayName": "业绩指标",
+            "enabled": true,
+            "siteUrl": "https://sycm.taobao.com/qos/service/frame/customer/performance/new#/user",
+            "downloadMode": "sycm",
+            "sourceSheetMode": "single_sheet",
+            "sourceSheetName": "数据信息",
+            "sourceSheetIndex": 0,
+            "sourceAliasFieldLabel": "旺旺昵称",
+            "metricMappings": [
+              {
+                "key": "amount",
+                "sourceFieldLabel": "净销售额"
+              },
+              {
+                "key": "inquiry",
+                "sourceFieldLabel": "询单人数"
+              },
+              {
+                "key": "order",
+                "sourceFieldLabel": "下单人数"
+              }
+            ]
+          },
+          "response_time": {
+            "key": "response_time",
+            "displayName": "平均响应时间",
+            "enabled": true,
+            "siteUrl": "https://qn.taobao.com/home.html/voc-tmall/serverReport",
+            "downloadMode": "single_file",
+            "sourceSheetMode": "single_sheet",
+            "sourceSheetName": "按客服查看",
+            "sourceSheetIndex": 0,
+            "sourceAliasFieldLabel": "旺旺账号名称",
+            "metricMappings": [
+              {
+                "key": "avg_response_time",
+                "sourceFieldLabel": "平均响应时长"
+              },
+              {
+                "key": "response_weight",
+                "sourceFieldLabel": "人工接待会话量"
+              }
+            ]
+          },
+          "three_minute_response_rate": {
+            "key": "three_minute_response_rate",
+            "displayName": "3分钟响应率",
+            "enabled": true,
+            "siteUrl": "https://qn.taobao.com/home.html/voc-tmall/serverReport",
+            "downloadMode": "single_file",
+            "sourceSheetMode": "single_sheet",
+            "sourceSheetName": "按客服查看",
+            "sourceSheetIndex": 0,
+            "sourceAliasFieldLabel": "旺旺账号名称",
+            "metricMappings": [
+              {
+                "key": "three_minute_response_rate",
+                "sourceFieldLabel": "3分钟人工响应率"
+              }
+            ]
+          },
+          "customer_satisfaction": {
+            "key": "customer_satisfaction",
+            "displayName": "客户满意度",
+            "enabled": true,
+            "siteUrl": "https://qn.taobao.com/home.html/voc-tmall/serverReport",
+            "downloadMode": "single_file",
+            "sourceSheetMode": "single_sheet",
+            "sourceSheetName": "旺旺账号咨询接待能力明细",
+            "sourceSheetIndex": 0,
+            "sourceAliasFieldLabel": "旺旺账号名称",
+            "metricMappings": [
+              {
+                "key": "satisfied_count",
+                "sourceFieldLabel": "满意评价量"
+              },
+              {
+                "key": "evaluation_count",
+                "sourceFieldLabel": "旺旺评价量"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "key": "tmall2",
+        "includedInSummary": true,
+        "displayName": "天猫2店",
+        "platformStoreId": "",
+        "platformStoreName": "",
+        "username": "",
+        "password": "",
+        "downloadDir": "",
+        "usesGlobalExportDateRange": true,
+        "exportDateRange": {
+          "start": {
+            "type": "custom_date",
+            "offsetDays": 0,
+            "customDate": "2026-08-01"
+          },
+          "end": {
+            "type": "custom_date",
+            "offsetDays": 0,
+            "customDate": "2026-08-31"
+          }
+        },
+        "reportProfiles": {
+          "performance": {
+            "key": "performance",
+            "displayName": "业绩指标",
+            "enabled": true,
+            "siteUrl": "https://sycm.taobao.com/qos/service/frame/customer/performance/new#/user",
+            "downloadMode": "sycm",
+            "sourceSheetMode": "single_sheet",
+            "sourceSheetName": "数据信息",
+            "sourceSheetIndex": 0,
+            "sourceAliasFieldLabel": "旺旺昵称",
+            "metricMappings": [
+              {
+                "key": "amount",
+                "sourceFieldLabel": "净销售额"
+              },
+              {
+                "key": "inquiry",
+                "sourceFieldLabel": "询单人数"
+              },
+              {
+                "key": "order",
+                "sourceFieldLabel": "下单人数"
+              }
+            ]
+          },
+          "response_time": {
+            "key": "response_time",
+            "displayName": "平均响应时间",
+            "enabled": true,
+            "siteUrl": "https://qn.taobao.com/home.html/voc-tmall/serverReport",
+            "downloadMode": "single_file",
+            "sourceSheetMode": "single_sheet",
+            "sourceSheetName": "按客服查看",
+            "sourceSheetIndex": 0,
+            "sourceAliasFieldLabel": "旺旺账号名称",
+            "metricMappings": [
+              {
+                "key": "avg_response_time",
+                "sourceFieldLabel": "平均响应时长"
+              },
+              {
+                "key": "response_weight",
+                "sourceFieldLabel": "人工接待会话量"
+              }
+            ]
+          },
+          "three_minute_response_rate": {
+            "key": "three_minute_response_rate",
+            "displayName": "3分钟响应率",
+            "enabled": true,
+            "siteUrl": "https://qn.taobao.com/home.html/voc-tmall/serverReport",
+            "downloadMode": "single_file",
+            "sourceSheetMode": "single_sheet",
+            "sourceSheetName": "按客服查看",
+            "sourceSheetIndex": 0,
+            "sourceAliasFieldLabel": "旺旺账号名称",
+            "metricMappings": [
+              {
+                "key": "three_minute_response_rate",
+                "sourceFieldLabel": "3分钟人工响应率"
+              }
+            ]
+          },
+          "customer_satisfaction": {
+            "key": "customer_satisfaction",
+            "displayName": "客户满意度",
+            "enabled": true,
+            "siteUrl": "https://qn.taobao.com/home.html/voc-tmall/serverReport",
+            "downloadMode": "single_file",
+            "sourceSheetMode": "single_sheet",
+            "sourceSheetName": "旺旺账号咨询接待能力明细",
+            "sourceSheetIndex": 0,
+            "sourceAliasFieldLabel": "旺旺账号名称",
+            "metricMappings": [
+              {
+                "key": "satisfied_count",
+                "sourceFieldLabel": "满意评价量"
+              },
+              {
+                "key": "evaluation_count",
+                "sourceFieldLabel": "旺旺评价量"
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "jd": {
+    "stores": [
+      {
+        "key": "jd1",
+        "includedInSummary": true,
+        "displayName": "京东1店",
+        "platformStoreId": "",
+        "platformStoreName": "",
+        "username": "",
+        "password": "",
+        "customerServiceScope": {
+          "mode": "客服岗位",
+          "values": [
+            "售前"
+          ]
+        },
+        "downloadDir": "",
+        "usesGlobalExportDateRange": true,
+        "exportDateRange": {
+          "start": {
+            "type": "custom_date",
+            "offsetDays": 0,
+            "customDate": "2026-08-01"
+          },
+          "end": {
+            "type": "custom_date",
+            "offsetDays": 0,
+            "customDate": "2026-08-31"
+          }
+        },
+        "reportProfiles": {
+          "performance": {
+            "key": "performance",
+            "displayName": "业绩指标",
+            "enabled": true,
+            "siteUrl": "https://xi.jd.com/kf-manage-lite/#/DataAnalysis/ReceptionData",
+            "downloadMode": "system",
+            "sourceSheetMode": "first_sheet",
+            "sourceSheetName": "整体数据",
+            "sourceSheetIndex": 0,
+            "sourceAliasFieldLabel": "客服",
+            "metricMappings": [
+              {
+                "key": "amount",
+                "sourceFieldLabel": "促成下单商品金额"
+              },
+              {
+                "key": "inquiry",
+                "sourceFieldLabel": "售前接待人数"
+              },
+              {
+                "key": "order",
+                "sourceFieldLabel": "促成下单人数"
+              }
+            ]
+          },
+          "response_time": {
+            "key": "response_time",
+            "displayName": "平均响应时间",
+            "enabled": true,
+            "siteUrl": "https://xi.jd.com/kf-manage-lite/#/DataAnalysis/ReceptionData",
+            "downloadMode": "system",
+            "sourceSheetMode": "first_sheet",
+            "sourceSheetName": "整体数据",
+            "sourceSheetIndex": 0,
+            "sourceAliasFieldLabel": "客服",
+            "metricMappings": [
+              {
+                "key": "avg_response_time",
+                "sourceFieldLabel": "平均响应时长（新）"
+              },
+              {
+                "key": "response_weight",
+                "sourceFieldLabel": "接待量"
+              },
+              {
+                "key": "thirty_second_response_rate",
+                "sourceFieldLabel": "30s应答率"
+              }
+            ]
+          },
+          "three_minute_response_rate": {
+            "key": "three_minute_response_rate",
+            "displayName": "3分钟响应率",
+            "enabled": true,
+            "siteUrl": "https://xi.jd.com/kf-manage-lite/#/DataAnalysis/ReceptionData",
+            "downloadMode": "system",
+            "sourceSheetMode": "first_sheet",
+            "sourceSheetName": "整体数据",
+            "sourceSheetIndex": 0,
+            "sourceAliasFieldLabel": "客服",
+            "metricMappings": [
+              {
+                "key": "three_minute_response_rate",
+                "sourceFieldLabel": "客服3分钟人工回复率"
+              }
+            ]
+          },
+          "customer_satisfaction": {
+            "key": "customer_satisfaction",
+            "displayName": "客户满意度",
+            "enabled": true,
+            "siteUrl": "https://xi.jd.com/kf-manage-lite/#/DataAnalysis/ReceptionData",
+            "downloadMode": "system",
+            "sourceSheetMode": "first_sheet",
+            "sourceSheetName": "整体数据",
+            "sourceSheetIndex": 0,
+            "sourceAliasFieldLabel": "客服",
+            "metricMappings": [
+              {
+                "key": "satisfied_count",
+                "sourceFieldLabel": "好评量"
+              },
+              {
+                "key": "evaluation_count",
+                "sourceFieldLabel": "评价量"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "key": "jd3",
+        "includedInSummary": true,
+        "displayName": "京东3店",
+        "platformStoreId": "",
+        "platformStoreName": "",
+        "username": "",
+        "password": "",
+        "customerServiceScope": {
+          "mode": "客服岗位",
+          "values": [
+            "售前"
+          ]
+        },
+        "downloadDir": "",
+        "usesGlobalExportDateRange": true,
+        "exportDateRange": {
+          "start": {
+            "type": "custom_date",
+            "offsetDays": 0,
+            "customDate": "2026-08-01"
+          },
+          "end": {
+            "type": "custom_date",
+            "offsetDays": 0,
+            "customDate": "2026-08-31"
+          }
+        },
+        "reportProfiles": {
+          "performance": {
+            "key": "performance",
+            "displayName": "业绩指标",
+            "enabled": true,
+            "siteUrl": "https://xi.jd.com/kf-manage-lite/#/DataAnalysis/ReceptionData",
+            "downloadMode": "system",
+            "sourceSheetMode": "first_sheet",
+            "sourceSheetName": "整体数据",
+            "sourceSheetIndex": 0,
+            "sourceAliasFieldLabel": "客服",
+            "metricMappings": [
+              {
+                "key": "amount",
+                "sourceFieldLabel": "促成下单商品金额"
+              },
+              {
+                "key": "inquiry",
+                "sourceFieldLabel": "售前接待人数"
+              },
+              {
+                "key": "order",
+                "sourceFieldLabel": "促成下单人数"
+              }
+            ]
+          },
+          "response_time": {
+            "key": "response_time",
+            "displayName": "平均响应时间",
+            "enabled": true,
+            "siteUrl": "https://xi.jd.com/kf-manage-lite/#/DataAnalysis/ReceptionData",
+            "downloadMode": "system",
+            "sourceSheetMode": "first_sheet",
+            "sourceSheetName": "整体数据",
+            "sourceSheetIndex": 0,
+            "sourceAliasFieldLabel": "客服",
+            "metricMappings": [
+              {
+                "key": "avg_response_time",
+                "sourceFieldLabel": "平均响应时长（新）"
+              },
+              {
+                "key": "response_weight",
+                "sourceFieldLabel": "接待量"
+              },
+              {
+                "key": "thirty_second_response_rate",
+                "sourceFieldLabel": "30s应答率"
+              }
+            ]
+          },
+          "three_minute_response_rate": {
+            "key": "three_minute_response_rate",
+            "displayName": "3分钟响应率",
+            "enabled": true,
+            "siteUrl": "https://xi.jd.com/kf-manage-lite/#/DataAnalysis/ReceptionData",
+            "downloadMode": "system",
+            "sourceSheetMode": "first_sheet",
+            "sourceSheetName": "整体数据",
+            "sourceSheetIndex": 0,
+            "sourceAliasFieldLabel": "客服",
+            "metricMappings": [
+              {
+                "key": "three_minute_response_rate",
+                "sourceFieldLabel": "客服3分钟人工回复率"
+              }
+            ]
+          },
+          "customer_satisfaction": {
+            "key": "customer_satisfaction",
+            "displayName": "客户满意度",
+            "enabled": true,
+            "siteUrl": "https://xi.jd.com/kf-manage-lite/#/DataAnalysis/ReceptionData",
+            "downloadMode": "system",
+            "sourceSheetMode": "first_sheet",
+            "sourceSheetName": "整体数据",
+            "sourceSheetIndex": 0,
+            "sourceAliasFieldLabel": "客服",
+            "metricMappings": [
+              {
+                "key": "satisfied_count",
+                "sourceFieldLabel": "好评量"
+              },
+              {
+                "key": "evaluation_count",
+                "sourceFieldLabel": "评价量"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "key": "jd6",
+        "includedInSummary": true,
+        "displayName": "京东6店",
+        "platformStoreId": "",
+        "platformStoreName": "",
+        "username": "",
+        "password": "",
+        "customerServiceScope": {
+          "mode": "客服岗位",
+          "values": [
+            "售前"
+          ]
+        },
+        "downloadDir": "",
+        "usesGlobalExportDateRange": true,
+        "exportDateRange": {
+          "start": {
+            "type": "custom_date",
+            "offsetDays": 0,
+            "customDate": "2026-08-01"
+          },
+          "end": {
+            "type": "custom_date",
+            "offsetDays": 0,
+            "customDate": "2026-08-31"
+          }
+        },
+        "reportProfiles": {
+          "performance": {
+            "key": "performance",
+            "displayName": "业绩指标",
+            "enabled": true,
+            "siteUrl": "https://xi.jd.com/kf-manage-lite/#/DataAnalysis/ReceptionData",
+            "downloadMode": "system",
+            "sourceSheetMode": "first_sheet",
+            "sourceSheetName": "整体数据",
+            "sourceSheetIndex": 0,
+            "sourceAliasFieldLabel": "客服",
+            "metricMappings": [
+              {
+                "key": "amount",
+                "sourceFieldLabel": "促成下单商品金额"
+              },
+              {
+                "key": "inquiry",
+                "sourceFieldLabel": "售前接待人数"
+              },
+              {
+                "key": "order",
+                "sourceFieldLabel": "促成下单人数"
+              }
+            ]
+          },
+          "response_time": {
+            "key": "response_time",
+            "displayName": "平均响应时间",
+            "enabled": true,
+            "siteUrl": "https://xi.jd.com/kf-manage-lite/#/DataAnalysis/ReceptionData",
+            "downloadMode": "system",
+            "sourceSheetMode": "first_sheet",
+            "sourceSheetName": "整体数据",
+            "sourceSheetIndex": 0,
+            "sourceAliasFieldLabel": "客服",
+            "metricMappings": [
+              {
+                "key": "avg_response_time",
+                "sourceFieldLabel": "平均响应时长（新）"
+              },
+              {
+                "key": "response_weight",
+                "sourceFieldLabel": "接待量"
+              },
+              {
+                "key": "thirty_second_response_rate",
+                "sourceFieldLabel": "30s应答率"
+              }
+            ]
+          },
+          "three_minute_response_rate": {
+            "key": "three_minute_response_rate",
+            "displayName": "3分钟响应率",
+            "enabled": false,
+            "siteUrl": "https://xi.jd.com/kf-manage-lite/#/DataAnalysis/ReceptionData",
+            "downloadMode": "system",
+            "sourceSheetMode": "first_sheet",
+            "sourceSheetName": "整体数据",
+            "sourceSheetIndex": 0,
+            "sourceAliasFieldLabel": "客服",
+            "metricMappings": [
+              {
+                "key": "three_minute_response_rate",
+                "sourceFieldLabel": "客服3分钟人工回复率"
+              }
+            ]
+          },
+          "customer_satisfaction": {
+            "key": "customer_satisfaction",
+            "displayName": "客户满意度",
+            "enabled": true,
+            "siteUrl": "https://xi.jd.com/kf-manage-lite/#/DataAnalysis/ReceptionData",
+            "downloadMode": "system",
+            "sourceSheetMode": "first_sheet",
+            "sourceSheetName": "整体数据",
+            "sourceSheetIndex": 0,
+            "sourceAliasFieldLabel": "客服",
+            "metricMappings": [
+              {
+                "key": "satisfied_count",
+                "sourceFieldLabel": "好评量"
+              },
+              {
+                "key": "evaluation_count",
+                "sourceFieldLabel": "评价量"
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "pdd": {
+    "stores": [
+      {
+        "key": "pdd02",
+        "includedInSummary": true,
+        "displayName": "德达拼多多02",
+        "platformStoreId": "",
+        "platformStoreName": "",
+        "username": "",
+        "password": "",
+        "downloadDir": "",
+        "usesGlobalExportDateRange": true,
+        "exportDateRange": {
+          "start": {
+            "type": "custom_date",
+            "offsetDays": 0,
+            "customDate": "2026-08-01"
+          },
+          "end": {
+            "type": "custom_date",
+            "offsetDays": 0,
+            "customDate": "2026-08-31"
+          }
+        },
+        "reportProfiles": {
+          "performance": {
+            "key": "performance",
+            "displayName": "业绩指标",
+            "enabled": true,
+            "siteUrl": "https://mms.pinduoduo.com/mms-chat/overview/merchant",
+            "downloadMode": "system",
+            "sourceSheetMode": "single_sheet",
+            "sourceSheetName": "Sheet0",
+            "sourceSheetIndex": 0,
+            "sourceAliasFieldLabel": "客服账号",
+            "metricMappings": [
+              {
+                "key": "amount",
+                "sourceFieldLabel": "去退销售额（元）"
+              },
+              {
+                "key": "inquiry",
+                "sourceFieldLabel": "询单人数"
+              },
+              {
+                "key": "order",
+                "sourceFieldLabel": "最终成团人数"
+              }
+            ]
+          },
+          "response_time": {
+            "key": "response_time",
+            "displayName": "平均响应时间",
+            "enabled": true,
+            "siteUrl": "https://mms.pinduoduo.com/mms-chat/overview/merchant",
+            "downloadMode": "system",
+            "sourceSheetMode": "single_sheet",
+            "sourceSheetName": "Sheet0",
+            "sourceSheetIndex": 0,
+            "sourceAliasFieldLabel": "客服账号",
+            "metricMappings": [
+              {
+                "key": "avg_response_time",
+                "sourceFieldLabel": "平均人工响应时长"
+              },
+              {
+                "key": "response_weight",
+                "sourceFieldLabel": "需要人工回复的咨询人数"
+              },
+              {
+                "key": "thirty_second_response_rate",
+                "sourceFieldLabel": "30秒应答率(8-23点)"
+              }
+            ]
+          },
+          "three_minute_response_rate": {
+            "key": "three_minute_response_rate",
+            "displayName": "3分钟响应率",
+            "enabled": true,
+            "siteUrl": "https://mms.pinduoduo.com/mms-chat/overview/merchant",
+            "downloadMode": "system",
+            "sourceSheetMode": "single_sheet",
+            "sourceSheetName": "Sheet0",
+            "sourceSheetIndex": 0,
+            "sourceAliasFieldLabel": "客服账号",
+            "metricMappings": [
+              {
+                "key": "three_minute_response_rate",
+                "sourceFieldLabel": "3分钟人工回复率(8-23点)"
+              },
+              {
+                "key": "three_minute_unreplied_count",
+                "sourceFieldLabel": "3分钟未回复人数"
+              }
+            ]
+          },
+          "customer_satisfaction": {
+            "key": "customer_satisfaction",
+            "displayName": "客户满意度",
+            "enabled": false,
+            "siteUrl": "https://mms.pinduoduo.com/mms-chat/overview/merchant",
+            "downloadMode": "system",
+            "sourceSheetMode": "single_sheet",
+            "sourceSheetName": "Sheet0",
+            "sourceSheetIndex": 0,
+            "sourceAliasFieldLabel": "",
+            "metricMappings": [
+              {
+                "key": "satisfied_count",
+                "sourceFieldLabel": "满意量"
+              },
+              {
+                "key": "evaluation_count",
+                "sourceFieldLabel": "评价量"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "key": "pdd03",
+        "includedInSummary": true,
+        "displayName": "DEDAKJ拼多多03",
+        "platformStoreId": "",
+        "platformStoreName": "",
+        "username": "",
+        "password": "",
+        "downloadDir": "",
+        "usesGlobalExportDateRange": true,
+        "exportDateRange": {
+          "start": {
+            "type": "custom_date",
+            "offsetDays": 0,
+            "customDate": "2026-08-01"
+          },
+          "end": {
+            "type": "custom_date",
+            "offsetDays": 0,
+            "customDate": "2026-08-31"
+          }
+        },
+        "reportProfiles": {
+          "performance": {
+            "key": "performance",
+            "displayName": "业绩指标",
+            "enabled": true,
+            "siteUrl": "https://mms.pinduoduo.com/mms-chat/overview/merchant",
+            "downloadMode": "system",
+            "sourceSheetMode": "single_sheet",
+            "sourceSheetName": "Sheet0",
+            "sourceSheetIndex": 0,
+            "sourceAliasFieldLabel": "客服账号",
+            "metricMappings": [
+              {
+                "key": "amount",
+                "sourceFieldLabel": "去退销售额（元）"
+              },
+              {
+                "key": "inquiry",
+                "sourceFieldLabel": "询单人数"
+              },
+              {
+                "key": "order",
+                "sourceFieldLabel": "最终成团人数"
+              }
+            ]
+          },
+          "response_time": {
+            "key": "response_time",
+            "displayName": "平均响应时间",
+            "enabled": true,
+            "siteUrl": "https://mms.pinduoduo.com/mms-chat/overview/merchant",
+            "downloadMode": "system",
+            "sourceSheetMode": "single_sheet",
+            "sourceSheetName": "Sheet0",
+            "sourceSheetIndex": 0,
+            "sourceAliasFieldLabel": "客服账号",
+            "metricMappings": [
+              {
+                "key": "avg_response_time",
+                "sourceFieldLabel": "平均人工响应时长"
+              },
+              {
+                "key": "response_weight",
+                "sourceFieldLabel": "需要人工回复的咨询人数"
+              },
+              {
+                "key": "thirty_second_response_rate",
+                "sourceFieldLabel": "30秒应答率(8-23点)"
+              }
+            ]
+          },
+          "three_minute_response_rate": {
+            "key": "three_minute_response_rate",
+            "displayName": "3分钟响应率",
+            "enabled": true,
+            "siteUrl": "https://mms.pinduoduo.com/mms-chat/overview/merchant",
+            "downloadMode": "system",
+            "sourceSheetMode": "single_sheet",
+            "sourceSheetName": "Sheet0",
+            "sourceSheetIndex": 0,
+            "sourceAliasFieldLabel": "客服账号",
+            "metricMappings": [
+              {
+                "key": "three_minute_response_rate",
+                "sourceFieldLabel": "3分钟人工回复率(8-23点)"
+              },
+              {
+                "key": "three_minute_unreplied_count",
+                "sourceFieldLabel": "3分钟未回复人数"
+              }
+            ]
+          },
+          "customer_satisfaction": {
+            "key": "customer_satisfaction",
+            "displayName": "客户满意度",
+            "enabled": false,
+            "siteUrl": "https://mms.pinduoduo.com/mms-chat/overview/merchant",
+            "downloadMode": "system",
+            "sourceSheetMode": "single_sheet",
+            "sourceSheetName": "Sheet0",
+            "sourceSheetIndex": 0,
+            "sourceAliasFieldLabel": "",
+            "metricMappings": [
+              {
+                "key": "satisfied_count",
+                "sourceFieldLabel": "满意量"
+              },
+              {
+                "key": "evaluation_count",
+                "sourceFieldLabel": "评价量"
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "douyin": {
+    "stores": [
+      {
+        "key": "douyin1",
+        "includedInSummary": true,
+        "displayName": "德达抖音",
+        "platformStoreId": "162329841",
+        "platformStoreName": "德达医疗康养器械旗舰店",
+        "username": "",
+        "password": "",
+        "downloadDir": "",
+        "usesGlobalExportDateRange": true,
+        "exportDateRange": {
+          "start": {
+            "type": "custom_date",
+            "offsetDays": 0,
+            "customDate": "2026-08-01"
+          },
+          "end": {
+            "type": "custom_date",
+            "offsetDays": 0,
+            "customDate": "2026-08-31"
+          }
+        },
+        "reportProfiles": {
+          "performance": {
+            "key": "performance",
+            "displayName": "业绩指标",
+            "enabled": true,
+            "siteUrl": "https://im.jinritemai.com/pc_seller_v2/main/data/customerService/index",
+            "downloadMode": "system",
+            "sourceSheetMode": "first_sheet",
+            "sourceSheetName": "",
+            "sourceSheetIndex": 0,
+            "sourceAliasFieldLabel": "客服账号",
+            "metricMappings": [
+              {
+                "key": "amount",
+                "sourceFieldLabel": "客服询单支付额"
+              },
+              {
+                "key": "inquiry",
+                "sourceFieldLabel": "询单人数"
+              },
+              {
+                "key": "order",
+                "sourceFieldLabel": "下单人数"
+              }
+            ]
+          },
+          "response_time": {
+            "key": "response_time",
+            "displayName": "平均响应时间",
+            "enabled": true,
+            "siteUrl": "https://im.jinritemai.com/pc_seller_v2/main/data/customerService/index",
+            "downloadMode": "system",
+            "sourceSheetMode": "first_sheet",
+            "sourceSheetName": "",
+            "sourceSheetIndex": 0,
+            "sourceAliasFieldLabel": "客服账号",
+            "metricMappings": [
+              {
+                "key": "avg_response_time",
+                "sourceFieldLabel": "工作时间平响时长"
+              },
+              {
+                "key": "response_weight",
+                "sourceFieldLabel": "接待会话量"
+              }
+            ]
+          },
+          "three_minute_response_rate": {
+            "key": "three_minute_response_rate",
+            "displayName": "3分钟响应率",
+            "enabled": true,
+            "siteUrl": "https://im.jinritemai.com/pc_seller_v2/main/data/customerService/index",
+            "downloadMode": "system",
+            "sourceSheetMode": "first_sheet",
+            "sourceSheetName": "",
+            "sourceSheetIndex": 0,
+            "sourceAliasFieldLabel": "客服账号",
+            "metricMappings": [
+              {
+                "key": "three_minute_response_rate",
+                "sourceFieldLabel": "工作时间3分钟回复率"
+              }
+            ]
+          },
+          "customer_satisfaction": {
+            "key": "customer_satisfaction",
+            "displayName": "客户满意度",
+            "enabled": true,
+            "siteUrl": "https://im.jinritemai.com/pc_seller_v2/main/data/customerService/index",
+            "downloadMode": "system",
+            "sourceSheetMode": "first_sheet",
+            "sourceSheetName": "",
+            "sourceSheetIndex": 0,
+            "sourceAliasFieldLabel": "客服账号",
+            "metricMappings": [
+              {
+                "key": "satisfied_count",
+                "sourceFieldLabel": "有效好评数"
+              },
+              {
+                "key": "evaluation_count",
+                "sourceFieldLabel": "有效评价数"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "key": "douyin2",
+        "includedInSummary": true,
+        "displayName": "dedakj抖音",
+        "platformStoreId": "29502951",
+        "platformStoreName": "DEDAKJ医疗器械旗舰店",
+        "username": "",
+        "password": "",
+        "downloadDir": "",
+        "usesGlobalExportDateRange": true,
+        "exportDateRange": {
+          "start": {
+            "type": "custom_date",
+            "offsetDays": 0,
+            "customDate": "2026-08-01"
+          },
+          "end": {
+            "type": "custom_date",
+            "offsetDays": 0,
+            "customDate": "2026-08-31"
+          }
+        },
+        "reportProfiles": {
+          "performance": {
+            "key": "performance",
+            "displayName": "业绩指标",
+            "enabled": true,
+            "siteUrl": "https://im.jinritemai.com/pc_seller_v2/main/data/customerService/index",
+            "downloadMode": "system",
+            "sourceSheetMode": "first_sheet",
+            "sourceSheetName": "",
+            "sourceSheetIndex": 0,
+            "sourceAliasFieldLabel": "客服账号",
+            "metricMappings": [
+              {
+                "key": "amount",
+                "sourceFieldLabel": "客服询单支付额"
+              },
+              {
+                "key": "inquiry",
+                "sourceFieldLabel": "询单人数"
+              },
+              {
+                "key": "order",
+                "sourceFieldLabel": "下单人数"
+              }
+            ]
+          },
+          "response_time": {
+            "key": "response_time",
+            "displayName": "平均响应时间",
+            "enabled": true,
+            "siteUrl": "https://im.jinritemai.com/pc_seller_v2/main/data/customerService/index",
+            "downloadMode": "system",
+            "sourceSheetMode": "first_sheet",
+            "sourceSheetName": "",
+            "sourceSheetIndex": 0,
+            "sourceAliasFieldLabel": "客服账号",
+            "metricMappings": [
+              {
+                "key": "avg_response_time",
+                "sourceFieldLabel": "工作时间平响时长"
+              },
+              {
+                "key": "response_weight",
+                "sourceFieldLabel": "已接待人数"
+              }
+            ]
+          },
+          "three_minute_response_rate": {
+            "key": "three_minute_response_rate",
+            "displayName": "3分钟响应率",
+            "enabled": true,
+            "siteUrl": "https://im.jinritemai.com/pc_seller_v2/main/data/customerService/index",
+            "downloadMode": "system",
+            "sourceSheetMode": "first_sheet",
+            "sourceSheetName": "",
+            "sourceSheetIndex": 0,
+            "sourceAliasFieldLabel": "客服账号",
+            "metricMappings": [
+              {
+                "key": "three_minute_response_rate",
+                "sourceFieldLabel": "工作时间3分钟回复率"
+              }
+            ]
+          },
+          "customer_satisfaction": {
+            "key": "customer_satisfaction",
+            "displayName": "客户满意度",
+            "enabled": true,
+            "siteUrl": "https://im.jinritemai.com/pc_seller_v2/main/data/customerService/index",
+            "downloadMode": "system",
+            "sourceSheetMode": "first_sheet",
+            "sourceSheetName": "",
+            "sourceSheetIndex": 0,
+            "sourceAliasFieldLabel": "客服账号",
+            "metricMappings": [
+              {
+                "key": "satisfied_count",
+                "sourceFieldLabel": "有效好评数"
+              },
+              {
+                "key": "evaluation_count",
+                "sourceFieldLabel": "有效评价数"
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "globalDefaults": {
+    "downloadRootDir": "",
+    "exportDateMode": "automatic",
+    "exportDateAutomation": {
+      "endDateDelayDayCount": 2
+    },
+    "exportDateRange": {
+      "start": {
+        "type": "custom_date",
+        "offsetDays": 0,
+        "customDate": "2026-08-01"
+      },
+      "end": {
+        "type": "custom_date",
+        "offsetDays": 0,
+        "customDate": "2026-08-31"
+      }
+    },
+    "reportProfiles": {
+      "performance": {
+        "personMappings": [
+          {
+            "summaryName": "",
+            "role": "售前",
+            "sourceNames": [
+              ""
+            ]
+          },
+          {
+            "summaryName": "",
+            "role": "售前",
+            "sourceNames": [
+              ""
+            ]
+          },
+          {
+            "summaryName": "",
+            "role": "售前",
+            "sourceNames": [
+              ""
+            ]
+          },
+          {
+            "summaryName": "",
+            "role": "售前",
+            "sourceNames": [
+              ""
+            ]
+          },
+          {
+            "summaryName": "",
+            "role": "售前",
+            "sourceNames": [
+              "",
+              ""
+            ]
+          },
+          {
+            "summaryName": "",
+            "role": "售后",
+            "sourceNames": [
+              "",
+              ""
+            ]
+          },
+          {
+            "summaryName": "",
+            "role": "售后",
+            "sourceNames": [
+              ""
+            ]
+          },
+          {
+            "summaryName": "",
+            "role": "售后",
+            "sourceNames": [
+              ""
+            ]
+          },
+          {
+            "summaryName": "",
+            "role": "售后",
+            "sourceNames": [
+              ""
+            ]
+          },
+          {
+            "summaryName": "",
+            "role": "售后",
+            "sourceNames": [
+              "",
+              "",
+              ""
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,39 @@
+            <section class="config-card config-page hidden" data-config-page="missedReply">
+              <div class="section-head">
+                <div>
+                  <p class="section-eyebrow">漏回复监控</p>
+                  <h2>漏回复设置</h2>
+                </div>
+                <button class="ghost-button" data-config-page-target="hub" type="button">返回目录</button>
+              </div>
+              <div class="config-page-menu missed-reply-page-menu">
+                <button class="config-page-button" data-config-page-target="missedReplyRuntime" type="button">
+                  <strong>运行参数</strong>
+                  <span>漏回复开关、扫描间隔、扫描数量和提醒阈值。</span>
+                </button>
+                <button class="config-page-button" data-config-page-target="missedReplyTemporaryKeywords" type="button">
+                  <strong>稍等类关键词</strong>
+                  <span>客服说「稍等」后只算临时接住，后面还要继续提醒。</span>
+                </button>
+                <button class="config-page-button" data-config-page-target="missedReplyResolutionKeywords" type="button">
+                  <strong>客户主动结案</strong>
+                  <span>客户明确表示问题已解决时，关闭此前待回复责任。</span>
+                </button>
+                <button class="config-page-button" data-config-page-target="missedReplyClosingKeywords" type="button">
+                  <strong>客户弱收尾</strong>
+                  <span>客户最后只发简单收尾内容时，不单独算漏回复。</span>
+                </button>
+                <button class="config-page-button" data-config-page-target="missedReplyInvalidKeywords" type="button">
+                  <strong>无效人工回复</strong>
+                  <span>标点或无意义内容不算人工正式回复。</span>
+                </button>
+                <button class="config-page-button" data-config-page-target="missedReplyPlatformNoticeKeywords" type="button">
+                  <strong>平台提示过滤</strong>
+                  <span>建联提示等平台固定文案不算客户真实消息。</span>
+                </button>
+                <button class="config-page-button" data-config-page-target="groupChatFilterKeywords" type="button">
+                  <strong>群聊识别</strong>
+                  <span>自动识别企微群会话并从督办名单排除，避免群消息触发超时提醒。</span>
+                </button>
+              </div>
+            </section>

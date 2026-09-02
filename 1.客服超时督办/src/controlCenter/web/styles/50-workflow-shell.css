@@ -1,0 +1,351 @@
+/* 该文件用于首页树状流程和现代按钮视觉样式。 */
+/* 首页流程图改造：保持主管端长期使用时更像工作台，而不是营销页。 */
+body {
+  background: #f4f7fb;
+}
+
+.page-shell {
+  width: min(1280px, calc(100vw - 40px));
+  margin: 0 auto;
+  padding: 22px 0 40px;
+}
+
+.hero,
+.card,
+.action-workflow,
+.config-dialog,
+.config-card,
+.private-config-card {
+  border: 1px solid #d7dee8;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 10px 26px rgba(36, 47, 66, 0.08);
+}
+
+.hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: stretch;
+  gap: 22px;
+  padding: 24px;
+  margin-bottom: 14px;
+}
+
+.eyebrow,
+.section-eyebrow {
+  color: #126b5b;
+  letter-spacing: 0;
+}
+
+h1 {
+  font-size: 30px;
+  letter-spacing: 0;
+}
+
+.hero-copy {
+  max-width: 760px;
+  margin-top: 12px;
+  color: #4a5567;
+}
+
+.hero-status {
+  min-width: min(360px, 100%);
+  border: 1px solid #cfe0dc;
+  border-radius: 8px;
+  background: #f6fbfa;
+  color: #1e3348;
+}
+
+.status-tag,
+.mode-chip {
+  border-radius: 999px;
+  background: #eaf7f3;
+  color: #0f5f4d;
+}
+
+.feedback-banner {
+  margin: 0 0 14px;
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+.action-workflow {
+  display: grid;
+  gap: 14px;
+  padding: 16px 20px 18px;
+  border-top: 4px solid #1a73e8;
+}
+
+.workflow-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e4ebf3;
+}
+
+.workflow-head h1 {
+  margin: 0;
+  font-size: 24px;
+}
+
+.workflow-heading {
+  display: grid;
+  gap: 6px;
+}
+
+.workflow-heading .eyebrow {
+  margin: 0;
+}
+
+.workflow-status-text {
+  margin: 0;
+  color: #1e3348;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.workflow-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px 18px;
+  color: #526173;
+  font-size: 13px;
+}
+
+.workflow-meta strong {
+  color: #1e3348;
+}
+
+.workflow-tree {
+  display: grid;
+  gap: 0;
+}
+
+.workflow-step {
+  position: relative;
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  column-gap: 10px;
+  padding: 10px 0;
+}
+
+.workflow-step::before {
+  content: "";
+  position: absolute;
+  left: 14px;
+  top: 35px;
+  bottom: -10px;
+  width: 1px;
+  background: #8ab4f8;
+}
+
+.workflow-step:last-child::before {
+  display: none;
+}
+
+.workflow-marker {
+  display: flex;
+  justify-content: center;
+  padding-top: 1px;
+}
+
+.workflow-dot {
+  display: inline-grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border: 2px solid #a7b4c3;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #526173;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.workflow-step.ok .workflow-dot {
+  border-color: #2e7d32;
+  background: #2e7d32;
+  color: #ffffff;
+}
+
+.workflow-step.running .workflow-dot {
+  border-color: #1a73e8;
+  background: #ffffff;
+  color: #1a73e8;
+  animation: workflow-pulse 1.2s ease-in-out infinite;
+}
+
+.workflow-step.warning .workflow-dot {
+  border-color: #b3261e;
+  background: #b3261e;
+  color: #ffffff;
+}
+
+@keyframes workflow-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(26, 115, 232, 0.36);
+  }
+  70% {
+    box-shadow: 0 0 0 7px rgba(26, 115, 232, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(26, 115, 232, 0);
+  }
+}
+
+.workflow-body {
+  min-width: 0;
+}
+
+.workflow-row {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) minmax(74px, 110px) minmax(180px, 260px);
+  align-items: center;
+  gap: 12px;
+  min-height: 28px;
+}
+
+.workflow-title {
+  color: #0f172a;
+  overflow-wrap: anywhere;
+}
+
+.workflow-state {
+  color: #475467;
+  font-weight: 700;
+}
+
+.workflow-state.ok {
+  color: #226b2c;
+}
+
+.workflow-state.running {
+  color: #1558b0;
+}
+
+.workflow-state.warning {
+  color: #8f1d17;
+}
+
+.workflow-time {
+  color: #1e3348;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.workflow-detail {
+  margin: 5px 0 0;
+  color: #526173;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.workflow-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 9px;
+}
+
+.private-config-panel,
+.notification-group-card,
+.notification-group-empty,
+.staff-card,
+.staff-directory-empty,
+.checkbox-row,
+.readonly-field,
+.phrase-editor,
+.phrase-preview-row,
+.phrase-empty {
+  border-radius: 8px;
+}
+
+.action-button,
+.ghost-button,
+.save-button,
+.mini-button,
+.log-channel-button {
+  position: relative;
+  min-height: 38px;
+  border-radius: 8px;
+  padding: 8px 14px;
+  border: 1px solid #c7d1df;
+  background: #ffffff;
+  color: #1e3348;
+  box-shadow: none;
+}
+
+.action-button:hover,
+.ghost-button:hover,
+.save-button:hover,
+.mini-button:hover,
+.log-channel-button:hover {
+  border-color: #1a73e8;
+  background: #eaf2ff;
+  box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.16), 0 8px 18px rgba(26, 115, 232, 0.14);
+  transform: translateY(-1px);
+}
+
+.action-button-primary,
+.save-button {
+  border-color: #126b5b;
+  background: #126b5b;
+  color: #ffffff;
+}
+
+.action-button-primary:hover,
+.save-button:hover {
+  border-color: #0f5d50;
+  background: #0f5d50;
+  color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(18, 107, 91, 0.2), 0 8px 18px rgba(18, 107, 91, 0.16);
+}
+
+.action-button-danger {
+  border-color: #b3261e;
+  background: #d93025;
+  color: #ffffff;
+}
+
+.action-button-danger:hover {
+  border-color: #9f211a;
+  background: #b3261e;
+  color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(217, 48, 37, 0.18), 0 8px 18px rgba(179, 38, 30, 0.18);
+}
+
+.action-button-danger:disabled {
+  border-color: rgba(179, 38, 30, 0.55);
+  background: #d93025;
+  color: #ffffff;
+  opacity: 0.64;
+}
+
+.action-button-badge {
+  position: absolute;
+  top: -9px;
+  right: -9px;
+  display: inline-flex;
+  min-width: 24px;
+  height: 24px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+  border: 2px solid #ffffff;
+  border-radius: 999px;
+  background: #d93025;
+  color: #ffffff;
+  box-shadow: 0 8px 18px rgba(217, 48, 37, 0.22);
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.action-button-badge.hidden {
+  display: none;
+}

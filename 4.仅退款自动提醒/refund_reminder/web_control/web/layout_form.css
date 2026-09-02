@@ -1,0 +1,169 @@
+.panel {
+  padding: 18px 20px;
+  margin-bottom: 14px;
+}
+
+.view-panel {
+  display: none;
+}
+
+.view-panel.active {
+  display: block;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+h2 {
+  margin: 0;
+  font-size: 20px;
+  letter-spacing: 0;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(220px, 1fr));
+  gap: 14px 18px;
+}
+
+.form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.field-label {
+  color: #26384d;
+  font-weight: 700;
+}
+
+.config-modal,
+.handled-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  overflow: auto;
+  padding: 22px;
+  background: rgba(15, 23, 42, 0.52);
+}
+
+.config-modal.hidden,
+.handled-modal.hidden {
+  display: none;
+}
+
+.config-dialog,
+.handled-dialog {
+  width: min(980px, 100%);
+  max-height: calc(100vh - 44px);
+  overflow: auto;
+  border: 1px solid #cfd9e6;
+  border-radius: 8px;
+  padding: 18px;
+  background: #ffffff;
+  box-shadow: 0 22px 60px rgba(15, 23, 42, 0.25);
+}
+
+.config-dialog-head,
+.handled-dialog-head {
+  align-items: flex-start;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #e5ebf3;
+}
+
+.config-dialog-head p,
+.handled-dialog-head p {
+  margin: 6px 0 0;
+  color: #5b6777;
+  font-size: 14px;
+}
+
+.config-dialog .form-grid {
+  margin-top: 16px;
+}
+
+.handled-dialog {
+  width: min(1180px, 100%);
+}
+
+.handled-dialog .order-toolbar {
+  margin-top: 16px;
+}
+
+.handled-dialog .handled-page-board {
+  margin-top: 14px;
+}
+
+.config-feedback {
+  min-height: 22px;
+  margin-top: 14px;
+  color: #126b5b;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.config-feedback[data-state="error"] {
+  color: #b3261e;
+}
+
+.config-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+input[type="text"],
+input[type="number"],
+input[type="date"],
+select {
+  width: 100%;
+  border: 1px solid #cfd9e6;
+  border-radius: 8px;
+  padding: 10px 11px;
+  background: #fcfdff;
+  font: inherit;
+  transition: background-color 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+}
+
+input[type="text"]:hover,
+input[type="number"]:hover,
+input[type="date"]:hover,
+select:hover {
+  border-color: #1a73e8;
+  background: #f4f8ff;
+  box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.12);
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus,
+input[type="date"]:focus,
+select:focus {
+  border-color: #1a73e8;
+  box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.2);
+  outline: none;
+}
+
+.date-input-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.date-today-button {
+  padding: 9px 12px;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+
+.checkbox-row {
+  flex-direction: row;
+  align-items: center;
+}

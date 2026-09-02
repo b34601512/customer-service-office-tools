@@ -1,0 +1,130 @@
+      <section class="action-workflow" id="workflowGrid" aria-label="督办流程">
+        <div class="workflow-head">
+          <div class="workflow-heading">
+            <p class="eyebrow">本地 Web 控制台</p>
+            <h1>客服督办控制台</h1>
+            <p id="workflowStatusText" class="workflow-status-text">后台状态加载中...</p>
+          </div>
+          <div class="workflow-meta">
+            <span>最近判定：<strong id="monitorUpdatedAtValue">暂无</strong></span>
+          </div>
+        </div>
+
+        <div class="workflow-tree">
+          <article class="workflow-step ok" id="workflowStepConfig">
+            <div class="workflow-marker"><span class="workflow-dot">1</span></div>
+            <div class="workflow-body">
+              <div class="workflow-row">
+                <strong class="workflow-title">配置中心</strong>
+                <span class="workflow-state ok" id="workflowConfigState">弹窗维护</span>
+                <time class="workflow-time" id="workflowConfigTime">低频操作</time>
+              </div>
+              <p class="workflow-detail" id="workflowConfigDetail">
+                生产参数和企微提醒从弹窗修改，保存后直接写入本地配置。
+              </p>
+              <div class="workflow-actions">
+                <button
+                  class="action-button"
+                  id="openConfigModalButton"
+                  type="button"
+                  aria-expanded="false"
+                  aria-controls="configModal"
+                >
+                  配置中心
+                </button>
+              </div>
+            </div>
+          </article>
+
+          <article class="workflow-step idle" id="workflowStepLogin">
+            <div class="workflow-marker"><span class="workflow-dot">2</span></div>
+            <div class="workflow-body">
+              <div class="workflow-row">
+                <strong class="workflow-title">首次登录</strong>
+                <span class="workflow-state idle" id="workflowLoginState">待操作</span>
+                <time class="workflow-time" id="workflowLoginTime">需要时执行</time>
+              </div>
+              <p class="workflow-detail" id="workflowLoginDetail">
+                第一次使用或登录态失效时执行，完成登录后回到这里确认。
+              </p>
+              <div class="workflow-actions">
+                <button class="action-button" data-task="login" type="button">首次登录</button>
+                <button class="action-button hidden" id="confirmLoginButton" type="button">完成登录</button>
+              </div>
+            </div>
+          </article>
+
+          <article class="workflow-step idle" id="workflowStepStart">
+            <div class="workflow-marker"><span class="workflow-dot">3</span></div>
+            <div class="workflow-body">
+              <div class="workflow-row">
+                <strong class="workflow-title">后台启动</strong>
+                <span class="workflow-state idle" id="workflowStartState">待启动</span>
+                <time class="workflow-time" id="workflowStartTime">未运行</time>
+              </div>
+              <p class="workflow-detail" id="workflowStartDetail">
+                启动后会同时监控「超时待回复」「客户转接」「漏回复」「下班监控」，任务日志进入独立日志页。
+              </p>
+              <div class="workflow-actions">
+                <button class="action-button action-button-primary" data-task="start" type="button">后台启动</button>
+                <button class="action-button action-button-danger" id="stopTaskButton" type="button" disabled>停止并退出</button>
+              </div>
+            </div>
+          </article>
+
+          <article class="workflow-step idle" id="workflowStepMonitor">
+            <div class="workflow-marker"><span class="workflow-dot">4</span></div>
+            <div class="workflow-body">
+              <div class="workflow-row">
+                <strong class="workflow-title">运行巡检</strong>
+                <span class="workflow-state idle" id="workflowMonitorState">等待数据</span>
+                <time class="workflow-time" id="workflowMonitorTime">暂无扫描</time>
+              </div>
+              <p class="workflow-detail" id="workflowMonitorDetail">后台启动后，这里只显示扫描状态，客户倒计时点按钮查看。</p>
+              <div class="workflow-actions">
+                <button
+                  class="action-button"
+                  id="openCountdownModalButton"
+                  type="button"
+                  aria-expanded="false"
+                  aria-controls="countdownModal"
+                >
+                  倒计时明细
+                  <span
+                    class="action-button-badge hidden"
+                    id="countdownAttentionBadge"
+                    aria-label="需关注客户数量"
+                  >0</span>
+                </button>
+                <button
+                  class="action-button"
+                  id="openResourceUsageModalButton"
+                  type="button"
+                  aria-expanded="false"
+                  aria-controls="resourceUsageModal"
+                >
+                  资源占用
+                </button>
+              </div>
+            </div>
+          </article>
+
+          <article class="workflow-step idle" id="workflowStepResult">
+            <div class="workflow-marker"><span class="workflow-dot">5</span></div>
+            <div class="workflow-body">
+              <div class="workflow-row">
+                <strong class="workflow-title">查看结果</strong>
+                <span class="workflow-state idle" id="workflowResultState">待查看</span>
+                <time class="workflow-time" id="workflowResultTime">独立页面</time>
+              </div>
+              <p class="workflow-detail" id="workflowResultDetail">
+                实时日志可在独立页面查看，客服绩效请使用终端「7 报表」。
+              </p>
+              <div class="workflow-actions">
+                <button class="action-button" data-link="/viewer" type="button">查看中心</button>
+                <button class="action-button" data-route="/logs" type="button">实时日志</button>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>

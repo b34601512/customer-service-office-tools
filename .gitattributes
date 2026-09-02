@@ -1,0 +1,5 @@
+# 提交时自动剔除 kdocs 敏感字段（配合 tools/git-secret-filter.js + filter.kdocs-secret）
+**/project-config/platform-config.json filter=kdocs-secret
+5.电话漏接分析/电话漏接分析后台/download_config.json filter=kdocs-secret
+5.电话漏接分析/电话漏接分析后台/agent_mapping.json filter=kdocs-secret
+5.电话漏接分析/电话漏接分析后台/complaint_config.json filter=kdocs-secret

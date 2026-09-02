@@ -1,0 +1,313 @@
+/* 该文件用于客户倒计时弹窗和客户详情样式。 */
+.countdown-dialog {
+  width: min(980px, 100%);
+}
+
+.countdown-card {
+  display: grid;
+  gap: 12px;
+}
+
+.countdown-title-with-help {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.help-dot {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid #b9c8d8;
+  border-radius: 50%;
+  background: #ffffff;
+  color: #2f4862;
+  font: 700 14px/1 "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
+  cursor: help;
+}
+
+.help-dot:hover,
+.help-dot:focus-visible {
+  border-color: #1a73e8;
+  color: #1a73e8;
+  box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.14);
+  outline: none;
+}
+
+.help-dot::after {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 10px);
+  z-index: 5;
+  width: min(320px, 78vw);
+  padding: 10px 12px;
+  border: 1px solid #c9d7e6;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #1e3348;
+  box-shadow: 0 12px 28px rgba(36, 47, 66, 0.16);
+  content: attr(data-help);
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.55;
+  opacity: 0;
+  pointer-events: none;
+  text-align: left;
+  transform: translate(-50%, 4px);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.help-dot:hover::after,
+.help-dot:focus-visible::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.countdown-list {
+  display: grid;
+  gap: 8px;
+}
+
+.countdown-empty {
+  border: 1px solid #d7e2ec;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.countdown-empty {
+  padding: 16px;
+  color: #667085;
+}
+
+.customer-mirror-overview-row {
+  display: grid;
+  grid-template-columns: 52px minmax(180px, 1fr) minmax(170px, 250px) minmax(180px, 270px) 92px;
+  gap: 10px;
+  align-items: center;
+  min-height: 58px;
+  padding: 8px 10px;
+  border: 1px solid #d7e2ec;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.customer-mirror-overview-row.is-due {
+  border-color: rgba(179, 38, 30, 0.34);
+  background: #fff7f6;
+}
+
+.customer-mirror-sequence {
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  min-height: 34px;
+  border: 1px solid #c7d1df;
+  border-radius: 8px;
+  background: #f6f9fc;
+  color: #1e3348;
+  font-weight: 800;
+}
+
+.customer-mirror-overview-main {
+  min-width: 0;
+}
+
+.customer-mirror-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.customer-mirror-title > strong {
+  font-size: 16px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.customer-mirror-detail-reasons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.customer-mirror-reason {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 3px 8px;
+  border-radius: 8px;
+  background: #eef4f1;
+  color: #31544c;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.customer-mirror-countdowns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  width: 100%;
+}
+
+.customer-mirror-countdown-card {
+  display: grid;
+  gap: 2px;
+  min-width: 98px;
+  padding: 7px 8px;
+  border: 1px solid #dce7f2;
+  border-radius: 8px;
+  background: #f8fbff;
+}
+
+.customer-mirror-countdown-card span {
+  color: #667085;
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+.customer-mirror-countdown-card strong {
+  color: #0f172a;
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.customer-mirror-countdown-card.is-active {
+  border-color: rgba(180, 35, 24, 0.26);
+  background: #fff7f6;
+}
+
+.customer-mirror-countdown-card.is-active span,
+.customer-mirror-countdown-card.is-active strong {
+  color: #b42318;
+}
+
+.customer-mirror-overview-meta {
+  color: #526173;
+  font-size: 13px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.customer-mirror-detail-button {
+  min-height: 34px;
+  padding: 6px 10px;
+  white-space: nowrap;
+}
+
+.customer-mirror-tags {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.customer-status-tag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.customer-status-tag.is-neutral {
+  color: #526173;
+  background: #eef2f6;
+}
+
+.customer-status-tag.is-warning {
+  color: #8a5a00;
+  background: #fff4db;
+}
+
+.customer-status-tag.is-danger {
+  color: #9f211a;
+  background: #ffe5e1;
+}
+
+.customer-status-tag.is-success {
+  color: #126b5b;
+  background: #dff4ee;
+}
+
+.customer-mirror-detail-modal {
+  z-index: 1100;
+}
+
+.customer-mirror-detail-dialog {
+  width: min(1180px, 100%);
+}
+
+.customer-mirror-detail-body {
+  display: grid;
+  gap: 12px;
+}
+
+.customer-mirror-detail-section {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid #d7e2ec;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.customer-mirror-detail-section h3 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 16px;
+}
+
+.customer-mirror-detail-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.customer-mirror-detail-countdowns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.customer-mirror-detail-meta {
+  color: #526173;
+  font-size: 13px;
+}
+
+.customer-mirror-detail-facts {
+  display: grid;
+  gap: 8px;
+}
+
+.customer-mirror-detail-fact-row {
+  display: grid;
+  grid-template-columns: 116px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  padding: 10px;
+  border: 1px solid #e2eaf2;
+  border-radius: 8px;
+  background: #fbfcfe;
+}
+
+.customer-mirror-detail-fact-row span {
+  color: #667085;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.customer-mirror-detail-fact-row strong {
+  color: #1f2f3d;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}

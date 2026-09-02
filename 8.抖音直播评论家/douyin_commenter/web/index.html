@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>抖音直播评论员</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <main class="page">
+      <section class="topbar">
+        <div class="title-block">
+          <p class="eyebrow">本地控制台</p>
+          <h1>抖音直播评论员</h1>
+          <p id="metaText" class="meta-text">版本加载中</p>
+        </div>
+        <div class="topbar-actions">
+          <button id="commentLibraryButton" class="primary" type="button">评论库</button>
+          <button id="exitButton" class="danger" type="button">退出后台</button>
+        </div>
+      </section>
+
+      <div id="feedback" class="feedback" aria-live="polite"></div>
+
+      <section class="workflow-band" aria-label="运行流程">
+        <div class="workflow-head">
+          <div>
+            <h2>运行流程</h2>
+            <p id="workflowStatusText">按步骤从配置、打开直播间到发送评论。</p>
+          </div>
+        </div>
+
+        <div id="workflowTree" class="workflow-tree">
+          <article class="workflow-step active expanded" data-workflow-item="1">
+            <div class="workflow-marker"><span class="workflow-dot">1</span></div>
+            <div class="workflow-body">
+              <button class="workflow-row-button" type="button" data-workflow-step="1" aria-expanded="true" aria-controls="workflowContent1">
+                <strong class="workflow-title">检查运行配置</strong>
+                <span id="workflowState1" class="workflow-state active">当前</span>
+                <span id="workflowSummary1" class="workflow-time">配置弹窗维护</span>
+              </button>
+              <p class="workflow-detail">直播间、账号档案和自动发送倒计时在运行配置里维护，评论库点顶部按钮单独维护。</p>
+              <div id="workflowContent1" class="workflow-content">
+                <div class="workflow-actions">
+                  <button id="configButton" class="primary" type="button">运行配置</button>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="workflow-step" data-workflow-item="2">
+            <div class="workflow-marker"><span class="workflow-dot">2</span></div>
+            <div class="workflow-body">
+              <button class="workflow-row-button" type="button" data-workflow-step="2" aria-expanded="false" aria-controls="workflowContent2">
+                <strong class="workflow-title">打开直播间</strong>
+                <span id="workflowState2" class="workflow-state idle">待打开</span>
+                <span id="workflowSummary2" class="workflow-time">等待打开受控浏览器</span>
+              </button>
+              <p class="workflow-detail">打开后在受控浏览器里确认抖音登录状态，登录信息只保存在当前账号档案里。</p>
+              <div id="workflowContent2" class="workflow-content">
+                <div class="state-card">
+                  <span>当前直播间页面</span>
+                  <strong id="activePageText">未打开</strong>
+                </div>
+                <div class="workflow-actions">
+                  <button id="openRoomButton" class="primary" type="button">打开直播间</button>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="workflow-step" data-workflow-item="3">
+            <div class="workflow-marker"><span class="workflow-dot">3</span></div>
+            <div class="workflow-body">
+              <button class="workflow-row-button" type="button" data-workflow-step="3" aria-expanded="false" aria-controls="workflowContent3">
+                <strong class="workflow-title">发送评论</strong>
+                <span id="workflowState3" class="workflow-state idle">待发送</span>
+                <span id="workflowSummary3" class="workflow-time">总工作任务 0/500</span>
+              </button>
+              <p class="workflow-detail">先确认直播间已经打开并登录；发送时只写入当前页面，达到总工作任务后自动停止。</p>
+              <div id="workflowContent3" class="workflow-content send-panel">
+                <div class="send-mode-group" role="radiogroup" aria-label="发送方式">
+                  <label class="send-mode-option">
+                    <input id="manualModeInput" type="radio" name="sendMode" value="manual" checked />
+                    <span>手动输入</span>
+                  </label>
+                  <label class="send-mode-option">
+                    <input id="randomModeInput" type="radio" name="sendMode" value="random" />
+                    <span>评论库自动</span>
+                  </label>
+                </div>
+                <textarea id="manualCommentInput" rows="4" placeholder="输入要发送的评论，或选择评论库自动填入"></textarea>
+                <div id="randomCountdownText" class="send-countdown">手动输入后点击立即发送。</div>
+                <div class="workflow-actions">
+                  <button id="sendNowButton" class="primary" type="button">立即发送</button>
+                  <button id="cancelRandomButton" type="button" hidden>停止倒计时</button>
+                  <button id="openLogButton" type="button">查看记录</button>
+                </div>
+                <div class="state-card">
+                  <span>总工作任务</span>
+                  <strong id="taskProgressText">总工作任务 0/500</strong>
+                </div>
+                <div class="state-card">
+                  <span>最近评论</span>
+                  <strong id="lastCommentText">暂无发送记录</strong>
+                </div>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <section id="configModal" class="modal hidden" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="configTitle">
+      <div class="modal-dialog">
+        <div class="modal-head">
+          <div>
+            <h2 id="configTitle">运行配置</h2>
+            <p>直播间、账号档案、自动发送倒计时和浏览器路径集中维护。</p>
+          </div>
+          <button id="configCloseButton" type="button" class="icon-button" aria-label="关闭配置">×</button>
+        </div>
+        <div id="configFeedback" class="dialog-feedback" aria-live="polite"></div>
+        <div class="config-scroll">
+          <section class="config-section">
+            <div class="section-head">
+              <h3>直播间</h3>
+              <button id="addRoomButton" type="button">新增直播间</button>
+            </div>
+            <div id="roomList" class="editable-list"></div>
+          </section>
+
+          <section class="config-section">
+            <div class="section-head">
+              <h3>账号档案</h3>
+              <button id="addAccountButton" type="button">新增账号档案</button>
+            </div>
+            <div id="accountList" class="editable-list"></div>
+          </section>
+
+          <section class="config-section grid-two">
+            <label class="field">
+              <span>总工作任务（次）</span>
+              <input id="totalTaskInput" type="number" min="1" step="1" />
+            </label>
+            <label class="field">
+              <span>评论库自动倒计时（秒）</span>
+              <input id="randomCountdownInput" type="number" min="1" step="1" />
+            </label>
+            <label class="field wide-field">
+              <span>浏览器路径（可空）</span>
+              <input id="browserPathInput" type="text" placeholder="找不到 Chrome/Edge 时再填写" />
+            </label>
+          </section>
+
+        </div>
+        <div class="modal-actions">
+          <button id="configCancelButton" type="button">关闭</button>
+          <button id="saveConfigButton" class="primary" type="button">保存配置</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="commentModal" class="modal hidden" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="commentTitle">
+      <div class="modal-dialog comment-dialog">
+        <div class="modal-head">
+          <div>
+            <h2 id="commentTitle">评论库</h2>
+            <p>发送评论里选择评论库自动时，会优先取发送次数最少的一条。</p>
+          </div>
+          <button id="commentCloseButton" type="button" class="icon-button" aria-label="关闭评论库">×</button>
+        </div>
+        <div id="commentFeedback" class="dialog-feedback" aria-live="polite"></div>
+        <div class="comment-toolbar">
+          <label class="field import-mode-field">
+            <span>切分方式</span>
+            <select id="importSplitMode">
+              <option value="line" selected>一行一条</option>
+              <option value="sentence">按句号/分号</option>
+              <option value="custom">自定义分隔符</option>
+            </select>
+          </label>
+          <label id="importCustomDelimiterField" class="field import-custom-field hidden">
+            <span>分隔符</span>
+            <input id="importCustomDelimiters" type="text" value="。；;" />
+          </label>
+          <input id="commentImportFileInput" class="hidden-file-input" type="file" accept=".txt,.docx" />
+          <button id="importCommentButton" type="button">导入评论</button>
+          <button id="addCommentButton" type="button">新增评论</button>
+        </div>
+        <div class="comment-scroll">
+          <div id="commentList" class="comment-list"></div>
+        </div>
+        <div class="modal-actions">
+          <button id="commentCancelButton" type="button">关闭</button>
+          <button id="saveCommentButton" class="primary" type="button">保存评论库</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="addCommentModal" class="modal hidden stacked-modal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="addCommentTitle">
+      <div class="modal-dialog add-comment-dialog">
+        <div class="modal-head">
+          <div>
+            <h2 id="addCommentTitle">新增评论</h2>
+            <p>新增一条适合直播间提问的话术，确认后才加入评论库。</p>
+          </div>
+          <button id="addCommentCloseButton" type="button" class="icon-button" aria-label="关闭新增评论">×</button>
+        </div>
+        <div id="addCommentFeedback" class="dialog-feedback" aria-live="polite"></div>
+        <label class="field add-comment-field">
+          <span>评论内容</span>
+          <textarea id="newCommentTextInput" rows="5" placeholder="例如：老人长期吸氧，3升和5升应该怎么选？"></textarea>
+        </label>
+        <div class="modal-actions">
+          <button id="addCommentCancelButton" type="button">关闭</button>
+          <button id="saveNewCommentButton" class="primary" type="button">加入评论库</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="logModal" class="modal hidden" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="logTitle">
+      <div class="modal-dialog log-dialog">
+        <div class="modal-head">
+          <div>
+            <h2 id="logTitle">运行日志</h2>
+            <p>只保留本次运行日志，失败时可以复制整段发给技术。</p>
+          </div>
+          <button id="logCloseButton" type="button" class="icon-button" aria-label="关闭日志">×</button>
+        </div>
+        <div class="log-actions">
+          <button id="copyLogButton" type="button">复制日志</button>
+          <button id="openLogFileButton" type="button">打开日志文件</button>
+        </div>
+        <pre id="logOutput" class="log-output">日志加载中</pre>
+      </div>
+    </section>
+
+    <script src="/js/dom.js"></script>
+    <script src="/js/utils.js"></script>
+    <script src="/js/workflow.js"></script>
+    <script src="/js/render-state.js"></script>
+    <script src="/js/config-modal.js"></script>
+    <script src="/js/comment-modal.js"></script>
+    <script src="/js/log-modal.js"></script>
+    <script src="/js/send-panel.js"></script>
+    <script src="/js/actions.js"></script>
+    <script src="/app.js"></script>
+    <footer style="padding:14px 0 8px;text-align:center;font-size:12px;color:#8a8f98;">作者：黎路遥 ｜ 微信：luyao2089 ｜ 话术精灵官网：luyao2089.cc ｜ 版权所有 © 黎路遥，保留所有权利</footer>
+  </body>
+</html>

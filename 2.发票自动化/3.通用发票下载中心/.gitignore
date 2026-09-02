@@ -1,0 +1,6 @@
+node_modules/
+runtime/
+data/*.local.json
+data/invoice-system-config.json
+data/invoice-system-auth-state.json
+data/invoice-file-index.json

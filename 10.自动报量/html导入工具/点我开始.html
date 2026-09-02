@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>6.4报量导入工具</title>
+  <link rel="stylesheet" href="./style.css?v=20260616-r1">
+</head>
+<body>
+  <main class="page">
+    <div id="mainView">
+      <section class="topbar">
+        <div>
+          <p class="eyebrow">Excel 导入</p>
+          <h1>6.4报量导入工具</h1>
+          <div class="app-meta">选择空白报量表和订单CSV，自动计算后导出已填报量表。</div>
+        </div>
+        <div class="topbar-controls">
+          <div class="actions topbar-actions">
+            <button id="toggleConfigButton" class="ghost-button" type="button" aria-expanded="false" aria-controls="configPanel">导入配置</button>
+            <button id="toggleMappingButton" class="ghost-button" type="button" aria-expanded="false" aria-controls="mappingPanel">映射管理</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="action-workflow" id="workflowGrid" aria-label="报量导入流程">
+        <div class="workflow-head">
+          <div class="workflow-heading">
+            <h2>导入流程</h2>
+            <p id="workflowStatusText" class="workflow-status-text">等待选择文件</p>
+          </div>
+          <div class="workflow-meta" aria-label="当前选择">
+            <span id="workflowTemplateMeta">模板：未选择</span>
+            <span id="workflowCsvMeta">CSV：未选择</span>
+            <span id="workflowDateMeta">日期：未选择</span>
+          </div>
+        </div>
+
+        <div class="workflow-tree" id="workflowTree">
+          <article class="workflow-step active expanded" data-workflow-item="1">
+            <div class="workflow-marker"><span class="workflow-dot">1</span></div>
+            <div class="workflow-body">
+              <button class="workflow-row-button" type="button" data-workflow-step="1" aria-expanded="true" aria-controls="workflowContent1">
+                <strong class="workflow-title">选择报量模板</strong>
+                <span id="workflowState1" class="workflow-state idle">待选择</span>
+                <span class="workflow-time" id="templateFileSummary">未选择模板</span>
+              </button>
+              <p class="workflow-detail">只能选择「2026年智能报量-v6.4.xlsx」这个空白模板。</p>
+              <div class="workflow-content" id="workflowContent1">
+                <label class="file-box workflow-file-box">
+                  <span>6.4空白报量表</span>
+                  <input id="templateFileInput" type="file" accept=".xlsx">
+                </label>
+              </div>
+            </div>
+          </article>
+
+          <article class="workflow-step" data-workflow-item="2">
+            <div class="workflow-marker"><span class="workflow-dot">2</span></div>
+            <div class="workflow-body">
+              <button class="workflow-row-button" type="button" data-workflow-step="2" aria-expanded="false" aria-controls="workflowContent2">
+                <strong class="workflow-title">选择订单CSV</strong>
+                <span id="workflowState2" class="workflow-state idle">待选择</span>
+                <span class="workflow-time" id="csvFileSummary">未选择CSV</span>
+              </button>
+              <p class="workflow-detail">选择从系统下载的「订单商品明细统计.csv」。</p>
+              <div class="workflow-content" id="workflowContent2">
+                <label class="file-box workflow-file-box">
+                  <span>订单商品明细统计.csv</span>
+                  <input id="csvFileInput" type="file" accept=".csv,text/csv">
+                </label>
+              </div>
+            </div>
+          </article>
+
+          <article class="workflow-step" data-workflow-item="3">
+            <div class="workflow-marker"><span class="workflow-dot">3</span></div>
+            <div class="workflow-body">
+              <button class="workflow-row-button" type="button" data-workflow-step="3" aria-expanded="false" aria-controls="workflowContent3">
+                <strong class="workflow-title">选择导入日期</strong>
+                <span id="workflowState3" class="workflow-state idle">待确认</span>
+                <span class="workflow-time" id="workflowDateSummary">未选择日期</span>
+              </button>
+              <p class="workflow-detail">默认是今天；点日历里的「本月」会选择1号到今天。</p>
+              <div class="workflow-content" id="workflowContent3">
+                <div class="date-row">
+                  <label class="date-field calendar-field">
+                    <span>导入日期</span>
+                    <div class="calendar-input-row">
+                      <input id="dateDisplayInput" type="text" readonly>
+                      <input id="targetDateInput" type="hidden">
+                      <button id="openCalendarButton" class="calendar-icon-button" type="button">▾</button>
+                    </div>
+                    <div id="dateRangeHint" class="date-range-hint">默认导入选中的这一天</div>
+                    <div id="calendarPopup" class="calendar-popup hidden">
+                      <div class="calendar-header">
+                        <button id="calendarPrevButton" class="calendar-nav-button" type="button">‹</button>
+                        <strong id="calendarTitle"></strong>
+                        <button id="calendarNextButton" class="calendar-nav-button" type="button">›</button>
+                      </div>
+                      <div class="calendar-weekdays">
+                        <span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span>
+                      </div>
+                      <div id="calendarGrid" class="calendar-grid"></div>
+                      <div class="calendar-actions">
+                        <button id="calendarClearButton" class="calendar-link-button" type="button">清除</button>
+                        <button id="calendarTodayButton" class="calendar-link-button" type="button">今天</button>
+                        <button id="calendarMonthButton" class="calendar-link-button primary-link" type="button">本月</button>
+                      </div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="workflow-step" data-workflow-item="4">
+            <div class="workflow-marker"><span class="workflow-dot">4</span></div>
+            <div class="workflow-body">
+              <button class="workflow-row-button" type="button" data-workflow-step="4" aria-expanded="false" aria-controls="workflowContent4">
+                <strong class="workflow-title">开始导入</strong>
+                <span id="workflowState4" class="workflow-state idle">待运行</span>
+                <span class="workflow-time" id="workflowRunSummary">确认后生成Excel</span>
+              </button>
+              <p class="workflow-detail">确认三项都正确后，点击绿色按钮生成报量表。</p>
+              <div class="workflow-content" id="workflowContent4">
+                <div class="workflow-review-grid">
+                  <div><span>模板</span><strong id="reviewTemplateName">未选择</strong></div>
+                  <div><span>CSV</span><strong id="reviewCsvName">未选择</strong></div>
+                  <div><span>日期</span><strong id="reviewDateText">未选择</strong></div>
+                </div>
+                <button id="runButton" class="primary-button" type="button">开始导入并导出Excel</button>
+
+                <div class="progress-panel">
+                  <div class="progress-head">
+                    <strong id="statusText">等待选择文件</strong>
+                    <span id="progressPercent">0%</span>
+                  </div>
+                  <div class="progress-track">
+                    <div id="progressBar" class="progress-bar"></div>
+                  </div>
+                  <div id="stepList" class="step-list"></div>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="workflow-step" data-workflow-item="5">
+            <div class="workflow-marker"><span class="workflow-dot">5</span></div>
+            <div class="workflow-body">
+              <button class="workflow-row-button" type="button" data-workflow-step="5" aria-expanded="false" aria-controls="workflowContent5">
+                <strong class="workflow-title">查看结果</strong>
+                <span id="workflowState5" class="workflow-state idle">待完成</span>
+                <span class="workflow-time" id="workflowResultSummary">等待导入完成</span>
+              </button>
+              <p class="workflow-detail">成功后点击绿色按钮下载，失败时点日志查看原因。</p>
+              <div class="workflow-content" id="workflowContent5">
+                <div id="resultNotice" class="result-notice idle">
+                  <div>
+                    <strong id="resultTitle">等待导入</strong>
+                    <span id="resultMessage">导入完成后，这里会提示下一步。</span>
+                  </div>
+                  <a id="downloadLink" class="download-link hidden" href="#" download>点击下载导出的报量表</a>
+                </div>
+                <div class="metric-grid">
+                  <div><span>CSV行数</span><strong id="metricTotalRows">0</strong></div>
+                  <div><span>有效订单</span><strong id="metricValidRows">0</strong></div>
+                  <div><span>写入数量</span><strong id="metricWrittenQty">0</strong></div>
+                  <div><span>未匹配</span><strong id="metricUnmatched">0</strong></div>
+                </div>
+                <div class="result-actions">
+                  <button id="openLogButton" class="ghost-button" type="button" disabled>查看处理日志</button>
+                </div>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+    </div>
+
+    <section id="configPanel" class="config-modal hidden" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="configTitle">
+      <div class="config-dialog">
+        <div class="section-title">
+          <div>
+            <h2 id="configTitle">导入配置</h2>
+            <p>字段名或排除状态变了，只改这里。</p>
+          </div>
+          <button id="closeConfigButton" class="ghost-button" type="button">关闭</button>
+        </div>
+        <div class="config-grid">
+          <label><span>店铺字段</span><input data-config-key="storeName" type="text"></label>
+          <label><span>付款时间字段</span><input data-config-key="paymentTime" type="text"></label>
+          <label><span>料号字段</span><input data-config-key="materialCode" type="text"></label>
+          <label><span>数量字段</span><input data-config-key="quantity" type="text"></label>
+          <label><span>交易状态字段</span><input data-config-key="tradeStatus" type="text"></label>
+          <label><span>作废字段</span><input data-config-key="voidFlag" type="text"></label>
+          <label><span>退款字段</span><input data-config-key="refundFlag" type="text"></label>
+          <label><span>赠品字段</span><input data-config-key="giftFlag" type="text"></label>
+        </div>
+        <label class="wide-field">
+          <span>不统计的交易状态，一行一个</span>
+          <textarea id="excludedStatusesInput" rows="4"></textarea>
+        </label>
+        <div class="config-grid compact">
+          <label><span>白班结束时间</span><input id="dayEndInput" type="time" step="60"></label>
+        </div>
+        <div id="configFeedback" class="config-feedback" role="status" aria-live="polite"></div>
+        <div class="config-actions">
+          <button id="saveConfigButton" class="secondary-button" type="button">保存配置</button>
+          <button id="resetConfigButton" class="ghost-button" type="button">恢复默认</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="mappingPanel" class="config-modal hidden" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="mappingTitle">
+      <div class="config-dialog mapping-dialog">
+        <div class="section-title">
+          <div>
+            <h2 id="mappingTitle">映射管理</h2>
+            <p>修改产品行、店铺名、料号；保存后只影响当前浏览器。</p>
+          </div>
+          <button id="closeMappingButton" class="ghost-button" type="button">关闭</button>
+        </div>
+
+        <div class="mapping-toolbar">
+          <label class="mapping-search">
+            <span>搜索映射</span>
+            <input id="mappingSearchInput" type="text" placeholder="输入店铺、产品、料号或行号">
+          </label>
+          <div class="mapping-toolbar-actions">
+            <button id="addMappingButton" class="secondary-button" type="button">新增映射</button>
+            <button id="exportMappingButton" class="ghost-button" type="button">导出映射</button>
+            <button id="saveMappingButton" class="secondary-button" type="button">保存映射</button>
+            <button id="resetMappingButton" class="ghost-button" type="button">恢复默认映射</button>
+          </div>
+        </div>
+
+        <div id="mappingFeedback" class="config-feedback" role="status" aria-live="polite"></div>
+
+        <div class="mapping-table-head">
+          <span id="mappingCountText">0条映射</span>
+          <span>保存前的修改只在当前弹窗里生效。</span>
+        </div>
+        <div class="mapping-table-wrap">
+          <table class="mapping-table">
+            <thead>
+              <tr>
+                <th>行号</th>
+                <th>产品</th>
+                <th>店铺</th>
+                <th>料号</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="mappingTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="mappingEditorPanel" class="config-modal mapping-editor-modal hidden" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="mappingEditorTitle">
+      <div class="config-dialog mapping-editor-dialog">
+        <div class="section-title">
+          <div>
+            <h2 id="mappingEditorTitle">编辑映射</h2>
+            <p>这一条保存后会回到映射列表，最后还要点“保存映射”才正式生效。</p>
+          </div>
+          <button id="closeMappingEditorButton" class="ghost-button" type="button">关闭</button>
+        </div>
+        <div id="mappingEditor" class="mapping-editor">
+          <input id="mappingEditIndex" type="hidden">
+          <div class="config-grid">
+            <label><span>报量表行号</span><input id="mappingRowInput" type="number" min="1" step="1"></label>
+            <label><span>产品名称</span><input id="mappingProductNameInput" type="text" placeholder="例如：制氧机C1（399元）"></label>
+          </div>
+          <div class="config-grid">
+            <label class="wide-field"><span>店铺名，一行一个</span><textarea id="mappingStoresInput" rows="4"></textarea></label>
+            <label class="wide-field"><span>料号，一行一个</span><textarea id="mappingMaterialCodesInput" rows="4"></textarea></label>
+          </div>
+          <div id="mappingEditorFeedback" class="config-feedback" role="status" aria-live="polite"></div>
+          <div class="config-actions">
+            <button id="saveMappingEditButton" class="secondary-button" type="button">保存这一条</button>
+            <button id="cancelMappingEditButton" class="ghost-button" type="button">取消编辑</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="logPanel" class="config-modal hidden" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="logTitle">
+      <div class="config-dialog log-dialog">
+        <div class="section-title">
+          <div>
+            <h2 id="logTitle">处理日志</h2>
+            <p>失败时点“复制报错信息”，把整段内容发给技术。</p>
+          </div>
+          <div class="log-title-actions">
+            <button id="copyLogButton" class="secondary-button" type="button" disabled>复制报错信息</button>
+            <button id="closeLogButton" class="ghost-button" type="button">关闭</button>
+          </div>
+        </div>
+        <div id="copyLogFeedback" class="config-feedback" role="status" aria-live="polite"></div>
+        <pre id="detailLog" class="detail-log"></pre>
+      </div>
+    </section>
+  </main>
+
+  <script src="./report-config.js?v=20260709-v64"></script>
+  <script src="./scripts/core.js?v=20260616-r2"></script>
+  <script src="./scripts/calendar.js?v=20260615-r3"></script>
+  <script src="./scripts/config-panel.js?v=20260615-r2"></script>
+  <script src="./scripts/mapping-panel.js?v=20260615-r2"></script>
+  <script src="./scripts/ui.js?v=20260616-r2"></script>
+  <script src="./scripts/file-csv.js?v=20260615-r1"></script>
+  <script src="./scripts/aggregation.js?v=20260615-r1"></script>
+  <script src="./scripts/worksheet-writer.js?v=20260615-r1"></script>
+  <script src="./scripts/xlsx-engine.js?v=20260615-r1"></script>
+  <script src="./scripts/cell-utils.js?v=20260615-r1"></script>
+  <script src="./scripts/data-utils.js?v=20260615-r1"></script>
+  <script src="./scripts/import-runner.js?v=20260709-v64"></script>
+  <script src="./scripts/selftest.js?v=20260709-v64"></script>
+  <footer style="padding:14px 0 8px;text-align:center;font-size:12px;color:#6b7280;">作者：黎路遥 ｜ 微信：luyao2089 ｜ 话术精灵官网：luyao2089.cc ｜ 版权所有 © 黎路遥，保留所有权利</footer>
+</body>
+</html>

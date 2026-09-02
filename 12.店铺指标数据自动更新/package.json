@@ -1,0 +1,19 @@
+{
+  "name": "store-metric-updater",
+  "version": "0.0.1",
+  "description": "多店铺店铺考核指标CLI自动更新工具",
+  "main": "src/cli/startCli.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node src/cli/startCli.js",
+    "cli": "node src/cli/startCli.js",
+    "panel": "node src/cli/startCli.js",
+    "test": "node --test tests/*.test.js"
+  },
+  "dependencies": {
+    "@xmldom/xmldom": "0.9.10",
+    "jszip": "3.10.1",
+    "playwright-core": "1.60.0",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
+  }
+}

@@ -1,0 +1,104 @@
+/* 该文件用于配置弹窗、配置目录和页面标题样式。 */
+.config-modal {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow: auto;
+  padding: 22px;
+  background: rgba(15, 23, 42, 0.58);
+}
+
+.config-modal.hidden {
+  display: none;
+}
+
+.config-dialog {
+  display: grid;
+  gap: 16px;
+  width: min(1080px, 100%);
+  max-height: calc(100vh - 44px);
+  overflow: auto;
+  padding: 18px;
+}
+
+.config-form-pages {
+  display: grid;
+  gap: 16px;
+}
+
+.config-page-menu {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.missed-reply-page-menu {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.config-page-button {
+  display: grid;
+  gap: 8px;
+  min-height: 108px;
+  padding: 18px;
+  text-align: left;
+  border: 1px solid #c7d1df;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #1e3348;
+  cursor: pointer;
+  font: inherit;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+}
+
+.config-page-button strong {
+  font-size: 18px;
+}
+
+.config-page-button span {
+  color: #667085;
+  line-height: 1.55;
+}
+
+.config-page-button:hover {
+  border-color: #1a73e8;
+  background: #f5f9ff;
+  box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.14), 0 8px 18px rgba(26, 115, 232, 0.12);
+  transform: translateY(-1px);
+}
+
+.config-page-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.modal-title-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.section-title {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.section-title h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.section-title p {
+  margin-top: 6px;
+  color: #667085;
+  font-size: 14px;
+}

@@ -1,0 +1,25 @@
+            <section class="config-card config-page hidden" data-config-page="params">
+              <div class="section-head">
+                <div>
+                  <p class="section-eyebrow">生产参数</p>
+                  <h2>参数设置</h2>
+                </div>
+                <div class="config-page-actions">
+                  <div class="mode-chip" id="modeChip">当前模式：加载中</div>
+                  <button class="ghost-button" data-config-page-target="hub" type="button">返回目录</button>
+                </div>
+              </div>
+              <div class="config-grid">
+                <label class="wide-field">
+                  <span>客服工作台地址</span>
+                  <input id="targetUrl" name="targetUrl" placeholder="https://.../main/.../.../chat" />
+                  <em class="field-hint">可以先填入口域名；首次登录后进入聊天工作台，程序会自动捕获完整地址。</em>
+                </label>
+                <button class="save-button" type="submit">保存参数设置</button>
+              </div>
+              <div class="feedback-banner is-info" id="configFeedback" aria-live="polite">
+                <span class="feedback-banner-badge">配置反馈</span>
+                <strong class="feedback-banner-title" data-feedback-title>等待保存</strong>
+                <p class="feedback-banner-message" data-feedback-message>这里会显示参数配置保存结果。</p>
+              </div>
+            </section>

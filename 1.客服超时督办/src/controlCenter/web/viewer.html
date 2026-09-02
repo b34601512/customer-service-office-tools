@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>查看中心</title>
+    <link rel="icon" href="/assets/supervisor-icon.svg" type="image/svg+xml" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#d9252a" />
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">查看入口</p>
+          <h1>查看中心</h1>
+          <p class="hero-copy">
+            HTML 报表已经下线，客服绩效统一在终端「7 报表」查看；这里保留说明文档和项目目录。
+          </p>
+        </div>
+        <div class="hero-status settings-hero-status">
+          <span class="status-tag">独立页面</span>
+          <p id="viewerStatusText">这里展示的是查看类入口，不承担启动动作。</p>
+          <div class="hero-actions">
+            <button class="ghost-button" data-link="/" type="button">打开首页</button>
+          </div>
+        </div>
+      </header>
+
+      <main class="layout settings-layout">
+        <section class="card action-card">
+          <div class="section-head">
+            <div>
+              <p class="section-eyebrow">查看入口</p>
+              <h2>文档 / 目录</h2>
+            </div>
+          </div>
+          <div class="action-grid">
+            <button class="action-button" data-link="/docs/readme" type="button">说明文档</button>
+            <button class="action-button" data-action="open-project-folder" type="button">项目目录</button>
+          </div>
+          <div class="feedback-banner is-info" id="viewerFeedback" aria-live="polite">
+            <span class="feedback-banner-badge">查看反馈</span>
+            <strong class="feedback-banner-title" data-feedback-title>等待操作</strong>
+            <p class="feedback-banner-message" data-feedback-message>这里会显示最近一次打开结果。</p>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div class="feedback-stack" id="feedbackStack" aria-live="polite" aria-atomic="true"></div>
+    <script src="/shared/requestJson.js"></script>
+    <script src="/viewer.js"></script>
+  </body>
+</html>

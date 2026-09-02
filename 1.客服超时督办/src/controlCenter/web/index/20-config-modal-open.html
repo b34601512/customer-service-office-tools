@@ -1,0 +1,47 @@
+      <section id="configModal" class="config-modal hidden" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="configModalTitle">
+        <div class="config-dialog">
+          <div class="section-title">
+            <div>
+              <p class="section-eyebrow">低频配置</p>
+              <h2 id="configModalTitle">配置中心</h2>
+              <p id="configModalSubtitle">先选择要维护的配置页，关闭后回到督办流程。</p>
+            </div>
+            <button id="closeConfigModalButton" class="ghost-button" type="button">关闭</button>
+          </div>
+
+          <section class="config-card config-hub" data-config-page="hub">
+            <div class="section-head">
+              <div>
+                <p class="section-eyebrow">配置目录</p>
+                <h2>选择配置页</h2>
+              </div>
+            </div>
+            <div class="config-page-menu">
+              <button class="config-page-button" data-config-page-target="params" type="button">
+                <strong>参数设置</strong>
+                <span>维护客服工作台地址。</span>
+              </button>
+              <button class="config-page-button" data-config-page-target="timeoutReminder" type="button">
+                <strong>超时提醒配置</strong>
+                <span>设置未实质回复多久触发超时提醒。</span>
+              </button>
+              <button class="config-page-button" data-config-page-target="missedReply" type="button">
+                <strong>漏回复设置</strong>
+                <span>漏回复开关、提醒阈值、扫描批量和关键词规则。</span>
+              </button>
+              <button class="config-page-button" data-config-page-target="onlinePresence" type="button">
+                <strong>上班监控</strong>
+                <span>当前应值班客服没人开启自动分配时提醒。</span>
+              </button>
+              <button class="config-page-button" data-config-page-target="offDuty" type="button">
+                <strong>下班监控配置</strong>
+                <span>下班监控、关店时间和明天班次提醒。</span>
+              </button>
+              <button class="config-page-button" data-config-page-target="wecom" type="button">
+                <strong>企微提醒</strong>
+                <span>通知群、成员姓名和手机号。</span>
+              </button>
+            </div>
+          </section>
+
+          <form id="configForm" class="config-form-pages">

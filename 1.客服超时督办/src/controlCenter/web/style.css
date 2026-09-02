@@ -1,0 +1,9 @@
+/* 该文件用于聚合控制台样式模块，页面继续只加载一个稳定入口。 */
+@import url("/styles/00-foundation.css");
+@import url("/styles/10-config-keywords.css");
+@import url("/styles/20-private-logs-feedback.css");
+@import url("/styles/30-countdown-customer.css");
+@import url("/styles/40-events-responsive.css");
+@import url("/styles/50-workflow-shell.css");
+@import url("/styles/60-config-modal.css");
+@import url("/styles/70-resource-responsive.css");

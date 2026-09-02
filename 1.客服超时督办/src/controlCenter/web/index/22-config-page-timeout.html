@@ -1,0 +1,21 @@
+            <section class="config-card config-page hidden" data-config-page="timeoutReminder">
+              <div class="section-head">
+                <div>
+                  <p class="section-eyebrow">超时待回复</p>
+                  <h2>超时提醒配置</h2>
+                </div>
+                <button class="ghost-button" data-config-page-target="hub" type="button">返回目录</button>
+              </div>
+              <div class="config-grid">
+                <label>
+                  <span>提醒阈值(秒)</span>
+                  <input id="timeoutReminderThresholdSeconds" name="timeoutReminderThresholdSeconds" inputmode="numeric" />
+                </label>
+                <button class="save-button" type="submit">保存超时提醒配置</button>
+              </div>
+              <div class="feedback-banner is-info" data-shared-config-feedback aria-live="polite">
+                <span class="feedback-banner-badge">配置反馈</span>
+                <strong class="feedback-banner-title" data-feedback-title>等待保存</strong>
+                <p class="feedback-banner-message" data-feedback-message>这里会显示超时提醒配置保存结果。</p>
+              </div>
+            </section>

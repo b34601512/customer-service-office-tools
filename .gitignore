@@ -1,0 +1,143 @@
+# 只备份源代码：排除运行时、依赖、缓存、日志、数据和构建产物。
+
+# Git / 系统临时文件
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 依赖和虚拟环境
+node_modules/
+.venv/
+venv/
+env/
+runtime/
+python_env/
+__pycache__/
+**/runtime/
+**/python_env/
+**/__pycache__/
+*.pyc
+*.pyo
+
+# 构建与打包产物
+dist/
+build/
+out/
+release_package/
+release_packages/
+release-package/
+release-packages/
+release_output/
+release_outputs/
+release-output/
+release-outputs/
+build_output/
+build_outputs/
+build-output/
+build-outputs/
+package_output/
+package_outputs/
+package-output/
+package-outputs/
+发布包/
+发布包*/
+分发包/
+分发包*/
+打包输出/
+打包产物/
+构建产物/
+*_免环境版_*/
+.pyinstaller_build/
+**/dist/
+**/build/
+**/out/
+**/release_package/
+**/release_packages/
+**/.pyinstaller_build/
+*.exe
+*.dll
+*.msi
+*.zip
+*.7z
+*.rar
+*.pyd
+*.pkg
+*.pyz
+
+# 浏览器与自动化运行数据
+Cache/
+cache/
+Cache_Data/
+browser_profiles/
+chrome-user-data/
+control-center-browser/
+control-center-window/
+control_browser/
+component_crx_cache/
+ProvenanceData/
+Safe Browsing/
+WasmTtsEngine/
+
+# 运行产物目录（浏览器配置、截图、中间输出不入库）
+**/自动报量输出/
+自动报量输出/
+**/outputs/
+outputs/
+.vmark/
+*.lock
+node_modules_runtime/
+**/node_modules_runtime/
+
+# 日志、临时文件、会话文件
+logs/
+log/
+download_records/
+tmp/
+temp/
+**/logs/
+**/log/
+**/download_records/
+**/tmp/
+**/temp/
+*.log
+*.tmp
+*.temp
+*.ses
+followup_state.json
+latest_download_result.json
+*.txt
+!requirements.txt
+
+# 业务数据和导出文件不属于源码备份
+data/
+*_qa.json
+v*_manual_*_structure.json
+*.xls
+*.xlsx
+*.csv
+*.dat
+
+# 本地敏感配置：保留 *.example.* 模板即可恢复结构。
+*.local
+*.secret
+.env
+!.env.example
+config.json
+wecom-robot.json
+*credential*
+*credentials*
+
+# 本地 kdocs 敏感字段恢复库（不入库，供 git smudge 过滤器恢复 token）
+tools/git-secret-store.json
+# store 重建时的旧备份也不入库
+tools/git-secret-store.json.bak
+
+# 业务截图与图片不入库（源码仓库只收代码）
+*.png
+*.jpg
+*.jpeg
+
+# AI 调试临时产物：测试运行记录 json 与截图不入库（.codex-temporary 下的脚本类代码保留）
+**/.codex-temporary/test-history/
+**/.codex-temporary/**/*.png
+

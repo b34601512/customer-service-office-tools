@@ -1,0 +1,18 @@
+{
+  "name": "jd-invoice-urge-watch",
+  "version": "0.0.1",
+  "private": true,
+  "description": "京东客户催促开票记录工具",
+  "type": "commonjs",
+  "scripts": {
+    "panel": "node src/tui/startTui.js",
+    "start": "node src/tui/startTui.js",
+    "pack:portable": "node src/release/buildPortablePackage.js",
+    "test": "node -e \"process.env.JD_INVOICE_URGE_TEST_MODE='1'; const result = require('node:child_process').spawnSync(process.execPath, ['--test', 'tests/*.test.js'], { stdio: 'inherit', env: process.env }); process.exit(result.status ?? 1);\"",
+    "panel:cli": "node src/cli/startCli.js"
+  },
+  "dependencies": {
+    "node-notifier": "^10.0.1",
+    "playwright": "^1.58.2"
+  }
+}

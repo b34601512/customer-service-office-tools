@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>实时日志｜响应时间后台</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <main class="page">
+      <section class="subpage-head">
+        <div>
+          <p class="eyebrow">实时日志</p>
+          <h1>日志中心</h1>
+          <p class="summary" id="statusText">后台状态加载中...</p>
+          <div class="indicator-row" id="indicatorRow"></div>
+          <div class="app-meta" id="appMetaBar">版本信息加载中...</div>
+        </div>
+        <div class="subpage-actions">
+          <a class="button-like" href="/">返回首页</a>
+          <a class="button-like primary" href="/config">运行配置</a>
+          <button id="openLogButton">打开启动日志</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>实时日志</h2>
+            <p>后台运行输出集中在这里查看。</p>
+          </div>
+        </div>
+        <div id="feedback" class="feedback"></div>
+        <pre id="logOutput" class="log-output">后台日志加载中...</pre>
+      </section>
+    </main>
+    <script src="/app/state.js"></script>
+    <script src="/app/dom.js"></script>
+    <script src="/app/buyer_urls.js"></script>
+    <script src="/app/credentials.js"></script>
+    <script src="/app/workflow.js"></script>
+    <script src="/app/form.js"></script>
+    <script src="/app/api.js"></script>
+    <script src="/app/runtime.js"></script>
+    <script src="/app.js"></script>
+  </body>
+</html>

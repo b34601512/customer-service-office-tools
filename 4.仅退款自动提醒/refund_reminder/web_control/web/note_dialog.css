@@ -1,0 +1,102 @@
+.note-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.38);
+}
+
+.note-dialog {
+  width: min(560px, 100%);
+  border: 1px solid #cfd9e6;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 22px 60px rgba(15, 23, 42, 0.25);
+}
+
+.note-dialog-head,
+.note-dialog-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+}
+
+.note-dialog-head {
+  border-bottom: 1px solid #e5ebf3;
+}
+
+.note-dialog-body {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+}
+
+.note-preset-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.note-preset-item {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.note-preset-button,
+.note-preset-edit,
+.note-preset-remove,
+.note-dialog-close,
+.note-dialog-actions button,
+.note-custom-row button {
+  border-radius: 6px;
+  padding: 7px 10px;
+}
+
+.note-preset-button {
+  border-color: #2e7d32;
+  color: #226b2c;
+}
+
+.note-preset-edit {
+  min-width: auto;
+  color: #1558b0;
+}
+
+.note-preset-remove {
+  min-width: auto;
+  color: #8f1d17;
+}
+
+.note-time-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #26384d;
+  font-weight: 700;
+}
+
+.note-textarea {
+  width: 100%;
+  min-height: 96px;
+  resize: vertical;
+  border: 1px solid #cfd9e6;
+  border-radius: 8px;
+  padding: 10px 11px;
+  background: #fcfdff;
+  font: inherit;
+}
+
+.note-custom-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 8px;
+}
+
+.note-dialog-actions {
+  justify-content: flex-end;
+  border-top: 1px solid #e5ebf3;
+}

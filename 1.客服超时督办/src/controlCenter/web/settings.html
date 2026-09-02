@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>配置中心</title>
+    <link rel="icon" href="/assets/supervisor-icon.svg" type="image/svg+xml" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#d9252a" />
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">低频配置</p>
+          <h1>配置中心</h1>
+          <p class="hero-copy">
+            这里专门放「生产配置」和「企微提醒」这类不是每次启动都要改的内容，首页只保留入口按钮，避免首屏信息过载。
+          </p>
+        </div>
+        <div class="hero-status settings-hero-status">
+          <span class="status-tag">独立页面</span>
+          <p>这里保存后立即写入本地生产配置。</p>
+          <div class="hero-actions">
+            <button class="ghost-button" data-link="/" type="button">打开首页</button>
+          </div>
+        </div>
+      </header>
+
+      <main class="layout settings-layout">
+        <section class="card config-card">
+          <div class="section-head">
+            <div>
+              <p class="section-eyebrow">生产配置</p>
+              <h2>督办参数 / 下班参数</h2>
+            </div>
+            <div class="mode-chip" id="modeChip">当前模式：加载中</div>
+          </div>
+
+          <form id="configForm" class="config-grid">
+            <label class="wide-field">
+              <span>客服工作台地址</span>
+              <input id="targetUrl" name="targetUrl" placeholder="https://.../main/.../.../chat" />
+              <em class="field-hint">可以先填入口域名；首次登录后进入聊天工作台，程序会自动捕获完整地址。</em>
+            </label>
+            <label>
+              <span>提醒阈值(秒)</span>
+              <input id="timeoutReminderThresholdSeconds" name="timeoutReminderThresholdSeconds" inputmode="numeric" />
+            </label>
+            <label class="checkbox-field">
+              <span>启用漏回复监控</span>
+              <span class="checkbox-row">
+                <input id="missedReplyMonitorEnabled" name="missedReplyMonitorEnabled" type="checkbox" />
+                <em>启用中</em>
+              </span>
+            </label>
+            <label class="checkbox-field">
+              <span>启用上班监控</span>
+              <span class="checkbox-row">
+                <input id="onlinePresenceMonitorEnabled" name="onlinePresenceMonitorEnabled" type="checkbox" />
+                <em>启用中</em>
+              </span>
+            </label>
+            <label>
+              <span>上班监控扫描间隔(ms)</span>
+              <input id="onlinePresenceScanIntervalMs" name="onlinePresenceScanIntervalMs" inputmode="numeric" />
+            </label>
+            <label>
+              <span>上班监控开始判断时间</span>
+              <input id="onlinePresenceWorkStartTime" name="onlinePresenceWorkStartTime" placeholder="08:00" />
+            </label>
+            <label>
+              <span>漏回复轮询间隔(ms)</span>
+              <input id="missedReplyScanIntervalMs" name="missedReplyScanIntervalMs" inputmode="numeric" />
+            </label>
+            <label>
+              <span>漏回复每轮扫描会话数</span>
+              <input id="missedReplyMaxContactsPerScan" name="missedReplyMaxContactsPerScan" inputmode="numeric" />
+            </label>
+            <section class="wide-field keyword-rule-editor" data-keyword-editor="missedReplyTemporaryReplyKeywords">
+              <div class="keyword-rule-editor-head">
+                <div>
+                  <strong>稍等类临时回复关键词</strong>
+                  <p class="field-hint">命中后只算临时接住；每行一个关键词，每行单独选择匹配方式。</p>
+                </div>
+                <button class="mini-button" data-keyword-add="missedReplyTemporaryReplyKeywords" type="button">新增关键词</button>
+              </div>
+              <div class="keyword-rule-table" data-keyword-rows="missedReplyTemporaryReplyKeywords"></div>
+              <textarea
+                class="keyword-rule-hidden"
+                id="missedReplyTemporaryReplyKeywords"
+                name="missedReplyTemporaryReplyKeywords"
+                hidden
+              ></textarea>
+            </section>
+            <section class="wide-field keyword-rule-editor" data-keyword-editor="missedReplyCustomerResolutionKeywords">
+              <div class="keyword-rule-editor-head">
+                <div>
+                  <strong>客户主动结案关键词</strong>
+                  <p class="field-hint">命中后关闭此前待回复责任；不要填写“谢谢/好的”这类客套话。</p>
+                </div>
+                <button class="mini-button" data-keyword-add="missedReplyCustomerResolutionKeywords" type="button">新增关键词</button>
+              </div>
+              <div class="keyword-rule-table" data-keyword-rows="missedReplyCustomerResolutionKeywords"></div>
+              <textarea
+                class="keyword-rule-hidden"
+                id="missedReplyCustomerResolutionKeywords"
+                name="missedReplyCustomerResolutionKeywords"
+                hidden
+              ></textarea>
+            </section>
+            <section class="wide-field keyword-rule-editor" data-keyword-editor="missedReplyCustomerClosingKeywords">
+              <div class="keyword-rule-editor-head">
+                <div>
+                  <strong>客户弱收尾关键词</strong>
+                  <p class="field-hint">只忽略本条客套话，不关闭此前尚未完成的反馈或申请。</p>
+                </div>
+                <button class="mini-button" data-keyword-add="missedReplyCustomerClosingKeywords" type="button">新增关键词</button>
+              </div>
+              <div class="keyword-rule-table" data-keyword-rows="missedReplyCustomerClosingKeywords"></div>
+              <textarea
+                class="keyword-rule-hidden"
+                id="missedReplyCustomerClosingKeywords"
+                name="missedReplyCustomerClosingKeywords"
+                hidden
+              ></textarea>
+            </section>
+            <section class="wide-field keyword-rule-editor" data-keyword-editor="missedReplyInvalidAgentReplyKeywords">
+              <div class="keyword-rule-editor-head">
+                <div>
+                  <strong>无效人工回复关键词</strong>
+                  <p class="field-hint">标点本身也可以作为关键词；每行一个关键词，每行单独选择匹配方式。</p>
+                </div>
+                <button class="mini-button" data-keyword-add="missedReplyInvalidAgentReplyKeywords" type="button">新增关键词</button>
+              </div>
+              <div class="keyword-rule-table" data-keyword-rows="missedReplyInvalidAgentReplyKeywords"></div>
+              <textarea
+                class="keyword-rule-hidden"
+                id="missedReplyInvalidAgentReplyKeywords"
+                name="missedReplyInvalidAgentReplyKeywords"
+                hidden
+              ></textarea>
+            </section>
+            <section class="wide-field keyword-rule-editor" data-keyword-editor="missedReplyPlatformNoticeKeywords">
+              <div class="keyword-rule-editor-head">
+                <div>
+                  <strong>平台固定提示关键词</strong>
+                  <p class="field-hint">命中后按系统提示排除，不进入客户最后有效消息。</p>
+                </div>
+                <button class="mini-button" data-keyword-add="missedReplyPlatformNoticeKeywords" type="button">新增关键词</button>
+              </div>
+              <div class="keyword-rule-table" data-keyword-rows="missedReplyPlatformNoticeKeywords"></div>
+              <textarea
+                class="keyword-rule-hidden"
+                id="missedReplyPlatformNoticeKeywords"
+                name="missedReplyPlatformNoticeKeywords"
+                hidden
+              ></textarea>
+            </section>
+            <label class="checkbox-field">
+              <span>启用下班监控</span>
+              <span class="checkbox-row">
+                <input id="offDutyAutomationEnabled" name="offDutyAutomationEnabled" type="checkbox" />
+                <em>启用中</em>
+              </span>
+            </label>
+            <label>
+              <span>下班检查间隔(ms，默认5分钟)</span>
+              <input id="offDutyScanIntervalMs" name="offDutyScanIntervalMs" inputmode="numeric" />
+            </label>
+            <label>
+              <span>售前早班上班时间</span>
+              <input id="offDutyPreSalesEarlyStartTime" name="offDutyPreSalesEarlyStartTime" placeholder="08:00" />
+            </label>
+            <label>
+              <span>售前晚班上班时间</span>
+              <input id="offDutyPreSalesLateStartTime" name="offDutyPreSalesLateStartTime" placeholder="15:45" />
+            </label>
+            <label>
+              <span>售后早班上班时间</span>
+              <input id="offDutyAfterSalesEarlyStartTime" name="offDutyAfterSalesEarlyStartTime" placeholder="08:00" />
+            </label>
+            <label>
+              <span>售后晚班上班时间</span>
+              <input id="offDutyAfterSalesLateStartTime" name="offDutyAfterSalesLateStartTime" placeholder="14:00" />
+            </label>
+            <label>
+              <span>售前早班关闭时间</span>
+              <input id="offDutyPreSalesEarlyCloseTime" name="offDutyPreSalesEarlyCloseTime" placeholder="16:30" />
+            </label>
+            <label>
+              <span>售前晚班关闭时间</span>
+              <input id="offDutyPreSalesLateCloseTime" name="offDutyPreSalesLateCloseTime" placeholder="23:45" />
+            </label>
+            <label>
+              <span>售后早班关闭时间</span>
+              <input id="offDutyAfterSalesEarlyCloseTime" name="offDutyAfterSalesEarlyCloseTime" placeholder="16:30" />
+            </label>
+            <label>
+              <span>售后晚班关闭时间</span>
+              <input id="offDutyAfterSalesLateCloseTime" name="offDutyAfterSalesLateCloseTime" placeholder="22:30" />
+            </label>
+            <label class="checkbox-field">
+              <span>群里提醒明天班次</span>
+              <span class="checkbox-row">
+                <input id="offDutyTomorrowShiftNotificationEnabled" name="offDutyTomorrowShiftNotificationEnabled" type="checkbox" />
+                <em>已关闭</em>
+              </span>
+            </label>
+            <button class="save-button" type="submit">保存配置</button>
+          </form>
+
+          <div class="feedback-banner is-info" id="configFeedback" aria-live="polite">
+            <span class="feedback-banner-badge">配置反馈</span>
+            <strong class="feedback-banner-title" data-feedback-title>等待保存</strong>
+            <p class="feedback-banner-message" data-feedback-message>这里会显示生产配置保存结果。</p>
+          </div>
+        </section>
+
+        <section class="card private-config-card">
+          <div class="section-head">
+            <div>
+              <p class="section-eyebrow">恢复配置</p>
+              <h2>企微提醒</h2>
+            </div>
+          </div>
+          <p class="helper-text">
+            这里保存督办升级需要的通知群和成员清单。主管端换电脑后，只需要回填这里，再做一次「首次登录」即可继续使用。
+          </p>
+          <p class="helper-text">
+            旧的「售前群 / 售后群」配置会自动迁移成通知群列表；现在启用几个群，就会通知几个群。
+          </p>
+
+          <form id="wecomConfigForm" class="private-config-panel">
+            <div class="private-config-head">
+              <p class="section-eyebrow">企微提醒</p>
+              <h3>通知群列表 / 成员清单</h3>
+            </div>
+            <div class="notification-group-toolbar">
+              <p class="helper-text notification-group-toolbar-text">启用中的通知群都会收到提醒；不想发时直接停用即可。</p>
+              <button class="mini-button" id="addNotificationGroupButton" type="button">新增通知群</button>
+            </div>
+            <div id="notificationGroupsList" class="notification-group-list"></div>
+            <div class="staff-directory-toolbar">
+              <div>
+                <p class="helper-text notification-group-toolbar-text">成员只维护这一份。填姓名和手机号就能正常提醒；超时提醒正文不再重复展示接待客服，只保留底部艾特。</p>
+              </div>
+              <button class="mini-button" id="addStaffButton" type="button">新增成员</button>
+            </div>
+            <div id="staffDirectoryList" class="staff-directory-list"></div>
+            <div class="config-grid private-form-grid">
+              <button class="save-button" type="submit">保存企微提醒</button>
+            </div>
+          </form>
+          <div class="feedback-banner is-info" id="privateConfigFeedback" aria-live="polite">
+            <span class="feedback-banner-badge">企微反馈</span>
+            <strong class="feedback-banner-title" data-feedback-title>等待保存</strong>
+            <p class="feedback-banner-message" data-feedback-message>这里会显示企微提醒配置保存结果。</p>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <section
+      id="keywordAddModal"
+      class="config-modal keyword-add-modal hidden"
+      role="dialog"
+      aria-modal="true"
+      aria-hidden="true"
+      aria-labelledby="keywordAddModalTitle"
+    >
+      <div class="config-dialog keyword-add-dialog">
+        <form id="keywordAddForm" class="keyword-add-form">
+          <div class="section-title">
+            <div>
+              <p class="section-eyebrow">新增关键词</p>
+              <h2 id="keywordAddModalTitle">新增关键词</h2>
+              <p id="keywordAddModalSubtitle">确认后加入当前列表，点击保存后正式生效。</p>
+            </div>
+            <button id="keywordAddCloseButton" class="ghost-button" type="button">关闭</button>
+          </div>
+          <div class="keyword-add-body">
+            <label class="keyword-add-field">
+              <span>关键词内容</span>
+              <input id="keywordAddText" name="keywordAddText" autocomplete="off" required />
+            </label>
+            <fieldset class="keyword-add-fieldset">
+              <legend>匹配方式</legend>
+              <div class="keyword-rule-radio-group">
+                <label class="keyword-rule-radio">
+                  <input name="keywordAddMatchMode" type="radio" value="exact" />
+                  <span>完全匹配</span>
+                </label>
+                <label class="keyword-rule-radio">
+                  <input name="keywordAddMatchMode" type="radio" value="startsWith" />
+                  <span>开头匹配</span>
+                </label>
+                <label class="keyword-rule-radio">
+                  <input name="keywordAddMatchMode" type="radio" value="includes" />
+                  <span>包含匹配</span>
+                </label>
+              </div>
+            </fieldset>
+          </div>
+          <div class="keyword-add-actions">
+            <button id="keywordAddCancelButton" class="ghost-button" type="button">取消</button>
+            <button class="save-button" type="submit">确认新增</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <div class="feedback-stack" id="feedbackStack" aria-live="polite" aria-atomic="true"></div>
+    <script src="/shared/requestJson.js"></script>
+    <script src="/settings/00-state.js"></script>
+    <script src="/settings/10-feedback-request.js"></script>
+    <script src="/settings/20-keyword-editor.js"></script>
+    <script src="/settings/30-modal-state.js"></script>
+    <script src="/settings/40-form-render.js"></script>
+    <script src="/settings/50-page-load.js"></script>
+    <script src="/settings/60-actions.js"></script>
+    <script src="/settings/70-config-modal-bootstrap.js"></script>
+  </body>
+</html>

@@ -1,0 +1,165 @@
+  background: #b6442e;
+  color: #fff;
+  border-color: #b6442e;
+}
+
+.subpage-actions {
+  justify-content: flex-end;
+  min-width: 320px;
+}
+
+.panel {
+  padding: 22px 24px;
+  margin-bottom: 18px;
+}
+
+.panel-head {
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.panel-head p {
+  margin: 8px 0 0;
+  color: #5a6d69;
+}
+
+.feedback {
+  min-height: 0;
+  margin-bottom: 12px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  font-weight: 700;
+}
+
+.feedback:not(:empty) {
+  padding: 10px 12px;
+  border: 1px solid #b9d7f8;
+  background: #eef6ff;
+  color: #174ea6;
+}
+
+.feedback[data-state="success"] {
+  border-color: #b7dfc4;
+  background: #ecf8f0;
+  color: #2e7d32;
+}
+
+.feedback[data-state="error"] {
+  border-color: #f2b8b5;
+  background: #fff0ef;
+  color: #b3261e;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(320px, 1fr));
+  gap: 14px 20px;
+}
+
+.form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field-label {
+  color: #294540;
+  font-weight: 700;
+}
+
+.form-row input[type="text"],
+.form-row input[type="password"],
+.form-row select,
+.form-row textarea {
+  width: 100%;
+  border: 1px solid #cfe0d9;
+  border-radius: 8px;
+  padding: 11px 12px;
+  background: #fcfefe;
+  font: inherit;
+}
+
+.form-row textarea {
+  min-height: 132px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.buyer-url-manager-body,
+.credential-manager-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.buyer-url-summary,
+.credential-summary {
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid #cfe0d9;
+  border-radius: 8px;
+  background: #fcfefe;
+}
+
+.buyer-url-summary span,
+.buyer-url-summary strong,
+.credential-summary span,
+.credential-summary strong {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.buyer-url-summary span,
+.credential-summary span {
+  color: #4f6b68;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.buyer-url-summary strong,
+.credential-summary strong {
+  margin-top: 4px;
+  color: #1f2a2a;
+  font-weight: 700;
+}
+
+.wide-row {
+  grid-column: 1 / -1;
+}
+
+.checkbox-row {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+.checkbox-row .field-label {
+  order: 2;
+}
+
+.form-tip {
+  margin: 0;
+  color: #9a5b13;
+  grid-column: 1 / -1;
+}
+
+.log-output {
+  margin: 0;
+  min-height: 280px;
+  max-height: 420px;
+  overflow: auto;
+  padding: 16px;
+  background: #191816;
+  color: #e6f6e5;
+  border-radius: 8px;
+  border: 1px solid #39342a;
+  font-family: Consolas, "Courier New", monospace;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}

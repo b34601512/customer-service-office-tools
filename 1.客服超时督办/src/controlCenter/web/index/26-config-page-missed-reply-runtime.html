@@ -1,0 +1,32 @@
+            <section class="config-card config-page hidden" data-config-page="missedReplyRuntime">
+              <div class="section-head">
+                <div>
+                  <p class="section-eyebrow">漏回复监控</p>
+                  <h2>运行参数</h2>
+                </div>
+                <button class="ghost-button" data-config-page-target="missedReply" type="button">返回漏回复设置</button>
+              </div>
+              <div class="config-grid">
+                <label class="checkbox-field">
+                  <span>启用漏回复监控</span>
+                  <span class="checkbox-row">
+                    <input id="missedReplyMonitorEnabled" name="missedReplyMonitorEnabled" type="checkbox" />
+                    <em>启用中</em>
+                  </span>
+                </label>
+                <label>
+                  <span>漏回复轮询间隔(ms)</span>
+                  <input id="missedReplyScanIntervalMs" name="missedReplyScanIntervalMs" inputmode="numeric" />
+                </label>
+                <label>
+                  <span>漏回复每轮扫描会话数</span>
+                  <input id="missedReplyMaxContactsPerScan" name="missedReplyMaxContactsPerScan" inputmode="numeric" />
+                </label>
+                <button class="save-button" type="submit">保存运行参数</button>
+              </div>
+              <div class="feedback-banner is-info" data-missed-reply-config-feedback aria-live="polite">
+                <span class="feedback-banner-badge">配置反馈</span>
+                <strong class="feedback-banner-title" data-feedback-title>等待保存</strong>
+                <p class="feedback-banner-message" data-feedback-message>这里会显示漏回复配置保存结果。</p>
+              </div>
+            </section>

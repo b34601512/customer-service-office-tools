@@ -1,0 +1,241 @@
+/* 该文件用于配置表单、关键词编辑器和复选项样式。 */
+.event-item,
+.empty-state {
+  border: 1px solid rgba(17, 39, 36, 0.08);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.mode-chip {
+  background: rgba(28, 92, 80, 0.1);
+  color: var(--brand-strong);
+}
+
+.config-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.config-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.config-grid .wide-field {
+  grid-column: 1 / -1;
+}
+
+.config-grid span,
+.checkbox-field em,
+.field-hint {
+  color: var(--muted);
+  font-style: normal;
+}
+
+.field-hint {
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.config-grid input {
+  width: 100%;
+  min-height: 46px;
+  padding: 0 14px;
+  color: var(--text);
+  border: 1px solid rgba(17, 39, 36, 0.12);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.92);
+  font: inherit;
+}
+
+.config-grid textarea {
+  width: 100%;
+  min-height: 160px;
+  padding: 12px 14px;
+  color: var(--text);
+  border: 1px solid rgba(17, 39, 36, 0.12);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.92);
+  font: inherit;
+  line-height: 1.65;
+  resize: vertical;
+}
+
+.keyword-rule-editor {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid #d7e2ec;
+  border-radius: 8px;
+  background: #f9fbff;
+}
+
+.keyword-rule-editor-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.keyword-rule-editor-head strong {
+  display: block;
+  margin-bottom: 5px;
+  color: #0f172a;
+  font-size: 16px;
+}
+
+.keyword-rule-table {
+  display: grid;
+  gap: 10px;
+}
+
+.keyword-rule-row {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(300px, auto) 82px;
+  gap: 12px;
+  align-items: end;
+  padding: 12px;
+  border: 1px solid #d7e2ec;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.config-grid .keyword-rule-text {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.keyword-rule-text span,
+.keyword-rule-modes legend {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.keyword-rule-modes {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.keyword-rule-radio-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  min-height: 38px;
+  padding: 6px 10px;
+  border: 1px solid #c7d1df;
+  border-radius: 6px;
+  background: #ffffff;
+}
+
+.config-grid .keyword-rule-radio {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  color: #1e3348;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.keyword-rule-radio input[type="radio"] {
+  width: 16px;
+  height: 16px;
+  min-height: 16px;
+  padding: 0;
+  accent-color: #126b5b;
+}
+
+.keyword-rule-hidden {
+  display: none;
+}
+
+.keyword-add-modal {
+  z-index: 1100;
+}
+
+.keyword-add-dialog {
+  width: min(560px, 100%);
+}
+
+.keyword-add-form,
+.keyword-add-body {
+  display: grid;
+  gap: 14px;
+}
+
+.keyword-add-field {
+  display: grid;
+  gap: 8px;
+}
+
+.keyword-add-field span,
+.keyword-add-fieldset legend {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.keyword-add-field input {
+  width: 100%;
+  min-height: 46px;
+  padding: 0 14px;
+  color: var(--text);
+  border: 1px solid rgba(17, 39, 36, 0.12);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.92);
+  font: inherit;
+}
+
+.keyword-add-fieldset {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.keyword-add-form .keyword-rule-radio {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  color: #1e3348;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.keyword-add-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.checkbox-field {
+  justify-content: flex-end;
+}
+
+.checkbox-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  min-height: 46px;
+  padding: 0 14px;
+  border: 1px solid rgba(17, 39, 36, 0.12);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.save-button {
+  align-self: end;
+}
+
+.config-grid > .save-button {
+  grid-column: 1 / -1;
+}

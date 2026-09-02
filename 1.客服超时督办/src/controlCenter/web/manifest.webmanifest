@@ -1,0 +1,16 @@
+{
+  "name": "客服督办控制台",
+  "short_name": "督办",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#d9252a",
+  "icons": [
+    {
+      "src": "/assets/supervisor-icon.svg",
+      "sizes": "256x256",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

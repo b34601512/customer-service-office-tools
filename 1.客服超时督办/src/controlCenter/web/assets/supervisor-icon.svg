@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="客服督办">
+  <rect width="256" height="256" rx="52" fill="#d9252a"/>
+  <rect x="18" y="18" width="220" height="220" rx="42" fill="none" stroke="#ffffff" stroke-opacity="0.32" stroke-width="10"/>
+  <text
+    x="128"
+    y="166"
+    text-anchor="middle"
+    font-family="Microsoft YaHei UI, Microsoft YaHei, SimHei, sans-serif"
+    font-size="132"
+    font-weight="800"
+    fill="#ffffff"
+  >督</text>
+</svg>

@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>响应时间后台</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <main class="page">
+      <section class="topbar">
+        <div>
+          <p class="eyebrow">自动回复测试</p>
+          <h1>响应时间后台</h1>
+          <p class="compliance-notice">免责声明：本软件仅用于自动回复机器人测试，严禁用于违法行为，请严格遵守平台规则，否则后果自负。</p>
+          <div class="app-meta" id="appMetaBar" data-show-usage-history="true">版本信息加载中...</div>
+        </div>
+      </section>
+      <div id="feedback" class="feedback"></div>
+      <div id="workflowActionPool" class="workflow-action-pool" hidden>
+        <button id="configButton" class="primary" type="button">运行配置</button>
+        <button id="serviceLoginButton" type="button">打开咚咚客服端</button>
+        <button id="webLoginButton" type="button">打开买家客户端</button>
+        <button id="startButton" disabled>启动</button>
+        <button id="pauseButton" disabled>暂停/继续</button>
+        <button id="stopButton" disabled>停止</button>
+        <a id="logsLink" class="button-like log-link" href="/logs">实时日志</a>
+        <button id="openLogButton">打开启动日志</button>
+        <button id="exitButton" class="danger">退出后台</button>
+      </div>
+      <section class="action-workflow" id="workflowGrid" aria-label="响应时间测试流程">
+        <div class="workflow-head">
+          <div class="workflow-heading">
+            <h2>测试流程</h2>
+          </div>
+          <p class="workflow-suggestion" id="guideHint">当前建议加载中...</p>
+        </div>
+      </section>
+      <div class="indicator-row legacy-indicator-row" id="indicatorRow" hidden></div>
+    </main>
+
+    <section id="configPanel" class="config-modal hidden" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="configDialogTitle">
+      <div class="config-dialog">
+        <div class="modal-head">
+          <div>
+            <h2 id="configDialogTitle">运行配置</h2>
+            <p>网址、账号、节奏和浏览器路径集中在这里维护。</p>
+          </div>
+          <button id="configCloseButton" type="button" class="icon-button" aria-label="关闭配置弹窗">×</button>
+        </div>
+        <div id="configDialogFeedback" class="dialog-feedback"></div>
+        <form id="configForm" class="form-grid config-modal-form"></form>
+        <div class="config-actions">
+          <button id="configCancelButton" type="button">关闭</button>
+          <button id="saveButton" class="primary" type="button">保存配置</button>
+        </div>
+      </div>
+    </section>
+
+    <div id="buyerUrlOverlay" class="modal-overlay hidden">
+      <section class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="buyerUrlDialogTitle">
+        <div class="modal-head">
+          <div>
+            <h2 id="buyerUrlDialogTitle">买家咨询链接</h2>
+            <p>维护多个店铺链接，并选择当前打开的那个。</p>
+          </div>
+          <button id="buyerUrlCloseButton" type="button" class="icon-button" aria-label="关闭弹窗">×</button>
+        </div>
+        <div id="buyerUrlDialogFeedback" class="dialog-feedback"></div>
+        <div id="buyerUrlList" class="buyer-url-list"></div>
+        <div class="modal-actions">
+          <button id="buyerUrlAddButton" type="button">新增链接</button>
+          <button id="buyerUrlCancelButton" type="button">关闭</button>
+          <button id="buyerUrlApplyButton" type="button" class="primary">应用选择</button>
+        </div>
+      </section>
+    </div>
+
+    <div id="credentialOverlay" class="modal-overlay hidden">
+      <section class="modal-dialog credential-dialog" role="dialog" aria-modal="true" aria-labelledby="credentialDialogTitle">
+        <div class="modal-head">
+          <div>
+            <h2 id="credentialDialogTitle">账号管理</h2>
+            <p id="credentialDialogDescription">维护多个店铺账号，并选择当前自动填入的那个。</p>
+          </div>
+          <button id="credentialCloseButton" type="button" class="icon-button" aria-label="关闭弹窗">×</button>
+        </div>
+        <div id="credentialDialogFeedback" class="dialog-feedback"></div>
+        <div id="credentialList" class="credential-list"></div>
+        <div class="modal-actions">
+          <button id="credentialAddButton" type="button">新增账号</button>
+          <button id="credentialCancelButton" type="button">关闭</button>
+          <button id="credentialApplyButton" type="button" class="primary">应用选择</button>
+        </div>
+      </section>
+    </div>
+    <script src="/app/state.js"></script>
+    <script src="/app/dom.js"></script>
+    <script src="/app/buyer_urls.js"></script>
+    <script src="/app/credentials.js"></script>
+    <script src="/app/workflow.js"></script>
+    <script src="/app/form.js"></script>
+    <script src="/app/api.js"></script>
+    <script src="/app/runtime.js"></script>
+    <script src="/app.js"></script>
+  </body>
+</html>

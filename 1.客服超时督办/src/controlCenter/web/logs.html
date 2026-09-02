@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>实时日志</title>
+    <link rel="icon" href="/assets/supervisor-icon.svg" type="image/svg+xml" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#d9252a" />
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">后台日志</p>
+          <h1>实时日志</h1>
+          <p class="hero-copy">
+            这里独立展示后台终端日志，首页只保留控制和状态总览，避免日志滚动内容挤占首屏。
+          </p>
+        </div>
+        <div class="hero-status settings-hero-status">
+          <span class="status-tag">独立页面</span>
+          <p id="logStatusText">正在连接日志流。</p>
+          <div class="hero-actions">
+            <button class="ghost-button" data-route="/" type="button">打开首页</button>
+          </div>
+        </div>
+      </header>
+
+      <main class="layout settings-layout">
+        <section class="card log-card log-page-card">
+          <div class="section-head">
+            <div>
+              <p class="section-eyebrow">实时流</p>
+              <h2>日志内容</h2>
+              <p class="helper-text">最新内容固定在最上面，便于直接查看最近动作。</p>
+            </div>
+            <div class="log-channel-switch">
+              <button class="log-channel-button is-active" data-log-channel="timeout" type="button">
+                超时日志
+              </button>
+              <button class="log-channel-button" data-log-channel="missed_reply" type="button">
+                漏回复日志
+              </button>
+              <button class="log-channel-button" data-log-channel="online_presence" type="button">
+                上班监控日志
+              </button>
+              <button class="log-channel-button" data-log-channel="off_duty" type="button">
+                下班监控日志
+              </button>
+            </div>
+          </div>
+          <pre id="logOutput" class="log-output log-page-output">后台日志加载中...</pre>
+        </section>
+      </main>
+    </div>
+
+    <script src="/shared/requestJson.js"></script>
+    <script src="/logs.js"></script>
+  </body>
+</html>

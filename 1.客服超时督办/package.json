@@ -1,0 +1,27 @@
+{
+  "name": "customer-timeout-supervisor",
+  "version": "1.0.0",
+  "description": "主管端超时督办控制台",
+  "main": "src/main.js",
+  "type": "commonjs",
+  "scripts": {
+    "panel": "node src/controlCenter/startControlCenter.js",
+    "panel:tui": "node src/controlCenter/startControlCenter.js --tui",
+    "panel:web": "node src/controlCenter/startControlCenter.js --web",
+    "login": "node src/main.js login",
+    "start": "node src/main.js run",
+    "schedule": "node src/queryScheduleShift.js",
+    "test": "node --test"
+  },
+  "keywords": [
+    "playwright",
+    "chrome",
+    "timeout",
+    "supervisor"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "playwright-core": "^1.54.2"
+  }
+}

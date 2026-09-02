@@ -1,0 +1,50 @@
+@media (max-width: 980px) {
+  .topbar {
+    flex-direction: column;
+  }
+
+  .view-actions {
+    justify-content: flex-start;
+  }
+
+  .form-grid,
+  .order-board {
+    grid-template-columns: 1fr;
+  }
+
+  .workflow-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .workflow-meta {
+    justify-content: flex-start;
+  }
+
+  .workflow-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .workflow-actions button {
+    flex: 1 1 140px;
+  }
+
+  .order-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .page-size-row {
+    width: 100%;
+  }
+
+  .order-item {
+    flex-direction: column;
+  }
+
+  .order-actions {
+    justify-content: flex-start;
+    min-width: 0;
+  }
+}

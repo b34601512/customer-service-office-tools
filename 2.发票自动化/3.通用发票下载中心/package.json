@@ -1,0 +1,17 @@
+{
+  "name": "common-invoice-download-center",
+  "version": "0.1.0",
+  "private": true,
+  "description": "通用发票下载中心：统一登录发票系统并按订单号下载发票",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node src/tui/startTui.js",
+    "server": "node src/server/startServer.js",
+    "import:jd-config": "node src/scripts/importJdInvoiceConfig.js",
+    "test": "node -e \"process.env.INVOICE_DOWNLOAD_CENTER_TEST_MODE='1'; const result = require('node:child_process').spawnSync(process.execPath, ['--test', 'tests/*.test.js'], { stdio: 'inherit', env: process.env }); process.exit(result.status ?? 1);\"",
+    "panel:cli": "node src/main.js"
+  },
+  "dependencies": {
+    "playwright": "^1.58.2"
+  }
+}

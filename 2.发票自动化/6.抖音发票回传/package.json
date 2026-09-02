@@ -1,0 +1,19 @@
+{
+  "name": "douyin-invoice-return",
+  "version": "0.0.1",
+  "private": true,
+  "description": "抖音发票回传工具",
+  "type": "commonjs",
+  "scripts": {
+    "panel": "node src/tui/startTui.js",
+    "start": "node src/tui/startTui.js",
+    "login": "node src/main.js login",
+    "login:all": "node src/main.js login-all",
+    "collect": "node src/main.js collect",
+    "check-config": "node src/main.js check-config",
+    "test": "node -e \"process.env.DOUYIN_INVOICE_RETURN_TEST_MODE='1'; const result = require('node:child_process').spawnSync(process.execPath, ['--test', 'tests/*.test.js'], { stdio: 'inherit', env: process.env }); process.exit(result.status ?? 1);\""
+  },
+  "dependencies": {
+    "playwright": "^1.58.2"
+  }
+}

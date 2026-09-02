@@ -1,0 +1,258 @@
+/* 该文件用于企微配置、日志页和浮层反馈样式。 */
+.private-config-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.private-config-panel {
+  padding: 18px;
+  border: 1px solid rgba(17, 39, 36, 0.08);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.private-config-head h3 {
+  margin: 0;
+  font-size: 24px;
+}
+
+.private-form-grid {
+  margin-top: 16px;
+}
+
+.notification-group-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.notification-group-toolbar-text {
+  margin: 0;
+}
+
+.notification-group-list {
+  display: grid;
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.staff-directory-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  margin-top: 18px;
+  flex-wrap: wrap;
+}
+
+.staff-directory-list {
+  display: grid;
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.notification-group-card,
+.notification-group-empty,
+.staff-card,
+.staff-directory-empty {
+  padding: 16px;
+  border: 1px solid rgba(17, 39, 36, 0.08);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.notification-group-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.notification-group-card-title {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.staff-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.staff-card-title {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.notification-group-grid {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.7fr) minmax(320px, 1.5fr) minmax(160px, 0.6fr) 120px;
+  gap: 14px;
+  align-items: end;
+}
+
+.staff-card-grid {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.9fr) minmax(240px, 1fr) 120px;
+  gap: 14px;
+  align-items: end;
+}
+
+.notification-group-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.staff-card-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.readonly-field {
+  display: flex;
+  align-items: center;
+  min-height: 46px;
+  padding: 0 14px;
+  color: var(--text);
+  border: 1px solid rgba(17, 39, 36, 0.12);
+  border-radius: 14px;
+  background: rgba(246, 248, 247, 0.96);
+  line-height: 1.5;
+  word-break: break-all;
+}
+
+.notification-group-empty,
+.staff-directory-empty {
+  color: var(--muted);
+  border-style: dashed;
+}
+
+.private-config-textarea {
+  grid-column: 1 / -1;
+}
+
+.ghost-button {
+  padding: 0 16px;
+  background: rgba(255, 255, 255, 0.1);
+  color: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.log-card .ghost-button {
+  color: var(--brand-strong);
+  background: rgba(28, 92, 80, 0.08);
+  border-color: rgba(28, 92, 80, 0.12);
+}
+
+.log-channel-switch {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.log-channel-button {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid rgba(17, 39, 36, 0.12);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--brand-strong);
+  cursor: pointer;
+  font: inherit;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+.log-channel-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(17, 39, 36, 0.12);
+}
+
+.log-channel-button.is-active {
+  color: #f8fbfa;
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--brand-strong), var(--brand));
+}
+
+.log-output {
+  min-height: 280px;
+  margin: 0;
+  padding: 18px;
+  border-radius: 20px;
+  background: #171411;
+  color: #f7f0e6;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font: 13px/1.65 Consolas, "Courier New", "Microsoft YaHei UI", monospace;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.log-page-output {
+  min-height: 560px;
+}
+
+.feedback-stack {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 999;
+  display: grid;
+  gap: 12px;
+  width: min(360px, calc(100vw - 32px));
+  pointer-events: none;
+}
+
+.feedback-toast {
+  padding: 16px 18px;
+  border: 1px solid rgba(17, 39, 36, 0.12);
+  border-radius: 18px;
+  box-shadow: 0 18px 40px rgba(17, 39, 36, 0.16);
+  backdrop-filter: blur(12px);
+  transform: translateY(0);
+  opacity: 1;
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+.feedback-toast.is-info {
+  background: rgba(244, 250, 248, 0.98);
+  border-color: rgba(28, 92, 80, 0.18);
+}
+
+.feedback-toast.is-pending {
+  background: rgba(255, 249, 239, 0.98);
+  border-color: rgba(216, 161, 74, 0.22);
+}
+
+.feedback-toast.is-success {
+  background: rgba(242, 250, 247, 0.98);
+  border-color: rgba(28, 92, 80, 0.2);
+}
+
+.feedback-toast.is-error {
+  background: rgba(252, 244, 243, 0.98);
+  border-color: rgba(154, 63, 52, 0.2);
+}
+
+.feedback-toast.is-leaving {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
+.feedback-toast-title {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 16px;
+}
+
+.feedback-toast-message {
+  margin: 0;
+  line-height: 1.6;
+  color: var(--muted);
+}

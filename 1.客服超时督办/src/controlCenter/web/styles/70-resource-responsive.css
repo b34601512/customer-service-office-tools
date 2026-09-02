@@ -1,0 +1,167 @@
+/* 该文件用于资源占用弹窗和最终移动端响应式样式。 */
+.config-card,
+.private-config-card {
+  padding: 18px;
+  box-shadow: none;
+}
+
+.resource-usage-dialog {
+  width: min(920px, 100%);
+}
+
+.resource-usage-card {
+  display: grid;
+  gap: 16px;
+}
+
+.resource-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(120px, 1fr));
+  gap: 10px;
+}
+
+.resource-summary-item {
+  display: grid;
+  gap: 6px;
+  min-height: 76px;
+  padding: 14px;
+  border: 1px solid #c7d1df;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.resource-summary-item span,
+.resource-process-metric span,
+.resource-process-main span {
+  color: #667085;
+  font-size: 13px;
+}
+
+.resource-summary-item strong {
+  color: #1e3348;
+  font-size: 22px;
+}
+
+.resource-summary-item-error strong {
+  color: #b3261e;
+}
+
+.resource-process-list {
+  display: grid;
+  gap: 10px;
+}
+
+.resource-process-row {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(96px, 0.28fr) minmax(120px, 0.34fr);
+  gap: 12px;
+  align-items: center;
+  padding: 14px;
+  border: 1px solid #d9e2ef;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.resource-process-main,
+.resource-process-metric {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.resource-process-main strong,
+.resource-process-main span {
+  overflow-wrap: anywhere;
+}
+
+.resource-process-metric strong {
+  color: #1e3348;
+}
+
+.config-grid input,
+.config-grid textarea,
+.phrase-search-bar input,
+.phrase-editor-field input,
+.phrase-editor-field textarea,
+.phrase-page-jump input {
+  border-radius: 6px;
+}
+
+.checkbox-row {
+  justify-content: flex-start;
+}
+
+.checkbox-row input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  min-height: 18px;
+  flex: 0 0 auto;
+  accent-color: #126b5b;
+}
+
+.notification-group-grid {
+  grid-template-columns: minmax(180px, 0.65fr) minmax(260px, 1.5fr) minmax(140px, 0.5fr) 100px;
+}
+
+.staff-card-grid {
+  grid-template-columns: minmax(180px, 0.9fr) minmax(220px, 1fr) 100px;
+}
+
+.modal-open {
+  overflow: hidden;
+}
+
+@media (max-width: 900px) {
+  .page-shell {
+    width: min(100vw - 24px, 1280px);
+    padding-top: 12px;
+  }
+
+  .hero,
+  .workflow-head,
+  .section-title {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .hero-status {
+    min-width: 0;
+  }
+
+  .workflow-meta {
+    justify-content: flex-start;
+  }
+
+  .workflow-row,
+  .config-grid,
+  .config-page-menu,
+  .notification-group-grid,
+  .staff-card-grid,
+  .keyword-rule-row,
+  .customer-mirror-overview-row,
+  .resource-summary-grid,
+  .resource-process-row,
+  .customer-mirror-detail-fact-row {
+    grid-template-columns: 1fr;
+  }
+
+  .workflow-actions,
+  .hero-actions,
+  .keyword-rule-editor-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .customer-mirror-detail-button {
+    width: 100%;
+  }
+
+  .customer-mirror-countdowns,
+  .customer-mirror-detail-countdowns {
+    align-items: stretch;
+  }
+
+  .customer-mirror-countdown-card {
+    flex: 1 1 140px;
+  }
+}

@@ -1,0 +1,43 @@
+          </form>
+
+          <section class="private-config-card config-page hidden" data-config-page="wecom">
+            <div class="section-head">
+              <div>
+                <p class="section-eyebrow">恢复配置</p>
+                <h2>企微提醒</h2>
+              </div>
+              <button class="ghost-button" data-config-page-target="hub" type="button">返回目录</button>
+            </div>
+            <p class="helper-text">
+              这里保存督办升级需要的通知群和成员清单。主管端换电脑后，只需要回填这里，再做一次「首次登录」即可继续使用。
+            </p>
+
+            <form id="wecomConfigForm" class="private-config-panel">
+              <div class="private-config-head">
+                <p class="section-eyebrow">企微提醒</p>
+                <h3>通知群列表 / 成员清单</h3>
+              </div>
+              <div class="notification-group-toolbar">
+                <p class="helper-text notification-group-toolbar-text">启用中的通知群都会收到提醒；不想发时直接停用即可。</p>
+                <button class="mini-button" id="addNotificationGroupButton" type="button">新增通知群</button>
+              </div>
+              <div id="notificationGroupsList" class="notification-group-list"></div>
+              <div class="staff-directory-toolbar">
+                <div>
+                  <p class="helper-text notification-group-toolbar-text">成员只维护这一份。填姓名和手机号就能正常提醒。</p>
+                </div>
+                <button class="mini-button" id="addStaffButton" type="button">新增成员</button>
+              </div>
+              <div id="staffDirectoryList" class="staff-directory-list"></div>
+              <div class="config-grid private-form-grid">
+                <button class="save-button" type="submit">保存企微提醒</button>
+              </div>
+            </form>
+            <div class="feedback-banner is-info" id="privateConfigFeedback" aria-live="polite">
+              <span class="feedback-banner-badge">企微反馈</span>
+              <strong class="feedback-banner-title" data-feedback-title>等待保存</strong>
+              <p class="feedback-banner-message" data-feedback-message>这里会显示企微提醒配置保存结果。</p>
+            </div>
+          </section>
+        </div>
+      </section>

@@ -1,0 +1,10 @@
+{
+  "baseUrl": "",
+  "companyCode": "",
+  "account": "",
+  "password": "",
+  "days": 90,
+  "downloadDir": "",
+  "profileDir": "",
+  "debugPort": 9876
+}

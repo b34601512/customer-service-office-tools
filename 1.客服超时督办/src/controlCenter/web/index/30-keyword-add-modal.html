@@ -1,0 +1,48 @@
+      <section
+        id="keywordAddModal"
+        class="config-modal keyword-add-modal hidden"
+        role="dialog"
+        aria-modal="true"
+        aria-hidden="true"
+        aria-labelledby="keywordAddModalTitle"
+      >
+        <div class="config-dialog keyword-add-dialog">
+          <form id="keywordAddForm" class="keyword-add-form">
+            <div class="section-title">
+              <div>
+                <p class="section-eyebrow">新增关键词</p>
+                <h2 id="keywordAddModalTitle">新增关键词</h2>
+                <p id="keywordAddModalSubtitle">确认后加入当前列表，点击保存后正式生效。</p>
+              </div>
+              <button id="keywordAddCloseButton" class="ghost-button" type="button">关闭</button>
+            </div>
+            <div class="keyword-add-body">
+              <label class="keyword-add-field">
+                <span>关键词内容</span>
+                <input id="keywordAddText" name="keywordAddText" autocomplete="off" required />
+              </label>
+              <fieldset class="keyword-add-fieldset">
+                <legend>匹配方式</legend>
+                <div class="keyword-rule-radio-group">
+                  <label class="keyword-rule-radio">
+                    <input name="keywordAddMatchMode" type="radio" value="exact" />
+                    <span>完全匹配</span>
+                  </label>
+                  <label class="keyword-rule-radio">
+                    <input name="keywordAddMatchMode" type="radio" value="startsWith" />
+                    <span>开头匹配</span>
+                  </label>
+                  <label class="keyword-rule-radio">
+                    <input name="keywordAddMatchMode" type="radio" value="includes" />
+                    <span>包含匹配</span>
+                  </label>
+                </div>
+              </fieldset>
+            </div>
+            <div class="keyword-add-actions">
+              <button id="keywordAddCancelButton" class="ghost-button" type="button">取消</button>
+              <button class="save-button" type="submit">确认新增</button>
+            </div>
+          </form>
+        </div>
+      </section>

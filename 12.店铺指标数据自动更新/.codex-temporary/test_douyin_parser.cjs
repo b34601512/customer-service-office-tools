@@ -1,0 +1,5 @@
+const {buildDouyinStoreMetricRecords}=require(process.cwd()+"/src/platforms/douyin/storeMetrics/douyinReportPayloadParser");
+const store={key:"douyin1",displayName:"德达抖音"};
+const text="服务体验 服务体验得分 95 分 较前1日持平 飞鸽平均响应时长得分 100 分 较前1日持平 x25秒/权重=25分 售后平均审核时长得分 100 分 较前1日持平 x25秒/权重=25分 飞鸽会话不满意率得分 90 分 较前1日持平 x25秒/权重=22.5分 平台求助率得分 90 分 较前1日持平 x25秒/权重=22.5分 考核指标 飞鸽平均响应时长 查看详情 100分 店铺表现 13.872秒 较前1日持平 售后平均审核时长 查看详情 100分 店铺表现 1.7712小时 较前1日持平 飞鸽会话不满意率 查看详情 90分 店铺表现 11.1111% 较前1日持平 平台求助率 查看详情 90分 店铺表现 0.3937% 较前1日持平 差行为扣分 0 分 虚假交易刷体验分扣分 0 分 影响消费者体验扣分 0 分 虚假交易刷体验分 0 次 影响消费者体验 0 次";
+const records=buildDouyinStoreMetricRecords({store,pageText:text,sourceUrl:"url",fallbackDate:new Date("2026-08-02T00:00:00+08:00")});
+console.log(records.length); for(const r of records)console.log(r.metricName,r.metricValue,r.unit);

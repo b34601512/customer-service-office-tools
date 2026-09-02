@@ -1,0 +1,9 @@
+{
+  "appKey": "填写京东开放平台应用 app_key",
+  "appSecret": "填写京东开放平台应用 app_secret",
+  "asker": "填写京东商家主账号 pin",
+  "redirectUri": "http://127.0.0.1:38202/jd-open-api/callback",
+  "callbackHost": "127.0.0.1",
+  "callbackPort": 38202,
+  "callbackPath": "/jd-open-api/callback"
+}

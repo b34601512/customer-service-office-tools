@@ -1,0 +1,34 @@
+      <section
+        id="resourceUsageModal"
+        class="config-modal hidden"
+        role="dialog"
+        aria-modal="true"
+        aria-hidden="true"
+        aria-labelledby="resourceUsageModalTitle"
+      >
+        <div class="config-dialog resource-usage-dialog">
+          <div class="section-title">
+            <div>
+              <p class="section-eyebrow">运行巡检</p>
+              <h2 id="resourceUsageModalTitle">资源占用</h2>
+              <p id="resourceUsageModalSubtitle">当前项目进程树的实时采样结果。</p>
+            </div>
+            <div class="modal-title-actions">
+              <button id="refreshResourceUsageButton" class="ghost-button" type="button">刷新</button>
+              <button id="closeResourceUsageModalButton" class="ghost-button" type="button">关闭</button>
+            </div>
+          </div>
+
+          <section class="config-card resource-usage-card">
+            <div class="section-head">
+              <div>
+                <p class="section-eyebrow">项目资源</p>
+                <h2>本项目占用</h2>
+              </div>
+              <span class="mode-chip" id="resourceUsageUpdatedAt">等待采样</span>
+            </div>
+            <div class="resource-summary-grid" id="resourceUsageSummary"></div>
+            <div class="resource-process-list" id="resourceUsageProcessList"></div>
+          </section>
+        </div>
+      </section>

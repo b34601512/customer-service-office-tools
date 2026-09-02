@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>退款自动提醒后台</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <main class="page">
+      <section class="topbar">
+        <div>
+          <p class="eyebrow">管易云 ERP</p>
+          <h1>退款自动提醒</h1>
+          <div id="appMetaBar" class="app-meta" aria-live="polite">版本信息加载中...</div>
+        </div>
+        <nav class="view-actions" aria-label="后台页面">
+          <button type="button" class="view-button active" data-view-target="home">首页</button>
+          <button type="button" id="toggleHandledButton" class="view-button" aria-expanded="false" aria-controls="handledPanel">已处理</button>
+          <button type="button" id="toggleConfigButton" class="view-button" aria-expanded="false" aria-controls="configPanel">运行配置</button>
+          <button type="button" id="toggleLogButton" class="view-button" aria-expanded="false" aria-controls="logDialog">实时日志</button>
+        </nav>
+      </section>
+
+      <div id="feedback" class="feedback"></div>
+      <div id="workflowActionPool" class="workflow-action-pool" hidden>
+        <button id="openErpButton" class="primary">打开 ERP</button>
+        <button id="startMonitorButton">启动监控</button>
+        <button id="stopMonitorButton">停止监控</button>
+        <button id="openLogButton">查看日志</button>
+        <button id="exitButton" class="danger">退出后台</button>
+      </div>
+
+      <section id="homeView" class="view-panel active" data-view-panel="home">
+        <section class="action-workflow" id="workflowGrid" aria-label="监控动作状态">
+          <div class="workflow-head">
+            <div class="workflow-heading">
+              <h2>监控进度</h2>
+              <p id="workflowStatusText" class="workflow-status-text">后台状态加载中...</p>
+            </div>
+          </div>
+        </section>
+        <section class="panel">
+          <div class="section-title">
+            <h2>订单处理</h2>
+          </div>
+          <div class="order-toolbar">
+            <div class="order-search-tools">
+              <label class="search-row">
+                <span>搜索平台单号</span>
+                <input id="orderSearchInput" type="text" placeholder="输入平台单号" autocomplete="off" />
+              </label>
+              <button id="clearOrderSearchButton" type="button" class="clear-search-button" title="清空搜索内容并恢复全部订单">清除搜索</button>
+            </div>
+            <div class="purchase-date-filter" role="group" aria-label="购买时间筛选">
+              <span>购买时间</span>
+              <div class="date-filter-buttons">
+                <button type="button" class="date-filter-button active" data-order-date-days="1">1天</button>
+                <button type="button" class="date-filter-button" data-order-date-days="2">2天</button>
+                <button type="button" class="date-filter-button" data-order-date-days="3">3天</button>
+                <button type="button" class="date-filter-button" data-order-date-days="5">5天</button>
+                <button type="button" class="date-filter-button" data-order-date-days="7">7天</button>
+              </div>
+            </div>
+            <label class="page-size-row">
+              <span>每列每页</span>
+              <select id="orderPageSizeSelect">
+                <option value="6">6 条</option>
+                <option value="8" selected>8 条</option>
+                <option value="12">12 条</option>
+                <option value="20">20 条</option>
+              </select>
+            </label>
+          </div>
+          <div id="orderBoard" class="order-board">
+            <section class="order-column pending-column">
+              <div class="order-column-head">
+                <strong>未处理</strong>
+                <span id="pendingCount" class="count-pill">0</span>
+              </div>
+              <div id="pendingOrderList" class="order-list">暂时没有待处理订单。</div>
+              <div id="pendingPager" class="pager"></div>
+            </section>
+            <section class="order-column verifying-column">
+              <div class="order-column-head">
+                <strong>正在核实</strong>
+                <span id="verifyingCount" class="count-pill verifying">0</span>
+              </div>
+              <div id="verifyingOrderList" class="order-list">暂时没有正在核实订单。</div>
+              <div id="verifyingPager" class="pager"></div>
+            </section>
+            <section class="order-column processing-column">
+              <div class="order-column-head">
+                <strong>处理中</strong>
+                <span id="processingCount" class="count-pill processing">0</span>
+              </div>
+              <div id="processingOrderList" class="order-list">暂时没有处理中订单。</div>
+              <div id="processingPager" class="pager"></div>
+            </section>
+          </div>
+        </section>
+      </section>
+
+      <section id="handledPanel" class="handled-modal hidden" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="handledDialogTitle">
+        <div class="handled-dialog">
+          <div class="section-title handled-dialog-head">
+            <div>
+              <h2 id="handledDialogTitle">已处理订单</h2>
+              <p>人工处理过的订单集中在这里查看和恢复。</p>
+            </div>
+            <button id="closeHandledButton" type="button">关闭</button>
+          </div>
+          <div class="order-toolbar">
+            <div class="order-search-tools">
+              <label class="search-row">
+                <span>搜索平台单号</span>
+                <input id="handledSearchInput" type="text" placeholder="输入平台单号" autocomplete="off" />
+              </label>
+              <button id="clearHandledSearchButton" type="button" class="clear-search-button" title="清空搜索内容并恢复全部已处理订单">清除搜索</button>
+            </div>
+            <div class="purchase-date-filter" role="group" aria-label="已处理购买时间筛选">
+              <span>购买时间</span>
+              <div class="date-filter-buttons">
+                <button type="button" class="date-filter-button active" data-order-date-days="1">1天</button>
+                <button type="button" class="date-filter-button" data-order-date-days="2">2天</button>
+                <button type="button" class="date-filter-button" data-order-date-days="3">3天</button>
+                <button type="button" class="date-filter-button" data-order-date-days="5">5天</button>
+                <button type="button" class="date-filter-button" data-order-date-days="7">7天</button>
+              </div>
+            </div>
+            <label class="page-size-row">
+              <span>每页</span>
+              <select id="handledPageSizeSelect">
+                <option value="6">6 条</option>
+                <option value="8" selected>8 条</option>
+                <option value="12">12 条</option>
+                <option value="20">20 条</option>
+              </select>
+            </label>
+          </div>
+          <div id="handledBoard" class="handled-page-board">
+            <section class="order-column handled-column">
+              <div class="order-column-head">
+                <strong>已处理</strong>
+                <span id="handledCount" class="count-pill success">0</span>
+              </div>
+              <div id="handledOrderList" class="order-list">暂时没有已处理订单。</div>
+              <div id="handledPager" class="pager"></div>
+            </section>
+          </div>
+        </div>
+      </section>
+
+      <section id="configPanel" class="config-modal hidden" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="configDialogTitle">
+        <div class="config-dialog">
+          <div class="section-title config-dialog-head">
+            <div>
+              <h2 id="configDialogTitle">运行配置</h2>
+              <p>自动查询间隔最低 5 分钟；通知和订单处理区共用付款范围。</p>
+            </div>
+            <button id="closeConfigButton" type="button">关闭</button>
+          </div>
+          <form id="configForm" class="form-grid"></form>
+          <div id="configFeedback" class="config-feedback" role="status" aria-live="polite"></div>
+          <div class="config-actions">
+            <button id="saveButton" type="button" class="primary">保存配置</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="logDialog" class="log-modal hidden" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="logDialogTitle">
+        <div class="log-dialog">
+          <div class="section-title log-dialog-head">
+            <div>
+              <h2 id="logDialogTitle">实时日志</h2>
+              <p>只显示本次运行的最新日志，复制后可直接发给技术排查。</p>
+            </div>
+            <div class="log-dialog-actions">
+              <button id="copyLogButton" type="button">复制日志</button>
+              <button id="closeLogDialogButton" type="button">关闭</button>
+            </div>
+          </div>
+          <div id="copyLogFeedback" class="copy-log-feedback" role="status" aria-live="polite"></div>
+          <pre id="logDialogOutput" class="log-dialog-output">后台日志加载中...</pre>
+        </div>
+      </section>
+    </main>
+    <script src="/button_feedback.js"></script>
+    <script src="/config_form.js"></script>
+    <script src="/order_card.js"></script>
+    <script src="/note_dialog.js"></script>
+    <script src="/order_board_helpers.js"></script>
+    <script src="/order_toggle_feedback.js"></script>
+    <script src="/order_board.js"></script>
+    <script src="/app.js"></script>
+  </body>
+</html>

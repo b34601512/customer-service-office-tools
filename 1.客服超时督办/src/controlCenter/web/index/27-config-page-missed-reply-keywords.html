@@ -1,0 +1,197 @@
+            <section class="config-card config-page hidden" data-config-page="missedReplyTemporaryKeywords">
+              <div class="section-head">
+                <div>
+                  <p class="section-eyebrow">漏回复监控</p>
+                  <h2>稍等类关键词</h2>
+                </div>
+                <button class="ghost-button" data-config-page-target="missedReply" type="button">返回漏回复设置</button>
+              </div>
+              <div class="config-grid">
+                <section class="wide-field keyword-rule-editor" data-keyword-editor="missedReplyTemporaryReplyKeywords">
+                  <div class="keyword-rule-editor-head">
+                    <div>
+                      <strong>稍等类临时回复关键词</strong>
+                      <p class="field-hint">命中后只算临时接住；每行一个关键词，每行单独选择匹配方式。</p>
+                    </div>
+                    <button class="mini-button" data-keyword-add="missedReplyTemporaryReplyKeywords" type="button">新增关键词</button>
+                  </div>
+                  <div class="keyword-rule-table" data-keyword-rows="missedReplyTemporaryReplyKeywords"></div>
+                  <textarea
+                    class="keyword-rule-hidden"
+                    id="missedReplyTemporaryReplyKeywords"
+                    name="missedReplyTemporaryReplyKeywords"
+                    hidden
+                  ></textarea>
+                </section>
+                <button class="save-button" type="submit">保存稍等类关键词</button>
+              </div>
+              <div class="feedback-banner is-info" data-missed-reply-config-feedback aria-live="polite">
+                <span class="feedback-banner-badge">配置反馈</span>
+                <strong class="feedback-banner-title" data-feedback-title>等待保存</strong>
+                <p class="feedback-banner-message" data-feedback-message>这里会显示漏回复配置保存结果。</p>
+              </div>
+            </section>
+
+            <section class="config-card config-page hidden" data-config-page="missedReplyResolutionKeywords">
+              <div class="section-head">
+                <div>
+                  <p class="section-eyebrow">漏回复监控</p>
+                  <h2>客户主动结案</h2>
+                </div>
+                <button class="ghost-button" data-config-page-target="missedReply" type="button">返回漏回复设置</button>
+              </div>
+              <div class="config-grid">
+                <section class="wide-field keyword-rule-editor" data-keyword-editor="missedReplyCustomerResolutionKeywords">
+                  <div class="keyword-rule-editor-head">
+                    <div>
+                      <strong>客户主动结案关键词</strong>
+                      <p class="field-hint">命中后关闭此前待回复责任；只配置“明确已解决”的表达，不要填写“谢谢/好的”。</p>
+                    </div>
+                    <button class="mini-button" data-keyword-add="missedReplyCustomerResolutionKeywords" type="button">新增关键词</button>
+                  </div>
+                  <div class="keyword-rule-table" data-keyword-rows="missedReplyCustomerResolutionKeywords"></div>
+                  <textarea
+                    class="keyword-rule-hidden"
+                    id="missedReplyCustomerResolutionKeywords"
+                    name="missedReplyCustomerResolutionKeywords"
+                    hidden
+                  ></textarea>
+                </section>
+                <button class="save-button" type="submit">保存客户主动结案</button>
+              </div>
+              <div class="feedback-banner is-info" data-missed-reply-config-feedback aria-live="polite">
+                <span class="feedback-banner-badge">配置反馈</span>
+                <strong class="feedback-banner-title" data-feedback-title>等待保存</strong>
+                <p class="feedback-banner-message" data-feedback-message>这里会显示漏回复配置保存结果。</p>
+              </div>
+            </section>
+
+            <section class="config-card config-page hidden" data-config-page="missedReplyClosingKeywords">
+              <div class="section-head">
+                <div>
+                  <p class="section-eyebrow">漏回复监控</p>
+                  <h2>客户弱收尾</h2>
+                </div>
+                <button class="ghost-button" data-config-page-target="missedReply" type="button">返回漏回复设置</button>
+              </div>
+              <div class="config-grid">
+                <section class="wide-field keyword-rule-editor" data-keyword-editor="missedReplyCustomerClosingKeywords">
+                  <div class="keyword-rule-editor-head">
+                    <div>
+                      <strong>客户弱收尾关键词</strong>
+                      <p class="field-hint">只忽略本条客套话，不关闭此前尚未完成的反馈或申请。</p>
+                    </div>
+                    <button class="mini-button" data-keyword-add="missedReplyCustomerClosingKeywords" type="button">新增关键词</button>
+                  </div>
+                  <div class="keyword-rule-table" data-keyword-rows="missedReplyCustomerClosingKeywords"></div>
+                  <textarea
+                    class="keyword-rule-hidden"
+                    id="missedReplyCustomerClosingKeywords"
+                    name="missedReplyCustomerClosingKeywords"
+                    hidden
+                  ></textarea>
+                </section>
+                <button class="save-button" type="submit">保存客户弱收尾</button>
+              </div>
+              <div class="feedback-banner is-info" data-missed-reply-config-feedback aria-live="polite">
+                <span class="feedback-banner-badge">配置反馈</span>
+                <strong class="feedback-banner-title" data-feedback-title>等待保存</strong>
+                <p class="feedback-banner-message" data-feedback-message>这里会显示漏回复配置保存结果。</p>
+              </div>
+            </section>
+
+            <section class="config-card config-page hidden" data-config-page="missedReplyInvalidKeywords">
+              <div class="section-head">
+                <div>
+                  <p class="section-eyebrow">漏回复监控</p>
+                  <h2>无效人工回复</h2>
+                </div>
+                <button class="ghost-button" data-config-page-target="missedReply" type="button">返回漏回复设置</button>
+              </div>
+              <div class="config-grid">
+                <section class="wide-field keyword-rule-editor" data-keyword-editor="missedReplyInvalidAgentReplyKeywords">
+                  <div class="keyword-rule-editor-head">
+                    <div>
+                      <strong>无效人工回复关键词</strong>
+                      <p class="field-hint">标点本身也可以作为关键词；每行一个关键词，每行单独选择匹配方式。</p>
+                    </div>
+                    <button class="mini-button" data-keyword-add="missedReplyInvalidAgentReplyKeywords" type="button">新增关键词</button>
+                  </div>
+                  <div class="keyword-rule-table" data-keyword-rows="missedReplyInvalidAgentReplyKeywords"></div>
+                  <textarea
+                    class="keyword-rule-hidden"
+                    id="missedReplyInvalidAgentReplyKeywords"
+                    name="missedReplyInvalidAgentReplyKeywords"
+                    hidden
+                  ></textarea>
+                </section>
+                <button class="save-button" type="submit">保存无效人工回复</button>
+              </div>
+              <div class="feedback-banner is-info" data-missed-reply-config-feedback aria-live="polite">
+                <span class="feedback-banner-badge">配置反馈</span>
+                <strong class="feedback-banner-title" data-feedback-title>等待保存</strong>
+                <p class="feedback-banner-message" data-feedback-message>这里会显示漏回复配置保存结果。</p>
+              </div>
+            </section>
+
+            <section class="config-card config-page hidden" data-config-page="missedReplyPlatformNoticeKeywords">
+              <div class="section-head">
+                <div>
+                  <p class="section-eyebrow">漏回复监控</p>
+                  <h2>平台提示过滤</h2>
+                </div>
+                <button class="ghost-button" data-config-page-target="missedReply" type="button">返回漏回复设置</button>
+              </div>
+              <div class="config-grid">
+                <section class="wide-field keyword-rule-editor" data-keyword-editor="missedReplyPlatformNoticeKeywords">
+                  <div class="keyword-rule-editor-head">
+                    <div>
+                      <strong>平台固定提示关键词</strong>
+                      <p class="field-hint">命中后按系统提示排除，不进入客户最后有效消息。</p>
+                    </div>
+                    <button class="mini-button" data-keyword-add="missedReplyPlatformNoticeKeywords" type="button">新增关键词</button>
+                  </div>
+                  <div class="keyword-rule-table" data-keyword-rows="missedReplyPlatformNoticeKeywords"></div>
+                  <textarea
+                    class="keyword-rule-hidden"
+                    id="missedReplyPlatformNoticeKeywords"
+                    name="missedReplyPlatformNoticeKeywords"
+                    hidden
+                  ></textarea>
+                </section>
+                <button class="save-button" type="submit">保存平台提示过滤</button>
+              </div>
+              <div class="feedback-banner is-info" data-missed-reply-config-feedback aria-live="polite">
+                <span class="feedback-banner-badge">配置反馈</span>
+                <strong class="feedback-banner-title" data-feedback-title>等待保存</strong>
+                <p class="feedback-banner-message" data-feedback-message>这里会显示漏回复配置保存结果。</p>
+              </div>
+            </section>
+
+            <section class="config-card config-page hidden" data-config-page="groupChatFilterKeywords">
+              <div class="section-head">
+                <div>
+                  <p class="section-eyebrow">督办范围</p>
+                  <h2>群聊识别</h2>
+                </div>
+                <button class="ghost-button" data-config-page-target="missedReply" type="button">返回漏回复设置</button>
+              </div>
+              <div class="config-grid">
+                <section class="wide-field">
+                  <label class="checkbox-field">
+                    <span>启用群聊识别</span>
+                    <span class="checkbox-row">
+                      <input id="groupChatFilterEnabled" name="groupChatFilterEnabled" type="checkbox" />
+                      <em data-checkbox-hint>启用中</em>
+                    </span>
+                  </label>
+                  <p class="field-hint">开启后，联系人名单里判断为群聊的会话会被自动排除，不再触发超时、漏回复和转接提醒。群聊由平台官方字段自动识别，无需维护关键词。默认开启，建议保持启用。</p>
+                </section>
+                <button class="save-button" type="submit">保存群聊识别</button>
+              </div>
+              <div class="feedback-banner is-info" data-missed-reply-config-feedback aria-live="polite">
+                <span class="feedback-banner-badge">配置反馈</span>
+                <strong class="feedback-banner-title" data-feedback-title>等待保存</strong>
+                <p class="feedback-banner-message" data-feedback-message>这里会显示漏回复配置保存结果。</p>
+              </div>
+            </section>

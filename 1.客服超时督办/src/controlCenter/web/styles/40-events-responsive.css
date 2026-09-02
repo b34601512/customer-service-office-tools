@@ -1,0 +1,95 @@
+/* 该文件用于通用事件空状态和旧页面移动端兼容样式。 */
+.event-item,
+.empty-state {
+  padding: 16px 18px;
+  color: var(--text);
+  line-height: 1.75;
+  word-break: break-word;
+}
+
+.event-item {
+  font-family: Consolas, "Microsoft YaHei UI", monospace;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(245, 249, 247, 0.98)),
+    linear-gradient(90deg, rgba(216, 161, 74, 0.04), transparent 35%);
+}
+
+.empty-state {
+  color: var(--muted);
+}
+
+.hidden {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .hero,
+  .layout,
+  .config-grid,
+  .private-config-grid,
+  .action-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .notification-group-grid,
+  .staff-card-grid,
+  .phrase-editor-head,
+  .phrase-toolbar,
+  .phrase-table-head,
+  .phrase-preview-row,
+  .phrase-editor-grid,
+  .phrase-editor-subgrid,
+  .phrase-pagination {
+    grid-template-columns: 1fr;
+  }
+
+  .phrase-editor-head,
+  .phrase-toolbar {
+    align-items: stretch;
+  }
+
+  .phrase-toolbar-left,
+  .notification-group-toolbar,
+  .staff-directory-toolbar,
+  .phrase-search-bar,
+  .log-channel-switch {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .feedback-stack {
+    left: 12px;
+    right: 12px;
+    top: 12px;
+    width: auto;
+  }
+
+  .phrase-key-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .phrase-search-bar input {
+    width: 100%;
+  }
+
+  .phrase-preview-actions,
+  .phrase-editor-actions,
+  .phrase-page-meta {
+    justify-content: flex-start;
+  }
+
+  .page-shell {
+    width: min(100%, calc(100% - 20px));
+    margin-top: 10px;
+  }
+
+  .section-action-button {
+    width: 100%;
+  }
+
+  .hero,
+  .card {
+    border-radius: 20px;
+  }
+}

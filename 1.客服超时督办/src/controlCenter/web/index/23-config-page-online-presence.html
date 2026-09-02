@@ -1,0 +1,46 @@
+            <section class="config-card config-page hidden" data-config-page="onlinePresence">
+              <div class="section-head">
+                <div>
+                  <p class="section-eyebrow">上班监控</p>
+                  <h2>上班监控</h2>
+                </div>
+                <button class="ghost-button" data-config-page-target="hub" type="button">返回目录</button>
+              </div>
+              <div class="config-grid">
+                <label class="checkbox-field">
+                  <span>启用上班监控</span>
+                  <span class="checkbox-row">
+                    <input id="onlinePresenceMonitorEnabled" name="onlinePresenceMonitorEnabled" type="checkbox" />
+                    <em>启用中</em>
+                  </span>
+                </label>
+                <label class="checkbox-field">
+                  <span>自动打开转接待</span>
+                  <span class="checkbox-row">
+                    <input id="transferAutoOpenEnabled" name="transferAutoOpenEnabled" type="checkbox" />
+                    <em>检测到开自动分配但没开可被转接时自动补开</em>
+                  </span>
+                </label>
+                <label class="checkbox-field">
+                  <span>自动关闭转接待</span>
+                  <span class="checkbox-row">
+                    <input id="transferAutoCloseEnabled" name="transferAutoCloseEnabled" type="checkbox" />
+                    <em>检测到关自动分配但可被转接仍开时自动关闭</em>
+                  </span>
+                </label>
+                <label>
+                  <span>扫描间隔(ms)</span>
+                  <input id="onlinePresenceScanIntervalMs" name="onlinePresenceScanIntervalMs" inputmode="numeric" />
+                </label>
+                <label>
+                  <span>开始判断时间</span>
+                  <input id="onlinePresenceWorkStartTime" name="onlinePresenceWorkStartTime" placeholder="08:00" />
+                </label>
+                <button class="save-button" type="submit">保存上班监控</button>
+              </div>
+              <div class="feedback-banner is-info" data-shared-config-feedback aria-live="polite">
+                <span class="feedback-banner-badge">配置反馈</span>
+                <strong class="feedback-banner-title" data-feedback-title>等待保存</strong>
+                <p class="feedback-banner-message" data-feedback-message>这里会显示上班监控配置保存结果。</p>
+              </div>
+            </section>

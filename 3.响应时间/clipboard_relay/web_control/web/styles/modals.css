@@ -1,0 +1,205 @@
+.indicator-tooltip {
+  position: fixed;
+  z-index: 30;
+  max-width: 360px;
+  padding: 10px 12px;
+  border: 1px solid #cfded8;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #1f2a2a;
+  box-shadow: 0 14px 24px rgba(16, 41, 37, 0.14);
+  pointer-events: none;
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
+
+.indicator-tooltip.hidden {
+  display: none;
+}
+
+.config-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 35;
+  display: grid;
+  place-items: center;
+  overflow: auto;
+  padding: 22px;
+  background: rgba(15, 23, 42, 0.56);
+}
+
+.config-modal.hidden {
+  display: none;
+}
+
+.config-dialog {
+  width: min(1120px, 100%);
+  max-height: calc(100vh - 44px);
+  overflow: auto;
+  padding: 20px;
+  border: 1px solid #d7e6df;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.26);
+}
+
+.config-dialog .modal-head {
+  padding-bottom: 14px;
+  border-bottom: 1px solid #dbe7e2;
+}
+
+.config-dialog .modal-head p {
+  margin: 8px 0 0;
+  color: #5a6d69;
+}
+
+.config-modal-form {
+  margin-top: 16px;
+}
+
+.config-actions {
+  position: sticky;
+  bottom: -20px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  margin: 16px -20px -20px;
+  padding: 14px 20px;
+  border-top: 1px solid #dbe7e2;
+  background: #ffffff;
+}
+
+.modal-open {
+  overflow: hidden;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(14, 30, 28, 0.42);
+}
+
+.modal-overlay.hidden {
+  display: none;
+}
+
+.modal-dialog {
+  width: min(920px, 100%);
+  max-height: min(720px, calc(100vh - 48px));
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 22px;
+  border: 1px solid #cfe0d9;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 24px 60px rgba(9, 38, 33, 0.24);
+}
+
+.modal-head,
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.modal-head p {
+  margin: 8px 0 0;
+  color: #5a6d69;
+}
+
+.icon-button {
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  font-size: 26px;
+  line-height: 1;
+}
+
+.dialog-feedback {
+  min-height: 0;
+  border-radius: 8px;
+  font-weight: 700;
+}
+
+.dialog-feedback:not(:empty) {
+  padding: 10px 12px;
+  border: 1px solid #b9d7f8;
+  background: #eef6ff;
+  color: #174ea6;
+}
+
+.dialog-feedback[data-state="error"] {
+  border-color: #f2b8b5;
+  background: #fff0ef;
+  color: #b3261e;
+}
+
+.buyer-url-list,
+.credential-list {
+  display: grid;
+  gap: 10px;
+  overflow: auto;
+  padding-right: 2px;
+}
+
+.buyer-url-item,
+.credential-item {
+  display: grid;
+  grid-template-columns: 28px minmax(150px, 240px) minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid #d8e5df;
+  border-radius: 8px;
+  background: #f8fbfa;
+}
+
+.credential-item {
+  grid-template-columns: 28px minmax(130px, 190px) minmax(150px, 1fr) minmax(140px, 1fr) auto;
+}
+
+.buyer-url-item input[type="radio"],
+.credential-item input[type="radio"] {
+  width: 18px;
+  height: 18px;
+}
+
+.buyer-url-note-input,
+.buyer-url-link-input,
+.credential-note-input,
+.credential-username-input,
+.credential-password-input {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid #cfe0d9;
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: #ffffff;
+  font: inherit;
+}
+
+.buyer-url-note-input,
+.credential-note-input {
+  font-weight: 700;
+}
+
+.small-danger {
+  color: #9c2f20;
+  border-color: #efc6bf;
+  background: #fff7f5;
+}
+
+.small-danger:disabled {
+  color: #8a9692;
+  border-color: #d4ddd9;
+  background: #eef3f1;
+  cursor: not-allowed;
+}

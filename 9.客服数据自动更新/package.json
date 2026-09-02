@@ -1,0 +1,19 @@
+{
+    "name":  "customer-performance-updater",
+    "version":  "1.0.1",
+    "description":  "多平台客服数据CLI自动更新工具",
+    "main":  "src/cli/startCli.js",
+    "type":  "commonjs",
+    "scripts":  {
+                    "start":  "node src/cli/startCli.js",
+                    "cli":  "node src/cli/startCli.js",
+                    "panel":  "node src/cli/startCli.js",
+                    "test":  "node tests/blockingPopupAndDouyinDate.test.js && node tests/pddDateRefreshSafety.test.js && node tests/defaultDateRange.test.js && node tests/homeSummaryDateRange.test.js && node tests/thirtySecondResponseRate.test.js && node tests/summaryRetryAndMissingData.test.js && node tests/forceRedownloadMenu.test.js && node tests/cliInterface.test.js && node tests/tuiInterface.test.js && node tests/evidenceFolderMenu.test.js && node tests/evidenceNaming.test.js && node tests/kdocsDataDetailSync.test.js && node tests/jdCustomerServiceScope.test.js"
+                },
+    "dependencies":  {
+                         "@xmldom/xmldom":  "0.9.10",
+                         "jszip":  "3.10.1",
+                         "playwright-core":  "1.60.0",
+                         "xlsx":  "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
+                     }
+}

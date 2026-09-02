@@ -1,0 +1,162 @@
+{
+  "workbook": {
+    "path": ""
+  },
+  "dateSelection": {
+    "mode": "automatic",
+    "manual": {
+      "snapshotDate": "2026-08-05"
+    }
+  },
+  "kdocsDataSourceSync": {
+    "documentUrl": "",
+    "webhookUrl": "",
+    "apiToken": ""
+  },
+  "jd": {
+    "stores": [
+      {
+        "platformKey": "jd",
+        "key": "jd1",
+        "displayName": "京东1店",
+        "enabled": true,
+        "username": "",
+        "password": "",
+        "downloadDir": "",
+        "sources": {
+          "shopStar": "https://jdsz.jd.com/szweb/view/service/shop-experience-score.html",
+          "negativeService": "https://jdsz.jd.com/szweb/view/service/negative-service-temp.html",
+          "compliance": "https://illegal-jdm.shop.jd.com/legal"
+        }
+      },
+      {
+        "platformKey": "jd",
+        "key": "jd2",
+        "displayName": "京东2店",
+        "enabled": false,
+        "username": "",
+        "password": "",
+        "downloadDir": "",
+        "sources": {
+          "shopStar": "https://jdsz.jd.com/szweb/view/service/shop-experience-score.html",
+          "negativeService": "https://jdsz.jd.com/szweb/view/service/negative-service-temp.html",
+          "compliance": "https://illegal-jdm.shop.jd.com/legal"
+        }
+      },
+      {
+        "platformKey": "jd",
+        "key": "jd3",
+        "displayName": "京东3店",
+        "enabled": true,
+        "username": "",
+        "password": "",
+        "downloadDir": "",
+        "sources": {
+          "shopStar": "https://jdsz.jd.com/szweb/view/service/shop-experience-score.html",
+          "negativeService": "https://jdsz.jd.com/szweb/view/service/negative-service-temp.html",
+          "compliance": "https://illegal-jdm.shop.jd.com/legal"
+        }
+      }
+    ]
+  },
+  "tmall": {
+    "stores": [
+      {
+        "platformKey": "tmall",
+        "key": "tmall1",
+        "displayName": "天猫1店",
+        "enabled": true,
+        "username": "",
+        "password": "",
+        "downloadDir": "",
+        "sources": {
+          "serverReport": "https://qn.taobao.com/home.html/voc-tmall/serverReport"
+        }
+      },
+      {
+        "platformKey": "tmall",
+        "key": "tmall2",
+        "displayName": "天猫2店",
+        "enabled": true,
+        "username": "",
+        "password": "",
+        "downloadDir": "",
+        "sources": {
+          "serverReport": "https://qn.taobao.com/home.html/voc-tmall/serverReport"
+        }
+      },
+      {
+        "platformKey": "tmall",
+        "key": "tmall6",
+        "displayName": "天猫6店",
+        "enabled": true,
+        "username": "",
+        "password": "",
+        "downloadDir": "",
+        "sources": {
+          "serverReport": "https://qn.taobao.com/home.html/voc-tmall/serverReport"
+        }
+      }
+    ]
+  },
+  "pdd": {
+    "stores": [
+      {
+        "platformKey": "pdd",
+        "key": "pdd02",
+        "displayName": "德达拼多多02",
+        "enabled": true,
+        "username": "",
+        "password": "",
+        "downloadDir": "",
+        "sources": {
+          "customer": "https://mms.pinduoduo.com/sycm/goods_quality/customer"
+        }
+      },
+      {
+        "platformKey": "pdd",
+        "key": "pdd03",
+        "displayName": "拼多多03店",
+        "enabled": true,
+        "username": "",
+        "password": "",
+        "downloadDir": "",
+        "sources": {
+          "customer": "https://mms.pinduoduo.com/sycm/goods_quality/customer"
+        }
+      }
+    ]
+  },
+  "douyin": {
+    "stores": [
+      {
+        "platformKey": "douyin",
+        "key": "douyin3",
+        "displayName": "抖音03店",
+        "enabled": true,
+        "platformStoreId": "",
+        "platformStoreName": "",
+        "username": "",
+        "password": "",
+        "downloadDir": "",
+        "sources": {
+          "experienceScore": "https://fxg.jinritemai.com/ffa/eco/experience-score?source=fxg-home&btm_ppre=a0.b0.c0.d0&btm_pre=..c0.c0"
+        }
+      },
+      {
+        "platformKey": "douyin",
+        "key": "douyin5",
+        "displayName": "抖音05店",
+        "enabled": true,
+        "platformStoreId": "",
+        "platformStoreName": "",
+        "username": "",
+        "password": "",
+        "downloadDir": "",
+        "sources": {
+          "experienceScore": "https://fxg.jinritemai.com/ffa/eco/experience-score?source=fxg-home&btm_ppre=a0.b0.c0.d0&btm_pre=..c0.c0"
+        }
+      }
+    ]
+  }
+}

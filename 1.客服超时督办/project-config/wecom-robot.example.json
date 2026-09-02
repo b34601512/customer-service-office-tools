@@ -1,0 +1,29 @@
+{
+  "pre_sales_webhook_url": "在这里填写售前群机器人 webhook",
+  "after_sales_webhook_url": "在这里填写售后群机器人 webhook",
+  "notification_groups": [
+    {
+      "id": "group_all_staff",
+      "name": "全员通知群",
+      "webhook_url": "在这里填写通知群机器人 webhook",
+      "enabled": true
+    }
+  ],
+  "member_directory": [
+    {
+      "name": "客服姓名",
+      "mobile": "在这里填写手机号",
+      "user_id": "这里显示当前识别到的企微userid",
+      "inline_mention_enabled": true
+    }
+  ],
+  "member_mobile_map": {
+    "客服姓名": "在这里填写手机号"
+  },
+  "member_userid_map": {
+    "客服姓名": "这里显示当前识别到的企微userid"
+  },
+  "member_inline_mention_enabled_map": {
+    "客服姓名": true
+  }
+}

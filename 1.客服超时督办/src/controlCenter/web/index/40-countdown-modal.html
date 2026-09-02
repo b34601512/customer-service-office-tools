@@ -1,0 +1,40 @@
+      <section
+        id="countdownModal"
+        class="config-modal hidden"
+        role="dialog"
+        aria-modal="true"
+        aria-hidden="true"
+        aria-labelledby="countdownModalTitle"
+      >
+        <div class="config-dialog countdown-dialog">
+          <div class="section-title">
+            <div>
+              <p class="section-eyebrow">运行巡检</p>
+              <h2 id="countdownModalTitle">倒计时明细</h2>
+              <p id="countdownModalSubtitle">展示系统完整联系人快照，并直接标出超时、漏回复和提醒状态。</p>
+            </div>
+            <button id="closeCountdownModalButton" class="ghost-button" type="button">关闭</button>
+          </div>
+
+          <section class="config-card countdown-card customer-mirror-card">
+            <div class="section-head">
+              <div>
+                <p class="section-eyebrow">客户镜像</p>
+                <h2 class="countdown-title-with-help">
+                  客户判定列表
+                  <button
+                    class="help-dot"
+                    type="button"
+                    aria-label="客户判定列表定义：展示完整联系人快照，再在同一行标出超时、漏回复、已提醒和未到点。"
+                    data-help="展示完整联系人快照，再在同一行标出超时、漏回复、已提醒和未到点。"
+                  >
+                    ?
+                  </button>
+                </h2>
+              </div>
+              <span class="mode-chip" id="customerMirrorSummary">暂无客户</span>
+            </div>
+            <div class="countdown-list customer-mirror-list" id="customerMirrorList"></div>
+          </section>
+        </div>
+      </section>
