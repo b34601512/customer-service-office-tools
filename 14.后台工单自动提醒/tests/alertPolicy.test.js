@@ -88,9 +88,9 @@ test("待商家处理：每30分钟重发 pending_handling", () => {
   assert.strictEqual(evaluateRound(state, obsD({ 待处理: 1 }, { 待处理: [TK_PENDING] }), optsR, 1000 + 32 * MIN).length, 0, "重发后重新计时");
 });
 
-test("待客户确认/纠纷关闭：客服已处理或完结，不提醒不重发", () => {
+test("待客户确认/纠纷单关闭：客服已处理或完结，不提醒不重发", () => {
   const state = { sources: {} };
-  for (const statusText of ["待客户确认", "纠纷关闭"]) {
+  for (const statusText of ["待客户确认", "纠纷单关闭"]) {
     const st = { sources: {} };
     evaluateRound(st, obsD({ 待处理: 1 }, { 待处理: [{ ...TK_PENDING, status: statusText }] }), optsR, 1000);
     const later = evaluateRound(st, obsD({ 待处理: 1 }, { 待处理: [{ ...TK_PENDING, status: statusText }] }), optsR, 1000 + 90 * MIN);

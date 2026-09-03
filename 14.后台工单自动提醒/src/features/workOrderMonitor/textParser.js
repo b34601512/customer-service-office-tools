@@ -42,8 +42,8 @@ function buildTabUrl(url, label) {
   return String(url).replace(/([?&])tabCode=[^&]*/, `$1tabCode=${code}`);
 }
 
-// 纠纷状态列取值（实测：可申诉页里关闭单显示“纠纷关闭”）。解析层只提取状态，“哪些状态要提醒”归 alertPolicy 判定（用户定：不看判责看状态）。
-const STATUS_TEXT = /(待商家处理|待商家回复|待客户确认|待买家处理|待平台处理|平台介入中|纠纷单?关闭|交易关闭|已关闭|已完成)/;
+// 纠纷状态列取值（实测：可申诉页里关闭单显示“纠纷单关闭”）。解析层只提取状态，“哪些状态要提醒”归 alertPolicy 判定（用户定：不看判责看状态）。
+const STATUS_TEXT = /(待商家处理|待商家回复|待客户确认|待买家处理|待平台处理|平台介入中|纠纷单关闭|交易关闭|已关闭|已完成)/;
 
 // 行文本列表 → 工单列表。id 只用编号（行内含“还剩X天”倒计时，全文做 id 会假新增）。
 function parseTicketRows(rowTexts) {
