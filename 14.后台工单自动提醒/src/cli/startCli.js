@@ -110,6 +110,7 @@ async function main() {
     console.log("测试消息已发送。");
     return;
   }
+  if (command === "menu") { runMenu(); return; }
   if (command === "status") { renderStatus(); return; }
   if (command === "help" || command === "--help") { printHelp(); return; }
   if (!command && process.stdin.isTTY) { runMenu(); return; }

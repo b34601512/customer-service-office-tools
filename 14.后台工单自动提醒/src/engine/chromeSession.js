@@ -2,7 +2,7 @@
 const fs = require("fs");
 const net = require("net");
 const path = require("path");
-const { spawn } = require("child_process");
+const { execFileSync, spawn } = require("child_process");
 const { chromium } = require("playwright-core");
 const appConfig = require("../config/appConfig");
 const { ensureDir } = require("./fileSystem");
@@ -11,6 +11,14 @@ const { log } = require("./logger");
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
+// 崩溃/Ctrl+C 中途退出时同步杀掉在飞的受控 Chrome，避免孤儿窗口锁住店铺 profile。
+const liveChildren = new Set();
+process.on("exit", () => {
+  for (const child of liveChildren) {
+    try { child.kill(); } catch (error) { /* 已退出 */ }
+  }
+});
 
 function resolveChromePath() {
   for (const chromePath of appConfig.chromeCandidates) {
@@ -44,11 +52,23 @@ async function acquireDebugPort(preferredPort) {
   throw new Error(`调试端口 ${preferredPort} 起连续 20 个都被占用，无法拉起受控浏览器。`);
 }
 
+// 启动前先杀掉霸占本店铺 profile 的残留 Chrome（上次强退孤儿/双开）：否则新进程会并入旧实例导致调试端口永远起不来。
+function killChromeHoldingProfile(profileDir) {
+  const needle = profileDir.replace(/'/g, "''");
+  const script = `Get-CimInstance Win32_Process | Where-Object { $_.Name -eq 'chrome.exe' -and $_.CommandLine -like ('*--user-data-dir=' + '${needle}' + ' *') } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }`;
+  try {
+    execFileSync("powershell.exe", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", script], { stdio: "ignore", timeout: 20000, windowsHide: true });
+  } catch (error) {
+    // 查杀失败不阻断启动，后面端口探测会自然兜底。
+  }
+}
+
 // 拉起带店铺 profile 的受控 Chrome 并返回 { browser, context, close }。
 // keepVisible=true 用于人工登录辅助；监控轮询默认也可见（京东对 headless 风险高，先保守）。
 async function openStoreBrowser(options) {
   const { profileDir, targetUrl, debugPort } = options;
   ensureDir(profileDir);
+  killChromeHoldingProfile(profileDir);
   fs.rmSync(path.join(profileDir, "SingletonLock"), { force: true });
   const port = await acquireDebugPort(debugPort || appConfig.baseDebugPort);
   const child = spawn(resolveChromePath(), [
@@ -61,6 +81,7 @@ async function openStoreBrowser(options) {
     targetUrl || "about:blank"
   ], { detached: true, stdio: "ignore" });
   child.unref();
+  liveChildren.add(child);
 
   let versionInfo = null;
   for (let waited = 0; waited < 30000; waited += 500) {
@@ -92,6 +113,7 @@ async function openStoreBrowser(options) {
       if (closed) return;
       closed = true;
       await browser.close().catch(() => {});
+      liveChildren.delete(child);
       try { process.kill(child.pid); } catch (error) { /* 已退出 */ }
     }
   };

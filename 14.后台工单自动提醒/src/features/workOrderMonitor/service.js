@@ -10,6 +10,10 @@ const { probeStore } = require("./pageProbe");
 const { evaluateRound, STATUS } = require("./alertPolicy");
 const { buildAlertMessage } = require("./messageText");
 
+function deepClone(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
 function sourceIdOf(platformKey, storeKey, sourceKey) {
   return `${platformKey}/${storeKey}/${sourceKey}`;
 }
@@ -22,10 +26,14 @@ function saveMonitorState(state) {
   writeJsonAtomic(appConfig.monitorStatePath, state);
 }
 
-// 执行一轮完整巡检。dryRun=true 时只判定不发送（供测试与预览）。
+// 执行一轮完整巡检。dryRun=true 时只判定不发送不改基线（供测试与预览）。
+// probeStoreImpl/sendTextImpl 仅依赖注入点：测试/AI 可传假实现跑同一条真实链路（#2705）。
 async function monitorOnce(options = {}) {
-  const config = loadConfig();
-  const state = loadMonitorState();
+  const config = options.configOverride || loadConfig();
+  const probeStoreImpl = options.probeStoreImpl || probeStore;
+  const sendTextImpl = options.sendTextImpl || sendWecomText;
+  const state = deepClone(loadMonitorState());
+  const prevSnapshot = deepClone(state);
   const sources = iterateEnabledSources(config);
   const timeoutMs = (Number(config.monitor.pageLoadTimeoutSeconds) || 45) * 1000;
 
@@ -41,7 +49,7 @@ async function monitorOnce(options = {}) {
     for (const store of stores) {
       let results = {};
       try {
-        results = await probeStore(platformKey, store, timeoutMs);
+        results = await probeStoreImpl(platformKey, store, timeoutMs);
       } catch (error) {
         // 单店失败隔离（#624 边界）：记为页面异常，不阻塞其他店铺。
         log("巡检", store.displayName, "店铺探测失败", error.message);
@@ -71,8 +79,9 @@ async function monitorOnce(options = {}) {
     repeatReminderMinutes: config.monitor.repeatReminderMinutes,
     alertOnFirstRun: config.monitor.alertOnFirstRun !== false
   }, new Date());
-  saveMonitorState(state);
+  // 注意：这里不立即落盘。dryRun 绝不改基线；真实运行要等发送结果确定后再写，避免演练吞事件、发送失败丢提醒。
 
+  const failedSourceIds = new Set();
   const sent = [];
   for (const event of events) {
     const content = buildAlertMessage(event);
@@ -82,7 +91,7 @@ async function monitorOnce(options = {}) {
       continue;
     }
     try {
-      await sendWecomText(
+      await sendTextImpl(
         config.wecom.webhookUrl,
         config.wecom.webhookName || "工单提醒群",
         content,
@@ -93,15 +102,21 @@ async function monitorOnce(options = {}) {
     } catch (error) {
       log("巡检", event.sourceId, "提醒发送最终失败", error.message);
       sent.push({ event, content, ok: false, error: error.message });
-      // 发送失败的提醒不丢：回滚本轮该源计数，下轮计数仍高于旧基线会重新触发。
-      const src = state.sources[event.sourceId];
-      if (src && (event.type === "count_increase" || event.type === "pending_repeat")) {
-        delete src.lastAlertAt;
-      }
+      // 发送失败的源回滚到本轮前状态，下轮计数仍高于旧基线会重新触发，提醒不丢。
+      failedSourceIds.add(event.sourceId);
     }
   }
-  // 回滚后仍需落盘（events 已基于原 state 生成，这里补写一次）。
-  if (!options.dryRun) saveMonitorState(state);
+
+  if (!options.dryRun) {
+    for (const id of failedSourceIds) {
+      if (prevSnapshot.sources[id]) {
+        state.sources[id] = prevSnapshot.sources[id];
+      } else {
+        delete state.sources[id];
+      }
+    }
+    saveMonitorState(state);
+  }
 
   return { events, sent, observations };
 }
