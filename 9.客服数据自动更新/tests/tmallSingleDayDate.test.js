@@ -50,6 +50,8 @@ assert.strictEqual(isTmallDateRangeMatched("统计时间2026-08-31", monthRange)
 assert.strictEqual(isTmallDateRangeMatched("2026-08-01~2026-08-30", monthRange), false);
 
 assert.deepStrictEqual(extractDateTexts("统计时间 2026-09-01"), ["2026-09-01"]);
+// 生产现场字符串（2026-09-03 16:32 失败日志原文）：稳定判定器读到的 "统计时间 2026-09-01" 必须命中单日。
+assert.strictEqual(isTmallDateRangeMatched("统计时间 2026-09-01", singleDay), true);
 assert.strictEqual(describeTmallDateText("统计时间2026-09-01"), "2026-09-01");
 assert.strictEqual(buildExpectedDateText(singleDay), "2026-09-01~2026-09-01");
 

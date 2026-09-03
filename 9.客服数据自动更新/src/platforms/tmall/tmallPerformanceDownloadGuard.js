@@ -2,6 +2,7 @@ const path = require("path");
 const appConfig = require("../../config/appConfig");
 const { log } = require("../../engine/logger");
 const { wait } = require("../../shared/browserActionEngine");
+const { isTmallDateRangeMatched } = require("./dateApplierParts/tmallDateText");
 
 function buildTmallDownloadDateToken(dateText) {
   // 这里把页面标准日期转换成下载文件名里的日期片段，用于导入前硬校验。
@@ -44,8 +45,8 @@ function assertTmallPerformanceDownloadMatchesRange(fileName, range) {
 }
 
 async function captureTmallPerformanceReportState(page, range) {
-  // 这里读取天猫报表的可操作状态，专门避免页面还在刷新时提前点击下载。
-  return page.evaluate(({ startText, endText }) => {
+  // 页面函数只读浏览器可感知的日期文本与加载状态；日期是否命中由 Node 侧共享判定器判定（单一真源，无页内正则副本）。
+  const pageState = await page.evaluate(() => {
     const normalizeText = (value) => String(value || "").replace(/\s+/g, " ").trim();
     const isVisible = (element) => {
       if (!(element instanceof HTMLElement)) {
@@ -57,8 +58,6 @@ async function captureTmallPerformanceReportState(page, range) {
     const currentDateText = normalizeText(
       document.querySelector(".oui-date-picker-current-date")?.textContent || ""
     );
-    const compactDateText = currentDateText.replace(/\s+/g, "").replace(/至/g, "~").replace(/～/g, "~");
-    const dateMatch = compactDateText.match(/(\d{4}-\d{2}-\d{2})~(\d{4}-\d{2}-\d{2})/);
     const visibleNodes = Array.from(document.querySelectorAll("body *")).filter(isVisible);
     const visibleNodeTexts = visibleNodes
       .map((node) => normalizeText(node.textContent || ""))
@@ -85,7 +84,6 @@ async function captureTmallPerformanceReportState(page, range) {
 
     return {
       currentDateText,
-      rangeMatched: Boolean(dateMatch && dateMatch[1] === startText && dateMatch[2] === endText),
       loadingVisible: loadingTexts.length > 0,
       loadingText: loadingTexts[0] || "",
       downloadButtonVisible,
@@ -102,10 +100,12 @@ async function captureTmallPerformanceReportState(page, range) {
         tableText.slice(0, 500)
       ].join("|")
     };
-  }, {
-    startText: range.startText,
-    endText: range.endText
   });
+
+  return {
+    ...pageState,
+    rangeMatched: isTmallDateRangeMatched(pageState.currentDateText, range)
+  };
 }
 
 function isTmallPerformanceReportStateReady(state) {
