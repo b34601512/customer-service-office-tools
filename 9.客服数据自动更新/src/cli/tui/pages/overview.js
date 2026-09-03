@@ -93,8 +93,8 @@ function createOverviewPage() {
       if (key === "enter") {
         const action = SUMMARY_ACTIONS[this.state.selection];
         if (action.id === "exit") {
-          // 与 Ctrl+C 同一条退出确认流（复用 tuiApp 内置 exitConfirmPending 机制）。
-          app.exitConfirmPending = true;
+          // 退出与按 0 同一路径：直接退出，不二次确认。
+          app.onExitRequest();
           return true;
         }
         if (running) {

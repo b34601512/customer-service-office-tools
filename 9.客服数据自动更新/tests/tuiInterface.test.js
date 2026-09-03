@@ -255,21 +255,13 @@ const callsBeforeBusyBlock = runCalls.length;
 pages[0].state.selection = 0;
 app.dispatchKey("enter");
 assert.strictEqual(runCalls.length, callsBeforeBusyBlock, "运行中回车不得触发新汇总");
-// 运行中选中退出项回车 → 走与 Ctrl+C 相同的退出确认流，n 可取消。
+// 运行中退出项仍可用：回车直接退出（与数字0同一路径），不二次确认。
 pages[0].state.selection = 2;
 app.dispatchKey("enter");
-assert.strictEqual(app.exitConfirmPending, true);
-app.dispatchKey("n");
-assert.strictEqual(app.exitConfirmPending, false);
+assert.strictEqual(exitRequestCount, 2, "菜单退出应直接触发 onExitRequest");
+assert.strictEqual(app.exitConfirmPending, false, "菜单退出不走确认流");
 runController.busy = false;
 runController.message = "";
-
-// 退出项：回车弹全局退出确认，确认后触发 onExitRequest。
-pages[0].state.selection = 2;
-app.dispatchKey("enter");
-assert.strictEqual(app.exitConfirmPending, true);
-app.dispatchKey("y");
-assert.strictEqual(exitRequestCount, 2);
 
 // 汇总页提示行同步新口径：S/F 保留为快捷键。
 const tasksText = stripAnsi(pages[1].render(app).join("\n"));
