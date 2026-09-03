@@ -1,6 +1,7 @@
-// 本文件是配置业务真源：加载、校验、保存平台/店铺/提醒源配置，界面只调用这里。
+// 本文件是配置业务真源：加载、校验、保存平台/店铺/提醒源/值班@配置，界面只调用这里。
 const appConfig = require("../config/appConfig");
 const { readJson, writeJsonAtomic, ensureDir } = require("../engine/fileSystem");
+const { parseMinutes } = require("../features/dutySchedule/dutyParser");
 const path = require("path");
 
 const VALID_SOURCE_TYPES = new Set(["jingxiWorkOrder", "popDispute"]);
@@ -48,6 +49,26 @@ function validateConfig(config) {
   }
   if (storeCount === 0) {
     throw new Error("配置校验失败：至少需要一个店铺");
+  }
+  // 值班@配置（可选模块）：一旦配置就必须完整，避免半残配置运行后默默不@人。
+  if (config.duty) {
+    assertText(config.duty.scheduleUrl, "duty.scheduleUrl 缺少（金山排班表链接）");
+    assertText(config.duty.group, "duty.group 缺少（要@的客服组，如 售后）");
+    const windows = config.duty.shiftWindows || {};
+    for (const field of ["earlyStart", "earlyEnd", "lateStart", "lateEnd"]) {
+      if (parseMinutes(windows[field]) === null) {
+        throw new Error(`配置校验失败：duty.shiftWindows.${field} 不是 HH:mm 格式`);
+      }
+    }
+    const memberMap = (config.wecom && config.wecom.memberMobileMap) || {};
+    for (const manager of config.duty.managerNames || []) {
+      if (!String(memberMap[manager] || "").trim()) {
+        throw new Error(`配置校验失败：主管「${manager}」在 wecom.memberMobileMap 里没有手机号，无法@`);
+      }
+    }
+    if ((config.duty.managerNames || []).length === 0) {
+      throw new Error("配置校验失败：duty.managerNames 至少填一人（如 黎路遥）");
+    }
   }
   return config;
 }

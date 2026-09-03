@@ -22,10 +22,14 @@
 - `src/config/projectConfigService.js`：配置加载/校验/遍历真源。
 - `src/engine/`：`chromeSession.js`（按店铺 profile 拉起/连接/关闭受控 Chrome）、`logger.js`、`fileSystem.js`。
 - `src/integrations/wecomRobot.js`：企微 text 消息发送（超时 10s、重试 1 次）。
+- `src/features/dutySchedule/`：值班@业务真源（照搬 1 号匿名读金山排班表，增强读底色）。
+  - `dutyParser.js`：纯函数，矩阵+色格 → 当日售后班次/底色、时段在班判定、色名描述。
+  - `scheduleFetcher.js`：无头 Chrome 打开排班表，矩阵 + 当日格 `getAppliedXf` 底色（实测 getXfByCell 读不到条件格式色，必须 getAppliedXf）。
+  - `dutyService.js`：`resolveDuty()`（按天缓存）+ `buildMentionPlan()`（@名单=当前时段在班售后+主管；读失败降级只@主管）。
 - `src/features/workOrderMonitor/`：业务真源。
   - `textParser.js`：纯函数，页面文本 → 分类计数、登录跳转识别（fixture 来自实测文本）。
   - `alertPolicy.js`：纯函数判定，计数新增/登录失效(节流)/恢复/可选重复提醒 → 事件。
-  - `messageText.js`：纯函数，事件 → 企微文案。
+  - `messageText.js`：纯函数，事件+值班@计划 → 企微文案（不发链接；说清 平台·店铺缩写 分类事项；附今日值班/底色与当前在班行）。
   - `pageProbe.js`：驱动浏览器读页面，输出观测值。
   - `service.js`：`monitorOnce()`（探测→判定→发送→落状态，单店失败隔离）、`startMonitorLoop()`。
   - `loginAssist.js`：拉起某店铺可见浏览器供人工登录一次。
@@ -38,20 +42,28 @@
 - 首轮非零计数提醒一次（`alertOnFirstRun`，默认开，让存量工单不被漏）。
 - 登录失效立即提醒并按 `loginAlertThrottleMinutes` 节流，恢复登录提醒一次。
 - `repeatReminderMinutes`>0 时未清零存量会周期性重复提醒（默认 0 关闭）。
-- 提醒结果追加 `runtime/state/alert-ledger.jsonl`；发送失败回滚 lastAlertAt，下轮重试。
+- 提醒结果追加 `runtime/state/alert-ledger.jsonl`；发送失败回滚该源到本轮前快照，下轮重试。
+
+## 5b. 值班@规则（唯一真源 dutySchedule）
+
+- 只@**当前时段在班的售后** + 主管（duty.managerNames 永远@）；早班 [08:00,16:30)，晚班 [14:00,22:30)，重叠段双班都@；时段外只@主管。
+- @用 `mentioned_mobile_list`（手机号，照 1 号；memberMobileMap 真源在配置）。
+- 每条提醒附「今日售后值班：姓名（班次·底色）」行：底色真源=金山单元格 `getAppliedXf` 实心填充 rgb，色名表 duty.colorNames 可读可扩；实测售后白底#FFFFFF/浅蓝#BDD7EE，休息黄底#FFFF00。未来“只提醒有底色标记者”只需改 buildMentionPlan 一处。
+- 排班读取失败降级：照常发事件提醒，只@主管，文案注明失败原因；排班结果按天缓存，一天只拉一次浏览器。
 
 ## 6. 运行方式
 
 ```powershell
 npm install
 # 1) 先为每个店铺完成一次登录（会打开浏览器，人工登录京麦后回车关闭）
-node src/cli/startCli.js login jingxi1
+node src/cli/startCli.js login jd1
 # 2) 巡检一轮（--dry-run 只演练不发消息）
 node src/cli/startCli.js once --dry-run
 # 3) 常驻监控（Ctrl+C 退出）/ 交互菜单 / 链路自测
 node src/cli/startCli.js run
 node src/cli/startCli.js menu
 node src/cli/startCli.js test-notify
+node src/cli/startCli.js duty    # 验证金山排班读取：今日售后班次/底色/当前在班/@名单
 npm test
 ```
 
@@ -61,3 +73,5 @@ npm test
 - `wecom.webhookUrl` 企微群机器人地址；`monitor.*` 间隔/超时/节流等。
 - `platforms.jd.stores[]`：`key`（同时决定 profile 目录 `runtime/state/browser-profiles/jd/<key>`）、`displayName`、`username`（登录辅助提示）、`enabled`、`mentionedMobileList`（@客服）。
 - `sources[]`：`type` 目前支持 `jingxiWorkOrder` / `popDispute`（未来平台=新 type+新页面文本规则），`url`，`watch`（要监控的页签分类名）。
+- `wecom.memberMobileMap`：姓名→手机号（与 1 号 wecom-robot.json 同源）。
+- `duty`（可选模块，配置了就必须完整，校验器强校验）：`scheduleUrl` 金山排班表、`group`（=售后）、`managerNames`（永远@的主管，须在 memberMobileMap 里有号）、`shiftWindows`（HH:mm 四字段）、`colorNames`（rgb→人话色名）。

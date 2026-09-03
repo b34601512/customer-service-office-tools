@@ -2,6 +2,7 @@
 const readline = require("readline");
 const { monitorOnce, startMonitorLoop, loadMonitorState } = require("../features/workOrderMonitor/service");
 const { loginAssist } = require("../features/workOrderMonitor/loginAssist");
+const { resolveDuty, buildMentionPlan } = require("../features/dutySchedule/dutyService");
 const { loadConfig } = require("../config/projectConfigService");
 const { sendWecomText } = require("../integrations/wecomRobot");
 const { log } = require("../engine/logger");
@@ -15,6 +16,7 @@ function printHelp() {
   node src/cli/startCli.js login <店铺key>     拉起该店铺的可见浏览器，人工登录后保持登录态
   node src/cli/startCli.js test-notify         向企微群发送一条测试提醒
   node src/cli/startCli.js status              查看各提醒源最近一次计数与登录状态
+  node src/cli/startCli.js duty                查看今日值班/当前在班与底色（验证金山排班读取）
   node src/cli/startCli.js menu                进入交互菜单
 不带参数且有终端时默认进入菜单。`);
 }
@@ -33,6 +35,24 @@ function renderStatus() {
   console.log(`最近一轮巡检时间：${state.lastRoundAt ? new Date(state.lastRoundAt).toLocaleString() : "无"}`);
 }
 
+async function renderDuty() {
+  const config = loadConfig();
+  const now = new Date();
+  const result = await resolveDuty(config, now);
+  if (!result.ok) {
+    console.log(`排班读取失败：${result.error}`);
+    return;
+  }
+  console.log(`今日（${now.getMonth() + 1}月${now.getDate()}日）${config.duty.group}值班：`);
+  for (const item of result.todayStaff) {
+    console.log(`  ${item.name}  ${item.shift}  底色：${item.colorName || "无"}${item.colorRgb ? `（${item.colorRgb}）` : ""}`);
+  }
+  const plan = buildMentionPlan(config, result);
+  console.log(`当前时段在班：${result.onDutyNow.join("、") || "无人"}`);
+  console.log(`将被@（含主管）：${plan.atNames.join("、") || "无"}`);
+  console.log(`手机号：${plan.mobiles.join("、") || "无"}`);
+}
+
 async function runMenu() {
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
   const ask = (q) => new Promise((resolve) => rl.question(q, resolve));
@@ -41,7 +61,7 @@ async function runMenu() {
   while (true) {
     const answer = (await ask(`
 [1] 立即巡检一轮  [2] 启动常驻监控  [3] 停止常驻监控
-[4] 登录辅助(输入店铺key)  [5] 状态  [6] 发送测试提醒  [0] 退出
+[4] 登录辅助(输入店铺key)  [5] 状态  [6] 发送测试提醒  [7] 今日值班  [0] 退出
 请选择: `)).trim();
     if (answer === "1") {
       const r = await monitorOnce().catch((e) => (log("菜单", "巡检", "失败", e.message), null));
@@ -71,6 +91,8 @@ async function runMenu() {
       const config = loadConfig();
       await sendWecomText(config.wecom.webhookUrl, config.wecom.webhookName, "【测试】14号工单提醒链路正常，收到请忽略。");
       console.log("测试消息已发送。");
+    } else if (answer === "7") {
+      await renderDuty();
     } else if (answer === "0") {
       if (loop) loop.stop();
       rl.close();
@@ -112,6 +134,7 @@ async function main() {
   }
   if (command === "menu") { runMenu(); return; }
   if (command === "status") { renderStatus(); return; }
+  if (command === "duty") { await renderDuty(); return; }
   if (command === "help" || command === "--help") { printHelp(); return; }
   if (!command && process.stdin.isTTY) { runMenu(); return; }
   printHelp();

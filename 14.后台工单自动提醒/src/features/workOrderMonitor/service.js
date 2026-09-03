@@ -9,6 +9,7 @@ const { sendWecomText } = require("../../integrations/wecomRobot");
 const { probeStore } = require("./pageProbe");
 const { evaluateRound, STATUS } = require("./alertPolicy");
 const { buildAlertMessage } = require("./messageText");
+const { resolveDuty, buildMentionPlan } = require("../dutySchedule/dutyService");
 
 function deepClone(value) {
   return JSON.parse(JSON.stringify(value));
@@ -83,8 +84,14 @@ async function monitorOnce(options = {}) {
 
   const failedSourceIds = new Set();
   const sent = [];
+  // 值班@计划：本轮只解析一次（内部按天缓存金山排班）。
+  let mentionPlan = null;
+  if (events.length > 0 && config.duty) {
+    const dutyResult = await (options.resolveDutyImpl || resolveDuty)(config, new Date());
+    mentionPlan = (options.buildMentionPlanImpl || buildMentionPlan)(config, dutyResult);
+  }
   for (const event of events) {
-    const content = buildAlertMessage(event);
+    const content = buildAlertMessage(event, mentionPlan);
     if (options.dryRun) {
       log("巡检", event.sourceId, "事件(演练不发送)", content.replace(/\n/g, " ⏎ "));
       sent.push({ event, content, ok: true, dryRun: true });
@@ -95,7 +102,7 @@ async function monitorOnce(options = {}) {
         config.wecom.webhookUrl,
         config.wecom.webhookName || "工单提醒群",
         content,
-        event.meta.mentionedMobileList
+        Array.from(new Set([...(event.meta.mentionedMobileList || []), ...(mentionPlan ? mentionPlan.mobiles : [])]))
       );
       appendJsonl(appConfig.alertLedgerPath, { at: event.at, sourceId: event.sourceId, type: event.type, content });
       sent.push({ event, content, ok: true });

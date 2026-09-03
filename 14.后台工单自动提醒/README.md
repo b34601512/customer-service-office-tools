@@ -6,7 +6,7 @@
 
 版权所有 © 黎路遥，保留所有权利。本软件仅供学习交流，未经作者书面授权不得用于商业用途。
 
-后台出现需处理的工单时自动提醒企业微信群：先支持京东两类店铺——京喜店「任务工单」（sale-jdm.jd.com）与 POP 店「交易纠纷」（shop.jd.com），多店铺各自独立登录态；店铺登录失效也会提醒。详见 `CLAUDE.md`、GitHub issue #623（元素采集）/#624（设计验收）。
+后台出现需处理的工单时自动提醒企业微信群：先支持京东两类店铺——京喜店「任务工单」（sale-jdm.jd.com）与 POP 店「交易纠纷」（shop.jd.com），多店铺各自独立登录态；店铺登录失效也会提醒。提醒只@**当前时段在班的售后客服 + 主管**（读金山排班表及其单元格底色，按天缓存）。详见 `CLAUDE.md`、GitHub issue #623（元素采集）/#624（设计验收）。
 
 ## 快速上手
 
@@ -15,9 +15,10 @@
 3. 双击「启动工单提醒.bat」进菜单，或命令行：
 
 ```powershell
-node src/cli/startCli.js login jingxi1     ; 首次为店铺登录一次（弹浏览器人工登录）
-node src/cli/startCli.js once --dry-run    ; 巡检一轮，演练不发消息
-node src/cli/startCli.js run               ; 常驻监控
-node src/cli/startCli.js test-notify       ; 验证企微链路
+node src/cli/startCli.js login jd1          ; 首次为店铺登录一次（弹浏览器人工登录）
+node src/cli/startCli.js once --dry-run     ; 巡检一轮，演练不发消息
+node src/cli/startCli.js run                ; 常驻监控
+node src/cli/startCli.js duty               ; 验证今日值班/底色/当前在班@名单
+node src/cli/startCli.js test-notify        ; 验证企微链路
 npm test
 ```

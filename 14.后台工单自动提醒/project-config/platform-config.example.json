@@ -1,7 +1,33 @@
 {
   "wecom": {
     "webhookUrl": "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=在此填写机器人key",
-    "webhookName": "工单提醒群"
+    "webhookName": "工单提醒群",
+    "memberMobileMap": {
+      "李守耀": "18923872211",
+      "缪婷婷": "18520864897",
+      "柯紫婷": "13411062809",
+      "邓远祥": "18975175710",
+      "陈燕玲": "13923800587",
+      "黎路遥": "19925378376"
+    }
+  },
+  "duty": {
+    "scheduleUrl": "https://www.kdocs.cn/l/cga7jWGHxzkp",
+    "group": "售后",
+    "managerNames": ["黎路遥"],
+    "shiftWindows": {
+      "earlyStart": "08:00",
+      "earlyEnd": "16:30",
+      "lateStart": "14:00",
+      "lateEnd": "22:30"
+    },
+    "colorNames": {
+      "#BDD7EE": "浅蓝",
+      "#DEEBF7": "淡蓝",
+      "#E2F0D9": "浅绿",
+      "#FFFFFF": "白色",
+      "#FFFF00": "黄色"
+    }
   },
   "monitor": {
     "intervalMinutes": 5,
@@ -15,10 +41,10 @@
       "displayName": "京东",
       "stores": [
         {
-          "key": "jingxi1",
-          "displayName": "京喜1店",
-          "enabled": true,
-          "username": "在此填写京麦账号，如：店铺名--子账号",
+          "key": "jd1",
+          "displayName": "京东1店",
+          "enabled": false,
+          "username": "德达官方旗舰店--小黛",
           "mentionedMobileList": [],
           "sources": [
             {
@@ -27,16 +53,53 @@
               "type": "jingxiWorkOrder",
               "url": "https://sale-jdm.jd.com/workOrder/workOrderList",
               "watch": ["待处理", "平台协同工单", "物流投诉工单", "安装求助工单", "催开发票工单"]
+            },
+            {
+              "key": "dispute",
+              "displayName": "交易纠纷",
+              "type": "popDispute",
+              "url": "https://shop.jd.com/jdm/trade/after-sale/trade-dispute/list?tabCode=WAIT_EVIDENCE",
+              "watch": ["待回复", "待处理", "京东介入", "待执行"]
             }
           ]
         },
         {
-          "key": "pop1",
-          "displayName": "POP1店",
-          "enabled": true,
-          "username": "在此填写京麦账号",
+          "key": "jd3",
+          "displayName": "京东3店",
+          "enabled": false,
+          "username": "DEDAKJ器械店--小黛",
           "mentionedMobileList": [],
           "sources": [
+            {
+              "key": "workorder",
+              "displayName": "后台工单",
+              "type": "jingxiWorkOrder",
+              "url": "https://sale-jdm.jd.com/workOrder/workOrderList",
+              "watch": ["待处理", "平台协同工单", "物流投诉工单", "安装求助工单", "催开发票工单"]
+            },
+            {
+              "key": "dispute",
+              "displayName": "交易纠纷",
+              "type": "popDispute",
+              "url": "https://shop.jd.com/jdm/trade/after-sale/trade-dispute/list?tabCode=WAIT_EVIDENCE",
+              "watch": ["待回复", "待处理", "京东介入", "待执行"]
+            }
+          ]
+        },
+        {
+          "key": "jd6",
+          "displayName": "京东6店",
+          "enabled": false,
+          "username": "DEDAKJ自营--小黛",
+          "mentionedMobileList": [],
+          "sources": [
+            {
+              "key": "workorder",
+              "displayName": "后台工单",
+              "type": "jingxiWorkOrder",
+              "url": "https://sale-jdm.jd.com/workOrder/workOrderList",
+              "watch": ["待处理", "平台协同工单", "物流投诉工单", "安装求助工单", "催开发票工单"]
+            },
             {
               "key": "dispute",
               "displayName": "交易纠纷",
