@@ -5,6 +5,62 @@ const { ensureTmallActiveStore } = require("./tmallStoreSwitcher");
 const { assertNoTmallSafetyChallenge } = require("./tmallSafetyGuard");
 const { tryAutofillTmallLoginPage } = require("./tmallLoginAutofill");
 
+// #632：淘宝登录票据 cookie2/_tb_token_ 是会话级，关浏览器即清，导致每次运行都要重新登录。
+// 登录确认成功后把它们以持久化副本写回资料目录（等效“记住登录”）；失败只记日志，绝不影响主流程。
+const PERSIST_AUTH_COOKIE_NAMES = ["cookie2", "_tb_token_"];
+const PERSIST_AUTH_COOKIE_TTL_SECONDS = 7 * 24 * 3600;
+
+async function persistTmallSessionCookies(context) {
+  try {
+    const cookies = await context.cookies(["https://www.taobao.com", "https://sycm.taobao.com"]);
+    const persistUntil = Math.floor(Date.now() / 1000) + PERSIST_AUTH_COOKIE_TTL_SECONDS;
+    const seen = new Set();
+    const updates = [];
+    for (const item of cookies) {
+      if (!PERSIST_AUTH_COOKIE_NAMES.includes(item.name)) {
+        continue;
+      }
+      if (item.expires && item.expires > 0) {
+        continue;
+      }
+      const key = `${item.name}|${item.domain}|${item.path}`;
+      if (seen.has(key)) {
+        continue;
+      }
+      seen.add(key);
+      updates.push({
+        name: item.name,
+        value: item.value,
+        domain: item.domain,
+        path: item.path,
+        secure: Boolean(item.secure),
+        httpOnly: Boolean(item.httpOnly),
+        sameSite: item.sameSite || "Lax",
+        expires: persistUntil
+      });
+    }
+    if (!updates.length) {
+      return { persisted: 0 };
+    }
+    await context.addCookies(updates);
+    log(
+      "主线:完成",
+      "天猫登录",
+      "登录态持久化",
+      `已把 ${updates.map((item) => item.name).join("、")} 续期为持久cookie（7天），下次启动无需重新登录`
+    );
+    return { persisted: updates.length };
+  } catch (error) {
+    log(
+      "主线:判断",
+      "天猫登录",
+      "登录态持久化",
+      `持久化失败（不影响本次运行，下次仍会自动登录）：${error instanceof Error ? error.message : String(error)}`
+    );
+    return { persisted: 0, error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
 function wait(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -56,6 +112,7 @@ async function confirmTmallLoginReadyPage(page, options = {}) {
   }
 
   log("主线:完成", "天猫登录", "状态检测", `已确认登录成功，当前地址=${page.url()}`);
+  await persistTmallSessionCookies(page.context());
   let currentShopName = "";
   if (storeConfig && /sycm\.taobao\.com/i.test(page.url())) {
     currentShopName = await ensureTmallActiveStore(page, storeConfig);
@@ -113,5 +170,6 @@ module.exports = {
   isTmallLoginReady,
   isTmallAuthenticatedBusinessPage,
   confirmTmallLoginReadyPage,
+  persistTmallSessionCookies,
   waitForTmallLoginReady
 };

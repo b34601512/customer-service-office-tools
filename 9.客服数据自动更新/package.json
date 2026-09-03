@@ -8,7 +8,7 @@
                     "start":  "node src/cli/startCli.js",
                     "cli":  "node src/cli/startCli.js",
                     "panel":  "node src/cli/startCli.js",
-                    "test":  "node tests/blockingPopupAndDouyinDate.test.js && node tests/douyinLoginRecovery.test.js && node tests/tmallSingleDayDate.test.js && node tests/pddDateRefreshSafety.test.js && node tests/defaultDateRange.test.js && node tests/homeSummaryDateRange.test.js && node tests/thirtySecondResponseRate.test.js && node tests/summaryRetryAndMissingData.test.js && node tests/forceRedownloadMenu.test.js && node tests/cliInterface.test.js && node tests/tuiInterface.test.js && node tests/evidenceFolderMenu.test.js && node tests/evidenceNaming.test.js && node tests/kdocsDataDetailSync.test.js && node tests/jdCustomerServiceScope.test.js"
+                    "test":  "node tests/blockingPopupAndDouyinDate.test.js && node tests/douyinLoginRecovery.test.js && node tests/tmallSingleDayDate.test.js && node tests/tmallLoginPersistence.test.js && node tests/pddDateRefreshSafety.test.js && node tests/defaultDateRange.test.js && node tests/homeSummaryDateRange.test.js && node tests/thirtySecondResponseRate.test.js && node tests/summaryRetryAndMissingData.test.js && node tests/forceRedownloadMenu.test.js && node tests/cliInterface.test.js && node tests/tuiInterface.test.js && node tests/evidenceFolderMenu.test.js && node tests/evidenceNaming.test.js && node tests/kdocsDataDetailSync.test.js && node tests/jdCustomerServiceScope.test.js"
                 },
     "dependencies":  {
                          "@xmldom/xmldom":  "0.9.10",
