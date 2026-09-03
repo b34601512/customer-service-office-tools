@@ -48,8 +48,11 @@ async function renderDuty() {
     console.log(`  ${item.name}  ${item.shift}  底色：${item.colorName || "无"}${item.colorRgb ? `（${item.colorRgb}）` : ""}`);
   }
   const plan = buildMentionPlan(config, result);
-  console.log(`当前时段在班：${result.onDutyNow.join("、") || "无人"}`);
-  console.log(`将被@（含主管）：${plan.atNames.join("、") || "无"}`);
+  console.log(`按规则应@（组长在班就@组长；其他人看底色标记）：`);
+  for (const item of result.atStaff) {
+    console.log(`  ${item.name}（${item.reason}）`);
+  }
+  console.log(`最终@名单（含主管）：${plan.atNames.join("、") || "无"}`);
   console.log(`手机号：${plan.mobiles.join("、") || "无"}`);
 }
 

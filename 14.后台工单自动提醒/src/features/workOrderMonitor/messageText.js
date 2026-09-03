@@ -7,6 +7,17 @@ function formatTime(ts) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+// 工单列表 → “订单号（纠纷单号）”行，最多列 5 单防刷屏。
+function ticketLines(tickets, prefix = "　") {
+  const list = tickets || [];
+  const shown = list.slice(0, 5).map((tk) => {
+    const order = tk.orderId ? `订单 ${tk.orderId}` : `单号 ${tk.id}`;
+    return tk.ticketId && tk.orderId ? `${prefix}${order}（纠纷单 ${tk.ticketId}）` : `${prefix}${order}`;
+  });
+  if (list.length > 5) shown.push(`${prefix}…等共 ${list.length} 单`);
+  return shown;
+}
+
 function dutyLinesOf(mentionPlan) {
   if (!mentionPlan) return [];
   const lines = [];
@@ -34,11 +45,26 @@ function buildAlertMessage(event, mentionPlan = null) {
     return `${header}\n仍有未处理工单：${summary}，请及时处理。\n时间：${formatTime(event.at)}${dutyLines.length ? `\n${dutyLines.join("\n")}` : ""}`;
   }
 
-  // count_increase
-  const lines = (event.changes || []).map(
-    (c) => `· ${c.label}：新增 ${c.newItems} 单（${c.from} → ${c.to}）`
-  );
+  // 判责结果已出：补报一次，不再重发
+  if (event.type === "verdict_decided") {
+    const lines = (event.tickets || []).flatMap((tk) => [
+      ...ticketLines([tk], "· "),
+      `　判责结果：${tk.verdict || "已出"}`
+    ]);
+    return `${header}\n【${event.label}】判责结果已出：\n${lines.join("\n")}\n时间：${formatTime(event.at)}`;
+  }
+  // 判责未出：按配置间隔持续催办
+  if (event.type === "verdict_pending") {
+    return `${header}\n【${event.label}】以下工单判责结果仍未出，请跟进：\n${ticketLines(event.tickets, "· ").join("\n")}\n时间：${formatTime(event.at)}`;
+  }
+
+  // count_increase：变化行下附新增单订单号
+  const lines = (event.changes || []).flatMap((c) => {
+    const head = `· ${c.label}：新增 ${c.newItems} 单（${c.from} → ${c.to}）`;
+    const tkLines = c.tickets ? ticketLines(c.tickets) : [];
+    return [head, ...tkLines];
+  });
   return `${header}\n${lines.join("\n")}\n时间：${formatTime(event.at)}${dutyLines.length ? `\n${dutyLines.join("\n")}` : ""}`;
 }
 
-module.exports = { buildAlertMessage, formatTime };
+module.exports = { buildAlertMessage, formatTime, ticketLines };

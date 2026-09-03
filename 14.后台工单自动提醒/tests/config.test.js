@@ -47,12 +47,12 @@ test("没有任何店铺报错", () => {
 
 const withDuty = () => {
   const c = base();
-  c.wecom.memberMobileMap = { "黎路遥": "19925378376" };
+  c.wecom.memberMobileMap = { "黎路遥": "19925378376", "李守耀": "18923872211" };
   c.duty = {
     scheduleUrl: "https://www.kdocs.cn/l/cga7jWGHxzkp",
     group: "售后",
-    managerNames: ["黎路遥"],
-    shiftWindows: { earlyStart: "08:00", earlyEnd: "16:30", lateStart: "14:00", lateEnd: "22:30" }
+    leadNames: ["李守耀"],
+    managerNames: ["黎路遥"]
   };
   return c;
 };
@@ -61,16 +61,16 @@ test("合法 duty 配置通过", () => {
   assert.doesNotThrow(() => validateConfig(withDuty()));
 });
 
-test("duty 时段格式错误报错", () => {
+test("主管/组长没手机号无法@报错", () => {
   const c = withDuty();
-  c.duty.shiftWindows.lateStart = "14点";
-  assert.throws(() => validateConfig(c), /lateStart 不是 HH:mm/);
+  c.wecom.memberMobileMap = { "李守耀": "18923872211" };
+  assert.throws(() => validateConfig(c), /黎路遥.*手机号/);
 });
 
-test("主管没手机号无法@报错", () => {
+test("duty 缺组长名单报错", () => {
   const c = withDuty();
-  c.wecom.memberMobileMap = {};
-  assert.throws(() => validateConfig(c), /黎路遥.*手机号/);
+  delete c.duty.leadNames;
+  assert.throws(() => validateConfig(c), /leadNames 至少填一人/);
 });
 
 test("duty 缺主管名单报错", () => {

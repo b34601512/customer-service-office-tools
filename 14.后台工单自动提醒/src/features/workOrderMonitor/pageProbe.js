@@ -5,10 +5,49 @@
 
 const { openStoreBrowser, resolveStoreProfileDir } = require("../../engine/chromeSession");
 const { log } = require("../../engine/logger");
-const { parseCounts, isLoginRedirect, looksLikeBrokenPage } = require("./textParser");
+const { parseCounts, parseTicketRows, buildTabUrl, isLoginRedirect, looksLikeBrokenPage } = require("./textParser");
 const { STATUS } = require("./alertPolicy");
 
 const CLICK_SETTLE_MS = 1500;
+const ROW_WAIT_MS = 4000;
+
+// 表格行文本提取（实测 rows-CAN_APPEAL.txt 同源逻辑）：取含长数字的最深层容器，去纯数字日历块。
+async function extractRowTexts(page) {
+  return page.evaluate(() => {
+    const out = [];
+    const cands = [...document.querySelectorAll("tr, [class*=row], [class*=Row], [class*=item], [class*=Item], [class*=card], [class*=Card]")];
+    for (const el of cands) {
+      const t = (el.innerText || "").trim();
+      if (t && /\d{7,}/.test(t) && t.length < 600 && !/^[\d\s]{10,}$/.test(t) && !out.includes(t)) out.push(t);
+    }
+    return out.filter((t) => !out.some((o) => o !== t && o.length < t.length && t.includes(o)));
+  }).catch(() => []);
+}
+
+// 深读指定页签的工单行：POP 用 tabCode URL 参数直跳（实测比点击稳），京喜用页签点击。
+async function readTicketsForLabels(page, source, labels, pageLoadTimeoutMs) {
+  const byLabel = {};
+  for (const label of labels) {
+    try {
+      if (source.type === "popDispute") {
+        const tabUrl = buildTabUrl(source.url, label);
+        if (!tabUrl) throw new Error(`页签「${label}」无 tabCode 映射`);
+        await page.goto(tabUrl, { waitUntil: "domcontentloaded", timeout: pageLoadTimeoutMs });
+      } else {
+        const target = page.getByText(new RegExp(`^${label}[\\s（(]`)).first();
+        await target.click({ timeout: 4000 });
+      }
+      await new Promise((resolve) => setTimeout(resolve, ROW_WAIT_MS));
+      if (isLoginRedirect(page.url())) return { login: true };
+      const texts = await extractRowTexts(page);
+      byLabel[label] = parseTicketRows(texts);
+      log("深读", `${source.key}/${label}`, "ok", `${byLabel[label].length} 单`);
+    } catch (error) {
+      log("深读", `${source.key}/${label}`, "失败(降级不阻塞)", String(error.message || error).slice(0, 100));
+    }
+  }
+  return { byLabel };
+}
 
 async function readPageState(page, source) {
   const url = page.url();
@@ -68,12 +107,23 @@ async function probeSource(page, source, pageLoadTimeoutMs) {
     if (again.status === STATUS.LOGIN_REQUIRED) return { status: again.status, counts: {}, url: again.url };
     counts = { ...counts, ...again.counts };
     if (stablePrev && sameCounts(stablePrev, counts)) {
-      return { status: STATUS.OK, counts, url: again.url };
+      return await withDeepRead(page, source, counts, pageLoadTimeoutMs);
     }
     stablePrev = { ...counts };
   }
   log("探测", source.url, "计数不稳定", "窗口内未连续两次一致，采用最后一次读数");
-  return { status: STATUS.OK, counts, url: state.url };
+  return await withDeepRead(page, source, counts, pageLoadTimeoutMs);
+}
+
+// 计数稳定后只对非零页签深读行（带订单号/判责）；全部为零不花冤枉时间。
+async function withDeepRead(page, source, counts, pageLoadTimeoutMs) {
+  const nonzero = source.watch.filter((label) => Number(counts[label]) > 0);
+  if (nonzero.length === 0) {
+    return { status: STATUS.OK, counts, ticketsByLabel: {} };
+  }
+  const deep = await readTicketsForLabels(page, source, nonzero, pageLoadTimeoutMs);
+  if (deep.login) return { status: STATUS.LOGIN_REQUIRED, counts: {}, url: page.url() };
+  return { status: STATUS.OK, counts, ticketsByLabel: deep.byLabel };
 }
 
 function pickMissing(newCounts, known) {

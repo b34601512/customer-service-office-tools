@@ -23,14 +23,14 @@
 - `src/engine/`：`chromeSession.js`（按店铺 profile 拉起/连接/关闭受控 Chrome）、`logger.js`、`fileSystem.js`。
 - `src/integrations/wecomRobot.js`：企微 text 消息发送（超时 10s、重试 1 次）。
 - `src/features/dutySchedule/`：值班@业务真源（照搬 1 号匿名读金山排班表，增强读底色）。
-  - `dutyParser.js`：纯函数，矩阵+色格 → 当日售后班次/底色、时段在班判定、色名描述。
+  - `dutyParser.js`：纯函数，矩阵+色格 → 当日售后班次/底色 + 按天@规则 selectAtStaff（组长在班/标记色）+ 色名描述。
   - `scheduleFetcher.js`：无头 Chrome 打开排班表，矩阵 + 当日格 `getAppliedXf` 底色（实测 getXfByCell 读不到条件格式色，必须 getAppliedXf）。
-  - `dutyService.js`：`resolveDuty()`（按天缓存）+ `buildMentionPlan()`（@名单=当前时段在班售后+主管；读失败降级只@主管）。
+  - `dutyService.js`：`resolveDuty()`（按天缓存）+ `buildMentionPlan()`（@名单=组长在班+标记色售后+主管；读失败降级只@主管）。
 - `src/features/workOrderMonitor/`：业务真源。
   - `textParser.js`：纯函数，页面文本 → 分类计数、登录跳转识别（fixture 来自实测文本）。
   - `alertPolicy.js`：纯函数判定，计数新增/登录失效(节流)/恢复/可选重复提醒 → 事件。
-  - `messageText.js`：纯函数，事件+值班@计划 → 企微文案（不发链接；说清 平台·店铺缩写 分类事项；附今日值班/底色与当前在班行）。
-  - `pageProbe.js`：驱动浏览器读页面，输出观测值。
+  - `messageText.js`：纯函数，事件+值班@计划 → 企微文案（不发链接；平台·店铺缩写+分类事项+新增单订单号；附今日值班/底色与本次@行）。
+  - `pageProbe.js`：驱动浏览器读页面；计数稳定后对非零页签**深读表格行**（POP 用 tabCode URL 直跳，京喜点页签），输出 计数+ticketsByLabel；行解析靠操作按钮/编号形态过滤噪声（实测客服电话 4006229068 会伪装成单）。
   - `service.js`：`monitorOnce()`（探测→判定→发送→落状态，单店失败隔离）、`startMonitorLoop()`。
   - `loginAssist.js`：拉起某店铺可见浏览器供人工登录一次。
 - `src/cli/startCli.js`：唯一界面，只做参数解析与调用 service，零业务判断。
@@ -38,17 +38,20 @@
 
 ## 5. 判定规则（唯一真源 alertPolicy.evaluateRound）
 
-- 基线存在 `runtime/state/monitor-state.json`；某分类计数**上升**才提醒，回落/持平不打扰。
+- 基线存在 `runtime/state/monitor-state.json`；某分类计数**上升**才提醒（附新增单订单号），回落/持平不打扰。
 - 首轮非零计数提醒一次（`alertOnFirstRun`，默认开，让存量工单不被漏）。
 - 登录失效立即提醒并按 `loginAlertThrottleMinutes` 节流，恢复登录提醒一次。
-- `repeatReminderMinutes`>0 时未清零存量会周期性重复提醒（默认 0 关闭）。
+- `repeatReminderMinutes`>0 时未清零存量会周期性重复提醒（默认 0 关闭）。判责重发不受此限制，另走 verdictPendingRepeatMinutes。
+- 判责状态机（仅 POP 纠纷，用户 2026-09-03 定）：新单提醒一次；判责未出→每 `monitor.verdictPendingRepeatMinutes`（默认30，0=关）重发；判责新出→补报一次后停止；单子消失/清零→记录删除。
 - 提醒结果追加 `runtime/state/alert-ledger.jsonl`；发送失败回滚该源到本轮前快照，下轮重试。
 
-## 5b. 值班@规则（唯一真源 dutySchedule）
+## 5b. 值班@规则（唯一真源 dutySchedule，按天判定不看时刻）
 
-- 只@**当前时段在班的售后** + 主管（duty.managerNames 永远@）；早班 [08:00,16:30)，晚班 [14:00,22:30)，重叠段双班都@；时段外只@主管。
-- @用 `mentioned_mobile_list`（手机号，照 1 号；memberMobileMap 真源在配置）。
-- 每条提醒附「今日售后值班：姓名（班次·底色）」行：底色真源=金山单元格 `getAppliedXf` 实心填充 rgb，色名表 duty.colorNames 可读可扩；实测售后白底#FFFFFF/浅蓝#BDD7EE，休息黄底#FFFF00。未来“只提醒有底色标记者”只需改 buildMentionPlan 一处。
+- 组长（duty.leadNames，如李守耀）当日有班（早/晚）→ @他；他在就是他总值班，不按时段拆。
+- 其他售后：只看格上**背景标记色**——当日有班且底色非空非白（白=#FFFFFF 在 nonMarkerColors 名单内不算标记）→ @；行政/年假/休息不@。
+- 主管（duty.managerNames）永远@；@用 `mentioned_mobile_list`（手机号，memberMobileMap 真源在配置，与 1 号同源）。
+- 每条提醒附两行：「今日售后值班：姓名（班次·底色）」+「本次@：姓名（原因）」，方便群里看懂为什么@他。
+- 底色真源=金山单元格 `getAppliedXf` 实心填充 rgb（getXfByCell 读不到条件格式色，实测推翻）；实测售后白底#FFFFFF/浅蓝#BDD7EE，休息黄底#FFFF00。色名表 duty.colorNames 可扩。
 - 排班读取失败降级：照常发事件提醒，只@主管，文案注明失败原因；排班结果按天缓存，一天只拉一次浏览器。
 
 ## 6. 运行方式
@@ -74,4 +77,4 @@ npm test
 - `platforms.jd.stores[]`：`key`（同时决定 profile 目录 `runtime/state/browser-profiles/jd/<key>`）、`displayName`、`username`（登录辅助提示）、`enabled`、`mentionedMobileList`（@客服）。
 - `sources[]`：`type` 目前支持 `jingxiWorkOrder` / `popDispute`（未来平台=新 type+新页面文本规则），`url`，`watch`（要监控的页签分类名）。
 - `wecom.memberMobileMap`：姓名→手机号（与 1 号 wecom-robot.json 同源）。
-- `duty`（可选模块，配置了就必须完整，校验器强校验）：`scheduleUrl` 金山排班表、`group`（=售后）、`managerNames`（永远@的主管，须在 memberMobileMap 里有号）、`shiftWindows`（HH:mm 四字段）、`colorNames`（rgb→人话色名）。
+- `duty`（可选模块，配置了就必须完整，校验器强校验）：`scheduleUrl` 金山排班表、`group`（=售后）、`leadNames`（值班组长，须在 memberMobileMap 里有号）、`managerNames`（永远@的主管）、`nonMarkerColors`（不算标记的颜色，默认白）、`colorNames`（rgb→人话色名）。

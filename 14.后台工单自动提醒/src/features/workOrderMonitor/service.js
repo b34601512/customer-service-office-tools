@@ -66,6 +66,7 @@ async function monitorOnce(options = {}) {
             platformName: config.platforms[platformKey].displayName || platformKey,
             storeName: store.displayName,
             sourceName: source.displayName || source.key,
+            sourceType: source.type,
             url: source.url,
             watch: source.watch,
             mentionedMobileList: store.mentionedMobileList || []
@@ -78,6 +79,7 @@ async function monitorOnce(options = {}) {
   const events = evaluateRound(state, observations, {
     loginAlertThrottleMinutes: config.monitor.loginAlertThrottleMinutes,
     repeatReminderMinutes: config.monitor.repeatReminderMinutes,
+    verdictPendingRepeatMinutes: config.monitor.verdictPendingRepeatMinutes,
     alertOnFirstRun: config.monitor.alertOnFirstRun !== false
   }, new Date());
   // 注意：这里不立即落盘。dryRun 绝不改基线；真实运行要等发送结果确定后再写，避免演练吞事件、发送失败丢提醒。

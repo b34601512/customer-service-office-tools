@@ -1,21 +1,21 @@
-// 本文件是值班业务真源：拉金山排班（带缓存）→ 解析当日售后班次/底色 → 判定当前时段在班人。
-// 界面与提醒链路都调 resolveDuty()，这里只出一份结论。
+// 本文件是值班业务真源：拉金山排班（带缓存）→ 解析当日售后班次/底色 → 按天选出应@的人。
+// @规则（用户2026-09-03定）：组长李守耀当日在班就@组长；其他售后看背景标记色，有标记=值班；主管永远@。
+// 界面与提醒链路都调 resolveDuty()/buildMentionPlan()，这里只出一份结论。
 const { log } = require("../../engine/logger");
 const { fetchScheduleMonth } = require("./scheduleFetcher");
-const { buildTodayDuty, listOnDutyNow, describeColor } = require("./dutyParser");
+const { buildTodayDuty, selectAtStaff, describeColor } = require("./dutyParser");
 
-const cache = new Map(); // dateKey → { staff, fetchedAt }
+const cache = new Map(); // dateKey → staff[]（当日班次+底色快照）
 
 function dateKeyOf(date) {
   return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
 }
 
-// resolveDuty(config, now) →
-// { ok, todayStaff:[{name,shift,colorRgb,colorName}], onDutyNow:[names], error }
+// resolveDuty(config, now) → { ok, todayStaff, atStaff:[{name,reason,colorName}], error }
 async function resolveDuty(config, now = new Date()) {
   const duty = (config && config.duty) || {};
   if (!duty.scheduleUrl) {
-    return { ok: false, todayStaff: [], onDutyNow: [], error: "未配置 duty.scheduleUrl" };
+    return { ok: false, todayStaff: [], atStaff: [], error: "未配置 duty.scheduleUrl" };
   }
   const key = dateKeyOf(now);
   try {
@@ -29,15 +29,18 @@ async function resolveDuty(config, now = new Date()) {
       ...item,
       colorName: describeColor(item.colorRgb, duty.colorNames || {})
     }));
-    const onDuty = listOnDutyNow(staff, duty.shiftWindows || {}, now);
-    return { ok: true, todayStaff: staff, onDutyNow: onDuty.map((item) => item.name) };
+    const atStaff = selectAtStaff(staff, {
+      leadNames: duty.leadNames || [],
+      nonMarkerColors: duty.nonMarkerColors || ["#FFFFFF"]
+    });
+    return { ok: true, todayStaff: staff, atStaff };
   } catch (error) {
     log("值班", "排班", "读取失败", error.message);
-    return { ok: false, todayStaff: [], onDutyNow: [], error: error.message };
+    return { ok: false, todayStaff: [], atStaff: [], error: error.message };
   }
 }
 
-// 组装 @ 名单与文案行：@ = 当前时段在班售后 + 主管；底色情况写入 todayLine 供验证。
+// 组装 @ 名单与文案行：@ = 当日在班组长 + 有标记色售后 + 主管；底色情况写入 todayLine 供验证。
 // 排班读取失败降级：只 @ 主管，并在文案里说明。
 function buildMentionPlan(config, dutyResult) {
   const duty = (config && config.duty) || {};
@@ -48,12 +51,13 @@ function buildMentionPlan(config, dutyResult) {
   let todayLine = "";
   let onDutyLine = "";
   if (dutyResult.ok) {
-    const afterSales = dutyResult.todayStaff;
-    todayLine = `今日${duty.group || "售后"}值班：${afterSales
+    todayLine = `今日${duty.group || "售后"}值班：${dutyResult.todayStaff
       .map((item) => `${item.name}（${item.shift}${item.colorName ? `·${item.colorName}底` : "·无底色"}）`)
       .join("、")}`;
-    atNames = [...dutyResult.onDutyNow];
-    onDutyLine = `当前在班：${atNames.length > 0 ? atNames.join("、") : "无人（只@主管）"}`;
+    atNames = dutyResult.atStaff.map((item) => item.name);
+    onDutyLine = `本次@：${dutyResult.atStaff.length > 0
+      ? dutyResult.atStaff.map((item) => `${item.name}（${item.reason}）`).join("、")
+      : "无值班售后（只@主管）"}`;
   } else {
     todayLine = `（排班读取失败，未能识别在班客服：${dutyResult.error}）`;
   }
@@ -63,6 +67,10 @@ function buildMentionPlan(config, dutyResult) {
   const mobiles = Array.from(
     new Set(atNames.map((name) => String(memberMobileMap[name] || "").trim()).filter(Boolean))
   );
+  const missing = atNames.filter((name) => !String(memberMobileMap[name] || "").trim());
+  if (missing.length > 0) {
+    log("值班", "@", "缺手机号", missing.join("、"));
+  }
   return { atNames, mobiles, todayLine, onDutyLine };
 }
 

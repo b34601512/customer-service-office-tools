@@ -1,18 +1,9 @@
-// 本文件是值班表纯函数解析层（不依赖浏览器）：排班矩阵 → 当日售后班次 + 当前时段在班人。
-// 排班表结构依据实测：B 列是姓名，A 列职务（售前/售后，只在组首行出现），表头行含“日期”，日期列按“日”定位。
+// 本文件是值班表纯函数解析层（不依赖浏览器）：排班矩阵 → 当日售后班次与底色。
+// @人规则（用户2026-09-03定，按天不按时刻）：组长当日有班就@组长；其他售后只看背景标记色，有标记色=值班。
+// 排班表结构依据实测：B 列是姓名，A 列职务（售前/售后，只在组首行出现），表头行含“日期”，日期列按日定位。
 
 function monthSheetName(date) {
   return `${date.getFullYear()}年${date.getMonth() + 1}月`;
-}
-
-function parseMinutes(timeText) {
-  const m = /^(\d{1,2}):(\d{2})$/.exec(String(timeText || "").trim());
-  if (!m) return null;
-  return Number(m[1]) * 60 + Number(m[2]);
-}
-
-function nowMinutes(date) {
-  return date.getHours() * 60 + date.getMinutes();
 }
 
 // 班次代码归一：实测表内取值 早/晚/行/年/空；空=休息。
@@ -64,18 +55,31 @@ function buildTodayDuty(matrix, date, colors = {}, groupFilter = "售后") {
   return { dayCol, staff };
 }
 
-// 当前时段在班：早班 [earlyStart, earlyEnd)，晚班 [lateStart, lateEnd)。14:00~16:30 双班重叠都算在班。
-function listOnDutyNow(staff, windows, date) {
-  const minutes = nowMinutes(date);
-  return staff.filter((item) => {
-    if (item.shift === "早班") {
-      return minutes >= parseMinutes(windows.earlyStart) && minutes < parseMinutes(windows.earlyEnd);
+// 当日在班（早/晚才算；行政/年假/休息不算）。
+function isWorkingShift(shift) {
+  return shift === "早班" || shift === "晚班";
+}
+
+// @名单选择（纯规则）：
+// 1) 组长（leadNames）当日在班 → @组长（他负责总值班，只看他在不在，不看底色）。
+// 2) 其他售后：当日在班 且 格上有背景标记色（非空、非 nonMarkerColors 名单内，默认排除白色） → @。
+// 返回 [{name, reason, colorName}]，reason 写进文案供群里看懂为什么@他。
+function selectAtStaff(staff, options) {
+  const leadNames = options.leadNames || [];
+  const nonMarker = (options.nonMarkerColors || ["#FFFFFF"]).map((c) => String(c).toUpperCase());
+  const picked = [];
+  for (const item of staff) {
+    if (!isWorkingShift(item.shift)) continue;
+    if (leadNames.includes(item.name)) {
+      picked.push({ name: item.name, reason: "组长值班", colorName: item.colorName || "" });
+      continue;
     }
-    if (item.shift === "晚班") {
-      return minutes >= parseMinutes(windows.lateStart) && minutes < parseMinutes(windows.lateEnd);
+    const rgb = item.colorRgb ? String(item.colorRgb).toUpperCase() : null;
+    if (rgb && !nonMarker.includes(rgb)) {
+      picked.push({ name: item.name, reason: `${item.colorName || rgb}底标记`, colorName: item.colorName || "" });
     }
-    return false;
-  });
+  }
+  return picked;
 }
 
 // rgb → 人话颜色：查配置色名表，命中给名字，未命中显示原色值（空=无底色由文案层决定表述）。
@@ -85,4 +89,4 @@ function describeColor(colorRgb, colorNames) {
   return colorNames[key] || colorNames[key.replace(/^#/, "")] || key;
 }
 
-module.exports = { monthSheetName, buildTodayDuty, listOnDutyNow, describeColor, normalizeShift, parseMinutes };
+module.exports = { monthSheetName, buildTodayDuty, isWorkingShift, selectAtStaff, describeColor, normalizeShift };

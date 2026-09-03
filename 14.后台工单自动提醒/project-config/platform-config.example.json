@@ -14,13 +14,15 @@
   "duty": {
     "scheduleUrl": "https://www.kdocs.cn/l/cga7jWGHxzkp",
     "group": "售后",
-    "managerNames": ["黎路遥"],
-    "shiftWindows": {
-      "earlyStart": "08:00",
-      "earlyEnd": "16:30",
-      "lateStart": "14:00",
-      "lateEnd": "22:30"
-    },
+    "leadNames": [
+      "李守耀"
+    ],
+    "managerNames": [
+      "黎路遥"
+    ],
+    "nonMarkerColors": [
+      "#FFFFFF"
+    ],
     "colorNames": {
       "#BDD7EE": "浅蓝",
       "#DEEBF7": "淡蓝",
@@ -34,7 +36,8 @@
     "pageLoadTimeoutSeconds": 45,
     "loginAlertThrottleMinutes": 60,
     "repeatReminderMinutes": 0,
-    "alertOnFirstRun": true
+    "alertOnFirstRun": true,
+    "verdictPendingRepeatMinutes": 30
   },
   "platforms": {
     "jd": {
@@ -52,14 +55,25 @@
               "displayName": "后台工单",
               "type": "jingxiWorkOrder",
               "url": "https://sale-jdm.jd.com/workOrder/workOrderList",
-              "watch": ["待处理", "平台协同工单", "物流投诉工单", "安装求助工单", "催开发票工单"]
+              "watch": [
+                "待处理",
+                "平台协同工单",
+                "物流投诉工单",
+                "安装求助工单",
+                "催开发票工单"
+              ]
             },
             {
               "key": "dispute",
               "displayName": "交易纠纷",
               "type": "popDispute",
               "url": "https://shop.jd.com/jdm/trade/after-sale/trade-dispute/list?tabCode=WAIT_EVIDENCE",
-              "watch": ["待回复", "待处理", "京东介入", "待执行"]
+              "watch": [
+                "待回复",
+                "待处理",
+                "京东介入",
+                "待执行"
+              ]
             }
           ]
         },
@@ -75,14 +89,25 @@
               "displayName": "后台工单",
               "type": "jingxiWorkOrder",
               "url": "https://sale-jdm.jd.com/workOrder/workOrderList",
-              "watch": ["待处理", "平台协同工单", "物流投诉工单", "安装求助工单", "催开发票工单"]
+              "watch": [
+                "待处理",
+                "平台协同工单",
+                "物流投诉工单",
+                "安装求助工单",
+                "催开发票工单"
+              ]
             },
             {
               "key": "dispute",
               "displayName": "交易纠纷",
               "type": "popDispute",
               "url": "https://shop.jd.com/jdm/trade/after-sale/trade-dispute/list?tabCode=WAIT_EVIDENCE",
-              "watch": ["待回复", "待处理", "京东介入", "待执行"]
+              "watch": [
+                "待回复",
+                "待处理",
+                "京东介入",
+                "待执行"
+              ]
             }
           ]
         },
@@ -98,14 +123,25 @@
               "displayName": "后台工单",
               "type": "jingxiWorkOrder",
               "url": "https://sale-jdm.jd.com/workOrder/workOrderList",
-              "watch": ["待处理", "平台协同工单", "物流投诉工单", "安装求助工单", "催开发票工单"]
+              "watch": [
+                "待处理",
+                "平台协同工单",
+                "物流投诉工单",
+                "安装求助工单",
+                "催开发票工单"
+              ]
             },
             {
               "key": "dispute",
               "displayName": "交易纠纷",
               "type": "popDispute",
               "url": "https://shop.jd.com/jdm/trade/after-sale/trade-dispute/list?tabCode=WAIT_EVIDENCE",
-              "watch": ["待回复", "待处理", "京东介入", "待执行"]
+              "watch": [
+                "待回复",
+                "待处理",
+                "京东介入",
+                "待执行"
+              ]
             }
           ]
         }
