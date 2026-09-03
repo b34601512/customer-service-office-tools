@@ -1,5 +1,5 @@
 // 本文件是提醒判定业务真源（纯函数）：输入上一轮状态+本轮观测，输出提醒事件与新状态。
-// 规则：计数新增→提醒（带新单订单号）；POP判责未出→每 verdictPendingRepeatMinutes 重发；判责新出→补一次并停止；
+// 规则：计数新增→提醒（带新单订单号）；POP判责未出→每 verdictPendingRepeatMinutes 重发；判责新出→静默停止重发（不补报，用户定）；
 // 登录失效→节流提醒；恢复→提醒一次；首轮可配置基线提醒。判责概念仅对 popDispute 生效，其他类型单视为“已定”不重发。
 
 const STATUS = {
@@ -17,7 +17,7 @@ function nowMs(now) {
 
 // 工单记录合并（纯函数，就地改 events/不碰外部状态）：
 // 新单→记 lastAlertAt=now（随 count_increase 带出订单号，不另发）；
-// 未定→定：补发 verdict_decided 一次；仍未定且超过 verdictPendingRepeatMinutes（默认30，0=关）→verdict_pending 重发。
+// 未定→定：不再补报，只更新记录使重发停止；仍未定且超过 verdictPendingRepeatMinutes（默认30，0=关）→verdict_pending 重发。
 // 只有 popDispute 有判责概念；其他类型单视为已定不重发。深读失败的页签沿用旧记录。
 function mergeTickets(prevByLabel, currentByLabel, counts, sourceType, t, options, events, sourceId, meta, changes) {
   const repeatMs = (options.verdictPendingRepeatMinutes === undefined ? 30 : Number(options.verdictPendingRepeatMinutes)) * 60000;
@@ -50,7 +50,6 @@ function mergeTickets(prevByLabel, currentByLabel, counts, sourceType, t, option
     }
     const merged = [];
     const newTickets = [];
-    const decidedNow = [];
     for (const raw of currentByLabel[label]) {
       const decided = verdictTrack ? Boolean(raw.decided) : true;
       const p = prevById.get(raw.id);
@@ -59,8 +58,8 @@ function mergeTickets(prevByLabel, currentByLabel, counts, sourceType, t, option
         rec = { ...raw, decided, firstSeenAt: t, lastAlertAt: t };
         newTickets.push(rec);
       } else if (!p.decided && decided) {
-        rec = { ...raw, decided, firstSeenAt: p.firstSeenAt, lastAlertAt: t };
-        decidedNow.push(rec);
+        // 判责刚出：只更新记录（重发自然停止），不发群
+        rec = { ...raw, decided, firstSeenAt: p.firstSeenAt, lastAlertAt: p.lastAlertAt || t };
       } else {
         rec = { ...raw, decided, firstSeenAt: p.firstSeenAt, lastAlertAt: p.lastAlertAt || t };
         if (decided && !rec.verdict && p.verdict) rec.verdict = p.verdict;
@@ -69,10 +68,8 @@ function mergeTickets(prevByLabel, currentByLabel, counts, sourceType, t, option
     }
     nextByLabel[label] = merged;
     if (changeByLabel[label] && newTickets.length > 0) changeByLabel[label].tickets = newTickets;
+    // 判责新出不补报（用户定：群里只提醒未出的）；记录更新后重发自然停止。
     if (verdictTrack) {
-      if (decidedNow.length > 0) {
-        events.push({ type: "verdict_decided", sourceId, meta, label, tickets: decidedNow, counts, at: t });
-      }
       firePendingRepeat(label, merged, true, repeatMs, t, events, sourceId, meta, counts);
     }
   }

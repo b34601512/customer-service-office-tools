@@ -1,70 +1,50 @@
 // 本文件是提醒文案真源（纯函数）：事件 + 值班@计划 → 企微文本。界面不参与文案拼装。
-// 文案规则（用户定）：说清 平台·店铺缩写 + 什么分类要处理；不发链接；附当日值班与底色说明。
+// 文案规则（用户定）：只留最少必要内容——店铺缩写（自带平台信息）+ 分类事项 + 订单号；
+// 不发：链接、时间戳（企微自带）、平台名前缀、纠纷单号/判责结果明细（那是判断逻辑内部数据）、判责已出的补报（停止重发即完成）。
+// 群里值班信息只有一行「本次@：谁（原因）」；完整班次/底色表用 CLI duty 命令看。
 
-function formatTime(ts) {
-  const d = new Date(ts);
-  const pad = (n) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-
-// 工单列表 → “订单号（纠纷单号）”行，最多列 5 单防刷屏。
 function ticketLines(tickets, prefix = "　") {
   const list = tickets || [];
-  const shown = list.slice(0, 5).map((tk) => {
-    const order = tk.orderId ? `订单 ${tk.orderId}` : `单号 ${tk.id}`;
-    return tk.ticketId && tk.orderId ? `${prefix}${order}（纠纷单 ${tk.ticketId}）` : `${prefix}${order}`;
-  });
+  const shown = list.slice(0, 5).map((tk) => `${prefix}${tk.orderId ? `订单 ${tk.orderId}` : `单号 ${tk.id}`}`);
   if (list.length > 5) shown.push(`${prefix}…等共 ${list.length} 单`);
   return shown;
 }
 
-function dutyLinesOf(mentionPlan) {
-  if (!mentionPlan) return [];
-  const lines = [];
-  if (mentionPlan.todayLine) lines.push(mentionPlan.todayLine);
-  if (mentionPlan.onDutyLine) lines.push(mentionPlan.onDutyLine);
-  return lines;
+function atLineOf(mentionPlan) {
+  if (!mentionPlan || !mentionPlan.onDutyLine) return [];
+  return [mentionPlan.onDutyLine];
 }
 
 function buildAlertMessage(event, mentionPlan = null) {
   const { meta } = event;
-  const header = `【工单提醒】${meta.platformName}·${meta.storeName} ${meta.sourceName}`;
-  const dutyLines = dutyLinesOf(mentionPlan);
+  const header = `【工单提醒】${meta.storeName} ${meta.sourceName}`;
+  const tail = atLineOf(mentionPlan);
+  const tailText = tail.length ? `\n${tail.join("\n")}` : "";
 
   if (event.type === "login_required") {
-    return `${header}\n店铺登录态已失效，后台工单无法检查，请尽快在监控电脑上重新登录京麦。\n时间：${formatTime(event.at)}${dutyLines.length ? `\n${dutyLines.join("\n")}` : ""}`;
+    return `${header}\n店铺登录态已失效，后台工单无法检查，请尽快在监控电脑上重新登录京麦。${tailText}`;
   }
   if (event.type === "login_restored") {
-    return `${header}\n店铺登录已恢复，工单监控继续。\n时间：${formatTime(event.at)}`;
+    return `${header}\n店铺登录已恢复，工单监控继续。`;
   }
   if (event.type === "pending_repeat") {
     const summary = Object.entries(event.counts || {})
       .filter(([, c]) => c > 0)
       .map(([label, c]) => `${label} ${c} 单`)
       .join("，");
-    return `${header}\n仍有未处理工单：${summary}，请及时处理。\n时间：${formatTime(event.at)}${dutyLines.length ? `\n${dutyLines.join("\n")}` : ""}`;
+    return `${header}\n仍有未处理工单：${summary}，请及时处理。${tailText}`;
   }
-
-  // 判责结果已出：补报一次，不再重发
-  if (event.type === "verdict_decided") {
-    const lines = (event.tickets || []).flatMap((tk) => [
-      ...ticketLines([tk], "· "),
-      `　判责结果：${tk.verdict || "已出"}`
-    ]);
-    return `${header}\n【${event.label}】判责结果已出：\n${lines.join("\n")}\n时间：${formatTime(event.at)}`;
-  }
-  // 判责未出：按配置间隔持续催办
   if (event.type === "verdict_pending") {
-    return `${header}\n【${event.label}】以下工单判责结果仍未出，请跟进：\n${ticketLines(event.tickets, "· ").join("\n")}\n时间：${formatTime(event.at)}`;
+    return `${header}\n【${event.label}】以下工单判责未出，请跟进：\n${ticketLines(event.tickets, "· ").join("\n")}${tailText}`;
   }
 
-  // count_increase：变化行下附新增单订单号
+  // count_increase：变化行下附新增单订单号。verdict_decided 事件已按用户要求取消（判责出了只是停止重发）。
   const lines = (event.changes || []).flatMap((c) => {
     const head = `· ${c.label}：新增 ${c.newItems} 单（${c.from} → ${c.to}）`;
     const tkLines = c.tickets ? ticketLines(c.tickets) : [];
     return [head, ...tkLines];
   });
-  return `${header}\n${lines.join("\n")}\n时间：${formatTime(event.at)}${dutyLines.length ? `\n${dutyLines.join("\n")}` : ""}`;
+  return `${header}\n${lines.join("\n")}${tailText}`;
 }
 
-module.exports = { buildAlertMessage, formatTime, ticketLines };
+module.exports = { buildAlertMessage, ticketLines };

@@ -90,14 +90,13 @@ test("判责未出：每 verdictPendingRepeatMinutes 重发一次", () => {
   assert.strictEqual(again.length, 0, "重发后重新计时");
 });
 
-test("判责出结果：补报一次后不再重发", () => {
+test("判责出结果：不补报（用户定），静默停止重发", () => {
   const state = { sources: {} };
   const o = { ...opts, verdictPendingRepeatMinutes: 30 };
   evaluateRound(state, obsD({ 待处理: 1 }, { 待处理: [TICKET] }), o, 1000);
   const decided = { ...TICKET, decided: true, verdict: "商家已和解" };
   const e = evaluateRound(state, obsD({ 待处理: 1 }, { 待处理: [decided] }), o, 1000 + 10 * MIN);
-  assert.strictEqual(e[0].type, "verdict_decided");
-  assert.strictEqual(e[0].tickets[0].verdict, "商家已和解");
+  assert.strictEqual(e.length, 0, "判责已出不发群");
   const later = evaluateRound(state, obsD({ 待处理: 1 }, { 待处理: [decided] }), o, 1000 + 90 * MIN);
   assert.strictEqual(later.length, 0, "已判责只提醒这一次");
 });

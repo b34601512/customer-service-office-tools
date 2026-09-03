@@ -40,26 +40,22 @@ async function resolveDuty(config, now = new Date()) {
   }
 }
 
-// 组装 @ 名单与文案行：@ = 当日在班组长 + 有标记色售后 + 主管；底色情况写入 todayLine 供验证。
-// 排班读取失败降级：只 @ 主管，并在文案里说明。
+// 组装 @ 名单与文案行：群里只有一行「本次@：姓名（原因）」（最少必要）；完整值班/底色表在 CLI duty 命令看。
+// 排班读取失败降级：只 @ 主管，同一行里注明原因。
 function buildMentionPlan(config, dutyResult) {
   const duty = (config && config.duty) || {};
   const memberMobileMap = (config.wecom && config.wecom.memberMobileMap) || {};
   const managerNames = duty.managerNames || [];
 
   let atNames = [];
-  let todayLine = "";
   let onDutyLine = "";
   if (dutyResult.ok) {
-    todayLine = `今日${duty.group || "售后"}值班：${dutyResult.todayStaff
-      .map((item) => `${item.name}（${item.shift}${item.colorName ? `·${item.colorName}底` : "·无底色"}）`)
-      .join("、")}`;
     atNames = dutyResult.atStaff.map((item) => item.name);
-    onDutyLine = `本次@：${dutyResult.atStaff.length > 0
+    onDutyLine = `本次@：${atNames.length > 0
       ? dutyResult.atStaff.map((item) => `${item.name}（${item.reason}）`).join("、")
       : "无值班售后（只@主管）"}`;
   } else {
-    todayLine = `（排班读取失败，未能识别在班客服：${dutyResult.error}）`;
+    onDutyLine = `本次@：（排班读取失败：${dutyResult.error}，只@主管）`;
   }
   for (const manager of managerNames) {
     if (!atNames.includes(manager)) atNames.push(manager);
@@ -71,7 +67,7 @@ function buildMentionPlan(config, dutyResult) {
   if (missing.length > 0) {
     log("值班", "@", "缺手机号", missing.join("、"));
   }
-  return { atNames, mobiles, todayLine, onDutyLine };
+  return { atNames, mobiles, onDutyLine };
 }
 
 module.exports = { resolveDuty, buildMentionPlan };

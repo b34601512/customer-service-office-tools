@@ -29,7 +29,7 @@
 - `src/features/workOrderMonitor/`：业务真源。
   - `textParser.js`：纯函数，页面文本 → 分类计数、登录跳转识别（fixture 来自实测文本）。
   - `alertPolicy.js`：纯函数判定，计数新增/登录失效(节流)/恢复/可选重复提醒 → 事件。
-  - `messageText.js`：纯函数，事件+值班@计划 → 企微文案（不发链接；平台·店铺缩写+分类事项+新增单订单号；附今日值班/底色与本次@行）。
+  - `messageText.js`：纯函数，事件+值班@计划 → 企微文案。**最少必要内容**：店铺缩写（自带平台信息，不加“京东·”前缀）+分类事项+订单号；不发链接/时间（企微自带）/纠纷单号/判责明细（那是判断逻辑内部数据）；群里值班信息只有「本次@：姓名（原因）」一行，完整班次/底色表在 CLI duty 命令看。
   - `pageProbe.js`：驱动浏览器读页面；计数稳定后对非零页签**深读表格行**（POP 用 tabCode URL 直跳，京喜点页签），输出 计数+ticketsByLabel；行解析靠操作按钮/编号形态过滤噪声（实测客服电话 4006229068 会伪装成单）。
   - `service.js`：`monitorOnce()`（探测→判定→发送→落状态，单店失败隔离）、`startMonitorLoop()`。
   - `loginAssist.js`：拉起某店铺可见浏览器供人工登录一次。
@@ -42,7 +42,7 @@
 - 首轮非零计数提醒一次（`alertOnFirstRun`，默认开，让存量工单不被漏）。
 - 登录失效立即提醒并按 `loginAlertThrottleMinutes` 节流，恢复登录提醒一次。
 - `repeatReminderMinutes`>0 时未清零存量会周期性重复提醒（默认 0 关闭）。判责重发不受此限制，另走 verdictPendingRepeatMinutes。
-- 判责状态机（仅 POP 纠纷，用户 2026-09-03 定）：新单提醒一次；判责未出→每 `monitor.verdictPendingRepeatMinutes`（默认30，0=关）重发；判责新出→补报一次后停止；单子消失/清零→记录删除。
+- 判责状态机（仅 POP 纠纷，用户 2026-09-03 定）：新单提醒一次；判责未出→每 `monitor.verdictPendingRepeatMinutes`（默认30，0=关）重发；判责新出→**静默停止重发，不补报**；单子消失/清零→记录删除。
 - 提醒结果追加 `runtime/state/alert-ledger.jsonl`；发送失败回滚该源到本轮前快照，下轮重试。
 
 ## 5b. 值班@规则（唯一真源 dutySchedule，按天判定不看时刻）
@@ -50,7 +50,7 @@
 - 组长（duty.leadNames，如李守耀）当日有班（早/晚）→ @他；他在就是他总值班，不按时段拆。
 - 其他售后：只看格上**背景标记色**——当日有班且底色非空非白（白=#FFFFFF 在 nonMarkerColors 名单内不算标记）→ @；行政/年假/休息不@。
 - 主管（duty.managerNames）永远@；@用 `mentioned_mobile_list`（手机号，memberMobileMap 真源在配置，与 1 号同源）。
-- 每条提醒附两行：「今日售后值班：姓名（班次·底色）」+「本次@：姓名（原因）」，方便群里看懂为什么@他。
+- 群里只附一行「本次@：姓名（原因）」（原因=组长值班/色名底标记）；完整「今日售后值班（班次·底色）」表只用 `duty` 命令查看，不进群（最少必要文案，用户 2026-09-03 定）。
 - 底色真源=金山单元格 `getAppliedXf` 实心填充 rgb（getXfByCell 读不到条件格式色，实测推翻）；实测售后白底#FFFFFF/浅蓝#BDD7EE，休息黄底#FFFF00。色名表 duty.colorNames 可扩。
 - 排班读取失败降级：照常发事件提醒，只@主管，文案注明失败原因；排班结果按天缓存，一天只拉一次浏览器。
 

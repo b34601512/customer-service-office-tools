@@ -119,12 +119,12 @@ test("@计划：组长+标记人+主管，@行写清原因", () => {
   assert.deepStrictEqual(plan.atNames, ["李守耀", "陈燕玲", "黎路遥"]);
   assert.deepStrictEqual(plan.mobiles, ["18923872211", "13923800587", "19925378376"]);
   assert.match(plan.onDutyLine, /本次@：李守耀（组长值班）、陈燕玲（浅蓝底标记）/);
-  assert.match(plan.todayLine, /李守耀（早班·白色底）/);
+  assert.ok(!("todayLine" in plan), "群文案不再有全员值班长行");
 });
 
 test("排班读取失败→只@主管并说明原因", () => {
   const plan = buildMentionPlan(CONFIG, { ok: false, todayStaff: [], atStaff: [], error: "网络超时" });
   assert.deepStrictEqual(plan.atNames, ["黎路遥"]);
   assert.deepStrictEqual(plan.mobiles, ["19925378376"]);
-  assert.match(plan.todayLine, /排班读取失败.*网络超时/);
+  assert.match(plan.onDutyLine, /排班读取失败.*网络超时.*只@主管/);
 });
