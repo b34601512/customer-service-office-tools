@@ -160,9 +160,14 @@ if (settingsPage.state.personEditor) {
   assert.strictEqual(settingsPage.state.personEditor, null);
 }
 
-// 总览只显示状态，具体操作由顶部横向分页承载。
+// 总览页承载快捷操作菜单（#630 反转首版“总览只展示”决策：用户要求对齐1号“↑↓选择 回车执行”）。
+const { getSummaryRunController } = require("../src/cli/tui/pages/summaryRunActions");
+const runController = getSummaryRunController();
 const overviewText = stripAnsi(pages[0].render({ ctx, columns: 100 }).join("\n"));
-assert.doesNotMatch(overviewText, /快捷操作|开始汇总|强制重新下载|打开汇总文件夹|打开凭证文件夹|打开下载根目录/);
+assert.match(overviewText, /快捷操作（↑↓选择 回车执行）/);
+assert.match(overviewText, /开始全部汇总/);
+assert.match(overviewText, /全部强制重新下载并汇总/);
+assert.doesNotMatch(overviewText, /打开汇总文件夹|打开凭证文件夹|打开下载根目录/); // 文件夹入口仍唯一归设置页
 const settingsText = stripAnsi(settingsPage.render({ columns: 100 }).join("\n"));
 assert.match(settingsText, /打开汇总文件夹/);
 assert.match(settingsText, /打开凭证文件夹/);
@@ -196,7 +201,65 @@ app.dispatchKey("0");
 assert.strictEqual(exitRequestCount, 1);
 assert.strictEqual(app.exitConfirmPending, false);
 
-console.log("PASS TUI六页面渲染、模态输入/确认、多级导航与退出确认均正常");
+// ---- #630 总览页菜单键盘驱动：↑↓选择、回车执行 ----
+async function waitFor(check, timeoutMs = 2000) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    if (check()) return true;
+    await new Promise((resolve) => setTimeout(resolve, 10));
+  }
+  return false;
+}
+
+const runCalls = [];
+services.runSummaryTask = async (options) => {
+  runCalls.push(options);
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  return { detail: "mock汇总完成" };
+};
+
+app.switchPage(0);
+pages[0].state.selection = 0;
+app.dispatchKey("enter"); // 第1项：开始全部汇总，无确认直接执行
+assert.ok(await waitFor(() => runCalls.length === 1), "回车应触发 runSummaryTask");
+assert.deepStrictEqual(runCalls[0], { selectedSummaryTaskIds: null, forceRedownload: false });
+assert.ok(await waitFor(() => !runController.busy), "运行结束后 busy 应复位");
+assert.strictEqual(runController.message, "mock汇总完成");
+
+// 第2项：全部强制重下，回车先弹确认，y 确认后带 force 参数执行。
+pages[0].state.selection = 1;
+app.dispatchKey("enter");
+assert.ok(app.inputModal && app.inputModal.mode === "confirm", "应弹出确认框");
+app.dispatchKey("y");
+assert.ok(await waitFor(() => runCalls.length === 2), "确认 y 后应触发强制汇总");
+assert.strictEqual(runCalls[1].forceRedownload, true);
+assert.ok(await waitFor(() => !runController.busy));
+
+// 取消确认则不执行。
+pages[0].state.selection = 1;
+app.dispatchKey("enter");
+assert.ok(app.inputModal && app.inputModal.mode === "confirm");
+app.dispatchKey("n");
+await new Promise((resolve) => setTimeout(resolve, 30));
+assert.strictEqual(runCalls.length, 2);
+assert.strictEqual(runController.busy, false);
+
+// 运行中菜单置灰禁用：回车只提示，不重复触发服务。
+runController.busy = true;
+const busyOverview = stripAnsi(pages[0].render(app).join("\n"));
+assert.match(busyOverview, /汇总运行中，暂不可执行/);
+const callsBeforeBusyBlock = runCalls.length;
+app.dispatchKey("enter");
+assert.strictEqual(runCalls.length, callsBeforeBusyBlock, "运行中回车不得触发新汇总");
+runController.busy = false;
+runController.message = "";
+
+// 汇总页提示行同步新口径：S/F 保留为快捷键。
+const tasksText = stripAnsi(pages[1].render(app).join("\n"));
+assert.match(tasksText, /S 开始全部汇总/);
+assert.match(tasksText, /F 全部强制重下/);
+
+console.log("PASS TUI六页面渲染、模态输入/确认、多级导航、退出确认与总览快捷操作菜单均正常");
 }
 
 main().catch((error) => {

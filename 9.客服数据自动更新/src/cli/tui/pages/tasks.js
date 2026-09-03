@@ -3,6 +3,7 @@ const ansi = require("../ansi");
 const { fit, normalizeCellText } = require("../width");
 const { formatDurationMs, formatProgressBar, formatSummaryTaskStatus } = require("../format");
 const { isSummaryRunning } = require("./overview");
+const { getSummaryRunController } = require("./summaryRunActions");
 
 function formatTaskLine(task, columns) {
   const statusInfo = formatSummaryTaskStatus(task.status);
@@ -20,34 +21,13 @@ function formatTaskLine(task, columns) {
 }
 
 function createTasksPage() {
+  const controller = getSummaryRunController();
   const page = {
     key: "2",
     title: "汇总",
-    state: { selection: 0, message: "", busy: false, scrollOffset: 0 },
-    onEnter() {
-      this.state.message = "";
-    },
-    startRun(app, { selectedSummaryTaskIds = null, forceRedownload = false } = {}) {
-      if (this.state.busy) {
-        this.state.message = "汇总正在进行中，请等待完成。";
-        app.requestRender();
-        return;
-      }
-      this.state.busy = true;
-      this.state.message = forceRedownload ? "正在强制重新下载并汇总……" : "汇总已启动，出现滑块或验证时请在浏览器中人工处理。";
-      app.requestRender();
-      Promise.resolve()
-        .then(() => app.ctx.services.runSummaryTask({ selectedSummaryTaskIds, forceRedownload }))
-        .then((result) => {
-          this.state.message = result?.detail || "汇总已结束。";
-        })
-        .catch((error) => {
-          this.state.message = `汇总停止：${error instanceof Error ? error.message : String(error)}`;
-        })
-        .finally(() => {
-          this.state.busy = false;
-          app.requestRender();
-        });
+    state: { selection: 0, scrollOffset: 0 },
+    startRun(app, options = {}) {
+      controller.start(app, options);
     },
     render(app) {
       const state = app.ctx.services.getState();
@@ -55,7 +35,7 @@ function createTasksPage() {
       const contentHeight = app.contentHeight;
       const lines = [];
 
-      const running = isSummaryRunning(state) || this.state.busy;
+      const running = isSummaryRunning(state) || controller.busy;
       const tasks = state.summaryTasks || [];
       const startedAt = state.summaryRunStartedAt ? new Date(state.summaryRunStartedAt) : null;
       const finishedAt = state.summaryRunFinishedAt ? new Date(state.summaryRunFinishedAt) : null;
@@ -84,7 +64,7 @@ function createTasksPage() {
 
       if (!tasks.length) {
         lines.push("");
-        lines.push("尚无本轮任务。按 S 开始汇总全部启用店铺。");
+        lines.push("尚无本轮任务。↑↓选中下方动作或按 S 开始汇总全部启用店铺。");
         lines.push("重跑：↑↓选中店铺后回车=单店重跑（复用今天源表），F=全部强制重下（忽略旧源表）。");
       } else {
         // 选中行用于浏览与单店强制重下。
@@ -112,10 +92,10 @@ function createTasksPage() {
       lines.push("");
       lines.push(running
         ? ansi.colorize("汇总进行中：请在自动打开的浏览器中完成登录/滑块，程序会原地等待。", "brightYellow")
-        : ansi.colorize("S 开始全部汇总    F 全部强制重下    回车 单店重跑    q 返回总览", "gray"));
+        : ansi.colorize("↑↓选择 回车执行    S 开始全部汇总    F 全部强制重下    回车店铺行 单店重跑", "gray"));
 
-      if (this.state.message) {
-        lines.push(ansi.colorize(`提示：${this.state.message}`, "brightYellow"));
+      if (controller.message) {
+        lines.push(ansi.colorize(`提示：${controller.message}`, "brightYellow"));
       }
       return lines;
     },
@@ -125,7 +105,7 @@ function createTasksPage() {
     handleKey(key, app) {
       const state = app.ctx.services.getState();
       const tasks = state.summaryTasks || [];
-      const running = isSummaryRunning(state) || this.state.busy;
+      const running = isSummaryRunning(state) || controller.busy;
 
       if (key === "up" || key === "down") {
         if (!tasks.length) return true;
@@ -137,11 +117,11 @@ function createTasksPage() {
         return key !== "left" && key !== "right" ? true : false;
       }
       if (key === "s" || key === "S") {
-        this.startRun(app, {});
+        controller.start(app, {});
         return true;
       }
       if (key === "f" || key === "F") {
-        this.confirmAndRunAll(app);
+        controller.runAction(app, "force-all");
         return true;
       }
       if (key === "enter" && tasks.length) {
@@ -150,17 +130,11 @@ function createTasksPage() {
       }
       return false;
     },
-    async confirmAndRunAll(app) {
-      const confirmed = await app.requestConfirm("确认对全部启用店铺强制重新下载并汇总？");
-      if (confirmed) {
-        this.startRun(app, { forceRedownload: true });
-      }
-    },
     async confirmAndRunOne(app, task) {
       if (!task) return;
       const confirmed = await app.requestConfirm(`确认重跑「${task.storeDisplayName}」并汇总？（复用今天已下载源文件，不清空其他店铺数据）`);
       if (confirmed) {
-        this.startRun(app, { selectedSummaryTaskIds: [task.id], forceRedownload: false });
+        controller.start(app, { selectedSummaryTaskIds: [task.id], forceRedownload: false });
       }
     }
   };

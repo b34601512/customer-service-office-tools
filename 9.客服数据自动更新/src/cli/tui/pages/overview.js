@@ -1,9 +1,12 @@
-// 总览页只展示关键状态；具体操作统一由顶部横向分页承载。
+// 总览页：展示关键状态 + 承载“↑↓选择 回车执行”的快捷操作菜单（对齐1号项目，#630）。
+// 快捷动作真源在 summaryRunActions，与汇总页 S/F 键共用同一执行入口。
 const path = require("path");
 const ansi = require("../ansi");
+const { fit } = require("../width");
 const { PLATFORM_META } = require("../../cliConstants");
 const { formatGlobalDateMode, resolveSummaryRunOutcome } = require("../../cliDashboard");
 const { isKdocsSyncConfigured } = require("../../../kdocsSync/kdocsSyncSettings");
+const { SUMMARY_ACTIONS, getSummaryRunController } = require("./summaryRunActions");
 
 function countPlatformStores(projectConfig) {
   return Object.keys(PLATFORM_META).map((platformKey) => {
@@ -17,13 +20,16 @@ function isSummaryRunning(state) {
 }
 
 function createOverviewPage() {
+  const controller = getSummaryRunController();
   const page = {
     key: "1",
     title: "总览",
+    state: { selection: 0 },
     render(app) {
       const ctx = app.ctx;
       const state = ctx.services.getState();
       const projectConfig = ctx.services.readConfig();
+      const columns = app.columns || 100;
       const lines = [];
 
       const tasks = ctx.services.buildTasks(projectConfig);
@@ -49,10 +55,53 @@ function createOverviewPage() {
       if (state?.lastError) {
         lines.push(ansi.colorize(`最近错误  ${state.lastError}`, "brightRed"));
       }
+
+      // 快捷操作菜单：↑↓选择、回车执行；运行中置灰禁用。
+      const running = isSummaryRunning(state) || controller.busy;
+      if (this.state.selection >= SUMMARY_ACTIONS.length) {
+        this.state.selection = 0;
+      }
+      lines.push("");
+      lines.push(ansi.colorize("快捷操作（↑↓选择 回车执行）", "brightBlue"));
+      SUMMARY_ACTIONS.forEach((action, index) => {
+        const selected = index === this.state.selection && !running;
+        const text = running ? `${action.label}（汇总运行中，暂不可执行）` : action.label;
+        const line = `${selected ? "▶ " : "  "}${text}`;
+        if (running) {
+          lines.push(ansi.colorize(fit(line, columns), "gray"));
+        } else if (selected) {
+          lines.push(ansi.colorize(fit(line, columns), "reverse"));
+        } else {
+          lines.push(fit(line, columns));
+        }
+      });
+      if (controller.message) {
+        lines.push("");
+        lines.push(ansi.colorize(`提示：${controller.message}`, "brightYellow"));
+      }
       return lines;
     },
+    handleKey(key, app) {
+      const state = app.ctx.services.getState();
+      const running = isSummaryRunning(state) || controller.busy;
+      if (key === "up" || key === "down") {
+        const direction = key === "down" ? 1 : -1;
+        this.state.selection = (this.state.selection + direction + SUMMARY_ACTIONS.length) % SUMMARY_ACTIONS.length;
+        return true;
+      }
+      if (key === "enter") {
+        if (running) {
+          controller.message = "汇总正在进行中，请在汇总页查看进度或等待完成。";
+          app.requestRender();
+          return true;
+        }
+        controller.runAction(app, SUMMARY_ACTIONS[this.state.selection].id);
+        return true;
+      }
+      return false;
+    },
     footer() {
-      return "←→或数字键切页 | 0退出 Ctrl+C确认退出";
+      return "↑↓选择 回车执行快捷操作 | ←→或数字键切页 | 0退出 Ctrl+C确认退出";
     }
   };
   return page;
