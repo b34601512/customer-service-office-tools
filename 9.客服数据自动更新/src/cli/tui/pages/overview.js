@@ -102,7 +102,15 @@ function createOverviewPage() {
           app.requestRender();
           return true;
         }
-        controller.runAction(app, action.id);
+        controller.runAction(app, action.id).then((started) => {
+          // 启动成功后自动跳汇总页看进度；确认取消则留在总览。
+          if (started) {
+            const tasksIndex = app.pages.findIndex((item) => item.key === "2");
+            if (tasksIndex >= 0) {
+              app.switchPage(tasksIndex);
+            }
+          }
+        });
         return true;
       }
       return false;

@@ -224,19 +224,23 @@ pages[0].state.selection = 0;
 app.dispatchKey("enter"); // 第1项：开始全部汇总，无确认直接执行
 assert.ok(await waitFor(() => runCalls.length === 1), "回车应触发 runSummaryTask");
 assert.deepStrictEqual(runCalls[0], { selectedSummaryTaskIds: null, forceRedownload: false });
+assert.ok(await waitFor(() => app.currentPageIndex === 1), "启动后应自动跳到汇总页看进度");
+app.switchPage(0);
 assert.ok(await waitFor(() => !runController.busy), "运行结束后 busy 应复位");
 assert.strictEqual(runController.message, "mock汇总完成");
 
-// 第2项：全部强制重下，回车先弹确认，y 确认后带 force 参数执行。
+// 第2项：全部强制重下，回车先弹确认，y 确认后带 force 参数执行并同样跳汇总页。
 pages[0].state.selection = 1;
 app.dispatchKey("enter");
 assert.ok(app.inputModal && app.inputModal.mode === "confirm", "应弹出确认框");
 app.dispatchKey("y");
 assert.ok(await waitFor(() => runCalls.length === 2), "确认 y 后应触发强制汇总");
 assert.strictEqual(runCalls[1].forceRedownload, true);
+assert.ok(await waitFor(() => app.currentPageIndex === 1), "强制汇总启动后也应自动跳汇总页");
+app.switchPage(0);
 assert.ok(await waitFor(() => !runController.busy));
 
-// 取消确认则不执行。
+// 取消确认则不执行、不跳页。
 pages[0].state.selection = 1;
 app.dispatchKey("enter");
 assert.ok(app.inputModal && app.inputModal.mode === "confirm");
@@ -244,8 +248,9 @@ app.dispatchKey("n");
 await new Promise((resolve) => setTimeout(resolve, 30));
 assert.strictEqual(runCalls.length, 2);
 assert.strictEqual(runController.busy, false);
+assert.strictEqual(app.currentPageIndex === 0, true, "取消后应留在总览页");
 
-// 运行中菜单置灰禁用：回车只提示，不重复触发服务；退出项仍可用。
+// 运行中菜单置灰禁用：回车只提示，不重复触发服务、不跳页；退出项仍可用。
 runController.busy = true;
 const busyOverview = stripAnsi(pages[0].render(app).join("\n"));
 assert.match(busyOverview, /汇总运行中，暂不可执行/);

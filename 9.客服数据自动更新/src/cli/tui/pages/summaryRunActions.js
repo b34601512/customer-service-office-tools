@@ -36,16 +36,19 @@ function createSummaryRunController() {
           app.requestRender();
         });
     },
+    // 返回 Promise<boolean>：本轮是否真正启动了汇总（供总览页决定是否跳转汇总页）。
     runAction(app, actionId) {
       if (actionId === "force-all") {
         return app.requestConfirm(FORCE_ALL_CONFIRM_TEXT).then((confirmed) => {
-          if (confirmed) {
-            this.start(app, { forceRedownload: true });
+          if (!confirmed) {
+            return false;
           }
+          this.start(app, { forceRedownload: true });
+          return this.busy;
         });
       }
       this.start(app, {});
-      return Promise.resolve();
+      return Promise.resolve(this.busy);
     }
   };
 }
