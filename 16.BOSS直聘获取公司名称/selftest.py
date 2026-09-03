@@ -119,15 +119,21 @@ class TuiTests(unittest.TestCase):
                 self.assertTrue(all(t in frame[3] for t in ("1总览", "2抓取", "3日志", "4结果")))
 
     def test_dispatch_global_keys(self):
-        _, _, app = new_app()
+        ctx, pages, app = new_app()
         app.dispatch_key("right")
         self.assertEqual(app.current_page_index, 1)
         app.dispatch_key("3")
         self.assertEqual(app.current_page_index, 2)
+        # Ctrl+C 与退出菜单：直接退出，不再要确认
+        calls = []
+        app.on_exit_request = lambda: calls.append("exit")
         app.dispatch_key("ctrl-c")
-        self.assertTrue(app.exit_confirm_pending)
-        app.dispatch_key("n")
-        self.assertFalse(app.exit_confirm_pending)
+        self.assertEqual(calls, ["exit"])
+        pages[0].handle_key("up", app)  # 回到退出项
+        app.switch_page(0)
+        pages[0].state["selection"] = 3
+        pages[0].handle_key("enter", app)
+        self.assertEqual(calls, ["exit", "exit"])
         app.dispatch_key("q")
         self.assertEqual(app.current_page_index, 0)
 

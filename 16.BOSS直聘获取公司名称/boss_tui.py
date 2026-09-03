@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 boss_tui.py —— BOSS直聘采集工具 终端图形界面（参考 1.客服超时督办 的 TUI 交互）
-  交互：↑↓ 选择 / ←→ 切页 / 回车执行 / 数字键切页 / Ctrl+C 退出确认
+  交互：↑↓ 选择 / ←→ 切页 / 回车执行 / 数字键切页 / Ctrl+C 直接退出
   布局：标题栏+时钟 / 状态栏 / 菜单栏 / 分隔线 / 内容区 / 版权 / 页脚 / 底边
   业务真源：直接 import boss_cdp（登录、抓取、导出全走同一份业务代码）
   运行：python boss_tui.py   （仅 Windows 控制台，纯标准库，无第三方依赖）
@@ -12,6 +12,7 @@ import contextlib
 import glob
 import io
 import os
+import shutil
 import subprocess
 import sys
 import threading
@@ -145,9 +146,12 @@ class TuiApp:
         self.status_bar_provider = status_bar_provider or (lambda app: [])
         self.footer_provider = footer_provider or (lambda app: "")
         self.running = False
-        self.exit_confirm_pending = False
         self.last_frame_lines = None
         self.escape_buffer = ""
+        self.last_cols = None
+        self.last_rows = None
+        self._last_tick = 0.0
+        self._old_console_input_mode = None
 
     @property
     def page(self):
@@ -155,11 +159,15 @@ class TuiApp:
 
     @property
     def columns(self):
-        return max(48, self.output.columns if hasattr(self.output, "columns") and self.output.columns else 80)
+        if hasattr(self.output, "columns") and self.output.columns:
+            return max(48, int(self.output.columns))
+        return max(48, shutil.get_terminal_size(fallback=(80, 24)).columns)
 
     @property
     def rows(self):
-        return max(14, self.output.rows if hasattr(self.output, "rows") and self.output.rows else 24)
+        if hasattr(self.output, "rows") and self.output.rows:
+            return max(14, int(self.output.rows))
+        return max(14, shutil.get_terminal_size(fallback=(80, 24)).lines)
 
     @property
     def content_height(self):
@@ -191,34 +199,40 @@ class TuiApp:
             # 不进入 msvcrt 按键循环，避免无限阻塞（SoftTalk #2705 可自动化原则）。
             self.request_render()
             return
+        self._prepare_console_input()
         self.output.write(CODES["enterAltScreen"] + CODES["clearScreen"] + CODES["hideCursor"] + "\x1b[?7l")
         import msvcrt
+        self._last_tick = time.monotonic()
         while self.running:
-            if not msvcrt.kbhit():
-                time.sleep(0.25)
-                self.request_render()
-                continue
-            ch = msvcrt.getwch()
-            if self.escape_buffer or ch == "\x1b":
-                # 等待完整转义序列（方向键等）
-                self.escape_buffer += ch
-                if self.escape_buffer.startswith("\x1b[") and self.escape_buffer in (
-                        "\x1b[A", "\x1b[B", "\x1b[C", "\x1b[D", "\x1b[H", "\x1b[F",
-                        "\x1b[1~", "\x1b[4~", "\x1b[5~", "\x1b[6~", "\x1b[3~"):
-                    key = self.resolve_escape(self.escape_buffer)
-                    self.escape_buffer = ""
+            if msvcrt.kbhit():
+                ch = msvcrt.getwch()
+                if self.escape_buffer or ch == "\x1b":
+                    # 等待完整转义序列（方向键等）
+                    self.escape_buffer += ch
+                    if self.escape_buffer.startswith("\x1b[") and self.escape_buffer in (
+                            "\x1b[A", "\x1b[B", "\x1b[C", "\x1b[D", "\x1b[H", "\x1b[F",
+                            "\x1b[1~", "\x1b[4~", "\x1b[5~", "\x1b[6~", "\x1b[3~"):
+                        key = self.resolve_escape(self.escape_buffer)
+                        self.escape_buffer = ""
+                        self.dispatch_key(key)
+                    elif len(self.escape_buffer) > 8:
+                        self.escape_buffer = ""
+                    continue
+                if ch == "\xe0" or ch == "\x00":
+                    # 扩展键：方向键等（第二字节）
+                    ch2 = msvcrt.getwch()
+                    self.dispatch_key(self._ext_key(ch2))
+                    continue
+                key = self.translate_char(ch)
+                if key:
                     self.dispatch_key(key)
-                elif len(self.escape_buffer) > 8:
-                    self.escape_buffer = ""
                 continue
-            if ch == "\xe0" or ch == "\x00":
-                # 扩展键：方向键等（第二字节）
-                ch2 = msvcrt.getwch()
-                self.dispatch_key(self._ext_key(ch2))
-                continue
-            key = self.translate_char(ch)
-            if key:
-                self.dispatch_key(key)
+            # 定时渲染（对齐 1 号项目：每秒一次，时钟/任务状态刷新；按键已即时渲染）
+            now = time.monotonic()
+            if now - self._last_tick >= 1.0:
+                self._last_tick = now
+                self.request_render()
+            time.sleep(0.05)
 
     @staticmethod
     def _interactive_terminal():
@@ -232,8 +246,38 @@ class TuiApp:
             return
         self.running = False
         self.output.write(CODES["reset"] + "\x1b[?7h" + CODES["showCursor"] + CODES["leaveAltScreen"])
+        self._restore_console_input()
         if hasattr(self.output, "flush"):
             self.output.flush()
+
+    def _prepare_console_input(self):
+        """关闭 Windows QuickEdit，避免鼠标拖选暂停控制台，造成窗口/TUI 像卡死。"""
+        if os.name != "nt":
+            return
+        try:
+            import ctypes
+            kernel32 = ctypes.windll.kernel32
+            handle = kernel32.GetStdHandle(-10)  # STD_INPUT_HANDLE
+            mode = ctypes.c_uint32()
+            if kernel32.GetConsoleMode(handle, ctypes.byref(mode)):
+                self._old_console_input_mode = (handle, mode.value)
+                # ENABLE_EXTENDED_FLAGS=0x0080；ENABLE_QUICK_EDIT_MODE=0x0040
+                new_mode = (mode.value | 0x0080) & ~0x0040
+                kernel32.SetConsoleMode(handle, new_mode)
+        except Exception:
+            self._old_console_input_mode = None
+
+    def _restore_console_input(self):
+        if not self._old_console_input_mode:
+            return
+        try:
+            import ctypes
+            handle, mode = self._old_console_input_mode
+            ctypes.windll.kernel32.SetConsoleMode(handle, mode)
+        except Exception:
+            pass
+        finally:
+            self._old_console_input_mode = None
 
     def resolve_escape(self, buf):
         return {"\x1b[A": "up", "\x1b[B": "down", "\x1b[C": "right", "\x1b[D": "left",
@@ -262,17 +306,9 @@ class TuiApp:
     def dispatch_key(self, key):
         if not key or key == "unknown":
             return
-        if self.exit_confirm_pending:
-            if key in ("y", "Y", "enter"):
-                self.exit_confirm_pending = False
-                self.on_exit_request()
-            elif key in ("n", "N", "esc", "ctrl-c"):
-                self.exit_confirm_pending = False
-                self.request_render()
-            return
         if key == "ctrl-c":
-            self.exit_confirm_pending = True
-            self.request_render()
+            # 直接退出，不再要确认（用户要求）
+            self.on_exit_request()
             return
         if self.page and hasattr(self.page, "handle_key"):
             if self.page.handle_key(key, self) is True:
@@ -319,8 +355,6 @@ class TuiApp:
         lines.append(colorize("─" * columns, "gray"))
         # 内容区
         content = self.page.render(self) if self.page and hasattr(self.page, "render") else []
-        if self.exit_confirm_pending:
-            content = self.build_exit_confirm_overlay(content, columns, content_height)
         for index in range(content_height):
             line = content[index] if index < len(content) else ""
             lines.append(fit(line, columns, False))
@@ -331,23 +365,23 @@ class TuiApp:
         footer = self.footer_provider(self)
         if not footer and self.page and hasattr(self.page, "footer"):
             footer = self.page.footer(self) or ""
-        lines.append(colorize(fit(footer or "↑↓选择 回车执行 ←→/数字键切页 q返回总览 Ctrl+C退出", columns), "gray"))
+        lines.append(colorize(fit(footer or "↑↓选择 回车执行 ←→/数字键切页 q返回总览 Ctrl+C直接退出", columns), "gray"))
         lines.append("─" * columns)
         return lines
-
-    def build_exit_confirm_overlay(self, content, columns, content_height):
-        question = "确认退出采集工具？后台任务将一并停止 (y=退出 n=取消)"
-        out = content[: max(0, content_height - 3)]
-        out.append("")
-        out.append(colorize(fit("─" * min(columns, 56), columns), "yellow"))
-        out.append(colorize(fit(f" {question}", columns), "brightYellow"))
-        return out
 
     def render(self):
         if not self.running:
             return
-        lines = [fit(line, self.columns, False) for line in self.build_frame()]
-        need_full = not self.last_frame_lines or len(self.last_frame_lines) != len(lines)
+        cols, rows_now = self.columns, self.rows
+        lines = [fit(line, cols, False) for line in self.build_frame()]
+        # 终端尺寸变化（拖动/最大化/最小化）时强制全量重绘，避免画面残留/花屏卡死
+        need_full = (
+            not self.last_frame_lines
+            or self.last_cols != cols
+            or self.last_rows != rows_now
+            or len(self.last_frame_lines) != len(lines)
+        )
+        self.last_cols, self.last_rows = cols, rows_now
         output = ""
         if need_full:
             output = CODES["cursorHome"] + "\r\n".join(lines)
@@ -461,8 +495,8 @@ class OverviewPage:
             elif action == 2:
                 self.open_result_dir()
             elif action == 3:
-                app.exit_confirm_pending = True
-                app.request_render()
+                # 退出选项：直接退出，不再要确认（用户要求）
+                app.on_exit_request()
         else:
             return None
         return True
@@ -471,8 +505,6 @@ class OverviewPage:
     def open_result_dir():
         os.makedirs(biz.RESULT_DIR, exist_ok=True)
         subprocess.Popen(["explorer", biz.RESULT_DIR])
-
-
 # ---------------------------------------------------------------- 页面：抓取设置（表单编辑，对齐 1 号 config 页）
 class FetchPage:
     key, title = "2", "抓取"
@@ -682,9 +714,9 @@ class Ctx:
         self.tasks = TaskRunner()
 
     @staticmethod
-    def action_login():
+    def action_login(timeout=900):
         biz.ensure_chrome_running(biz.DEFAULT_PORT)
-        ok = biz.login_wait("内贸", biz.CITY_CODES.get("深圳", "深圳"), biz.DEFAULT_PORT, 900)
+        ok = biz.login_wait("内贸", biz.CITY_CODES.get("深圳", "深圳"), biz.DEFAULT_PORT, timeout)
         return bool(ok)
 
 
@@ -710,8 +742,26 @@ def ensure_console_utf8():
         pass
 
 
-def main():
+def main(argv=None):
     ensure_console_utf8()
+    argv = argv if argv is not None else sys.argv[1:]
+    # 无头自动化入口：AI/脚本无需按键即可真实运行业务（SoftTalk #2705）
+    if argv and argv[0] == "--auto":
+        import argparse as _ap
+        ap = _ap.ArgumentParser(description="无头自动化运行真实业务")
+        ap.add_argument("--auto", choices=["login", "fetch"], help="login=扫码登录流程 fetch=真实抓取")
+        ap.add_argument("--keyword", default="国内电商")
+        ap.add_argument("--city", default="深圳")
+        ap.add_argument("--pages", type=int, default=1)
+        ap.add_argument("--format", choices=["csv", "json", "both"], default="csv")
+        ap.add_argument("--login-timeout", type=int, default=900)
+        args = ap.parse_args(argv)
+        if args.auto == "login":
+            ok = Ctx.action_login(timeout=args.login_timeout)
+            sys.exit(0 if ok else 2)
+        biz.run_fetch(args.keyword, args.city, args.pages, args.format, delay=3, port=biz.DEFAULT_PORT)
+        sys.exit(0)
+
     ctx = Ctx()
     pages = [
         OverviewPage(ctx),
