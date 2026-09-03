@@ -1,0 +1,52 @@
+{
+  "wecom": {
+    "webhookUrl": "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=在此填写机器人key",
+    "webhookName": "工单提醒群"
+  },
+  "monitor": {
+    "intervalMinutes": 5,
+    "pageLoadTimeoutSeconds": 45,
+    "loginAlertThrottleMinutes": 60,
+    "repeatReminderMinutes": 0,
+    "alertOnFirstRun": true
+  },
+  "platforms": {
+    "jd": {
+      "displayName": "京东",
+      "stores": [
+        {
+          "key": "jingxi1",
+          "displayName": "京喜1店",
+          "enabled": true,
+          "username": "在此填写京麦账号，如：店铺名--子账号",
+          "mentionedMobileList": [],
+          "sources": [
+            {
+              "key": "workorder",
+              "displayName": "后台工单",
+              "type": "jingxiWorkOrder",
+              "url": "https://sale-jdm.jd.com/workOrder/workOrderList",
+              "watch": ["待处理", "平台协同工单", "物流投诉工单", "安装求助工单", "催开发票工单"]
+            }
+          ]
+        },
+        {
+          "key": "pop1",
+          "displayName": "POP1店",
+          "enabled": true,
+          "username": "在此填写京麦账号",
+          "mentionedMobileList": [],
+          "sources": [
+            {
+              "key": "dispute",
+              "displayName": "交易纠纷",
+              "type": "popDispute",
+              "url": "https://shop.jd.com/jdm/trade/after-sale/trade-dispute/list?tabCode=WAIT_EVIDENCE",
+              "watch": ["待回复", "待处理", "京东介入", "待执行"]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
