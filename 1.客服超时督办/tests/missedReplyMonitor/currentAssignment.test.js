@@ -23,7 +23,7 @@ test("当前接待只按联系人 assignedTo 解析", () => {
   assert.equal(assignment.assigneeMember.staffName, "卢安");
 });
 
-test("assignedTo 为空时历史操作人和发信人不得补成当前接待", () => {
+test("assignedTo 为空且无最后接待兜底信息时仍报未分配", () => {
   const assignment = resolveCurrentAssignment({
     assignedToUserId: "",
     assigneeFallbackStaffName: "卢安",
@@ -33,6 +33,41 @@ test("assignedTo 为空时历史操作人和发信人不得补成当前接待", 
   assert.equal(assignment.status, ASSIGNMENT_STATUS.UNASSIGNED);
   assert.equal(assignment.assigneeMember, null);
   assert.equal(assignment.assignedToUserId, "");
+});
+
+// issue #621：会话结束清空 assignedTo 后，按最后接待客服兜底归属，避免丢失责任人。
+test("assignedTo 为空但会话内有可映射的最后接待人时应兜底为 last_handler", () => {
+  const assignment = resolveCurrentAssignment(
+    { assignedToUserId: "" },
+    members,
+    { lastHandlerSenderName: "卢安（售后客服）" }
+  );
+
+  assert.equal(assignment.status, ASSIGNMENT_STATUS.LAST_HANDLER);
+  assert.equal(assignment.assignedToUserId, "");
+  assert.equal(assignment.assigneeMember.staffName, "卢安");
+});
+
+test("最后接待发送人映射不到成员表时应回落未分配", () => {
+  const assignment = resolveCurrentAssignment(
+    { assignedToUserId: "" },
+    members,
+    { lastHandlerSenderName: "查无此人（售后客服）" }
+  );
+
+  assert.equal(assignment.status, ASSIGNMENT_STATUS.UNASSIGNED);
+  assert.equal(assignment.assigneeMember, null);
+});
+
+test("平台已分配时最后接待兜底不得覆盖当前接待", () => {
+  const assignment = resolveCurrentAssignment(
+    { assignedToUserId: "staff_deng" },
+    members,
+    { lastHandlerSenderName: "查无此人" }
+  );
+
+  assert.equal(assignment.status, ASSIGNMENT_STATUS.ASSIGNED);
+  assert.equal(assignment.assigneeMember.staffName, "卢安");
 });
 
 test("assignedTo 有值但成员表无记录时应该明确为映射缺失", () => {

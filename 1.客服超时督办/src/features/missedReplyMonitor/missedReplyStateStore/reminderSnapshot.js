@@ -28,7 +28,7 @@ function normalizeReminderSnapshot(snapshot) {
     assignedToUserId,
     assignmentStatus,
     assignmentStatusLabel,
-    assigneeName: assignmentStatus === ASSIGNMENT_STATUS.ASSIGNED ? rawAssigneeName : "",
+    assigneeName: assignmentStatus === ASSIGNMENT_STATUS.ASSIGNED || assignmentStatus === ASSIGNMENT_STATUS.LAST_HANDLER ? rawAssigneeName : "",
     assigneeRoleLabel: String(snapshot?.assigneeRoleLabel || "").trim(),
     lastCustomerMessageAtMs: Number(snapshot?.lastCustomerMessageAtMs || 0),
     lastCustomerMessageText: String(snapshot?.lastCustomerMessageText || ""),

@@ -10,9 +10,13 @@ async function analyzeContactMissedReply(page, contact, replyConfig, memberMapBy
     logModuleName: MISSED_REPLY_LOG_MODULE_NAME,
     logMessageFetch: false
   });
-  const assignment = resolveCurrentAssignment(contact, memberMapByUserId);
+  const unresolvedReplyState = analyzeUnresolvedReplyState(contact, messages, replyConfig);
+  // 平台当前接待为空时，用会话内最后一条人工消息发送人兜底归属最后接待客服（ issue #621）。
+  const assignment = resolveCurrentAssignment(contact, memberMapByUserId, {
+    lastHandlerSenderName: unresolvedReplyState.lastHandlerSenderName
+  });
   const unresolvedState = {
-    ...analyzeUnresolvedReplyState(contact, messages, replyConfig),
+    ...unresolvedReplyState,
     assignmentStatus: assignment.status,
     assignmentStatusLabel: assignment.statusLabel
   };

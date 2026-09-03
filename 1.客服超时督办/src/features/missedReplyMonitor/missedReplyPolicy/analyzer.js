@@ -16,6 +16,14 @@ const {
 
 const UNREACHABLE_CONTACT_REASON = "客户已不是联系人，无法发送消息";
 
+function findLastHandlerSenderName(messages) {
+  // 最后接待兜底只取会话内最后一条人工消息发送人，不得拿历史客服名单猜当前责任。
+  const lastAgentMessage = Array.isArray(messages)
+    ? messages.slice().reverse().find((message) => message.role === "agent")
+    : null;
+  return String(lastAgentMessage?.senderName || "").trim();
+}
+
 function buildResolvedReplyDecision(input) {
   const firstCustomerMessage = input.resolved.firstCustomer.message;
   const resolvedByCustomer = input.resolved.resolutionKind === "customer";
@@ -61,7 +69,8 @@ function analyzeUnresolvedReplyState(contact, rawMessages, replyConfig, nowMs = 
   const contactFields = {
     chatId,
     customerName,
-    assignedToUserId
+    assignedToUserId,
+    lastHandlerSenderName: findLastHandlerSenderName(messages)
   };
   const latestMessageFields = buildLatestMessageFields(messages);
   const obligation = buildReplyObligation(messages, replyConfig);
@@ -112,6 +121,7 @@ function analyzeUnresolvedReplyState(contact, rawMessages, replyConfig, nowMs = 
       chatId,
       customerName,
       assignedToUserId,
+      lastHandlerSenderName: contactFields.lastHandlerSenderName,
       pendingStartCustomerMessage: firstCustomer.message,
       latestCustomerMessage: latestCustomer.message,
       agentSummary: obligation.pending.agentSummary,

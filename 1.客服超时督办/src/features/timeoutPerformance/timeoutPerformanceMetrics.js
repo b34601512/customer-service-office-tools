@@ -141,8 +141,12 @@ function buildTimeoutPerformanceReport(ledger, options = {}) {
   }
 
   const events = (Array.isArray(ledger?.timeoutEvents) ? ledger.timeoutEvents : []).filter((event) => inRange(event.notifiedAtMs));
+  // 最后接待兜底的事件同样计入客服个人绩效，避免结束会话甩贵后在报表里凭空消失（ issue #621）。
   const assignedEvents = events.filter(
-    (event) => resolveRecordAssignmentStatus(event) === ASSIGNMENT_STATUS.ASSIGNED
+    (event) => [
+      ASSIGNMENT_STATUS.ASSIGNED,
+      ASSIGNMENT_STATUS.LAST_HANDLER
+    ].includes(resolveRecordAssignmentStatus(event))
   );
   for (const event of assignedEvents) {
     const row = ensureStaffRow(rowByStaffKey, event);

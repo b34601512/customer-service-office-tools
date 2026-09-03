@@ -1,6 +1,9 @@
 // 该文件用于处理已到点的未实质回复提醒候选，保证同一事件不重复刷群。
 const { log } = require('../../../engine/logger');
-const { resolveCurrentAssignment } = require('../../shared/currentAssignment');
+const {
+  ASSIGNMENT_STATUS,
+  resolveCurrentAssignment
+} = require('../../shared/currentAssignment');
 const { sendUnresolvedReplyReminder } = require('../missedReplyNotifier');
 const {
   markUnresolvedReplyReminderSent,
@@ -14,8 +17,16 @@ const { MISSED_REPLY_LOG_MODULE_NAME } = require('./constants');
 const { recordTimeoutNotification } = require('../../timeoutPerformance/timeoutPerformanceLedger');
 
 function formatAssignmentForLog(assignment) {
-  // 日志明确写平台当前分配状态，不再把“未分配”误写成“未识别”。
-  return String(assignment?.assigneeMember?.staffName || assignment?.statusLabel || "").trim();
+  // 日志明确写平台当前分配状态；最后接待兜底要带状态说明，不再把“未分配”误写成“未识别”。
+  const staffName = String(assignment?.assigneeMember?.staffName || "").trim();
+  if (!staffName) {
+    return String(assignment?.statusLabel || "").trim();
+  }
+  if (assignment?.status === ASSIGNMENT_STATUS.LAST_HANDLER) {
+    return `${staffName}（${assignment.statusLabel}）`;
+  }
+
+  return staffName;
 }
 
 async function processReminderCandidate(runtimeState, candidate, memberMapByUserId) {
@@ -24,7 +35,9 @@ async function processReminderCandidate(runtimeState, candidate, memberMapByUser
     return false;
   }
 
-  const assignment = resolveCurrentAssignment(candidate, memberMapByUserId);
+  const assignment = resolveCurrentAssignment(candidate, memberMapByUserId, {
+    lastHandlerSenderName: candidate.lastHandlerSenderName
+  });
   const assigneeMember = assignment.assigneeMember;
   const reminderResult = await sendUnresolvedReplyReminder({
     ...candidate,

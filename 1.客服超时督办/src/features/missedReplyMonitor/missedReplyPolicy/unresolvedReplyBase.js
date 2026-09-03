@@ -12,6 +12,7 @@ function buildUnresolvedReplyBase(input) {
     chatId: input.chatId,
     customerName: input.customerName,
     assignedToUserId: input.assignedToUserId,
+    lastHandlerSenderName: input.lastHandlerSenderName || "",
     ...buildLatestMessageFields(input.messages),
     lastCustomerMessageAtMs: Number(latestCustomerMessage.timestampMs || 0),
     lastCustomerMessageText: String(latestCustomerMessage.text || ""),

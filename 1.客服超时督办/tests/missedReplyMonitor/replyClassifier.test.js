@@ -102,3 +102,20 @@ test("客户多个弱收尾词连在一起也不应该触发漏回复", () => {
   assert.equal(isCustomerClosingMessage({ text: "好的，谢谢。" }, replyConfig), true);
   assert.equal(isCustomerClosingMessage({ text: "谢谢帮我查一下" }, replyConfig), false);
 });
+
+// issue #620：表情组合（如 [OK][抱拳]）应整体按纯表情处理，不得建责或冒充实质回复。
+test("客服发送表情组合应判为无效回复", () => {
+  assert.equal(classifyAgentReply({ text: "[OK][抱拳]" }, replyConfig).kind, "invalid");
+  assert.equal(classifyAgentReply({ text: "【抱拳】【握手】" }, replyConfig).kind, "invalid");
+});
+
+test("客服表情加真实正文应算实质回复", () => {
+  assert.equal(
+    classifyAgentReply({ text: "[玫瑰]您的订单已加急处理" }, replyConfig).kind,
+    "substantive"
+  );
+});
+
+test("单个表情仍应判为无效回复", () => {
+  assert.equal(classifyAgentReply({ text: "[微笑]" }, replyConfig).kind, "invalid");
+});

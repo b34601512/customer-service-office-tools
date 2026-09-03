@@ -31,13 +31,13 @@ function isPurePunctuation(value) {
 }
 
 function isEmojiOnlyText(value) {
-  // 这里把常见表情占位和单个表情当成无效回复，避免表情刷掉漏回复提醒。
+  // 这里把消息整体由一个或多个 [表情]/【表情】占位符组成的情况视为纯表情，避免表情组合刷掉漏回复提醒。
   const text = normalizeCompactText(value);
   if (!text) {
     return false;
   }
 
-  return /^\[(表情|微笑|捂脸|呲牙|OK)\]$/.test(text) || /^【(表情|微笑|捂脸|呲牙|OK)】$/.test(text);
+  return /^(\[[^\[\]]{1,10}\]|【[^【】]{1,10}】)+$/.test(text);
 }
 
 function matchesKeywordRule(text, rule) {

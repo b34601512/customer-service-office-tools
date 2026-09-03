@@ -16,7 +16,7 @@
 - `src/controlCenter/`：本地控制台（TUI 终端界面为主，Web 网页界面为可选）、配置保存、任务子进程、资源监控和安全退出。
 - `src/controlCenter/tui/`：零依赖 ANSI 终端界面，七个页面（总览/客户/日志/配置/企微/资源/报表），复用同一套状态与服务。
 - `src/features/chatMonitorRuntime/`、`transferMonitor/`、`missedReplyMonitor/`：共用完整联系人和成员快照；未回复责任从首条未解决客户消息起算，只有人工实质回复或客户明确表示问题已解决才能结案；客户弱收尾不关闭已有待办，AI 不参与结案。
-- `src/features/shared/currentAssignment.js`：当前接待业务真源，只认联系人接口 `assignedTo`；历史操作人、渠道账号和消息发送人不得补定当前责任。
+- `src/features/shared/currentAssignment.js`：当前接待业务真源，第一依据仍是联系人接口 `assignedTo`；`assignedTo` 清空（如客服结束会话）时，按会话内最后一条人工消息发送人兜底归属为“最后接待客服”（last_handler，见 issue #621），兜不到成员映射才报未分配；渠道账号和历史操作人仍不得补定当前责任。
 - `src/features/onlinePresenceMonitor/`、`offDutyClose/`、`scheduleQuery/`：读取金山排班，检查上班监控（该到班时无人在线提醒）并处理下班监控；下班链路启动后立即检查，默认每 5 分钟复查今天和昨天。
 - `src/features/timeoutPerformance/`：记录企微群发送成功后的首次超时事实，并为 TUI 生成近 30 天或自然月对比。
 - `src/features/supervision/`：保存最近过程记录，供首页摘要和排障使用，不参与绩效统计。

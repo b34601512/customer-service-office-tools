@@ -105,3 +105,15 @@ test("提醒名单只包含平台当前接待和主管", () => {
   assert.equal(plan.managerMentionText, "<@manager>");
   assert.deepEqual(plan.mentionedMobileList, []);
 });
+
+// issue #621：会话结束兜底归属最后接待客服时，提醒对象应是该客服而不是主管认领。
+test("last_handler 兜底时应提醒最后接待客服跟进", () => {
+  assert.equal(
+    resolveAssigneeActionLine({
+      assignmentStatus: "last_handler",
+      staffMentionText: "缪婷婷",
+      reminderKind: "timeout"
+    }),
+    "缪婷婷，会话已结束客户仍未处理，请尽快处理。"
+  );
+});

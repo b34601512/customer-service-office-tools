@@ -58,7 +58,10 @@ module.exports = {
     { text: "嗯呢", matchMode: "exact" },
     { text: "OK", matchMode: "exact" },
     { text: "收到", matchMode: "exact" },
-    { text: "好滴", matchMode: "exact" }
+    { text: "好滴", matchMode: "exact" },
+    { text: "抱拳", matchMode: "exact" },
+    { text: "握手", matchMode: "exact" },
+    { text: "玫瑰", matchMode: "exact" }
   ],
 
   // 这里配置无效人工回复；命中后不算实质回复，避免标点和占位符误清零。

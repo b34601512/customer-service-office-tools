@@ -36,7 +36,8 @@ function normalizeStaffFields(record) {
   return {
     assignmentStatus,
     assigneeUserId,
-    assigneeName: assignmentStatus === ASSIGNMENT_STATUS.ASSIGNED ? rawAssigneeName : "",
+    // 最后接待兜底也要保留责任人名，否则绩效无法归人（ issue #621）。
+    assigneeName: assignmentStatus === ASSIGNMENT_STATUS.ASSIGNED || assignmentStatus === ASSIGNMENT_STATUS.LAST_HANDLER ? rawAssigneeName : "",
     assigneeRoleLabel: String(record?.assigneeRoleLabel || "").trim(),
     assigneeStaffGroup: String(record?.assigneeStaffGroup || "").trim()
   };

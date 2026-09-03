@@ -543,3 +543,36 @@ test("最后有效消息应该只看客户和真实人工，忽略 AI 自动回�
 test("漏回复阈值应该固定等于首次超时阈值的10倍", () => {
   assert.equal(resolveMissedReplyThresholdSeconds(150), 1500);
 });
+
+// issue #620/#621：纯表情组合不建责；最后人工消息发送人要随判定结果透传，供结束会话兜底归属。
+test("客户纯表情组合消息不应建立待回复责任", () => {
+  const decision = analyzeDecision([
+    createMessage({
+      timestamp: NOW_MS - 200 * 1000,
+      role: "customer",
+      text: "[OK][抱拳]"
+    })
+  ]);
+
+  assert.equal(decision.isPendingUnresolvedReplyCandidate, false);
+  assert.match(decision.reason, /标点或表情/);
+});
+
+test("未实质回复判定应透传最后人工消息发送人", () => {
+  const unresolvedState = analyzeUnresolvedReplyState(createContact(), [
+    createMessage({
+      timestamp: NOW_MS - 200 * 1000,
+      role: "customer",
+      text: "帮我查一下订单"
+    }),
+    createMessage({
+      timestamp: NOW_MS - 190 * 1000,
+      role: "agent",
+      senderName: "缪婷婷（售后客服）",
+      text: ""
+    })
+  ], replyConfig, NOW_MS);
+
+  assert.equal(unresolvedState.lastHandlerSenderName, "缪婷婷（售后客服）");
+  assert.equal(unresolvedState.reasonLabel, "人工回复无效");
+});

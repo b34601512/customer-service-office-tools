@@ -7,7 +7,6 @@ const {
   ASSIGNMENT_STATUS,
   normalizeAssignmentStatus
 } = require("../shared/currentAssignment");
-
 const MANAGER_STAFF_NAME = "黎路遥";
 
 function formatDurationText(seconds) {
@@ -54,6 +53,11 @@ function resolveAssigneeActionLine(input) {
   const staffMentionText = String(input?.staffMentionText || "").trim();
   if (!staffMentionText) {
     throw new Error("未实质回复提醒状态错误：已分配客服却缺少成员姓名。");
+  }
+
+  if (assignmentStatus === ASSIGNMENT_STATUS.LAST_HANDLER) {
+    // 会话已结束但客户仍未被实质回复：责任兜底给最后接待客服，不再让主管凭空认领。
+    return `${staffMentionText}，会话已结束客户仍未处理，${resolveActionText(input?.reminderKind)}`;
   }
 
   return `${staffMentionText}，${resolveActionText(input?.reminderKind)}`;
