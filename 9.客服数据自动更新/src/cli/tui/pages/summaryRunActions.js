@@ -21,7 +21,7 @@ function createSummaryRunController() {
       this.busy = true;
       this.message = forceRedownload
         ? "正在强制重新下载并汇总……"
-        : "汇总已启动，出现滑块或验证时请在浏览器中人工处理。";
+        : "汇总已启动，正在逐店运行；需人工处理时会显示在对应店铺行。";
       app.requestRender();
       Promise.resolve()
         .then(() => app.ctx.services.runSummaryTask({ selectedSummaryTaskIds, forceRedownload }))

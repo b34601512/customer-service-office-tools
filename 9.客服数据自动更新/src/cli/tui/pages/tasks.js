@@ -91,7 +91,7 @@ function createTasksPage() {
 
       lines.push("");
       lines.push(running
-        ? ansi.colorize("汇总进行中：请在自动打开的浏览器中完成登录/滑块，程序会原地等待。", "brightYellow")
+        ? ansi.colorize("汇总进行中：正在自动运行，无需操作；如某店需要人工登录/滑块，会显示在该店行内。", "brightYellow")
         : ansi.colorize("↑↓选择 回车执行    S 开始全部汇总    F 全部强制重下    回车店铺行 单店重跑", "gray"));
 
       if (controller.message) {
