@@ -20,7 +20,13 @@ const replyConfig = {
   missedReplyCustomerResolutionKeywords: [
     { text: "找到问题了", matchMode: "includes" }
   ],
-  missedReplyCustomerClosingKeywords: ["谢谢", "好的", "嗯", "嗯嗯", "嗯呢"],
+  missedReplyCustomerClosingKeywords: [
+    { text: "谢谢", matchMode: "includes" },
+    { text: "好的", matchMode: "includes" },
+    { text: "嗯", matchMode: "includes" },
+    { text: "嗯嗯", matchMode: "includes" },
+    { text: "嗯呢", matchMode: "includes" }
+  ],
   missedReplyInvalidAgentReplyKeywords: [".", "。", "，", ",", "、", "...", "…"]
 };
 
@@ -278,6 +284,39 @@ test("客服发标点不算人工响应，仍应该触发首次超时", () => {
   assert.equal(decision.reminderKind, "timeout");
   assert.equal(decision.reasonLabel, "人工回复无效");
   assert.equal(decision.isPendingTimeoutReplyCandidate, true);
+});
+
+test("客服回握手表情应该算实质回复，不再触发超时", () => {
+  const decision = analyzeDecision([
+    createMessage({
+      timestamp: NOW_MS - 160 * 1000,
+      role: "customer",
+      text: "帮我查一下订单"
+    }),
+    createMessage({
+      timestamp: NOW_MS - 150 * 1000,
+      role: "agent",
+      text: "[握手]"
+    })
+  ]);
+
+  assert.equal(decision.isPendingUnresolvedReplyCandidate, false);
+  assert.equal(decision.shouldRemind, false);
+  assert.equal(decision.reason, "客户消息后已有人工实质回复");
+});
+
+test("客户道谢组合句应识别为弱收尾，不单独触发提醒", () => {
+  const decision = analyzeDecision([
+    createMessage({
+      timestamp: NOW_MS - 1600 * 1000,
+      role: "customer",
+      text: "谢谢！知道了。"
+    })
+  ]);
+
+  assert.equal(decision.shouldRemind, false);
+  assert.equal(decision.reason, "客户最后消息是弱收尾");
+  assert.equal(decision.lastCustomerMessageText, "谢谢！知道了。");
 });
 
 test("客服有新的实质回复后不应该提醒", () => {

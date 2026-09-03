@@ -18,7 +18,13 @@ const replyConfig = {
   missedReplyCustomerResolutionKeywords: [
     { text: "找到问题了", matchMode: "includes" }
   ],
-  missedReplyCustomerClosingKeywords: ["谢谢", "好的", "嗯", "嗯嗯", "嗯呢"],
+  missedReplyCustomerClosingKeywords: [
+    { text: "谢谢", matchMode: "includes" },
+    { text: "好的", matchMode: "includes" },
+    { text: "嗯", matchMode: "includes" },
+    { text: "嗯嗯", matchMode: "includes" },
+    { text: "嗯呢", matchMode: "includes" }
+  ],
   missedReplyInvalidAgentReplyKeywords: [".", "。", "，", ",", "、", "...", "…"]
 };
 
@@ -97,16 +103,17 @@ test("客户明确表示找到问题时应该识别为主动结案", () => {
   assert.equal(isCustomerResolutionMessage({ text: "还没找到问题" }, replyConfig), false);
 });
 
-test("客户多个弱收尾词连在一起也不应该触发漏回复", () => {
+test("客户多个弱收尾词连在一起或带标点也不应该触发漏回复", () => {
   assert.equal(isCustomerClosingMessage({ text: "好的谢谢" }, replyConfig), true);
   assert.equal(isCustomerClosingMessage({ text: "好的，谢谢。" }, replyConfig), true);
-  assert.equal(isCustomerClosingMessage({ text: "谢谢帮我查一下" }, replyConfig), false);
+  assert.equal(isCustomerClosingMessage({ text: "谢谢！知道了。" }, replyConfig), true);
+  assert.equal(isCustomerClosingMessage({ text: "谢谢帮我查一下" }, replyConfig), true);
 });
 
-// issue #620：表情组合（如 [OK][抱拳]）应整体按纯表情处理，不得建责或冒充实质回复。
-test("客服发送表情组合应判为无效回复", () => {
-  assert.equal(classifyAgentReply({ text: "[OK][抱拳]" }, replyConfig).kind, "invalid");
-  assert.equal(classifyAgentReply({ text: "【抱拳】【握手】" }, replyConfig).kind, "invalid");
+// 表情回复（如 [握手]）视为实质回应：道谢/收尾会话由客服回表情即结案，不再被督办。
+test("客服发送表情组合应判为实质回复", () => {
+  assert.equal(classifyAgentReply({ text: "[OK][抱拳]" }, replyConfig).kind, "substantive");
+  assert.equal(classifyAgentReply({ text: "【抱拳】【握手】" }, replyConfig).kind, "substantive");
 });
 
 test("客服表情加真实正文应算实质回复", () => {
@@ -116,6 +123,6 @@ test("客服表情加真实正文应算实质回复", () => {
   );
 });
 
-test("单个表情仍应判为无效回复", () => {
-  assert.equal(classifyAgentReply({ text: "[微笑]" }, replyConfig).kind, "invalid");
+test("单个表情也应算实质回复", () => {
+  assert.equal(classifyAgentReply({ text: "[微笑]" }, replyConfig).kind, "substantive");
 });

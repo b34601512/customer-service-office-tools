@@ -48,20 +48,21 @@ module.exports = {
     { text: "找到问题了", matchMode: "includes" }
   ],
 
-  // 这里配置客户弱收尾关键词；只忽略本条消息，不关闭此前尚未完成的反馈或申请。
+  // 这里配置客户弱收尾关键词；命中后按弱收尾忽略本条消息，不关闭此前尚未完成的反馈或申请。
+  // 采用包含匹配：道谢/收尾常带标点或组合（如「谢谢！知道了。」）也应识别为弱收尾，不再精确死磕。
   missedReplyCustomerClosingKeywords: [
-    { text: "谢谢", matchMode: "exact" },
-    { text: "好的", matchMode: "exact" },
-    { text: "好", matchMode: "exact" },
-    { text: "嗯", matchMode: "exact" },
-    { text: "嗯嗯", matchMode: "exact" },
-    { text: "嗯呢", matchMode: "exact" },
-    { text: "OK", matchMode: "exact" },
-    { text: "收到", matchMode: "exact" },
-    { text: "好滴", matchMode: "exact" },
-    { text: "抱拳", matchMode: "exact" },
-    { text: "握手", matchMode: "exact" },
-    { text: "玫瑰", matchMode: "exact" }
+    { text: "谢谢", matchMode: "includes" },
+    { text: "好的", matchMode: "includes" },
+    { text: "好", matchMode: "includes" },
+    { text: "嗯", matchMode: "includes" },
+    { text: "嗯嗯", matchMode: "includes" },
+    { text: "嗯呢", matchMode: "includes" },
+    { text: "OK", matchMode: "includes" },
+    { text: "收到", matchMode: "includes" },
+    { text: "好滴", matchMode: "includes" },
+    { text: "抱拳", matchMode: "includes" },
+    { text: "握手", matchMode: "includes" },
+    { text: "玫瑰", matchMode: "includes" }
   ],
 
   // 这里配置无效人工回复；命中后不算实质回复，避免标点和占位符误清零。

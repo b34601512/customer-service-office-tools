@@ -140,10 +140,18 @@ function classifyAgentReply(message, replyConfig) {
     };
   }
 
-  if (isPurePunctuation(text) || isEmojiOnlyText(text)) {
+  if (isPurePunctuation(text)) {
     return {
       kind: "invalid",
       label: "空白或标点"
+    };
+  }
+
+  if (isEmojiOnlyText(text)) {
+    // 表情回复（如 [握手]、[OK][抱拳]）视为对客户消息的实质回应，避免道谢/收尾会话被督办。
+    return {
+      kind: "substantive",
+      label: "表情实质回复"
     };
   }
 
