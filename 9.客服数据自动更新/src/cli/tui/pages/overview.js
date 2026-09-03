@@ -64,10 +64,11 @@ function createOverviewPage() {
       lines.push("");
       lines.push(ansi.colorize("快捷操作（↑↓选择 回车执行）", "brightBlue"));
       SUMMARY_ACTIONS.forEach((action, index) => {
-        const selected = index === this.state.selection && !running;
-        const text = running ? `${action.label}（汇总运行中，暂不可执行）` : action.label;
+        const disabled = running && !action.alwaysEnabled;
+        const selected = index === this.state.selection && !disabled;
+        const text = disabled ? `${action.label}（汇总运行中，暂不可执行）` : action.label;
         const line = `${selected ? "▶ " : "  "}${text}`;
-        if (running) {
+        if (disabled) {
           lines.push(ansi.colorize(fit(line, columns), "gray"));
         } else if (selected) {
           lines.push(ansi.colorize(fit(line, columns), "reverse"));
@@ -90,12 +91,18 @@ function createOverviewPage() {
         return true;
       }
       if (key === "enter") {
+        const action = SUMMARY_ACTIONS[this.state.selection];
+        if (action.id === "exit") {
+          // 与 Ctrl+C 同一条退出确认流（复用 tuiApp 内置 exitConfirmPending 机制）。
+          app.exitConfirmPending = true;
+          return true;
+        }
         if (running) {
           controller.message = "汇总正在进行中，请在汇总页查看进度或等待完成。";
           app.requestRender();
           return true;
         }
-        controller.runAction(app, SUMMARY_ACTIONS[this.state.selection].id);
+        controller.runAction(app, action.id);
         return true;
       }
       return false;

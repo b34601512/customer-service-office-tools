@@ -167,6 +167,7 @@ const overviewText = stripAnsi(pages[0].render({ ctx, columns: 100 }).join("\n")
 assert.match(overviewText, /快捷操作（↑↓选择 回车执行）/);
 assert.match(overviewText, /开始全部汇总/);
 assert.match(overviewText, /全部强制重新下载并汇总/);
+assert.match(overviewText, /退出程序/);
 assert.doesNotMatch(overviewText, /打开汇总文件夹|打开凭证文件夹|打开下载根目录/); // 文件夹入口仍唯一归设置页
 const settingsText = stripAnsi(settingsPage.render({ columns: 100 }).join("\n"));
 assert.match(settingsText, /打开汇总文件夹/);
@@ -244,15 +245,31 @@ await new Promise((resolve) => setTimeout(resolve, 30));
 assert.strictEqual(runCalls.length, 2);
 assert.strictEqual(runController.busy, false);
 
-// 运行中菜单置灰禁用：回车只提示，不重复触发服务。
+// 运行中菜单置灰禁用：回车只提示，不重复触发服务；退出项仍可用。
 runController.busy = true;
 const busyOverview = stripAnsi(pages[0].render(app).join("\n"));
 assert.match(busyOverview, /汇总运行中，暂不可执行/);
+assert.match(busyOverview, /退出程序/, "退出项运行中仍应可见");
+assert.doesNotMatch(busyOverview, /退出程序（汇总运行中/, "退出项运行中不得置灰");
 const callsBeforeBusyBlock = runCalls.length;
+pages[0].state.selection = 0;
 app.dispatchKey("enter");
 assert.strictEqual(runCalls.length, callsBeforeBusyBlock, "运行中回车不得触发新汇总");
+// 运行中选中退出项回车 → 走与 Ctrl+C 相同的退出确认流，n 可取消。
+pages[0].state.selection = 2;
+app.dispatchKey("enter");
+assert.strictEqual(app.exitConfirmPending, true);
+app.dispatchKey("n");
+assert.strictEqual(app.exitConfirmPending, false);
 runController.busy = false;
 runController.message = "";
+
+// 退出项：回车弹全局退出确认，确认后触发 onExitRequest。
+pages[0].state.selection = 2;
+app.dispatchKey("enter");
+assert.strictEqual(app.exitConfirmPending, true);
+app.dispatchKey("y");
+assert.strictEqual(exitRequestCount, 2);
 
 // 汇总页提示行同步新口径：S/F 保留为快捷键。
 const tasksText = stripAnsi(pages[1].render(app).join("\n"));
