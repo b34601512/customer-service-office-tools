@@ -23,6 +23,8 @@ import sys
 import tempfile
 import time
 import unittest
+from unittest import mock
+from websocket import WebSocketTimeoutException, create_connection
 
 sys.stdout.reconfigure(encoding="utf-8")
 sys.stderr.reconfigure(encoding="utf-8")
@@ -39,7 +41,7 @@ class FakeTerminal(io.StringIO):
 
 def new_app():
     ctx = tui.Ctx()
-    pages = [tui.OverviewPage(ctx), tui.FetchPage(ctx), tui.LogPage(ctx), tui.ResultsPage(ctx)]
+    pages = [tui.OverviewPage(ctx), tui.ConfigPage(ctx), tui.LogPage(ctx), tui.ResultsPage(ctx)]
     app = tui.TuiApp("BOSS直聘采集工具", pages, output=FakeTerminal(),
                      status_bar_provider=lambda a: tui.build_status_lines(ctx, a))
     return ctx, pages, app
@@ -48,6 +50,32 @@ def new_app():
 # ---------------------------------------------------------------- 业务真源
 
 class BusinessTests(unittest.TestCase):
+    def test_response_job_list_supports_current_nested_shape(self):
+        data = {"code": 0, "zpData": {"resCount": 1, "jobList": [{"jobId": "J1"}]}}
+        self.assertEqual(biz.response_job_list(data), [{"jobId": "J1"}])
+
+    def test_cdp_recv_event_honors_short_timeout(self):
+        class FakeWebSocket:
+            def __init__(self):
+                self.timeout = 60
+
+            def gettimeout(self):
+                return self.timeout
+
+            def settimeout(self, value):
+                self.timeout = value
+
+            def recv(self):
+                raise WebSocketTimeoutException()
+
+        session = biz.CDPSession.__new__(biz.CDPSession)
+        session.ws = FakeWebSocket()
+        session._pending = {}
+        started = time.monotonic()
+        self.assertIsNone(session.recv_event(timeout=0.05))
+        self.assertLess(time.monotonic() - started, 0.5)
+        self.assertEqual(session.ws.gettimeout(), 60)
+
     def test_parse_job(self):
         item = {
             "jobId": "J1", "encryptJobId": "eJ1", "jobName": "国内电商运营",
@@ -83,11 +111,121 @@ class BusinessTests(unittest.TestCase):
             data = json.load(open(paths["json"], encoding="utf-8"))
             self.assertEqual(data[0]["company"], "甲")
 
+    def test_login_state_accepts_chrome_network_cookie_location(self):
+        """Chrome 127+ 的 Cookie 数据位于 Default/Network/Cookies。"""
+        with tempfile.TemporaryDirectory() as d:
+            os.makedirs(os.path.join(d, "Default", "Network"), exist_ok=True)
+            open(os.path.join(d, "Default", "Network", "Cookies"), "wb").close()
+            with mock.patch.object(biz, "PROFILE_DIR", d):
+                self.assertTrue(tui.is_logged_in())
+
+    def test_login_wait_accepts_logged_in_empty_job_list(self):
+        """登录有效不应依赖岗位数量；空列表也必须视为已登录。"""
+        class FakeSession:
+            def __init__(self):
+                self.navigate_urls = []
+                self.closed = False
+
+            def send(self, method, params=None):
+                if method == "Page.navigate":
+                    self.navigate_urls.append(params["url"])
+                return 1
+
+            def close(self):
+                self.closed = True
+
+        fake = FakeSession()
+        clock = [0.0]
+
+        def fake_wait(_session, timeout=60, **_kwargs):
+            clock[0] += 2.0
+            return {"code": 0, "zpList": []}
+
+        with mock.patch.object(biz, "_new_session", return_value=fake), \
+             mock.patch.object(biz, "_await_joblist", side_effect=fake_wait), \
+             mock.patch.object(biz.time, "time", side_effect=lambda: clock[0]):
+            result = biz.login_wait("国内电商", "101280600", port=9222, login_timeout=1)
+
+        self.assertTrue(result)
+        self.assertEqual(len(fake.navigate_urls), 1)
+        self.assertTrue(fake.closed)
+
+    def test_close_owned_chrome_uses_process_tree_and_is_idempotent(self):
+        """退出只清理本次登记的 Chrome，重复清理不应误伤其他实例。"""
+        fake_process = type("FakeProcess", (), {"pid": 4321})()
+        with mock.patch.object(biz, "_owned_chrome_processes", {9222: fake_process}), \
+             mock.patch.object(biz, "_request_graceful_close", return_value=False), \
+             mock.patch.object(biz, "_wait_for_cdp_closed", return_value=False), \
+             mock.patch.object(biz, "_terminate_process_tree") as terminate:
+            self.assertTrue(biz.close_owned_chrome(9222))
+            terminate.assert_called_once_with(4321)
+            self.assertFalse(biz.close_owned_chrome(9222))
+
+    def test_login_wait_does_not_renavigate_while_waiting_for_manual_login(self):
+        """未登录时浏览器页面只能导航一次，后续必须停留等待用户登录。"""
+        class FakeSession:
+            def __init__(self):
+                self.navigate_urls = []
+                self.closed = False
+
+            def send(self, method, params=None):
+                if method == "Page.navigate":
+                    self.navigate_urls.append(params["url"])
+                return 1
+
+            def close(self):
+                self.closed = True
+
+        fake = FakeSession()
+        clock = [0.0]
+
+        def fake_wait(_session, timeout=60, **_kwargs):
+            clock[0] += 1.0
+            return None  # 模拟登录页没有岗位请求，用户尚未登录
+
+        with mock.patch.object(biz, "_new_session", return_value=fake), \
+             mock.patch.object(biz, "_await_joblist", side_effect=fake_wait), \
+             mock.patch.object(biz.time, "time", side_effect=lambda: clock[0]):
+            result = biz.login_wait("国内电商", "101280600", port=9222, login_timeout=5)
+
+        self.assertFalse(result)
+        self.assertEqual(len(fake.navigate_urls), 1,
+                         "未登录等待期间不得重复 Page.navigate，页面必须停留给用户扫码")
+        self.assertTrue(fake.closed)
+
     def test_search_url_encoding(self):
         url = biz.search_url("国内电商", "101280600", 2)
         self.assertIn("query=%E5%9B%BD%E5%86%85%E7%94%B5%E5%95%86", url)
         self.assertIn("city=101280600", url)
         self.assertIn("page=2", url)
+
+    def test_run_fetch_normalizes_string_page_count(self):
+        class FakeSession:
+            def __init__(self):
+                self.closed = False
+
+            def send(self, method, params=None):
+                return 1
+
+            def close(self):
+                self.closed = True
+
+        fake = FakeSession()
+        seen_pages = []
+
+        def fake_fetch_page(session, keyword, city_code, page, delay, total_pages=0, progress=None):
+            seen_pages.append((page, total_pages))
+            return []
+
+        with mock.patch.object(biz, "ensure_chrome_running"), \
+             mock.patch.object(biz, "_new_session", return_value=fake), \
+             mock.patch.object(biz, "fetch_page", side_effect=fake_fetch_page), \
+             mock.patch.object(biz, "export_rows", return_value={}):
+            result = biz.run_fetch("国内电商", "深圳", "2", "csv", 0, 9222)
+
+        self.assertEqual(result, [])
+        self.assertEqual(seen_pages, [(1, 2), (2, 2)])
+        self.assertTrue(fake.closed)
 
     def test_city_codes_known(self):
         for city in ("深圳", "北京", "上海", "广州", "杭州"):
@@ -99,6 +237,24 @@ class BusinessTests(unittest.TestCase):
 class TuiTests(unittest.TestCase):
     def _frame(self, app):
         return app.build_frame()
+
+    def test_overview_login_action_moves_to_bottom_when_logged_in(self):
+        _, pages, _ = new_app()
+        with mock.patch.object(tui, "is_logged_in", return_value=False):
+            labels = [item[0] for item in pages[0].items]
+            self.assertIn("首次登录", labels[0])
+            self.assertIn("检查", labels[0])
+            self.assertEqual(labels[1], "开始抓取")
+            self.assertEqual(labels[-1], "退出采集工具")
+        with mock.patch.object(tui, "is_logged_in", return_value=True):
+            labels = [item[0] for item in pages[0].items]
+            self.assertEqual(labels[0], "开始抓取")
+            self.assertIn("首次登录", labels[-1])
+            rendered = "\n".join(pages[0].render(type("App", (), {"columns": 100, "content_height": 15})()))
+            self.assertIn(tui.CODES["brightGreen"], rendered)
+            self.assertIn(tui.CODES["brightRed"], rendered)
+        self.assertEqual(pages[1].title, "配置")
+        self.assertNotIn("开始抓取", [field["label"] for field in pages[1].fields])
 
     def test_frame_structure_and_no_mojibake(self):
         """四页全部渲染：行数=终端行数、版权两行、无乱码（U+FFFD/非法解码）、每行不超宽过多。"""
@@ -116,7 +272,7 @@ class TuiTests(unittest.TestCase):
                     w = tui.display_width(line)
                     self.assertLessEqual(w, 102, f"行宽越界: {w}")
                 # 菜单栏含四页
-                self.assertTrue(all(t in frame[3] for t in ("1总览", "2抓取", "3日志", "4结果")))
+                self.assertTrue(all(t in frame[3] for t in ("1首页", "2配置", "3日志", "4结果")))
 
     def test_dispatch_global_keys(self):
         ctx, pages, app = new_app()
@@ -131,31 +287,119 @@ class TuiTests(unittest.TestCase):
         self.assertEqual(calls, ["exit"])
         pages[0].handle_key("up", app)  # 回到退出项
         app.switch_page(0)
-        pages[0].state["selection"] = 3
-        pages[0].handle_key("enter", app)
+        with mock.patch.object(tui, "is_logged_in", return_value=False):
+            pages[0].state["selection"] = len(pages[0].items) - 1
+            pages[0].handle_key("enter", app)
         self.assertEqual(calls, ["exit", "exit"])
         app.dispatch_key("q")
         self.assertEqual(app.current_page_index, 0)
 
-    def test_fetch_form_edit(self):
+    def test_windows_escape_does_not_swallow_following_text(self):
+        """Windows 单独按 Esc 后，后续关键词字符仍应正常进入编辑器。"""
+        class FakeMsvcrt:
+            def __init__(self, chars):
+                self.chars = list(chars)
+
+            def kbhit(self):
+                return bool(self.chars)
+
+            def getwch(self):
+                return self.chars.pop(0)
+
+        app = tui.TuiApp("test", [], output=FakeTerminal())
+        reader = FakeMsvcrt([chr(27), "a", "b"])
+        self.assertEqual(app._read_windows_key(reader), "esc")
+        self.assertEqual(app._read_windows_key(reader), "a")
+        self.assertEqual(app._read_windows_key(reader), "b")
+
+    def test_home_start_fetch_uses_config(self):
+        ctx, pages, app = new_app()
+        ctx.config.update(keyword="运营", city="北京", pages=2, format="json")
+        with mock.patch.object(biz, "run_fetch", return_value=[]), \
+             mock.patch.object(tui, "is_logged_in", return_value=True):
+            app.switch_page(0)
+            pages[0].state["selection"] = next(
+                index for index, item in enumerate(pages[0].items) if item[0] == "开始抓取"
+            )
+            pages[0].handle_key("enter", app)
+            while ctx.tasks.running:
+                time.sleep(0.01)
+        self.assertEqual(ctx.tasks.task["desc"], "抓取 运营 @ 北京")
+        self.assertEqual(app.current_page_index, 2)
+
+    def test_config_text_left_right_do_not_start_editing(self):
         _, pages, app = new_app()
-        fp = pages[1]
-        fp.handle_key("down", app)
-        fp.handle_key("enter", app)
-        self.assertIsNotNone(fp.state["editing"])
-        for _ in fp.state["edit_buffer"]:
-            fp.handle_key("backspace", app)
+        app.switch_page(1)
+        config = pages[1]
+        config.state["selection"] = 0
+        self.assertIsNone(config.handle_key("right", app))
+        self.assertIsNone(config.state["editing"])
+        self.assertIsNone(config.handle_key("left", app))
+        self.assertIsNone(config.state["editing"])
+
+    def test_config_keyword_edit(self):
+        _, pages, app = new_app()
+        app.switch_page(1)
+        config = pages[1]
+        config.state["selection"] = 0
+        config.handle_key("enter", app)
+        for _ in config.state["edit_buffer"]:
+            config.handle_key("backspace", app)
+        for ch in "运营":
+            config.handle_key(ch, app)
+        config.handle_key("enter", app)
+        self.assertEqual(config.ctx.config["keyword"], "运营")
+        self.assertIsNone(config.state["editing"])
+
+    def test_config_form_edit(self):
+        _, pages, app = new_app()
+        config = pages[1]
+        config.handle_key("down", app)
+        config.handle_key("enter", app)
+        self.assertIsNotNone(config.state["editing"])
+        for _ in config.state["edit_buffer"]:
+            config.handle_key("backspace", app)
         for ch in "北京":
-            fp.handle_key(ch, app)
-        fp.handle_key("enter", app)
-        self.assertEqual(fp.state["city"], "北京")
-        # 左右改页数/格式
-        fp.state["selection"] = 2
-        fp.handle_key("right", app)
-        self.assertEqual(fp.state["pages"], 2)
-        fp.state["selection"] = 3
-        fp.handle_key("right", app)
-        self.assertEqual(fp.state["format"], "json")
+            config.handle_key(ch, app)
+        config.handle_key("enter", app)
+        self.assertEqual(config.ctx.config["city"], "北京")
+        # 所有设置都必须先回车进入编辑，再由左右键调整，最后回车保存。
+        config.state["selection"] = 2
+        config.handle_key("right", app)
+        self.assertEqual(config.ctx.config["pages"], 1)
+        config.handle_key("enter", app)
+        config.handle_key("right", app)
+        self.assertEqual(config.ctx.config["pages"], 1)
+        config.handle_key("enter", app)
+        self.assertEqual(config.ctx.config["pages"], 2)
+        config.state["selection"] = 3
+        config.handle_key("enter", app)
+        config.handle_key("right", app)
+        self.assertEqual(config.ctx.config["format"], "csv")
+        config.handle_key("enter", app)
+        self.assertEqual(config.ctx.config["format"], "json")
+
+    def test_config_edit_escape_discards_all_field_types(self):
+        _, pages, app = new_app()
+        config = pages[1]
+        original = dict(config.ctx.config)
+        for index, key in ((0, "keyword"), (2, "pages"), (3, "format")):
+            config.state["selection"] = index
+            config.handle_key("enter", app)
+            if key == "keyword":
+                config.handle_key("x", app)
+            else:
+                config.handle_key("right", app)
+            config.handle_key("esc", app)
+        self.assertEqual(config.ctx.config, original)
+
+    def test_ctx_cleanup_is_idempotent(self):
+        """TUI 退出与 finally 可能各调用一次，资源清理必须只执行一次。"""
+        ctx = tui.Ctx()
+        with mock.patch.object(biz, "close_owned_chrome", return_value=True) as close:
+            ctx.cleanup()
+            ctx.cleanup()
+        close.assert_called_once_with(biz.DEFAULT_PORT)
 
     def test_task_runner_captures_real_stdout(self):
         ctx = tui.Ctx()
@@ -173,6 +417,45 @@ class TuiTests(unittest.TestCase):
             time.sleep(0.02)
         self.assertEqual(runner.task["result"], [1, 2, 3])
         self.assertIn("real-log-line-中文", runner.snapshot_lines())
+
+    def test_task_runner_reports_progress_for_bar_and_stage(self):
+        ctx = tui.Ctx()
+        runner = ctx.tasks
+
+        def job(progress=None):
+            progress(1, 3, "第 1/3 页", "正在等待接口响应")
+            time.sleep(0.05)
+            return [1]
+
+        self.assertTrue(runner.start("抓取测试", job, with_progress=True, total=3))
+        time.sleep(0.01)
+        self.assertEqual(runner.task["total"], 3)
+        self.assertEqual(runner.task["current"], 1)
+        self.assertEqual(runner.task["stage"], "第 1/3 页")
+        self.assertIn("▰", tui.format_progress_bar(1, 3))
+        self.assertIn(tui.spinner_frame(), "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏")
+        while runner.running:
+            time.sleep(0.02)
+
+    def test_log_page_shows_progress_and_wait_animation(self):
+        ctx, pages, app = new_app()
+
+        def job(progress=None):
+            progress(1, 3, "等待第 2/3 页响应", "已等待 2s")
+            time.sleep(0.05)
+
+        ctx.tasks.start("抓取测试", job, with_progress=True, total=3)
+        for _ in range(20):
+            if ctx.tasks.task["current"] == 1:
+                break
+            time.sleep(0.01)
+        rendered = "\\n".join(pages[2].render(app))
+        self.assertIn("等待第 2/3 页响应", rendered)
+        self.assertIn("已等待 2s", rendered)
+        self.assertIn("▰", rendered)
+        self.assertIn(tui.spinner_frame(), "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏")
+        while ctx.tasks.running:
+            time.sleep(0.02)
 
     def test_task_runner_error_reported(self):
         ctx = tui.Ctx()
@@ -194,7 +477,7 @@ class TuiTests(unittest.TestCase):
         finally:
             app.stop()
         output = app.output.getvalue()
-        self.assertIn("总览", output)
+        self.assertIn("首页", output)
         self.assertIn("黎路遥", output)
 
 
@@ -209,10 +492,21 @@ class ChromeTests(unittest.TestCase):
         self.assertTrue(biz.cdp_ready(biz.DEFAULT_PORT), "CDP 端口应可访问")
         info = biz.open_tab(biz.DEFAULT_PORT)
         self.assertTrue(info.startswith("ws://"), "应拿到 WebSocket 调试地址")
-        # 连接一次再关闭，验证 websocket 通路
-        sess = tui.CDPSession(info) if hasattr(tui, "CDPSession") else None
-        if sess:
-            sess.close()
+        # 真正建立 WebSocket 并执行 CDP 请求，不只检查地址字符串。
+        sess = biz.CDPSession(info)
+        request_id = sess.send("Browser.getVersion")
+        response = sess.wait_response(request_id, timeout=10)
+        self.assertIsNotNone(response, "CDP WebSocket 应返回响应")
+        self.assertIn("result", response, "CDP 响应应包含 result")
+        sess.close()
+        # 只清理本测试实际启动的 Chrome；测试前已有实例绝不触碰。
+        if started:
+            self.assertTrue(biz.close_owned_chrome(biz.DEFAULT_PORT))
+            for _ in range(20):
+                if not biz.cdp_ready(biz.DEFAULT_PORT):
+                    break
+                time.sleep(0.1)
+            self.assertFalse(biz.cdp_ready(biz.DEFAULT_PORT), "测试启动的 Chrome 应已被进程树清理")
 
     def test_login_state_detection(self):
         # 真实判断登录态（读专用 profile 目录）
@@ -222,25 +516,31 @@ class ChromeTests(unittest.TestCase):
 
 # ---------------------------------------------------------------- 真实抓取（可选，需已登录）
 
-@unittest.skipUnless("--with-real-fetch" in sys.argv and os.path.exists(
-    os.path.join(biz.PROFILE_DIR, "Default", "Cookies")), "需 --with-real-fetch 且已扫码登录")
+@unittest.skipUnless("--with-real-fetch" in sys.argv and any(os.path.exists(path) for path in (
+    os.path.join(biz.PROFILE_DIR, "Default", "Network", "Cookies"),
+    os.path.join(biz.PROFILE_DIR, "Default", "Cookies"),
+)), "需 --with-real-fetch 且已扫码登录")
 class RealFetchTests(unittest.TestCase):
     def test_real_fetch_one_page(self):
         """真实浏览器 + 真实网络 + 真实导出文件，验证完整抓取链路。"""
         before = set(os.listdir(biz.RESULT_DIR)) if os.path.isdir(biz.RESULT_DIR) else set()
-        rows = biz.run_fetch("国内电商", "深圳", 1, "both", delay=0, port=biz.DEFAULT_PORT)
-        self.assertGreater(len(rows), 0, "应抓取到至少一条真实岗位数据")
-        for key in ("company", "title", "salary", "job_link"):
-            self.assertTrue(rows[0][key], f"字段 {key} 不应为空")
-        after = set(os.listdir(biz.RESULT_DIR))
-        new_files = after - before
-        self.assertTrue(any(f.endswith(".csv") for f in new_files), "应生成真实 CSV 导出文件")
-        # 读回校验
-        for f in new_files:
-            if f.endswith(".csv"):
-                with open(os.path.join(biz.RESULT_DIR, f), encoding="utf-8-sig") as fh:
-                    content = fh.read()
-                self.assertIn(rows[0]["company"], content, "CSV 内容应含抓到的公司名")
+        try:
+            rows = biz.run_fetch("国内电商", "深圳", 1, "both", delay=0, port=biz.DEFAULT_PORT)
+            self.assertGreater(len(rows), 0, "应抓取到至少一条真实岗位数据")
+            for key in ("company", "title", "salary", "job_link"):
+                self.assertTrue(rows[0][key], f"字段 {key} 不应为空")
+            after = set(os.listdir(biz.RESULT_DIR))
+            new_files = after - before
+            self.assertTrue(any(f.endswith(".csv") for f in new_files), "应生成真实 CSV 导出文件")
+            # 读回校验
+            for f in new_files:
+                if f.endswith(".csv"):
+                    with open(os.path.join(biz.RESULT_DIR, f), encoding="utf-8-sig") as fh:
+                        content = fh.read()
+                    self.assertIn(rows[0]["company"], content, "CSV 内容应含抓到的公司名")
+        finally:
+            # 真实测试只清理本测试自己启动的 Chrome，不碰测试前已有实例。
+            biz.close_owned_chrome(biz.DEFAULT_PORT)
 
 
 if __name__ == "__main__":

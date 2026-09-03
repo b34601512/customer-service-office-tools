@@ -134,6 +134,38 @@ def format_clock():
     return time.strftime("%H:%M:%S")
 
 
+def spinner_frame(rate=4.0):
+    """等待期间的旋转动画，按时间取帧，避免误以为程序无响应。"""
+    frames = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
+    return frames[int(time.monotonic() * rate) % len(frames)]
+
+
+def format_progress_bar(current, total, width=24):
+    """已知总量显示进度条；未知总量显示移动标记，避免伪造百分比。"""
+    width = max(8, int(width))
+    total = int(total or 0)
+    current = max(0, int(current or 0))
+    if total <= 0:
+        position = int(time.monotonic() * 4) % width
+        cells = ["░"] * width
+        cells[position] = "▰"
+        return f"[{''.join(cells)}]  --%"
+    current = min(current, total)
+    filled = round(current / total * width)
+    return f"[{'▰' * filled}{'▱' * (width - filled)}]  {round(current / total * 100):>3}%"
+
+
+def format_elapsed(seconds):
+    seconds = max(0, int(seconds or 0))
+    minutes, seconds = divmod(seconds, 60)
+    hours, minutes = divmod(minutes, 60)
+    if hours:
+        return f"{hours}时{minutes:02d}分{seconds:02d}秒"
+    if minutes:
+        return f"{minutes}分{seconds:02d}秒"
+    return f"{seconds}秒"
+
+
 # ---------------------------------------------------------------- TUI 核心（对齐 1 号项目交互）
 class TuiApp:
     def __init__(self, title, pages, output=None, on_exit_request=None, status_bar_provider=None,
@@ -148,6 +180,7 @@ class TuiApp:
         self.running = False
         self.last_frame_lines = None
         self.escape_buffer = ""
+        self._pending_console_chars = []
         self.last_cols = None
         self.last_rows = None
         self._last_tick = 0.0
@@ -204,26 +237,8 @@ class TuiApp:
         import msvcrt
         self._last_tick = time.monotonic()
         while self.running:
-            if msvcrt.kbhit():
-                ch = msvcrt.getwch()
-                if self.escape_buffer or ch == "\x1b":
-                    # 等待完整转义序列（方向键等）
-                    self.escape_buffer += ch
-                    if self.escape_buffer.startswith("\x1b[") and self.escape_buffer in (
-                            "\x1b[A", "\x1b[B", "\x1b[C", "\x1b[D", "\x1b[H", "\x1b[F",
-                            "\x1b[1~", "\x1b[4~", "\x1b[5~", "\x1b[6~", "\x1b[3~"):
-                        key = self.resolve_escape(self.escape_buffer)
-                        self.escape_buffer = ""
-                        self.dispatch_key(key)
-                    elif len(self.escape_buffer) > 8:
-                        self.escape_buffer = ""
-                    continue
-                if ch == "\xe0" or ch == "\x00":
-                    # 扩展键：方向键等（第二字节）
-                    ch2 = msvcrt.getwch()
-                    self.dispatch_key(self._ext_key(ch2))
-                    continue
-                key = self.translate_char(ch)
+            if msvcrt.kbhit() or self._pending_console_chars:
+                key = self._read_windows_key(msvcrt)
                 if key:
                     self.dispatch_key(key)
                 continue
@@ -240,6 +255,38 @@ class TuiApp:
             return bool(sys.stdin.isatty()) and bool(sys.stdout.isatty())
         except Exception:
             return False
+
+    def _read_windows_key(self, msvcrt):
+        """读取一个 Windows 控制台按键；单独 Esc 必须立即结束转义状态，不能吞掉后续文字。"""
+        if self._pending_console_chars:
+            ch = self._pending_console_chars.pop(0)
+        else:
+            ch = msvcrt.getwch()
+
+        if ch in ("\xe0", "\x00"):
+            return self._ext_key(msvcrt.getwch())
+        if ch != "\x1b":
+            return self.translate_char(ch)
+
+        # Windows 扩展方向键通常是 E0/H 等；Windows Terminal 也可能发送 ANSI Esc 序列。
+        # 只在很短窗口内收集序列，超时即认定为独立 Esc，避免编辑状态永久卡住。
+        buffer = ch
+        deadline = time.monotonic() + 0.08
+        while time.monotonic() < deadline:
+            if not msvcrt.kbhit():
+                time.sleep(0.005)
+                continue
+            buffer += msvcrt.getwch()
+            resolved = self.resolve_escape(buffer)
+            if resolved != "unknown":
+                return resolved
+            if buffer.startswith("\x1b[") and (buffer[-1].isalpha() or buffer[-1] == "~"):
+                return "unknown"
+            if not buffer.startswith(("\x1b[", "\x1bO")):
+                self._pending_console_chars.extend(buffer[1:])
+                return "esc"
+        self._pending_console_chars.extend(buffer[1:])
+        return "esc"
 
     def stop(self):
         if not self.running:
@@ -365,7 +412,7 @@ class TuiApp:
         footer = self.footer_provider(self)
         if not footer and self.page and hasattr(self.page, "footer"):
             footer = self.page.footer(self) or ""
-        lines.append(colorize(fit(footer or "↑↓选择 回车执行 ←→/数字键切页 q返回总览 Ctrl+C直接退出", columns), "gray"))
+        lines.append(colorize(fit(footer or "↑↓选择 回车执行 ←→/数字键切页 q返回首页 Ctrl+C直接退出", columns), "gray"))
         lines.append("─" * columns)
         return lines
 
@@ -400,26 +447,49 @@ class TuiApp:
 class TaskRunner:
     def __init__(self):
         self.task = None
+        self._lock = threading.Lock()
 
     @property
     def running(self):
         return self.task is not None and not self.task["done"]
 
-    def start(self, desc, fn, args=()):
+    def start(self, desc, fn, args=(), with_progress=False, total=0):
         if self.running:
             return False
         buf = io.StringIO()
-        self.task = {"desc": desc, "fn": fn, "args": args, "buf": buf,
-                     "done": False, "error": None, "result": None}
+        task = {
+            "desc": desc, "fn": fn, "args": args, "buf": buf,
+            "done": False, "error": None, "result": None,
+            "current": 0, "total": int(total or 0), "stage": "准备中",
+            "detail": "任务已创建", "started_at": time.monotonic(),
+        }
+        self.task = task
+
+        def report_progress(current=0, total=0, stage="运行中", detail=""):
+            # 业务层只上报事实，TUI 决定如何显示进度条/动画。
+            with self._lock:
+                if self.task is not task:
+                    return
+                task["current"] = int(current or 0)
+                if total:
+                    task["total"] = int(total)
+                task["stage"] = str(stage or "运行中")
+                task["detail"] = str(detail or "")
+                task["updated_at"] = time.monotonic()
 
         def worker():
             try:
                 with contextlib.redirect_stdout(buf):
-                    self.task["result"] = fn(*args)
+                    if with_progress:
+                        task["result"] = fn(*args, progress=report_progress)
+                    else:
+                        task["result"] = fn(*args)
             except Exception as exc:  # noqa: BLE001
-                self.task["error"] = exc
+                task["error"] = exc
             finally:
-                self.task["done"] = True
+                task["done"] = True
+                task["updated_at"] = time.monotonic()
+                task["finished_at"] = time.time()
 
         threading.Thread(target=worker, daemon=True).start()
         return True
@@ -437,14 +507,19 @@ class TaskRunner:
 
 
 def is_logged_in():
-    """专用 profile 存在即视为已登录（登录态持久化在该目录）。"""
-    return os.path.isdir(biz.PROFILE_DIR) and os.path.exists(
-        os.path.join(biz.PROFILE_DIR, "Default", "Cookies"))
+    """只作界面状态提示：兼容 Chrome 新旧 Cookie 路径；最终以真实 joblist 响应为准。"""
+    if not os.path.isdir(biz.PROFILE_DIR):
+        return False
+    cookie_paths = (
+        os.path.join(biz.PROFILE_DIR, "Default", "Network", "Cookies"),  # Chrome 127+
+        os.path.join(biz.PROFILE_DIR, "Default", "Cookies"),              # 旧版 Chrome
+    )
+    return any(os.path.exists(path) for path in cookie_paths)
 
 
-# ---------------------------------------------------------------- 页面：总览（主菜单）
+# ---------------------------------------------------------------- 页面：首页（主菜单）
 class OverviewPage:
-    key, title = "1", "总览"
+    key, title = "1", "首页"
 
     def __init__(self, ctx):
         self.ctx = ctx
@@ -452,12 +527,15 @@ class OverviewPage:
 
     @property
     def items(self):
-        return [
-            ("启动Chrome并登录", "首次需要扫码，登录态永久保存，之后不再登录"),
-            ("抓取职位数据", "设置关键词/城市/页数并开始抓取"),
+        login_item = ("首次登录 / 检查登录态", "已登录则直接复用，未登录才打开登录页面")
+        common_items = [
+            ("开始抓取", "按配置页参数启动职位采集"),
+            ("配置采集参数", "编辑关键词、城市、页数和导出格式"),
             ("打开结果目录", "用资源管理器打开输出文件夹"),
             ("退出采集工具", "结束本程序"),
         ]
+        # 未登录时把首次登录置顶；已登录时沉底，避免首页每次都先看到低频操作。
+        return [login_item, *common_items] if not is_logged_in() else [*common_items, login_item]
 
     def on_enter(self, app):
         self.state["selection"] = min(self.state["selection"], len(self.items) - 1)
@@ -470,6 +548,10 @@ class OverviewPage:
                 break
             selected = index == self.state["selection"]
             prefix = "▶ " if selected else "  "
+            if label == "开始抓取":
+                label = colorize(label, "brightGreen")
+            elif label == "退出采集工具":
+                label = colorize(label, "brightRed")
             line = f"{prefix}{label}　{colorize(desc, 'gray')}"
             lines.append(colorize(fit(line, columns), "reverse") if selected else fit(line, columns))
         if self.state["message"]:
@@ -484,17 +566,23 @@ class OverviewPage:
         elif key == "down":
             self.state["selection"] = (self.state["selection"] + 1) % len(items)
         elif key == "enter":
-            action = self.state["selection"]
-            if action == 0:
-                ok = self.ctx.tasks.start("启动专用Chrome并等待登录",
-                                          self.ctx.action_login)
+            action_label = items[self.state["selection"]][0]
+            if action_label == "首次登录 / 检查登录态":
+                ok = self.ctx.tasks.start(
+                    "启动专用Chrome并等待登录",
+                    self.ctx.action_login,
+                    with_progress=True,
+                )
                 if ok:
                     app.switch_page(2)  # 切到日志页看进度
-            elif action == 1:
+            elif action_label == "开始抓取":
+                if not self.ctx.start_fetch(app):
+                    self.state["message"] = "已有任务在运行，请先等待完成"
+            elif action_label == "配置采集参数":
                 app.switch_page(1)
-            elif action == 2:
+            elif action_label == "打开结果目录":
                 self.open_result_dir()
-            elif action == 3:
+            elif action_label == "退出采集工具":
                 # 退出选项：直接退出，不再要确认（用户要求）
                 app.on_exit_request()
         else:
@@ -505,14 +593,13 @@ class OverviewPage:
     def open_result_dir():
         os.makedirs(biz.RESULT_DIR, exist_ok=True)
         subprocess.Popen(["explorer", biz.RESULT_DIR])
-# ---------------------------------------------------------------- 页面：抓取设置（表单编辑，对齐 1 号 config 页）
-class FetchPage:
-    key, title = "2", "抓取"
+# ---------------------------------------------------------------- 页面：配置（只维护采集参数，抓取动作位于首页）
+class ConfigPage:
+    key, title = "2", "配置"
 
     def __init__(self, ctx):
         self.ctx = ctx
-        self.state = {"selection": 0, "editing": None, "edit_buffer": "",
-                      "keyword": "国内电商", "city": "深圳", "pages": 1, "format": "csv", "message": ""}
+        self.state = {"selection": 0, "editing": None, "edit_buffer": "", "message": ""}
 
     @property
     def fields(self):
@@ -521,7 +608,6 @@ class FetchPage:
             {"key": "city", "label": "城市", "type": "text"},
             {"key": "pages", "label": "页数", "type": "number"},
             {"key": "format", "label": "格式", "type": "choice", "choices": ["csv", "json", "both"]},
-            {"key": "run", "label": "开始抓取", "type": "action"},
         ]
 
     def on_enter(self, app):
@@ -531,21 +617,20 @@ class FetchPage:
     def render(self, app):
         columns = app.columns
         label_width = 12
-        lines = [colorize(fit(f"抓取设置（↑↓选择 回车编辑/执行 ←→修改值 s开始 r重置）", columns), "brightBlue"), ""]
+        lines = [colorize(fit(f"采集配置（↑↓选择 回车编辑；编辑中 ←→调整 Esc取消 回车保存 r重置 q返回首页）", columns), "brightBlue"), ""]
         for index, field in enumerate(self.fields):
             if len(lines) >= app.content_height - 3 and self.state["editing"] is None:
                 break
             selected = index == self.state["selection"]
             prefix = "▶ " if selected else "  "
-            if field["type"] == "action":
-                value_text = "回车开始抓取"
-                value = colorize(value_text, "brightGreen") if selected else value_text
-            elif field["type"] == "choice":
-                value = f"{self.state[field['key']]} (←→切换)"
+            is_editing_field = self.state["editing"] and self.state["editing"]["key"] == field["key"]
+            shown_value = self.state["edit_buffer"] if is_editing_field else self.ctx.config[field["key"]]
+            if field["type"] == "choice":
+                value = f"{shown_value} (←→切换)" if is_editing_field else shown_value
             elif field["type"] == "number":
-                value = f"{self.state[field['key']]} (←→调)"
+                value = f"{shown_value} (←→调整)" if is_editing_field else shown_value
             else:
-                value = self.state[field["key"]]
+                value = shown_value
             line = f"{prefix}{pad_end(field['label'], label_width)} {value}"
             lines.append(colorize(fit(line, columns), "reverse") if selected else fit(line, columns))
         if self.state["editing"]:
@@ -566,27 +651,12 @@ class FetchPage:
         elif key == "down":
             self.state["selection"] = (self.state["selection"] + 1) % len(fields)
         elif key in ("left", "right"):
-            field = fields[self.state["selection"]]
-            d = 1 if key == "right" else -1
-            if field["type"] == "number":
-                self.state["pages"] = max(1, min(10, self.state["pages"] + d))
-            elif field["type"] == "choice":
-                choices = field["choices"]
-                self.state["format"] = choices[(choices.index(self.state["format"]) + d) % len(choices)]
-            elif field["type"] == "text":
-                self._begin_edit(field)
-            # action 行：消费键避免误切页
+            # 所有配置必须先按回车进入编辑；未编辑时左右键不改值，交给全局逻辑切页。
+            return None
         elif key == "enter":
-            field = fields[self.state["selection"]]
-            if field["type"] == "action":
-                return self._start_fetch(app)
-            self.state["editing"] = field
-            self.state["edit_buffer"] = str(self.state[field["key"]])
-            self.state["selection"] = min(self.state["selection"], len(fields) - 1)
-        elif key == "s":
-            self._start_fetch(app)
+            self._begin_edit(fields[self.state["selection"]])
         elif key == "r":
-            self.state.update(keyword="国内电商", city="深圳", pages=1, format="csv")
+            self.ctx.config.update(keyword="国内电商", city="深圳", pages=1, format="csv")
             self.state["message"] = "参数已恢复默认"
         else:
             return None
@@ -596,16 +666,46 @@ class FetchPage:
         field = self.state["editing"]
         if key == "enter":
             value = self.state["edit_buffer"].strip()
-            if value:
-                self.state[field["key"]] = value
-            if field["type"] == "text" and not value:
-                self.state["message"] = f"{field['label']}不能为空"
+            if field["type"] == "text":
+                if value:
+                    self.ctx.config[field["key"]] = value
+                else:
+                    self.state["message"] = f"{field['label']}不能为空"
+            elif field["type"] == "number":
+                if value.isdigit() and 1 <= int(value) <= 10:
+                    self.ctx.config[field["key"]] = int(value)
+                else:
+                    self.state["message"] = "页数必须是 1-10 的整数"
+            elif field["type"] == "choice":
+                if value in field["choices"]:
+                    self.ctx.config[field["key"]] = value
+                else:
+                    self.state["message"] = "格式只能是 csv、json 或 both"
             self.state["editing"] = None
         elif key == "esc":
+            # 编辑期间只改缓冲区；取消时无需回写，原配置保持不变。
             self.state["editing"] = None
+            self.state["edit_buffer"] = ""
+        elif key in ("left", "right"):
+            d = 1 if key == "right" else -1
+            if field["type"] == "number":
+                try:
+                    current = int(self.state["edit_buffer"])
+                except ValueError:
+                    current = int(self.ctx.config[field["key"]])
+                self.state["edit_buffer"] = str(max(1, min(10, current + d)))
+            elif field["type"] == "choice":
+                choices = field["choices"]
+                current = self.state["edit_buffer"]
+                if current not in choices:
+                    current = self.ctx.config[field["key"]]
+                self.state["edit_buffer"] = choices[(choices.index(current) + d) % len(choices)]
+            # 文本编辑也消费左右键，但不移动/切页，避免误操作离开编辑状态。
         elif key == "backspace":
             self.state["edit_buffer"] = self.state["edit_buffer"][:-1]
-        elif len(key) == 1 and key.isprintable():
+        elif field["type"] == "text" and len(key) == 1 and key.isprintable():
+            self.state["edit_buffer"] += key
+        elif field["type"] == "number" and len(key) == 1 and key.isdigit():
             self.state["edit_buffer"] += key
         else:
             return None
@@ -613,20 +713,7 @@ class FetchPage:
 
     def _begin_edit(self, field):
         self.state["editing"] = field
-        self.state["edit_buffer"] = str(self.state[field["key"]])
-
-    def _start_fetch(self, app):
-        if self.ctx.tasks.running:
-            self.state["message"] = "已有任务在运行，请先等待完成"
-            return True
-        kwargs = dict(keyword=self.state["keyword"], city=self.state["city"],
-                      pages=self.state["pages"], fmt=self.state["format"], delay=3, port=biz.DEFAULT_PORT)
-        ok = self.ctx.tasks.start(f"抓取 {self.state['keyword']} @ {self.state['city']}",
-                                  biz.run_fetch, tuple(kwargs.values()))
-        self.state["message"] = "" if ok else "启动失败：已有任务在运行"
-        if ok:
-            app.switch_page(2)  # 去日志页看进度
-        return True
+        self.state["edit_buffer"] = str(self.ctx.config[field["key"]])
 
 
 # ---------------------------------------------------------------- 页面：运行日志
@@ -641,10 +728,15 @@ class LogPage:
         tasks = self.ctx.tasks
         lines = [colorize(fit("运行日志（最近一次任务输出）", columns), "brightBlue")]
         if not tasks.task:
-            lines.append(colorize(fit("还没有运行过任务，去【2抓取】页开始吧。", columns), "gray"))
+            lines.append(colorize(fit("还没有运行过任务，请回首页选择【开始抓取】。", columns), "gray"))
             return lines
         if tasks.running:
-            lines.append(colorize(fit(f"▶ 运行中：{tasks.task['desc']}（完成后自动显示结果，Ctrl+C 可退出）", columns), "brightYellow"))
+            task = tasks.task
+            elapsed = format_elapsed(time.monotonic() - task.get("started_at", time.monotonic()))
+            progress = format_progress_bar(task.get("current"), task.get("total"))
+            lines.append(colorize(fit(f"{spinner_frame()} 运行中：{task['stage']}  {progress}  已运行 {elapsed}", columns), "brightYellow"))
+            if task.get("detail"):
+                lines.append(colorize(fit(f"  详情：{task['detail']}", columns), "gray"))
         else:
             t = tasks.task
             if t["error"]:
@@ -652,7 +744,11 @@ class LogPage:
             else:
                 result = t["result"]
                 if isinstance(result, list):
-                    summary = f"✓ 已完成：{t['desc']} → 共 {len(result)} 条，已导出到 {biz.RESULT_DIR}"
+                    finished_at = time.strftime(
+                        "%Y-%m-%d %H:%M:%S",
+                        time.localtime(t.get("finished_at", time.time())),
+                    )
+                    summary = f"🎉 已完成：{t['desc']} → 共 {len(result)} 条，完成时间：{finished_at}，已导出到 {biz.RESULT_DIR}"
                 elif result is True:
                     summary = f"✓ 已完成：{t['desc']} → 登录成功，登录态已保存"
                 else:
@@ -687,7 +783,7 @@ class ResultsPage:
         lines = [colorize(fit("最近结果（回车打开所在目录）", columns), "brightBlue"), ""]
         files = self.list_files()
         if not files:
-            lines.append(colorize(fit("结果目录还没有文件，去【2抓取】页运行一次。", columns), "gray"))
+            lines.append(colorize(fit("结果目录还没有文件，请回首页选择【开始抓取】。", columns), "gray"))
             return lines
         for path in files:
             if len(lines) >= app.content_height - 1:
@@ -712,19 +808,57 @@ class ResultsPage:
 class Ctx:
     def __init__(self):
         self.tasks = TaskRunner()
+        self.config = {"keyword": "国内电商", "city": "深圳", "pages": 1, "format": "csv"}
+        self._cleaned_up = False
 
     @staticmethod
-    def action_login(timeout=900):
+    def action_login(timeout=900, progress=None):
+        if callable(progress):
+            progress(0, 0, "连接专用 Chrome", "正在建立登录会话")
         biz.ensure_chrome_running(biz.DEFAULT_PORT)
-        ok = biz.login_wait("内贸", biz.CITY_CODES.get("深圳", "深圳"), biz.DEFAULT_PORT, timeout)
+        ok = biz.login_wait(
+            "内贸", biz.CITY_CODES.get("深圳", "深圳"), biz.DEFAULT_PORT, timeout,
+            progress=progress,
+        )
+        if callable(progress):
+            progress(1 if ok else 0, 1, "登录完成" if ok else "登录未完成", "登录态已保存" if ok else "请检查 Chrome 页面")
         return bool(ok)
+
+    def start_fetch(self, app):
+        """首页唯一的抓取入口，统一读取配置页参数并切换到日志页。"""
+        if self.tasks.running:
+            return False
+        config = self.config
+        args = (config["keyword"], config["city"], config["pages"], config["format"], 3, biz.DEFAULT_PORT)
+        ok = self.tasks.start(
+            f"抓取 {config['keyword']} @ {config['city']}",
+            biz.run_fetch,
+            args,
+            with_progress=True,
+            total=config["pages"],
+        )
+        if ok:
+            app.switch_page(2)
+        return ok
+
+    def cleanup(self):
+        """退出时只关闭本次 TUI 启动的专用 Chrome，不关闭外部已有实例。"""
+        if self._cleaned_up:
+            return
+        self._cleaned_up = True
+        biz.close_owned_chrome(biz.DEFAULT_PORT)
 
 
 def build_status_lines(ctx, app):
     login = "已登录(Profile)" if is_logged_in() else "未登录(首次需扫码)"
     task = ctx.tasks.task
     if task and not task["done"]:
-        task_text = f"任务 [{colorize('运行中', 'brightYellow')}] {task['desc']}"
+        elapsed = format_elapsed(time.monotonic() - task.get("started_at", time.monotonic()))
+        task_text = (
+            f"任务 [{colorize('运行中', 'brightYellow')}] {task['desc']} "
+            f"{spinner_frame()} {format_progress_bar(task.get('current'), task.get('total'), 12)} "
+            f"{elapsed}"
+        )
     else:
         task_text = "任务 [空闲] 等待操作"
     lines = [fit(f" {task_text}   登录 [{colorize(login, 'brightGreen' if is_logged_in() else 'brightRed')}]", app.columns)]
@@ -765,18 +899,27 @@ def main(argv=None):
     ctx = Ctx()
     pages = [
         OverviewPage(ctx),
-        FetchPage(ctx),
+        ConfigPage(ctx),
         LogPage(ctx),
         ResultsPage(ctx),
     ]
+    def request_exit():
+        # 先退出 TUI，再按归属清理本次启动的 Chrome 进程树。
+        app.stop()
+        ctx.cleanup()
+
     app = TuiApp(
         title="BOSS直聘采集工具",
         pages=pages,
-        on_exit_request=lambda: app.stop(),
+        on_exit_request=request_exit,
         status_bar_provider=lambda a: build_status_lines(ctx, a),
     )
-    app.start()
-    # 退出时停止渲染循环并清理终端（TuiApp.start 内部循环结束后执行到这里）
+    try:
+        app.start()
+    finally:
+        # Ctrl+C、窗口关闭、非 TTY 返回等路径都必须执行同一份清理。
+        app.stop()
+        ctx.cleanup()
     sys.exit(0)
 
 

@@ -49,6 +49,9 @@ DEFAULT_PORT = 9222
 PROFILE_DIR = os.path.join(os.path.expanduser("~"), ".boss-zhipin-scraper", "chrome-profile")
 RESULT_DIR = os.path.join(os.path.expanduser("~"), ".boss-zhipin-scraper", "job-result")
 
+# 仅记录当前 Python 进程实际启动的 Chrome；端口已有实例时不登记、不负责关闭。
+_owned_chrome_processes = {}
+
 JOBLIST_PATH_PART = "/wapi/zpgeek/search/joblist.json"
 SEARCH_PAGE_URL = "https://www.zhipin.com/web/geek/job"
 
@@ -96,21 +99,92 @@ def ensure_chrome_running(port=DEFAULT_PORT):
         "--remote-allow-origins=*",   # 踩坑2：不加则 CDP 握手被拒
         "--no-first-run",
         "--no-default-browser-check",
-        "about:blank",
+        "--new-window",
+        SEARCH_PAGE_URL,
     ]
-    subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    process = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    _owned_chrome_processes[port] = process
     for _ in range(60):  # 最多等 30 秒
         if cdp_ready(port):
             return True
         time.sleep(0.5)
+    # 启动失败也要收掉本次留下的进程，避免半启动 Chrome 残留。
+    close_owned_chrome(port)
     raise TimeoutError("Chrome 调试端口未就绪，请检查启动参数")
+
+
+def _request_graceful_close(pid):
+    """先请求 Chrome 主窗口正常关闭，避免直接强杀触发恢复页或损坏会话。"""
+    if os.name != "nt":
+        return False
+    script = "\n".join([
+        f"$process = Get-Process -Id {int(pid)} -ErrorAction SilentlyContinue",
+        "if ($null -eq $process) { 'false'; exit 0 }",
+        "if ($process.CloseMainWindow()) { 'true' } else { 'false' }",
+    ])
+    try:
+        result = subprocess.run(
+            ["powershell.exe", "-NoProfile", "-NonInteractive", "-Command", script],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            text=True,
+            timeout=10,
+            check=False,
+        )
+        return result.returncode == 0 and result.stdout.strip().lower() == "true"
+    except (OSError, subprocess.SubprocessError, ValueError):
+        return False
+
+
+def _wait_for_cdp_closed(port, timeout=8):
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        if not cdp_ready(port):
+            return True
+        time.sleep(0.25)
+    return not cdp_ready(port)
+
+
+def _terminate_process_tree(pid):
+    """按 12 号项目的策略终止进程树；Windows 下覆盖 Chrome 的全部子进程。"""
+    if os.name == "nt":
+        result = subprocess.run(
+            ["taskkill.exe", "/PID", str(pid), "/T", "/F"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        )
+        # 进程已自行退出时 taskkill 可能返回非 0，这不应阻断退出清理。
+        return result.returncode == 0
+
+    try:
+        os.kill(pid, 15)
+    except (ProcessLookupError, PermissionError):
+        pass
+    return True
+
+
+def close_owned_chrome(port=DEFAULT_PORT):
+    """关闭当前进程本次启动的专用 Chrome；复用的外部 Chrome 永不由此函数关闭。"""
+    process = _owned_chrome_processes.pop(port, None)
+    if process is None:
+        return False
+    pid = int(process.pid)
+    try:
+        if _request_graceful_close(pid) and _wait_for_cdp_closed(port):
+            return True
+        _terminate_process_tree(pid)
+        _wait_for_cdp_closed(port, timeout=15)
+    except Exception as exc:  # noqa: BLE001
+        print(f"[chrome] 退出清理失败（PID={pid}）：{exc}", file=sys.stderr)
+    return True
 
 
 def open_tab(port=DEFAULT_PORT):
     """新建一个标签页并返回其 webSocketDebuggerUrl。Chrome 127+ 需 PUT。"""
     for method in (requests.put, requests.get):
         try:
-            r = method(f"http://127.0.0.1:{port}/json/new?{urllib.parse.urlencode({'url': 'about:blank'})}", timeout=5)
+            r = method(f"http://127.0.0.1:{port}/json/new?{urllib.parse.urlencode({'url': SEARCH_PAGE_URL})}", timeout=5)
             if r.status_code == 200:
                 info = r.json()
                 tab = next(t for t in info if t.get("type") == "page") if isinstance(info, list) else info
@@ -137,31 +211,47 @@ class CDPSession:
         self.ws.send(json.dumps({"id": mid, "method": method, "params": params or {}}))
         return mid
 
+    def _recv_json(self, timeout):
+        """按调用方超时读取一条 CDP 消息，避免连接初始化的 60 秒超时覆盖业务超时。"""
+        previous_timeout = self.ws.gettimeout()
+        self.ws.settimeout(max(0.1, float(timeout)))
+        try:
+            return json.loads(self.ws.recv())
+        except WebSocketTimeoutException:
+            return None
+        finally:
+            self.ws.settimeout(previous_timeout)
+
     def wait_response(self, mid, timeout=30):
         """等待指定 id 的 response（期间消费事件）。返回响应 dict 或 None。"""
         deadline = time.time() + timeout
         while time.time() < deadline:
-            try:
-                msg = json.loads(self.ws.recv())
-            except WebSocketTimeoutException:
-                return None
+            msg = self._recv_json(min(1, max(0.1, deadline - time.time())))
+            if msg is None:
+                continue
             if "id" in msg and msg["id"] == mid:
                 return msg
             self._handle_event(msg)
         return None
 
     def recv_event(self, timeout=30):
-        """阻塞收一条事件消息；返回事件 dict 或 None（超时）。"""
-        try:
-            msg = json.loads(self.ws.recv())
-            if "id" in msg:
-                self._pending[msg["id"]] = msg
-                return None
-            return msg
-        except WebSocketTimeoutException:
+        """阻塞收一条事件消息；返回事件 dict 或 None（按传入超时返回）。"""
+        msg = self._recv_json(timeout)
+        if msg is None:
             return None
+        if "id" in msg:
+            self._pending[msg["id"]] = msg
+            return None
+        return msg
 
     def close(self):
+        # open_tab() 创建的是本次任务专用标签页；关闭 WebSocket 不会自动关闭标签页。
+        # 先请求 CDP 关闭当前页面，避免每次抓取残留 about:blank。
+        try:
+            mid = self.send("Page.close")
+            self.wait_response(mid, timeout=2)
+        except Exception:
+            pass
         try:
             self.ws.close()
         except Exception:
@@ -179,29 +269,58 @@ class CDPSession:
 _joblist_responses = []
 
 
+# ---------------------------------------------------------------- response parsing
+
+def response_job_list(data):
+    """兼容 BOSS joblist 接口的新旧响应结构，返回统一岗位列表。"""
+    if not isinstance(data, dict):
+        return []
+    if isinstance(data.get("zpList"), list):
+        return data["zpList"]
+    zp_data = data.get("zpData")
+    if isinstance(zp_data, dict) and isinstance(zp_data.get("jobList"), list):
+        return zp_data["jobList"]
+    if isinstance(data.get("jobList"), list):
+        return data["jobList"]
+    return []
+
+
 # ---------------------------------------------------------------- login_wait（模块2）
 
-def login_wait(keyword, city_code, port=DEFAULT_PORT, login_timeout=900):
-    """导航搜索页，等 joblist 返回可用数据即视为已登录；否则提示扫码。"""
+def login_wait(keyword, city_code, port=DEFAULT_PORT, login_timeout=900, progress=None):
+    """只导航一次到搜索页，未登录时保持登录页不动，监听登录后的 joblist 响应。"""
     session = _new_session(port)
     session.send("Network.enable")
     session.send("Page.enable")
     url = search_url(keyword, city_code, 1)
     deadline = time.time() + login_timeout
     print("[login] 请在弹出的 Chrome 窗口中完成扫码/验证码登录（若已登录可忽略）…")
+    # 只导航一次：未登录时页面会由 BOSS 自己停留/跳转到登录入口；
+    # 后续只监听这个页面的网络事件，绝不循环刷新或重复 Page.navigate。
+    _joblist_responses.clear()
+    session.send("Page.navigate", {"url": url})
+    print("[login] 登录等待中：浏览器页面保持不动，请直接在窗口内完成登录…")
     while time.time() < deadline:
-        _joblist_responses.clear()
-        session.send("Page.navigate", {"url": url})
-        data = _await_joblist(session, timeout=30)
+        remaining = max(1, int(deadline - time.time()))
+        data = _await_joblist(
+            session,
+            timeout=min(30, remaining),
+            progress_message="[login] 等待登录后的岗位响应",
+            progress=progress,
+            progress_total=0,
+            progress_stage="等待登录响应",
+        )
         if data is not None:
             code = data.get("code")
-            if code == 0 and data.get("zpList"):
-                print("[login] 登录成功（已抓到岗位数据），登录态已持久化到专用 profile。")
+            if code == 0:
+                # 登录态判断只看接口成功码，不依赖岗位数量；合法搜索结果可以为空。
+                count = len(response_job_list(data))
+                print(f"[login] 登录态有效（本次搜索返回 {count} 条岗位），已持久化到专用 profile。")
                 session.close()
                 return True
             if code == 37:
                 print("[login] code:37 环境异常——请确认走的是已登录专用 Chrome，勿直连 API。")
-        # 未登录：页面通常停留在登录页，继续刷新等待
+        # 未登录时只等待事件，不重新加载页面，避免登录页反复抽搐。
     session.close()
     print(f"[login] 超时（{login_timeout}s）。请检查窗口内确认登录状态后重试。")
     return False
@@ -222,28 +341,60 @@ def _new_session(port):
     return CDPSession(open_tab(port))
 
 
-def _await_joblist(session, timeout=60):
-    """等待 jblist 响应并取回 body 解析。超时返回 None。"""
-    deadline = time.time() + timeout
-    while time.time() < deadline:
-        msg = session.recv_event(timeout=max(1, int(deadline - time.time())))
-        if msg is None:
-            continue
-        method = msg.get("method")
-        params = msg.get("params", {})
-        if method == "Network.responseReceived":
-            resp = params.get("response", {})
-            if JOBLIST_PATH_PART in resp.get("url", ""):
-                req_id = params["requestId"]
-                body, enc = _get_body(session, req_id)
-                if body:
-                    return json.loads(body)
+def _joblist_response_data(session, params):
+    """读取一条 joblist 响应；响应体尚未就绪时短暂重试，避免丢掉真实岗位数据。"""
+    request_id = params.get("requestId")
+    if not request_id:
+        return None
+    for attempt in range(3):
+        body, _ = _get_body(session, request_id, timeout=5)
+        if body:
+            try:
+                return json.loads(body)
+            except json.JSONDecodeError:
+                return None
+        if attempt < 2:
+            time.sleep(0.2)
     return None
 
 
-def _get_body(session, request_id):
+def _await_joblist(session, timeout=60, progress_message="", progress=None,
+                   progress_current=0, progress_total=0, progress_stage="等待网络响应"):
+    """等待 joblist 响应并取回 body 解析；按秒返回控制权，保证界面持续有状态。"""
+    deadline = time.time() + timeout
+    last_progress = 0.0
+    while time.time() < deadline:
+        # wait_response 取 body 时可能顺便消费其他 Network 事件，先处理缓存队列，避免漏响应。
+        if _joblist_responses:
+            params = _joblist_responses.pop(0)
+            data = _joblist_response_data(session, params)
+            if data is not None:
+                return data
+
+        remaining = max(0.1, deadline - time.time())
+        msg = session.recv_event(timeout=min(1, remaining))
+        if msg is not None:
+            method = msg.get("method")
+            params = msg.get("params", {})
+            if method == "Network.responseReceived":
+                resp = params.get("response", {})
+                if JOBLIST_PATH_PART in resp.get("url", ""):
+                    data = _joblist_response_data(session, params)
+                    if data is not None:
+                        return data
+
+        elapsed = int(time.time() - (deadline - timeout))
+        if callable(progress):
+            progress(progress_current, progress_total, progress_stage, f"已等待 {elapsed}s")
+        if progress_message and time.time() - last_progress >= 10:
+            print(f"{progress_message}（已等待 {elapsed}s）", flush=True)
+            last_progress = time.time()
+    return None
+
+
+def _get_body(session, request_id, timeout=20):
     mid = session.send("Network.getResponseBody", {"requestId": request_id})
-    resp = session.wait_response(mid, timeout=20)
+    resp = session.wait_response(mid, timeout=timeout)
     if resp and "error" not in resp:
         r = resp["result"]
         body = r.get("body", "")
@@ -282,16 +433,29 @@ def parse_job(item):
     }
 
 
-def fetch_page(session, keyword, city_code, page, page_delay=3):
+def fetch_page(session, keyword, city_code, page, page_delay=3, total_pages=0, progress=None):
     """导航到第 page 页并解析 joblist 数据。返回 row 列表。"""
     _joblist_responses.clear()
+    if callable(progress):
+        progress(page - 1, total_pages, f"打开第 {page}/{total_pages} 页" if total_pages else f"打开第 {page} 页", "正在导航到搜索结果页")
+    print(f"[fetch] 第 {page} 页：正在打开搜索结果并等待接口响应…", flush=True)
     session.send("Page.navigate", {"url": search_url(keyword, city_code, page)})
-    data = _await_joblist(session, timeout=60)
+    data = _await_joblist(
+        session,
+        timeout=60,
+        progress_message=f"[fetch] 第 {page} 页仍在等待 joblist 响应",
+        progress=progress,
+        progress_current=page - 1,
+        progress_total=total_pages,
+        progress_stage=f"等待第 {page}/{total_pages} 页响应" if total_pages else f"等待第 {page} 页响应",
+    )
     if data is None:
-        raise TimeoutError(f"第 {page} 页无 joblist 响应（可能未登录或风控）")
+        raise TimeoutError(
+            f"第 {page} 页未捕获到 joblist 响应（可能网络超时、CDP监听时序、登录失效或风控）"
+        )
     if data.get("code") != 0:
         raise RuntimeError(f"第 {page} 页返回 code:{data.get('code')} {data.get('message', '')}")
-    rows = [parse_job(x) for x in data.get("zpList") or []]
+    rows = [parse_job(x) for x in response_job_list(data)]
     if page_delay > 0:
         time.sleep(page_delay)  # 低频，避免封号
     return rows
@@ -321,33 +485,61 @@ def export_rows(rows, keyword, city_code, fmt, outdir=RESULT_DIR):
     return paths
 
 
-def run_fetch(keyword, city, pages, fmt, delay, port):
+def run_fetch(keyword, city, pages, fmt, delay, port, progress=None):
+    # TUI/旧调用方可能传入文本框字符串；业务入口统一成整数，避免 pages + 1 类型错误。
+    try:
+        pages = int(pages)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"页数必须是整数：{pages!r}") from exc
+    if not 1 <= pages <= 10:
+        raise ValueError(f"页数必须是 1-10：{pages}")
     city_code = city if city in CITY_CODES and city.isdigit() else CITY_CODES.get(city, city)
     if not city_code or not str(city_code).isdigit():
         raise ValueError(f"未知城市：{city}，请用 --city-code 传城市码（全量码表见 /wapi/zpCommon/data/cityGroup.json）")
     ensure_chrome_running(port)
-    session = _new_session(port)
-    session.send("Network.enable")
-    session.send("Page.enable")
+    if callable(progress):
+        progress(0, pages, "连接专用 Chrome", "正在建立 CDP 会话")
+    print(f"[fetch] 开始抓取：{keyword} @ {city}，共 {pages} 页", flush=True)
+    session = None
     all_rows, failed = [], []
-    for page in range(1, pages + 1):
-        try:
-            rows = fetch_page(session, keyword, city_code, page, delay)
-            all_rows.extend(rows)
-            print(f"[fetch] 第 {page} 页 OK，累计 {len(all_rows)} 条", flush=True)
-        except Exception as e:
-            failed.append(page)
-            print(f"[fetch] 第 {page} 页失败：{e}", flush=True)
-            time.sleep(delay)  # 失败也给缓冲，不硬闯
-    session.close()
+    try:
+        session = _new_session(port)
+        session.send("Network.enable")
+        session.send("Page.enable")
+        for page in range(1, pages + 1):
+            try:
+                rows = fetch_page(
+                    session, keyword, city_code, page, delay,
+                    total_pages=pages, progress=progress,
+                )
+                all_rows.extend(rows)
+                if callable(progress):
+                    progress(page, pages, f"完成第 {page}/{pages} 页", f"本页 {len(rows)} 条，累计 {len(all_rows)} 条")
+                print(f"[fetch] 第 {page} 页 OK，累计 {len(all_rows)} 条", flush=True)
+            except Exception as e:
+                failed.append(page)
+                if callable(progress):
+                    progress(page, pages, f"第 {page}/{pages} 页失败", str(e))
+                print(f"[fetch] 第 {page} 页失败：{e}", flush=True)
+                time.sleep(delay)  # 失败也给缓冲，不硬闯
+    finally:
+        if session is not None:
+            session.close()
     if all_rows:
         paths = export_rows(all_rows, keyword, city_code, fmt)
         for k, p in paths.items():
             print(f"[export] {k.upper()} -> {p}")
     else:
-        print("[fetch] 未抓到数据（检查登录是否有效）")
+        print("[fetch] 未抓到岗位数据（可能接口无结果、未捕获响应、登录失效或风控）")
+    completed_at = time.strftime("%Y-%m-%d %H:%M:%S")
     if failed:
         print(f"[fetch] 失败页：{failed}，已抓数据已保存，可缩小 --pages 重跑。")
+        if all_rows:
+            print(f"⚠ [fetch] 部分完成：{completed_at}，成功 {len(all_rows)} 条，失败页 {failed}", flush=True)
+        else:
+            raise RuntimeError(f"所有 {len(failed)} 页均抓取失败，未生成有效岗位数据")
+    else:
+        print(f"🎉 [fetch] 抓取成功：{completed_at}，共 {len(all_rows)} 条，完成 {pages} 页", flush=True)
     return all_rows
 
 
