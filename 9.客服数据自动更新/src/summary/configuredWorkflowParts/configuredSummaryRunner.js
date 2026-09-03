@@ -113,7 +113,8 @@ async function runConfiguredSummaryWorkflow(options = {}) {
           task,
           dateRange: taskDateRange,
           forceRedownload: options.forceRedownload === true,
-          onTaskProgress: options.onTaskProgress
+          onTaskProgress: options.onTaskProgress,
+          projectConfig
         });
         const successTask = buildSuccessfulSummaryTask(task, taskResult);
         results.push(successTask);
