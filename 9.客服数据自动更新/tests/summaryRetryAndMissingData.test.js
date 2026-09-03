@@ -210,6 +210,10 @@ function testMissingDurationValuesBecomeBlank() {
   assert.strictEqual(isMissingDurationText("--分--秒"), true);
   assert.strictEqual(convertSourceCellToNumber({ value: "--分--秒" }), null);
   assert.strictEqual(convertSourceCellToNumber({ value: "13分43秒" }), 823);
+  // 2026-09-03 回归：京东对 0 接待客服导出字面量 "NaN"，必须按空值处理，不能整店失败。
+  assert.strictEqual(convertSourceCellToNumber({ value: "NaN" }), null);
+  assert.strictEqual(convertSourceCellToNumber({ value: "#DIV/0!" }), null);
+  assert.strictEqual(convertSourceCellToNumber({ value: "12.5" }), 12.5);
   assert.deepStrictEqual(
     buildResponseTotals({ response_weight: null, avg_response_time: 12 }),
     {

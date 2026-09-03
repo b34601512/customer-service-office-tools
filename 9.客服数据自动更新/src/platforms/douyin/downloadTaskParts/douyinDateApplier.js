@@ -1,6 +1,7 @@
 // 该文件只负责抖音导出日期选择与查询结果验收。
 const { runAfterDismissingBlockingPopups } = require("../../../shared/blockingPopupEngine");
 const { waitForDouyinExportButtonReady } = require("./douyinExportButton");
+const { DOUYIN_DATE_CONTROL_IDLE_TIMEOUT_MS } = require("./douyinDownloadSettings");
 
 function isSameDate(leftDate, rightDate) {
   // 该函数只比较两个日期是否为同一个自然日。
@@ -8,7 +9,12 @@ function isSameDate(leftDate, rightDate) {
 }
 
 async function runDouyinDateControlAction(page, action) {
-  // 该函数只保证一个日期控件动作不会被异步晚到的已知安全弹层阻断。
+  // 该函数只保证一个日期控件动作不被页面自身加载动画和晚到的安全弹层阻断：
+  // ecom-spin 转圈遮罩会拦截 pointer events，点击前必须先等它消失（元素不存在时 hidden 立即通过）。
+  await page.locator(".ecom-spin-spinning").first().waitFor({
+    state: "hidden",
+    timeout: DOUYIN_DATE_CONTROL_IDLE_TIMEOUT_MS
+  }).catch(() => {});
   return runAfterDismissingBlockingPopups(page, action, { platformName: "抖音" });
 }
 

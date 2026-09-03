@@ -7,10 +7,14 @@ const { isSummaryRunning } = require("./overview");
 function formatTaskLine(task, columns) {
   const statusInfo = formatSummaryTaskStatus(task.status);
   const statusText = ansi.colorize(`[${statusInfo.label}]`, statusInfo.color);
+  // 失败行的 action 恒为“汇总失败”，真正原因在 detail：失败时优先显示原因首行，不用翻日志就能看到问题。
+  const reasonText = task.status === "error"
+    ? String(task.detail || task.action || "").split("\n")[0]
+    : String(task.action || task.detail || "");
   const body = [
     task.platformLabel,
     task.storeDisplayName,
-    task.action || task.detail
+    reasonText
   ].map(normalizeCellText).join(" · ");
   return `${statusText} ${body}`;
 }

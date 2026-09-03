@@ -12,50 +12,28 @@ const {
 } = require("./tmallDateText");
 
 async function readCurrentTmallDateText(page) {
-  // 这里读取页面主日期文本，作为唯一业务生效验收来源。
+  // 这里读取页面主日期文本，作为唯一业务生效验收来源；元素未出现时按空文本继续轮询。
   const locator = getTmallCurrentDateLocator(page);
-  return normalizeDateText(await locator.innerText());
+  if (!(await locator.isVisible().catch(() => false))) {
+    return "";
+  }
+  return normalizeDateText(await locator.innerText().catch(() => ""));
 }
 
 async function waitForTmallPageDateApplied(page, range) {
-  // 这里等待页面主日期文本命中目标区间，不靠固定等待猜测筛选是否生效。
+  // 这里只在节点侧轮询页面文本，命中规则统一收口到 tmallDateText 单一真源，
+  // 不再在页内脚本复制一份归一化和匹配逻辑，避免双真源漂移。
   const expectedText = buildExpectedDateText(range);
-
-  try {
-    await page.waitForFunction(
-      ({ startText, endText }) => {
-        const normalizeDateText = (value) =>
-          String(value || "")
-            .replace(/\s+/g, "")
-            .replace(/已选择[:：]/g, "")
-            .replace(/至/g, "~")
-            .replace(/～/g, "~")
-            .trim();
-        const normalizedText = normalizeDateText(
-          document.querySelector(".oui-date-picker-current-date")?.textContent || ""
-        );
-        const match = normalizedText.match(/(\d{4}-\d{2}-\d{2})~(\d{4}-\d{2}-\d{2})/);
-        return Boolean(match && match[1] === startText && match[2] === endText);
-      },
-      {
-        startText: range.startText,
-        endText: range.endText
-      },
-      {
-        timeout: TMALL_DATE_PAGE_TIMEOUT_MS,
-        polling: TMALL_DATE_POLL_INTERVAL_MS
-      }
-    );
-  } catch (_error) {
-    const lastText = await readCurrentTmallDateText(page);
-    throw new Error(`天猫页面日期验收失败：期望=${expectedText}，实际=${describeTmallDateText(lastText)}。`);
+  const deadline = Date.now() + TMALL_DATE_PAGE_TIMEOUT_MS;
+  let lastText = "";
+  while (Date.now() <= deadline) {
+    lastText = await readCurrentTmallDateText(page);
+    if (isTmallDateRangeMatched(lastText, range)) {
+      return lastText;
+    }
+    await page.waitForTimeout(TMALL_DATE_POLL_INTERVAL_MS);
   }
-
-  const appliedText = await readCurrentTmallDateText(page);
-  if (!isTmallDateRangeMatched(appliedText, range)) {
-    throw new Error(`天猫页面日期验收失败：期望=${expectedText}，实际=${describeTmallDateText(appliedText)}。`);
-  }
-  return appliedText;
+  throw new Error(`天猫页面日期验收失败：期望=${expectedText}，实际=${describeTmallDateText(lastText)}。`);
 }
 
 module.exports = {

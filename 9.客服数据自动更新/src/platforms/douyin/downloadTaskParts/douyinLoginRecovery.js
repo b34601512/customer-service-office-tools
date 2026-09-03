@@ -57,11 +57,23 @@ async function gotoDouyinMerchantHome(page, options = {}) {
   }
 }
 
+function listDouyinBrowserPages(browser) {
+  return browser.contexts().flatMap((context) => context.pages());
+}
+
+async function isDouyinMerchantHomePage(page) {
+  // 只有商家首页真实店铺头部可见，才能证明当前会话已登录。
+  const shopHeader = page.locator(".headerShopName").first();
+  if ((await shopHeader.count()) === 0) {
+    return false;
+  }
+  return await shopHeader.isVisible().catch(() => false);
+}
+
 async function findDouyinMerchantHomePage(browser) {
-  const pages = browser.contexts().flatMap((context) => context.pages());
+  const pages = listDouyinBrowserPages(browser);
   for (const candidatePage of pages) {
-    const shopHeader = candidatePage.locator(".headerShopName").first();
-    if ((await shopHeader.count()) > 0 && await shopHeader.isVisible().catch(() => false)) {
+    if (await isDouyinMerchantHomePage(candidatePage)) {
       return candidatePage;
     }
   }
@@ -70,12 +82,20 @@ async function findDouyinMerchantHomePage(browser) {
 
 async function waitForDouyinLoginRecovery(browser, loginPage, options = {}) {
   // 人工完成手机号验证码后，必须等商家首页真实店铺头部出现才算恢复。
+  // 登录开始前就存在的残留旧页签不能作数：它们可能是上一轮未刷新的页面，
+  // 否则过期会话会被秒判“已登录”，后续切店只能在未登录页上找不到入口。
   const timeoutMs = Number(options.loginRecoveryTimeoutMs) || DOUYIN_LOGIN_RECOVERY_TIMEOUT_MS;
+  const knownPagesBeforeLogin = new Set(listDouyinBrowserPages(browser));
   const deadline = Date.now() + timeoutMs;
   while (Date.now() <= deadline) {
-    const merchantHomePage = await findDouyinMerchantHomePage(browser);
-    if (merchantHomePage) {
-      return merchantHomePage;
+    if (await isDouyinMerchantHomePage(loginPage)) {
+      return loginPage;
+    }
+    const freshPages = listDouyinBrowserPages(browser).filter((candidatePage) => !knownPagesBeforeLogin.has(candidatePage));
+    for (const freshPage of freshPages) {
+      if (await isDouyinMerchantHomePage(freshPage)) {
+        return freshPage;
+      }
     }
     await loginPage.waitForTimeout(DOUYIN_POLL_INTERVAL_MS);
   }
@@ -101,6 +121,7 @@ module.exports = {
   isRetryableDouyinHomeNavigationError,
   gotoDouyinMerchantHome,
   isDouyinLoginRequired,
+  isDouyinMerchantHomePage,
   openDouyinLoginPage,
   waitForDouyinLoginRecovery,
   ensureDouyinMerchantSession

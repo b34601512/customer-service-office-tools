@@ -30,14 +30,25 @@ function parseTmallDateRangeText(text) {
   };
 }
 
+function extractDateTexts(text) {
+  // 这里只做一件事：按出现顺序提取页面文本中的全部明确日期，供窗口比对使用。
+  return normalizeDateText(text).match(/\d{4}-\d{2}-\d{2}/g) || [];
+}
+
 function isTmallDateRangeMatched(text, range) {
-  // 这里用解析结果比对配置日期，保证页面最终确实命中目标区间。
-  const parsedRange = parseTmallDateRangeText(text);
-  return Boolean(
-    parsedRange &&
-      parsedRange.startText === range?.startText &&
-      parsedRange.endText === range?.endText
-  );
+  // 验收只认业务真相：页面生效统计窗口=期望区间。
+  // 单日区间会被天猫折叠成单个日期显示（如“统计时间2026-09-01”），也可能仍显示同日成对区间，两者都等价；
+  // 多日区间必须命中成对日期，单日显示不能通过，防止筛选未生效被误判成功。
+  const dateTexts = extractDateTexts(text);
+  const startText = String(range?.startText || "").trim();
+  const endText = String(range?.endText || "").trim();
+  if (!startText || !endText) {
+    return false;
+  }
+  if (startText === endText && dateTexts.length === 1) {
+    return dateTexts[0] === startText;
+  }
+  return dateTexts.length === 2 && dateTexts[0] === startText && dateTexts[1] === endText;
 }
 
 function describeTmallDateText(text) {
@@ -45,6 +56,11 @@ function describeTmallDateText(text) {
   const parsedRange = parseTmallDateRangeText(text);
   if (parsedRange) {
     return `${parsedRange.startText} ~ ${parsedRange.endText}`;
+  }
+
+  const dateTexts = extractDateTexts(text);
+  if (dateTexts.length === 1) {
+    return dateTexts[0];
   }
 
   const normalizedText = normalizeDateText(text);
@@ -55,6 +71,7 @@ module.exports = {
   normalizeDateText,
   buildExpectedDateText,
   parseTmallDateRangeText,
+  extractDateTexts,
   isTmallDateRangeMatched,
   describeTmallDateText
 };

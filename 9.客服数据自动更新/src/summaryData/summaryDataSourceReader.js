@@ -185,6 +185,11 @@ function convertSourceCellToNumber(cell) {
   if (/^(?:--+|—+|-)+%?$/.test(text)) {
     return null;
   }
+  if (/^(?:NaN|null|undefined|#DIV\/0!|#N\/A|#VALUE!|#REF!|#NUM!)$/i.test(text)) {
+    // 平台无数据时导出占位符（如京东对 0 接待客服的响应时长直接写 "NaN"），
+    // 与 "-" 同义按空值处理，单个格子缺数据不能连累整店失败。
+    return null;
+  }
   if (/%$/.test(text)) {
     const percentage = Number(text.slice(0, -1).replace(/,/g, ""));
     if (Number.isFinite(percentage)) {
