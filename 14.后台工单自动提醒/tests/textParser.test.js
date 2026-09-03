@@ -34,26 +34,50 @@ test("空白页识别为异常", () => {
   assert.strictEqual(looksLikeBrokenPage(JINGXI_TEXT, ["待处理"]), false);
 });
 
-// ===== 表格行 → 工单（订单号/判责）：fixture 来自 jdtest 可申诉页实测 rows-CAN_APPEAL.txt =====
+// ===== 表格行 → 工单（订单号/纠纷状态）：fixture 来自 jdtest 可申诉页实测 rows-CAN_APPEAL.txt =====
 const { parseTicketRows, buildTabUrl } = require("../src/features/workOrderMonitor/textParser");
 
-const REAL_ROW = "84700001\n\t\n退款问题\n\t\n3581494008428198\n便利贴\n\t\n×2\nDEDAKJ【德国品牌】制氧机配件 过滤器+过滤棉\n\t\n2026-08-27 13:49:10\njd_65a3e7f58350f \n\t\n商家已和解\n\t\n纠纷单关闭\n还剩2天1小时58分\n\t\n去申诉\n查看详情";
-const NOISE = ["14151617181920", "C20170418100026", "4006229068\n联系客服"];
+const REAL_ROW = `84700001
+	
+退款问题
+	
+3581494008428198
+便利贴
+	
+×2
+DEDAKJ【德国品牌】制氧机配件 过滤器+过滤棉
+	
+2026-08-27 13:49:10
+jd_65a3e7f58350f 
+	
+商家已和解
+	
+纠纷单关闭
+还剩2天1小时58分
+	
+去申诉
+查看详情`;
+const NOISE = ["14151617181920", "C20170418100026", "4006229068" + String.fromCharCode(10) + "联系客服"];
 
-test("实测行解析：纠纷单号+订单号+判责已出", () => {
+test("实测行解析：订单号+纠纷状态=纠纷单关闭+去申诉标记", () => {
   const tickets = parseTicketRows([REAL_ROW, ...NOISE]);
   assert.strictEqual(tickets.length, 1);
   assert.strictEqual(tickets[0].ticketId, "84700001");
   assert.strictEqual(tickets[0].orderId, "3581494008428198");
-  assert.strictEqual(tickets[0].decided, true);
-  assert.strictEqual(tickets[0].verdict, "商家已和解");
+  assert.strictEqual(tickets[0].status, "纠纷单关闭");
+  assert.strictEqual(tickets[0].canAppeal, true);
 });
 
-test("判责未出行：decided=false 参与重发", () => {
-  const row = REAL_ROW.replace("商家已和解", "");
+test("待商家处理行：status 提取供重发判定", () => {
+  const row = REAL_ROW.replace("纠纷单关闭", "待商家处理");
   const [tk] = parseTicketRows([row]);
-  assert.strictEqual(tk.decided, false);
-  assert.strictEqual(tk.verdict, "");
+  assert.strictEqual(tk.status, "待商家处理");
+});
+
+test("无状态词行：status 空串（不参与重发）", () => {
+  const row = REAL_ROW.replace("纠纷单关闭", "");
+  const [tk] = parseTicketRows([row]);
+  assert.strictEqual(tk.status, "");
 });
 
 test("重复行去重、无编号行丢弃", () => {

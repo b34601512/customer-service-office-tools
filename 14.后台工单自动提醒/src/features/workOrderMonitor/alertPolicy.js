@@ -1,6 +1,12 @@
 // 本文件是提醒判定业务真源（纯函数）：输入上一轮状态+本轮观测，输出提醒事件与新状态。
-// 规则：计数新增→提醒（带新单订单号）；POP判责未出→每 verdictPendingRepeatMinutes 重发；判责新出→静默停止重发（不补报，用户定）；
-// 登录失效→节流提醒；恢复→提醒一次；首轮可配置基线提醒。判责概念仅对 popDispute 生效，其他类型单视为“已定”不重发。
+// 规则（用户 2026-09-03 两次修正后）：
+// 1) 计数新增→提醒（带新单订单号）。
+// 2) 纠纷**看状态不看判责**（实测判责列会把已关闭单误当未判责刷屏）：待商家处理/待商家回复→每 merchantPendingRepeatMinutes（默认30，0=关）重发；
+//    待客户确认/关闭等=客服已处理或完结→不提醒；状态转完结→静默停发不补报。
+// 3) 操作列含“去申诉”的单→只随新增提醒一次，永不重发。
+// 4) 登录失效→节流提醒；恢复→提醒一次；首轮可配置基线提醒。
+// 5) 无状态列的页型（京喜工单解析不出状态）天然不参与重发，只随计数新增提醒。
+// 发送时一单一消息（messageText.expandMessages），事件内部仍按页签聚合。
 
 const STATUS = {
   OK: "ok",
@@ -8,20 +14,22 @@ const STATUS = {
   PAGE_ERROR: "page_error"
 };
 
+const ATTENTION_STATUSES = new Set(["待商家处理", "待商家回复"]);
+
 function nowMs(now) {
   return now instanceof Date ? now.getTime() : Number(now) || Date.now();
 }
 
+// 是否持续催办：去申诉机会单永不重发；仅待商家处理/待商家回复重发。
+function needsRepeat(tk) {
+  if (tk.canAppeal) return false;
+  return ATTENTION_STATUSES.has(String(tk.status || ""));
+}
+
 // observations: { [sourceId]: { status, counts, ticketsByLabel, meta } }
 // state.sources: { [sourceId]: { counts, status, loginAlertAt, lastAlertAt, tickets: { [label]: [record] } } }
-
-// 工单记录合并（纯函数，就地改 events/不碰外部状态）：
-// 新单→记 lastAlertAt=now（随 count_increase 带出订单号，不另发）；
-// 未定→定：不再补报，只更新记录使重发停止；仍未定且超过 verdictPendingRepeatMinutes（默认30，0=关）→verdict_pending 重发。
-// 只有 popDispute 有判责概念；其他类型单视为已定不重发。深读失败的页签沿用旧记录。
-function mergeTickets(prevByLabel, currentByLabel, counts, sourceType, t, options, events, sourceId, meta, changes) {
-  const repeatMs = (options.verdictPendingRepeatMinutes === undefined ? 30 : Number(options.verdictPendingRepeatMinutes)) * 60000;
-  const verdictTrack = sourceType === "popDispute";
+function mergeTickets(prevByLabel, currentByLabel, counts, t, options, events, sourceId, meta, changes) {
+  const repeatMs = (options.merchantPendingRepeatMinutes === undefined ? 30 : Number(options.merchantPendingRepeatMinutes)) * 60000;
   const nextByLabel = {};
   const changeByLabel = {};
   for (const c of changes || []) changeByLabel[c.label] = c;
@@ -45,42 +53,29 @@ function mergeTickets(prevByLabel, currentByLabel, counts, sourceType, t, option
       // 深读失败：沿用旧记录继续参与重发判定（数据旧但不漏提醒）
       const carried = prevList.map((tk) => ({ ...tk }));
       nextByLabel[label] = carried;
-      firePendingRepeat(label, carried, verdictTrack, repeatMs, t, events, sourceId, meta, counts);
+      firePendingRepeat(label, carried, repeatMs, t, events, sourceId, meta, counts);
       continue;
     }
     const merged = [];
     const newTickets = [];
     for (const raw of currentByLabel[label]) {
-      const decided = verdictTrack ? Boolean(raw.decided) : true;
       const p = prevById.get(raw.id);
-      let rec;
-      if (!p) {
-        rec = { ...raw, decided, firstSeenAt: t, lastAlertAt: t };
-        newTickets.push(rec);
-      } else if (!p.decided && decided) {
-        // 判责刚出：只更新记录（重发自然停止），不发群
-        rec = { ...raw, decided, firstSeenAt: p.firstSeenAt, lastAlertAt: p.lastAlertAt || t };
-      } else {
-        rec = { ...raw, decided, firstSeenAt: p.firstSeenAt, lastAlertAt: p.lastAlertAt || t };
-        if (decided && !rec.verdict && p.verdict) rec.verdict = p.verdict;
-      }
+      const rec = { ...raw, firstSeenAt: p ? p.firstSeenAt : t, lastAlertAt: p ? p.lastAlertAt || t : t };
+      if (!p) newTickets.push(rec);
       merged.push(rec);
     }
     nextByLabel[label] = merged;
     if (changeByLabel[label] && newTickets.length > 0) changeByLabel[label].tickets = newTickets;
-    // 判责新出不补报（用户定：群里只提醒未出的）；记录更新后重发自然停止。
-    if (verdictTrack) {
-      firePendingRepeat(label, merged, true, repeatMs, t, events, sourceId, meta, counts);
-    }
+    firePendingRepeat(label, merged, repeatMs, t, events, sourceId, meta, counts);
   }
   return nextByLabel;
 }
 
-function firePendingRepeat(label, list, verdictTrack, repeatMs, t, events, sourceId, meta, counts) {
-  if (!verdictTrack || !(repeatMs > 0)) return;
-  const due = list.filter((tk) => !tk.decided && t - (tk.lastAlertAt || 0) >= repeatMs);
+function firePendingRepeat(label, list, repeatMs, t, events, sourceId, meta, counts) {
+  if (!(repeatMs > 0)) return;
+  const due = list.filter((tk) => needsRepeat(tk) && t - (tk.lastAlertAt || 0) >= repeatMs);
   if (due.length === 0) return;
-  events.push({ type: "verdict_pending", sourceId, meta, label, tickets: due, counts, at: t });
+  events.push({ type: "pending_handling", sourceId, meta, label, tickets: due, counts, at: t });
   due.forEach((tk) => { tk.lastAlertAt = t; });
 }
 
@@ -158,9 +153,7 @@ function evaluateRound(state, observations, options, now) {
 
     next.counts = currentCounts;
     next.status = STATUS.OK;
-    // 工单级状态机（订单号/判责）：新增单写进本轮 count_increase 事件，判责重发/补报在这里起事件。
-    const srcType = (obs.meta && obs.meta.sourceType) || "";
-    next.tickets = mergeTickets(prev.tickets || {}, obs.ticketsByLabel || {}, currentCounts, srcType, t, options, events, sourceId, meta, changes);
+    next.tickets = mergeTickets(prev.tickets || {}, obs.ticketsByLabel || {}, currentCounts, t, options, events, sourceId, meta, changes);
     state.sources[sourceId] = next;
   }
 
@@ -168,4 +161,4 @@ function evaluateRound(state, observations, options, now) {
   return events;
 }
 
-module.exports = { evaluateRound, mergeTickets, STATUS };
+module.exports = { evaluateRound, mergeTickets, needsRepeat, STATUS };

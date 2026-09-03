@@ -23,8 +23,8 @@ function validateConfig(config) {
   if (Number(monitor.loginAlertThrottleMinutes) < 0) {
     throw new Error("配置校验失败：monitor.loginAlertThrottleMinutes 不能为负数");
   }
-  if (monitor.verdictPendingRepeatMinutes !== undefined && Number(monitor.verdictPendingRepeatMinutes) < 0) {
-    throw new Error("配置校验失败：monitor.verdictPendingRepeatMinutes 不能为负数（0=关闭判责未出重发）");
+  if (monitor.merchantPendingRepeatMinutes !== undefined && Number(monitor.merchantPendingRepeatMinutes) < 0) {
+    throw new Error("配置校验失败：monitor.merchantPendingRepeatMinutes 不能为负数（0=关闭待商家处理重发）");
   }
   let storeCount = 0;
   for (const [platformKey, platform] of Object.entries(config.platforms || {})) {

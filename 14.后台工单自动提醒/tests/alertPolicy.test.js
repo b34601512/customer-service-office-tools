@@ -64,67 +64,77 @@ test("repeatReminderMinutes 开启后未清零会重复提醒", () => {
   assert.strictEqual(rep[0].type, "pending_repeat");
 });
 
-// ===== 工单级：订单号 + 判责状态机（popDispute） =====
+// ===== 工单级：订单号 + 纠纷状态驱动重发（用户定：不看判责看状态；去申诉只提醒一次；一单一消息） =====
 const META2 = { platformName: "京东", storeName: "京东3店", sourceName: "交易纠纷", url: "https://example", watch: ["待处理"], sourceType: "popDispute" };
-const TICKET = { id: "84700001", ticketId: "84700001", orderId: "3581494008428198", decided: false, verdict: "" };
+const TK_PENDING = { id: "59088842", ticketId: "59088842", orderId: "275490614167", status: "待商家处理", canAppeal: false };
 const obsD = (counts, ticketsByLabel) => ({ "jd/s/d": { status: STATUS.OK, counts, ticketsByLabel, meta: META2 } });
 const MIN = 60000;
+const optsR = { ...opts, merchantPendingRepeatMinutes: 30 };
 
-test("新单：count_increase 带出新增工单（订单号在事件里）", () => {
+test("新单：count_increase 带出新增工单订单号", () => {
   const state = { sources: {} };
-  const e = evaluateRound(state, obsD({ 待处理: 1 }, { 待处理: [TICKET] }), opts, 1000);
+  const e = evaluateRound(state, obsD({ 待处理: 1 }, { 待处理: [TK_PENDING] }), optsR, 1000);
   assert.strictEqual(e[0].type, "count_increase");
-  assert.strictEqual(e[0].changes[0].tickets.length, 1);
-  assert.strictEqual(e[0].changes[0].tickets[0].orderId, "3581494008428198");
+  assert.strictEqual(e[0].changes[0].tickets[0].orderId, "275490614167");
 });
 
-test("判责未出：每 verdictPendingRepeatMinutes 重发一次", () => {
+test("待商家处理：每30分钟重发 pending_handling", () => {
   const state = { sources: {} };
-  evaluateRound(state, obsD({ 待处理: 1 }, { 待处理: [TICKET] }), { ...opts, verdictPendingRepeatMinutes: 30 }, 1000);
-  const soon = evaluateRound(state, obsD({ 待处理: 1 }, { 待处理: [TICKET] }), { ...opts, verdictPendingRepeatMinutes: 30 }, 1000 + 29 * MIN);
-  assert.strictEqual(soon.length, 0, "未到30分钟不重发");
-  const due = evaluateRound(state, obsD({ 待处理: 1 }, { 待处理: [TICKET] }), { ...opts, verdictPendingRepeatMinutes: 30 }, 1000 + 31 * MIN);
-  assert.strictEqual(due[0].type, "verdict_pending");
-  assert.strictEqual(due[0].tickets[0].orderId, "3581494008428198");
-  const again = evaluateRound(state, obsD({ 待处理: 1 }, { 待处理: [TICKET] }), { ...opts, verdictPendingRepeatMinutes: 30 }, 1000 + 32 * MIN);
-  assert.strictEqual(again.length, 0, "重发后重新计时");
+  evaluateRound(state, obsD({ 待处理: 1 }, { 待处理: [TK_PENDING] }), optsR, 1000);
+  assert.strictEqual(evaluateRound(state, obsD({ 待处理: 1 }, { 待处理: [TK_PENDING] }), optsR, 1000 + 29 * MIN).length, 0);
+  const due = evaluateRound(state, obsD({ 待处理: 1 }, { 待处理: [TK_PENDING] }), optsR, 1000 + 31 * MIN);
+  assert.strictEqual(due[0].type, "pending_handling");
+  assert.strictEqual(due[0].tickets[0].orderId, "275490614167");
+  assert.strictEqual(evaluateRound(state, obsD({ 待处理: 1 }, { 待处理: [TK_PENDING] }), optsR, 1000 + 32 * MIN).length, 0, "重发后重新计时");
 });
 
-test("判责出结果：不补报（用户定），静默停止重发", () => {
+test("待客户确认/纠纷关闭：客服已处理或完结，不提醒不重发", () => {
   const state = { sources: {} };
-  const o = { ...opts, verdictPendingRepeatMinutes: 30 };
-  evaluateRound(state, obsD({ 待处理: 1 }, { 待处理: [TICKET] }), o, 1000);
-  const decided = { ...TICKET, decided: true, verdict: "商家已和解" };
-  const e = evaluateRound(state, obsD({ 待处理: 1 }, { 待处理: [decided] }), o, 1000 + 10 * MIN);
-  assert.strictEqual(e.length, 0, "判责已出不发群");
-  const later = evaluateRound(state, obsD({ 待处理: 1 }, { 待处理: [decided] }), o, 1000 + 90 * MIN);
-  assert.strictEqual(later.length, 0, "已判责只提醒这一次");
+  for (const statusText of ["待客户确认", "纠纷关闭"]) {
+    const st = { sources: {} };
+    evaluateRound(st, obsD({ 待处理: 1 }, { 待处理: [{ ...TK_PENDING, status: statusText }] }), optsR, 1000);
+    const later = evaluateRound(st, obsD({ 待处理: 1 }, { 待处理: [{ ...TK_PENDING, status: statusText }] }), optsR, 1000 + 90 * MIN);
+    assert.strictEqual(later.length, 0, statusText + " 不应重发");
+  }
+});
+
+test("操作列带去申诉：只随新增提醒一次，永不重发", () => {
+  const state = { sources: {} };
+  const appeal = { ...TK_PENDING, status: "", canAppeal: true };
+  const e1 = evaluateRound(state, obsD({ 待处理: 1 }, { 待处理: [appeal] }), optsR, 1000);
+  assert.strictEqual(e1[0].type, "count_increase");
+  const later = evaluateRound(state, obsD({ 待处理: 1 }, { 待处理: [appeal] }), optsR, 1000 + 120 * MIN);
+  assert.strictEqual(later.length, 0);
+});
+
+test("状态从待商家处理转为完结：静默停发，不补报", () => {
+  const state = { sources: {} };
+  evaluateRound(state, obsD({ 待处理: 1 }, { 待处理: [TK_PENDING] }), optsR, 1000);
+  const done = { ...TK_PENDING, status: "待客户确认" };
+  const e = evaluateRound(state, obsD({ 待处理: 1 }, { 待处理: [done] }), optsR, 1000 + 10 * MIN);
+  assert.strictEqual(e.length, 0);
+  assert.strictEqual(evaluateRound(state, obsD({ 待处理: 1 }, { 待处理: [done] }), optsR, 1000 + 90 * MIN).length, 0);
 });
 
 test("单子消失（清零）：记录删除，重新出现算新单", () => {
   const state = { sources: {} };
-  const o = { ...opts, verdictPendingRepeatMinutes: 30 };
-  evaluateRound(state, obsD({ 待处理: 1 }, { 待处理: [TICKET] }), o, 1000);
-  evaluateRound(state, obsD({ 待处理: 0 }, { 待处理: [] }), o, 1000 + 5 * MIN);
-  assert.deepStrictEqual(state.sources["jd/s/d"].tickets["待处理"] || undefined, undefined);
-  const back = evaluateRound(state, obsD({ 待处理: 1 }, { 待处理: [TICKET] }), o, 1000 + 6 * MIN);
+  evaluateRound(state, obsD({ 待处理: 1 }, { 待处理: [TK_PENDING] }), optsR, 1000);
+  evaluateRound(state, obsD({ 待处理: 0 }, { 待处理: [] }), optsR, 1000 + 5 * MIN);
+  assert.strictEqual(state.sources["jd/s/d"].tickets["待处理"], undefined);
+  const back = evaluateRound(state, obsD({ 待处理: 1 }, { 待处理: [TK_PENDING] }), optsR, 1000 + 6 * MIN);
   assert.strictEqual(back[0].type, "count_increase");
-  assert.strictEqual(back[0].changes[0].tickets.length, 1);
 });
 
-test("深读失败的页签：沿用旧记录，重发不漏", () => {
+test("深读失败的页签：沿用旧记录，到期重发不漏", () => {
   const state = { sources: {} };
-  const o = { ...opts, verdictPendingRepeatMinutes: 30 };
-  evaluateRound(state, obsD({ 待处理: 1 }, { 待处理: [TICKET] }), o, 1000);
-  const e = evaluateRound(state, obsD({ 待处理: 1 }, {}), o, 1000 + 31 * MIN);
-  assert.strictEqual(e[0].type, "verdict_pending");
+  evaluateRound(state, obsD({ 待处理: 1 }, { 待处理: [TK_PENDING] }), optsR, 1000);
+  const e = evaluateRound(state, obsD({ 待处理: 1 }, {}), optsR, 1000 + 31 * MIN);
+  assert.strictEqual(e[0].type, "pending_handling");
 });
 
-test("非POP纠纷类型（无判责概念）：不重发", () => {
+test("无状态概念（京喜工单解析不出状态）：不重发", () => {
   const state = { sources: {} };
-  const metaJ = { ...META2, sourceType: "jingxiWorkOrder" };
-  const o = { ...opts, verdictPendingRepeatMinutes: 30 };
-  evaluateRound(state, { "jd/s/w": { status: STATUS.OK, counts: { 待处理: 1 }, ticketsByLabel: { 待处理: [TICKET] }, meta: metaJ } }, o, 1000);
-  const later = evaluateRound(state, { "jd/s/w": { status: STATUS.OK, counts: { 待处理: 1 }, ticketsByLabel: { 待处理: [TICKET] }, meta: metaJ } }, o, 1000 + 120 * MIN);
-  assert.strictEqual(later.length, 0);
+  const jx = { id: "99887766", ticketId: "99887766", orderId: "3581494008428198", status: "", canAppeal: false };
+  evaluateRound(state, obsD({ 待处理: 1 }, { 待处理: [jx] }), optsR, 1000);
+  assert.strictEqual(evaluateRound(state, obsD({ 待处理: 1 }, { 待处理: [jx] }), optsR, 1000 + 120 * MIN).length, 0);
 });

@@ -37,7 +37,7 @@
     "loginAlertThrottleMinutes": 60,
     "repeatReminderMinutes": 0,
     "alertOnFirstRun": true,
-    "verdictPendingRepeatMinutes": 30
+    "merchantPendingRepeatMinutes": 30
   },
   "platforms": {
     "jd": {

@@ -42,9 +42,8 @@ function buildTabUrl(url, label) {
   return String(url).replace(/([?&])tabCode=[^&]*/, `$1tabCode=${code}`);
 }
 
-// 判责已出短语集（纠纷页“判责结果”列实测“商家已和解”+京东常见取值）；命中=已出只提醒一次，未命中=暂无重复提醒。
-const VERDICT_DECIDED = /买家责任|商家责任|双方责任|物流责任|平台承担|已和解|维持原判|支持买家|支持商家/;
-const VERDICT_TEXT = /(买家责任|商家责任|双方责任|物流责任|平台承担|商家已和解|买家已和解|已和解|维持原判|支持买家|支持商家)/;
+// 纠纷状态列取值（实测：可申诉页里关闭单显示“纠纷关闭”）。解析层只提取状态，“哪些状态要提醒”归 alertPolicy 判定（用户定：不看判责看状态）。
+const STATUS_TEXT = /(待商家处理|待商家回复|待客户确认|待买家处理|待平台处理|平台介入中|纠纷单?关闭|交易关闭|已关闭|已完成)/;
 
 // 行文本列表 → 工单列表。id 只用编号（行内含“还剩X天”倒计时，全文做 id 会假新增）。
 function parseTicketRows(rowTexts) {
@@ -63,9 +62,8 @@ function parseTicketRows(rowTexts) {
     const id = ticketId || orderId;
     if (!id || seen.has(id)) continue;
     seen.add(id);
-    const decided = VERDICT_DECIDED.test(t);
-    const vm = t.match(VERDICT_TEXT);
-    tickets.push({ id, ticketId, orderId, decided, verdict: decided && vm ? vm[1] : "" });
+    const sm = t.match(STATUS_TEXT);
+    tickets.push({ id, ticketId, orderId, status: sm ? sm[1] : "", canAppeal: /去申诉/.test(t) });
   }
   return tickets;
 }

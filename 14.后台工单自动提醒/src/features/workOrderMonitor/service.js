@@ -8,7 +8,7 @@ const { log } = require("../../engine/logger");
 const { sendWecomText } = require("../../integrations/wecomRobot");
 const { probeStore } = require("./pageProbe");
 const { evaluateRound, STATUS } = require("./alertPolicy");
-const { buildAlertMessage } = require("./messageText");
+const { buildAlertMessages } = require("./messageText");
 const { resolveDuty, buildMentionPlan } = require("../dutySchedule/dutyService");
 
 function deepClone(value) {
@@ -79,7 +79,7 @@ async function monitorOnce(options = {}) {
   const events = evaluateRound(state, observations, {
     loginAlertThrottleMinutes: config.monitor.loginAlertThrottleMinutes,
     repeatReminderMinutes: config.monitor.repeatReminderMinutes,
-    verdictPendingRepeatMinutes: config.monitor.verdictPendingRepeatMinutes,
+    merchantPendingRepeatMinutes: config.monitor.merchantPendingRepeatMinutes,
     alertOnFirstRun: config.monitor.alertOnFirstRun !== false
   }, new Date());
   // 注意：这里不立即落盘。dryRun 绝不改基线；真实运行要等发送结果确定后再写，避免演练吞事件、发送失败丢提醒。
@@ -93,24 +93,25 @@ async function monitorOnce(options = {}) {
     mentionPlan = (options.buildMentionPlanImpl || buildMentionPlan)(config, dutyResult);
   }
   for (const event of events) {
-    const content = buildAlertMessage(event, mentionPlan);
+    // 一单一消息：事件可能展开成多条，逐条发送。
+    const messages = buildAlertMessages(event, mentionPlan);
+    const mentions = Array.from(new Set([...(event.meta.mentionedMobileList || []), ...(mentionPlan ? mentionPlan.mobiles : [])]));
     if (options.dryRun) {
-      log("巡检", event.sourceId, "事件(演练不发送)", content.replace(/\n/g, " ⏎ "));
-      sent.push({ event, content, ok: true, dryRun: true });
+      for (const content of messages) {
+        log("巡检", event.sourceId, "事件(演练不发送)", content.replace(/\n/g, " ⏎ "));
+      }
+      sent.push({ event, messages, ok: true, dryRun: true });
       continue;
     }
     try {
-      await sendTextImpl(
-        config.wecom.webhookUrl,
-        config.wecom.webhookName || "工单提醒群",
-        content,
-        Array.from(new Set([...(event.meta.mentionedMobileList || []), ...(mentionPlan ? mentionPlan.mobiles : [])]))
-      );
-      appendJsonl(appConfig.alertLedgerPath, { at: event.at, sourceId: event.sourceId, type: event.type, content });
-      sent.push({ event, content, ok: true });
+      for (const content of messages) {
+        await sendTextImpl(config.wecom.webhookUrl, config.wecom.webhookName || "工单提醒群", content, mentions);
+        appendJsonl(appConfig.alertLedgerPath, { at: event.at, sourceId: event.sourceId, type: event.type, content });
+      }
+      sent.push({ event, messages, ok: true });
     } catch (error) {
       log("巡检", event.sourceId, "提醒发送最终失败", error.message);
-      sent.push({ event, content, ok: false, error: error.message });
+      sent.push({ event, messages, ok: false, error: error.message });
       // 发送失败的源回滚到本轮前状态，下轮计数仍高于旧基线会重新触发，提醒不丢。
       failedSourceIds.add(event.sourceId);
     }

@@ -27,9 +27,9 @@
   - `scheduleFetcher.js`：无头 Chrome 打开排班表，矩阵 + 当日格 `getAppliedXf` 底色（实测 getXfByCell 读不到条件格式色，必须 getAppliedXf）。
   - `dutyService.js`：`resolveDuty()`（按天缓存）+ `buildMentionPlan()`（@名单=组长在班+标记色售后+主管；读失败降级只@主管）。
 - `src/features/workOrderMonitor/`：业务真源。
-  - `textParser.js`：纯函数，页面文本 → 分类计数、登录跳转识别（fixture 来自实测文本）。
-  - `alertPolicy.js`：纯函数判定，计数新增/登录失效(节流)/恢复/可选重复提醒 → 事件。
-  - `messageText.js`：纯函数，事件+值班@计划 → 企微文案。**最少必要内容**：店铺缩写（自带平台信息，不加“京东·”前缀）+分类事项+订单号；不发链接/时间（企微自带）/纠纷单号/判责明细（那是判断逻辑内部数据）；群里值班信息只有「本次@：姓名（原因）」一行，完整班次/底色表在 CLI duty 命令看。
+  - `textParser.js`：纯函数，页面文本 → 分类计数、登录跳转识别、表格行→工单（订单号/纠纷状态/去申诉标记；状态文案实测是“纠纷单关闭”带单字）。
+  - `alertPolicy.js`：纯函数判定，计数新增（附新单订单号）/待商家处理重发/去申诉只一次/登录失效(节流)/恢复/可选重复提醒 → 事件。
+  - `messageText.js`：纯函数，事件+值班@计划 → 企微文案数组，**一单一消息**。最少必要：店铺缩写（自带平台信息，不加“京东·”前缀）+分类事项+订单号；不发链接/时间（企微自带）/纠纷单号/判责字样；群里值班信息只有「本次@：姓名（原因）」一行，完整班次/底色表在 CLI duty 命令看。
   - `pageProbe.js`：驱动浏览器读页面；计数稳定后对非零页签**深读表格行**（POP 用 tabCode URL 直跳，京喜点页签），输出 计数+ticketsByLabel；行解析靠操作按钮/编号形态过滤噪声（实测客服电话 4006229068 会伪装成单）。
   - `service.js`：`monitorOnce()`（探测→判定→发送→落状态，单店失败隔离）、`startMonitorLoop()`。
   - `loginAssist.js`：拉起某店铺可见浏览器供人工登录一次。
@@ -41,8 +41,10 @@
 - 基线存在 `runtime/state/monitor-state.json`；某分类计数**上升**才提醒（附新增单订单号），回落/持平不打扰。
 - 首轮非零计数提醒一次（`alertOnFirstRun`，默认开，让存量工单不被漏）。
 - 登录失效立即提醒并按 `loginAlertThrottleMinutes` 节流，恢复登录提醒一次。
-- `repeatReminderMinutes`>0 时未清零存量会周期性重复提醒（默认 0 关闭）。判责重发不受此限制，另走 verdictPendingRepeatMinutes。
-- 判责状态机（仅 POP 纠纷，用户 2026-09-03 定）：新单提醒一次；判责未出→每 `monitor.verdictPendingRepeatMinutes`（默认30，0=关）重发；判责新出→**静默停止重发，不补报**；单子消失/清零→记录删除。
+- `repeatReminderMinutes`>0 时未清零存量会周期性重复提醒（默认 0 关闭）。待商家处理重发不受此限制，另走 merchantPendingRepeatMinutes。
+- 纠纷状态驱动（用户 2026-09-03 定：**不看判责看状态**，实测判责列会把已关闭单误当未判责刷屏）：待商家处理/待商家回复→每 `monitor.merchantPendingRepeatMinutes`（默认30，0=关）重发；待客户确认（客服已处理）、纠纷单关闭等完结/非商家侧状态→不提醒；状态转完结→静默停发不补报；单子消失/清零→记录删除。
+- 操作列含“去申诉”的单：只随新增提醒一次，永不重发（canAppeal 标记）。
+- 一单一消息：发送层把事件拆成每订单一条，不在一条里堆多单（消息文本见 messageText 头注）。
 - 提醒结果追加 `runtime/state/alert-ledger.jsonl`；发送失败回滚该源到本轮前快照，下轮重试。
 
 ## 5b. 值班@规则（唯一真源 dutySchedule，按天判定不看时刻）
