@@ -112,7 +112,7 @@ test("近30天与自然月按提醒入群时间筛选", () => {
   ]);
 });
 
-test("客服对比支持次数、累计时长、最长单次三种最差优先排序", () => {
+test("客服对比支持次数、累计时长两种最差优先排序", () => {
   const nowMs = new Date(2026, 7, 27, 12, 0, 0).getTime();
   const base = nowMs - 100000;
   const ledger = foldTimeoutPerformanceRecords([
@@ -127,10 +127,9 @@ test("客服对比支持次数、累计时长、最长单次三种最差优先�
 
   assert.equal(buildTimeoutPerformanceReport(ledger, { nowMs, sortKey: "count" }).rows[0].assigneeName, "客服甲");
   assert.equal(buildTimeoutPerformanceReport(ledger, { nowMs, sortKey: "total" }).rows[0].assigneeName, "客服乙");
-  assert.equal(buildTimeoutPerformanceReport(ledger, { nowMs, sortKey: "max" }).rows[0].assigneeName, "客服乙");
 });
 
-test("累计和平均按各事件漏回复阈值封顶，最长单次保留实际时长", () => {
+test("累计超时按各事件漏回复阈值封顶", () => {
   const nowMs = new Date(2026, 7, 27, 12, 0, 0).getTime();
   const base = nowMs - 4 * 60 * 60 * 1000;
   const ledger = foldTimeoutPerformanceRecords([
@@ -148,8 +147,6 @@ test("累计和平均按各事件漏回复阈值封顶，最长单次保留实�
   const staffB = report.rows.find((row) => row.assigneeName === "客服乙");
 
   assert.equal(staffA.totalOverdueSeconds, 25 * 60);
-  assert.equal(staffA.averageOverdueSeconds, 25 * 60);
-  assert.equal(staffA.maxOverdueSeconds, 3 * 60 * 60);
   assert.equal(staffB.totalOverdueSeconds, 40 * 60);
   assert.equal(report.summary.totalOverdueSeconds, 65 * 60);
   assert.equal(report.rows[0].assigneeName, "客服乙");

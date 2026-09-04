@@ -9,7 +9,6 @@ const {
 const RANGE_RECENT_30 = "recent30";
 const SORT_COUNT = "count";
 const SORT_TOTAL = "total";
-const SORT_MAX = "max";
 
 function toLocalMonthKey(timestampMs) {
   const date = new Date(Number(timestampMs));
@@ -83,8 +82,6 @@ function ensureStaffRow(rowByStaffKey, item) {
       assigneeStaffGroup: String(item?.assigneeStaffGroup || "").trim(),
       timeoutCount: 0,
       totalOverdueSeconds: 0,
-      averageOverdueSeconds: 0,
-      maxOverdueSeconds: 0,
       activeTimeoutCount: 0,
       resolvedTimeoutCount: 0
     };
@@ -104,7 +101,7 @@ function resolveEventOverdueSeconds(event, nowMs) {
 }
 
 function resolveEventCountedOverdueSeconds(event, nowMs) {
-  // 累计和平均衡量日常表现，单个长期漏回复最多贡献到该事件当时的漏回复阈值。
+  // 累计衡量日常表现，单个长期漏回复最多贡献到该事件当时的漏回复阈值。
   const overdueSeconds = resolveEventOverdueSeconds(event, nowMs);
   return Math.min(
     overdueSeconds,
@@ -114,10 +111,8 @@ function resolveEventCountedOverdueSeconds(event, nowMs) {
 
 function compareRows(left, right, sortKey) {
   const sortFields = sortKey === SORT_TOTAL
-    ? ["totalOverdueSeconds", "timeoutCount", "maxOverdueSeconds"]
-    : sortKey === SORT_MAX
-      ? ["maxOverdueSeconds", "totalOverdueSeconds", "timeoutCount"]
-      : ["timeoutCount", "totalOverdueSeconds", "maxOverdueSeconds"];
+    ? ["totalOverdueSeconds", "timeoutCount"]
+    : ["timeoutCount", "totalOverdueSeconds"];
   for (const field of sortFields) {
     const difference = Number(right[field] || 0) - Number(left[field] || 0);
     if (difference !== 0) {
@@ -130,7 +125,7 @@ function compareRows(left, right, sortKey) {
 function buildTimeoutPerformanceReport(ledger, options = {}) {
   const nowMs = Number(options.nowMs || Date.now());
   const range = resolveRange(options.rangeKey || RANGE_RECENT_30, nowMs);
-  const sortKey = [SORT_COUNT, SORT_TOTAL, SORT_MAX].includes(options.sortKey) ? options.sortKey : SORT_COUNT;
+  const sortKey = [SORT_COUNT, SORT_TOTAL].includes(options.sortKey) ? options.sortKey : SORT_COUNT;
   const inRange = (timestampMs) => Number(timestampMs || 0) >= range.startAtMs && Number(timestampMs || 0) < range.endAtMs;
   const rowByStaffKey = new Map();
 
@@ -153,11 +148,9 @@ function buildTimeoutPerformanceReport(ledger, options = {}) {
     if (!row) {
       continue;
     }
-    const overdueSeconds = resolveEventOverdueSeconds(event, nowMs);
     const countedOverdueSeconds = resolveEventCountedOverdueSeconds(event, nowMs);
     row.timeoutCount += 1;
     row.totalOverdueSeconds += countedOverdueSeconds;
-    row.maxOverdueSeconds = Math.max(row.maxOverdueSeconds, overdueSeconds);
     if (Number(event.resolvedAtMs || 0) > 0) {
       row.resolvedTimeoutCount += 1;
     } else {
@@ -166,11 +159,6 @@ function buildTimeoutPerformanceReport(ledger, options = {}) {
   }
 
   const rows = Array.from(rowByStaffKey.values());
-  for (const row of rows) {
-    row.averageOverdueSeconds = row.timeoutCount > 0
-      ? Math.round(row.totalOverdueSeconds / row.timeoutCount)
-      : 0;
-  }
   rows.sort((left, right) => compareRows(left, right, sortKey));
 
   const totalOverdueSeconds = rows.reduce((sum, row) => sum + row.totalOverdueSeconds, 0);
@@ -191,7 +179,6 @@ function buildTimeoutPerformanceReport(ledger, options = {}) {
         (event) => resolveRecordAssignmentStatus(event) === ASSIGNMENT_STATUS.MEMBER_MAPPING_MISSING
       ).length,
       totalOverdueSeconds,
-      averageOverdueSeconds: assignedEvents.length > 0 ? Math.round(totalOverdueSeconds / assignedEvents.length) : 0,
       activeTimeoutCount: rows.reduce((sum, row) => sum + row.activeTimeoutCount, 0)
     }
   };
@@ -200,7 +187,6 @@ function buildTimeoutPerformanceReport(ledger, options = {}) {
 module.exports = {
   RANGE_RECENT_30,
   SORT_COUNT,
-  SORT_MAX,
   SORT_TOTAL,
   buildRangeOptions,
   buildTimeoutPerformanceReport,

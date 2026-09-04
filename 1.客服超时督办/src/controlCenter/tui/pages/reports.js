@@ -3,7 +3,6 @@ const ansi = require("../ansi");
 const { fit, normalizeCellText, padStart } = require("../width");
 const {
   SORT_COUNT,
-  SORT_MAX,
   SORT_TOTAL,
   buildRangeOptions,
   buildTimeoutPerformanceReport
@@ -11,8 +10,7 @@ const {
 
 const SORT_OPTIONS = [
   { key: SORT_COUNT, label: "超时次数↓", valueLabel: "次数" },
-  { key: SORT_TOTAL, label: "累计超时↓", valueLabel: "累计" },
-  { key: SORT_MAX, label: "最长单次↓", valueLabel: "最长" }
+  { key: SORT_TOTAL, label: "累计超时↓", valueLabel: "累计" }
 ];
 
 function formatDurationSeconds(seconds) {
@@ -47,9 +45,6 @@ function resolveMetricValue(row, sortKey) {
   if (sortKey === SORT_TOTAL) {
     return row.totalOverdueSeconds;
   }
-  if (sortKey === SORT_MAX) {
-    return row.maxOverdueSeconds;
-  }
   return row.timeoutCount;
 }
 
@@ -75,7 +70,7 @@ function buildWideHeader(columns) {
   const barWidth = Math.max(8, columns - fixedWidth);
   return {
     barWidth,
-    line: `${fit("排名", 4)} ${fit("客服", 18)} ${padStart("次数", 8)} ${padStart("累计超时", 12)} ${padStart("平均", 10)} ${padStart("最长", 10)} ${padStart("未解决", 6)} ${fit("对比柱", barWidth)}`
+    line: `${fit("排名", 4)} ${fit("客服", 18)} ${padStart("次数", 8)} ${padStart("累计超时", 12)} ${padStart("未解决", 6)} ${fit("对比柱", barWidth)}`
   };
 }
 
@@ -85,8 +80,6 @@ function buildWideRow(row, index, sortKey, maxValue, columns) {
   return (
     `${fit(String(index + 1), 4)} ${fit(name, 18)} ${padStart(String(row.timeoutCount), 8)} ` +
     `${padStart(formatDurationSeconds(row.totalOverdueSeconds), 12)} ` +
-    `${padStart(formatDurationSeconds(row.averageOverdueSeconds), 10)} ` +
-    `${padStart(formatDurationSeconds(row.maxOverdueSeconds), 10)} ` +
     `${padStart(String(row.activeTimeoutCount), 6)} ${buildBar(row, sortKey, maxValue, barWidth)}`
   );
 }
@@ -152,7 +145,7 @@ function createReportsPage() {
 
       lines.push(ansi.colorize(fit(`客服绩效对比  范围：${report.range.label}  排序：${sortOption.label}（越少越好）`, columns), "brightBlue"));
       lines.push(fit(`可信数据起点：${formatTrustedStart(report.trustedStartedAtMs)}  客服 ${report.summary.staffCount}  个人超时 ${report.summary.timeoutCount}  未分配 ${report.summary.unassignedTimeoutCount}  映射缺失 ${report.summary.memberMappingMissingTimeoutCount}`, columns));
-      lines.push(ansi.colorize(fit(`个人累计 ${formatDurationSeconds(report.summary.totalOverdueSeconds)}  未解决 ${report.summary.activeTimeoutCount}；累计/平均按单次漏回复阈值封顶，最长保留实际。`, columns), "gray"));
+      lines.push(ansi.colorize(fit(`个人累计 ${formatDurationSeconds(report.summary.totalOverdueSeconds)}  未解决 ${report.summary.activeTimeoutCount}；累计按单次漏回复阈值封顶。`, columns), "gray"));
       lines.push("");
 
       const wide = columns >= 96;
