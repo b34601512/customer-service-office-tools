@@ -4,7 +4,7 @@
 boss_tui.py —— BOSS直聘采集工具 终端图形界面（参考 1.客服超时督办 的 TUI 交互）
   交互：↑↓ 选择 / ←→ 切页 / 回车执行 / 数字键切页 / Ctrl+C 直接退出
   布局：标题栏+时钟 / 状态栏 / 菜单栏 / 分隔线 / 内容区 / 版权 / 页脚 / 底边
-  业务真源：直接 import boss_cdp（登录、抓取、导出全走同一份业务代码）
+  业务真源：直接 import boss_cdp（登录、抓取、导出全走同一份 Edge 业务代码）
   运行：python boss_tui.py   （仅 Windows 控制台，纯标准库，无第三方依赖）
 """
 
@@ -412,7 +412,7 @@ class TuiApp:
         footer = self.footer_provider(self)
         if not footer and self.page and hasattr(self.page, "footer"):
             footer = self.page.footer(self) or ""
-        lines.append(colorize(fit(footer or "↑↓选择 回车执行 ←→/数字键切页 q返回首页 Ctrl+C直接退出", columns), "gray"))
+        lines.append(colorize(fit(footer or "↑↓选择 回车执行 ←→/数字键切页 q返回首页 0首页退出 Ctrl+C直接退出", columns), "gray"))
         lines.append("─" * columns)
         return lines
 
@@ -507,12 +507,12 @@ class TaskRunner:
 
 
 def is_logged_in():
-    """只作界面状态提示：兼容 Chrome 新旧 Cookie 路径；最终以真实 joblist 响应为准。"""
+    """只作界面状态提示：兼容 Chromium 浏览器 Cookie 路径；最终以真实 joblist 响应为准。"""
     if not os.path.isdir(biz.PROFILE_DIR):
         return False
     cookie_paths = (
-        os.path.join(biz.PROFILE_DIR, "Default", "Network", "Cookies"),  # Chrome 127+
-        os.path.join(biz.PROFILE_DIR, "Default", "Cookies"),              # 旧版 Chrome
+        os.path.join(biz.PROFILE_DIR, "Default", "Network", "Cookies"),  # Edge 127+
+        os.path.join(biz.PROFILE_DIR, "Default", "Cookies"),              # 旧版 Edge
     )
     return any(os.path.exists(path) for path in cookie_paths)
 
@@ -532,7 +532,7 @@ class OverviewPage:
             ("开始抓取", "按配置页参数启动职位采集"),
             ("配置采集参数", "编辑关键词、城市、页数和导出格式"),
             ("打开结果目录", "用资源管理器打开输出文件夹"),
-            ("退出采集工具", "结束本程序"),
+            ("退出采集工具", "结束本程序；首页按 0 可直接退出"),
         ]
         # 未登录时把首次登录置顶；已登录时沉底，避免首页每次都先看到低频操作。
         return [login_item, *common_items] if not is_logged_in() else [*common_items, login_item]
@@ -542,7 +542,7 @@ class OverviewPage:
 
     def render(self, app):
         columns = app.columns
-        lines = [colorize(fit("主操作（↑↓选择 回车执行 ←→切页）", columns), "brightBlue"), ""]
+        lines = [colorize(fit("主操作（↑↓选择 回车执行 ←→切页 0退出）", columns), "brightBlue"), ""]
         for index, (label, desc) in enumerate(self.items):
             if len(lines) >= app.content_height - 1:
                 break
@@ -561,7 +561,10 @@ class OverviewPage:
 
     def handle_key(self, key, app):
         items = self.items
-        if key == "up":
+        if key == "0":
+            # 首页数字 0 作为退出快捷键，和退出菜单的回车操作一致。
+            app.on_exit_request()
+        elif key == "up":
             self.state["selection"] = (self.state["selection"] - 1) % len(items)
         elif key == "down":
             self.state["selection"] = (self.state["selection"] + 1) % len(items)
@@ -569,7 +572,7 @@ class OverviewPage:
             action_label = items[self.state["selection"]][0]
             if action_label == "首次登录 / 检查登录态":
                 ok = self.ctx.tasks.start(
-                    "启动专用Chrome并等待登录",
+                    "启动专用浏览器并等待登录",
                     self.ctx.action_login,
                     with_progress=True,
                 )
@@ -740,20 +743,32 @@ class LogPage:
         else:
             t = tasks.task
             if t["error"]:
-                summary = f"✗ 已完成：{t['desc']} → 失败：{t['error']}"
+                summary = f"✗ 任务失败：{t['desc']} → {t['error']}"
+                summary_color = "brightRed"
             else:
                 result = t["result"]
-                if isinstance(result, list):
+                partial = str(t.get("stage", "")) == "部分完成"
+                if isinstance(result, list) and partial:
+                    finished_at = time.strftime(
+                        "%Y-%m-%d %H:%M:%S",
+                        time.localtime(t.get("finished_at", time.time())),
+                    )
+                    summary = f"⚠ 部分完成：{t['desc']} → 共 {len(result)} 条，完成时间：{finished_at}"
+                    summary_color = "brightYellow"
+                elif isinstance(result, list):
                     finished_at = time.strftime(
                         "%Y-%m-%d %H:%M:%S",
                         time.localtime(t.get("finished_at", time.time())),
                     )
                     summary = f"🎉 已完成：{t['desc']} → 共 {len(result)} 条，完成时间：{finished_at}，已导出到 {biz.RESULT_DIR}"
+                    summary_color = "brightGreen"
                 elif result is True:
                     summary = f"✓ 已完成：{t['desc']} → 登录成功，登录态已保存"
+                    summary_color = "brightGreen"
                 else:
                     summary = f"✓ 已完成：{t['desc']} → 结果：{result}"
-            lines.append(colorize(fit(summary, columns), "brightGreen" if not t["error"] else "brightRed"))
+                    summary_color = "brightGreen"
+            lines.append(colorize(fit(summary, columns), summary_color))
         lines.append("")
         # 缓冲输出尾部
         tail = tasks.snapshot_lines(app.content_height - 3)
@@ -790,7 +805,7 @@ class ResultsPage:
                 break
             name = os.path.basename(path)
             size = os.path.getsize(path)
-            when = time.strftime("%m-%d %H:%M", time.localtime(os.path.getmtime(path)))
+            when = time.strftime("%Y-%m-%d %H:%M", time.localtime(os.path.getmtime(path)))
             lines.append(fit(f"  {name}  {size}B  {when}", columns))
         lines.append("")
         lines.append(colorize(f"输出目录：{biz.RESULT_DIR}", "gray"))
@@ -814,14 +829,14 @@ class Ctx:
     @staticmethod
     def action_login(timeout=900, progress=None):
         if callable(progress):
-            progress(0, 0, "连接专用 Chrome", "正在建立登录会话")
-        biz.ensure_chrome_running(biz.DEFAULT_PORT)
+            progress(0, 0, "连接专用浏览器", "正在建立登录会话")
+        active_port = biz.ensure_edge_running(biz.DEFAULT_PORT)
         ok = biz.login_wait(
-            "内贸", biz.CITY_CODES.get("深圳", "深圳"), biz.DEFAULT_PORT, timeout,
+            "内贸", biz.CITY_CODES.get("深圳", "深圳"), active_port, timeout,
             progress=progress,
         )
         if callable(progress):
-            progress(1 if ok else 0, 1, "登录完成" if ok else "登录未完成", "登录态已保存" if ok else "请检查 Chrome 页面")
+            progress(1 if ok else 0, 1, "登录完成" if ok else "登录未完成", "登录态已保存" if ok else "请检查 Edge 页面")
         return bool(ok)
 
     def start_fetch(self, app):
@@ -842,11 +857,11 @@ class Ctx:
         return ok
 
     def cleanup(self):
-        """退出时只关闭本次 TUI 启动的专用 Chrome，不关闭外部已有实例。"""
+        """退出时只关闭本次 TUI 启动的专用浏览器，不关闭外部已有实例。"""
         if self._cleaned_up:
             return
         self._cleaned_up = True
-        biz.close_owned_chrome(biz.DEFAULT_PORT)
+        biz.close_owned_edge()
 
 
 def build_status_lines(ctx, app):
@@ -890,11 +905,15 @@ def main(argv=None):
         ap.add_argument("--format", choices=["csv", "json", "both"], default="csv")
         ap.add_argument("--login-timeout", type=int, default=900)
         args = ap.parse_args(argv)
-        if args.auto == "login":
-            ok = Ctx.action_login(timeout=args.login_timeout)
-            sys.exit(0 if ok else 2)
-        biz.run_fetch(args.keyword, args.city, args.pages, args.format, delay=3, port=biz.DEFAULT_PORT)
-        sys.exit(0)
+        try:
+            if args.auto == "login":
+                ok = Ctx.action_login(timeout=args.login_timeout)
+                sys.exit(0 if ok else 2)
+            biz.run_fetch(args.keyword, args.city, args.pages, args.format, delay=3, port=biz.DEFAULT_PORT)
+            sys.exit(0)
+        finally:
+            # 自动化入口也遵守同一套浏览器所有权清理规则。
+            biz.close_owned_edge()
 
     ctx = Ctx()
     pages = [
@@ -904,7 +923,7 @@ def main(argv=None):
         ResultsPage(ctx),
     ]
     def request_exit():
-        # 先退出 TUI，再按归属清理本次启动的 Chrome 进程树。
+        # 先退出 TUI，再按归属清理本次启动的浏览器进程树。
         app.stop()
         ctx.cleanup()
 

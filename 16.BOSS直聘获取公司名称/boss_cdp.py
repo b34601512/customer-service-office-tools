@@ -1,27 +1,29 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-boss_cdp.py —— BOSS直聘职位/公司名自动采集（CDP 浏览器方案，可复用工具）
+boss_cdp.py —— BOSS直聘职位/公司名自动采集（Edge CDP 方案，可复用工具）
 
 依据仓库 issue #636「BOSS直聘职位数据自动采集」完整经验实现：
   - 不抓 DOM，不用 Selenium/Playwright（受控浏览器指纹明显，极易验证码）
-  - 独立 Chrome 实例（独立 user-data-dir + CDP 调试端口 + --remote-allow-origins=*）
+  - 独立 Microsoft Edge 实例（独立 user-data-dir + CDP 调试端口 + --remote-allow-origins=*）
   - 人工扫码登录一次，登录态永久保存在该 profile，后续不再登录
   - CDP 监听页面自身发出的 /wapi/zpgeek/search/joblist.json 响应，解析明文 JSON（绕开字体反爬）
-  - 低频抓取（默认每页间隔 3 秒），增量保存，异常不丢已抓数据
+  - 低频抓取（默认页间隔 3 秒），逐页收集，单页异常不影响其他页
 
 用法：
-  python boss_cdp.py setup          # 启动专用 Chrome 并等待登录（仅首次需要扫码）
+  python boss_cdp.py setup          # 启动专用 Edge 并等待登录
   python boss_cdp.py fetch --keyword "国内电商" --city 深圳 --pages 2 --format csv
 
 依赖：requests、websocket-client（见 requirements.txt）
-由 CLI 与外部调用共享同一业务真源（被 import 时提供 BossCdp 类）。
+由 CLI、TUI 与外部调用共享同一组业务函数。
 """
 
 import argparse
 import csv
 import json
+from datetime import datetime
 import os
+import socket
 import subprocess
 import sys
 import time
@@ -38,19 +40,19 @@ from websocket import create_connection, WebSocketTimeoutException
 
 # ---------------------------------------------------------------- launcher（模块1）
 
-CHROME_CANDIDATES = [
-    r"C:\Program Files\Google\Chrome\Application\chrome.exe",
-    r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
-    os.path.expandvars(r"%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe"),
+EDGE_CANDIDATES = [
+    r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
+    r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
+    os.path.expandvars(r"%LOCALAPPDATA%\Microsoft\Edge\Application\msedge.exe"),
 ]
 
 DEFAULT_PORT = 9222
 # 独立 profile = 持久登录态（踩坑2：必须独立 user-data-dir，默认 profile 无法开调试端口）
-PROFILE_DIR = os.path.join(os.path.expanduser("~"), ".boss-zhipin-scraper", "chrome-profile")
+PROFILE_DIR = os.path.join(os.path.expanduser("~"), ".boss-zhipin-scraper", "edge-profile")
 RESULT_DIR = os.path.join(os.path.expanduser("~"), ".boss-zhipin-scraper", "job-result")
 
-# 仅记录当前 Python 进程实际启动的 Chrome；端口已有实例时不登记、不负责关闭。
-_owned_chrome_processes = {}
+# 仅记录当前 Python 进程实际启动的 Edge；端口已有实例时不登记、不负责关闭。
+_owned_edge_processes = {}
 
 JOBLIST_PATH_PART = "/wapi/zpgeek/search/joblist.json"
 SEARCH_PAGE_URL = "https://www.zhipin.com/web/geek/job"
@@ -71,30 +73,52 @@ CSV_FIELDS = [
 ]
 
 
-def find_chrome():
-    for p in CHROME_CANDIDATES:
-        if os.path.exists(p):
-            return p
-    raise FileNotFoundError("未找到 Chrome，请修改 CHROME_CANDIDATES 指定 chrome.exe 路径")
+def find_edge():
+    for path in EDGE_CANDIDATES:
+        if os.path.exists(path):
+            return path
+    raise FileNotFoundError("未找到 Microsoft Edge，请确认系统 Edge 已安装")
 
 
-def cdp_ready(port):
+def cdp_ready(port, timeout=2):
     try:
-        r = requests.get(f"http://127.0.0.1:{port}/json/version", timeout=2)
+        r = requests.get(f"http://127.0.0.1:{port}/json/version", timeout=max(0.1, float(timeout)))
         return r.status_code == 200
     except Exception:
         return False
 
 
-def ensure_chrome_running(port=DEFAULT_PORT):
-    """启动独立 Chrome（若端口已监听则直接复用，登录态已在 profile 里）。"""
-    if cdp_ready(port):
-        return False  # 已运行，复用
+def find_free_port(preferred=DEFAULT_PORT):
+    """从首选端口开始寻找本机可绑定的回环端口，避开其他本地服务。"""
+    preferred = int(preferred)
+    if preferred <= 0:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.bind(("127.0.0.1", 0))
+            return int(sock.getsockname()[1])
+    for candidate in range(preferred, preferred + 100):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            try:
+                sock.bind(("127.0.0.1", candidate))
+            except OSError:
+                continue
+            return candidate
+    raise OSError(f"从端口 {preferred} 开始没有找到可用端口")
+
+
+def ensure_edge_running(port=DEFAULT_PORT):
+    """启动独立 Edge；若首选端口被占用则自动换用可用端口。返回实际端口。"""
+    requested_port = int(port)
+    if cdp_ready(requested_port):
+        return requested_port  # 已运行，复用
     os.makedirs(PROFILE_DIR, exist_ok=True)
     os.makedirs(RESULT_DIR, exist_ok=True)
+    browser_path = find_edge()
+    active_port = find_free_port(requested_port)
+    if active_port != requested_port:
+        print(f"[browser] 端口 {requested_port} 已被占用，改用端口 {active_port}…", flush=True)
     cmd = [
-        find_chrome(),
-        f"--remote-debugging-port={port}",
+        browser_path,
+        f"--remote-debugging-port={active_port}",
         f"--user-data-dir={PROFILE_DIR}",
         "--remote-allow-origins=*",   # 踩坑2：不加则 CDP 握手被拒
         "--no-first-run",
@@ -102,58 +126,73 @@ def ensure_chrome_running(port=DEFAULT_PORT):
         "--new-window",
         SEARCH_PAGE_URL,
     ]
-    process = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    _owned_chrome_processes[port] = process
-    for _ in range(60):  # 最多等 30 秒
-        if cdp_ready(port):
-            return True
-        time.sleep(0.5)
-    # 启动失败也要收掉本次留下的进程，避免半启动 Chrome 残留。
-    close_owned_chrome(port)
-    raise TimeoutError("Chrome 调试端口未就绪，请检查启动参数")
-
-
-def _request_graceful_close(pid):
-    """先请求 Chrome 主窗口正常关闭，避免直接强杀触发恢复页或损坏会话。"""
-    if os.name != "nt":
-        return False
-    script = "\n".join([
-        f"$process = Get-Process -Id {int(pid)} -ErrorAction SilentlyContinue",
-        "if ($null -eq $process) { 'false'; exit 0 }",
-        "if ($process.CloseMainWindow()) { 'true' } else { 'false' }",
-    ])
+    print("[browser] 启动 Microsoft Edge…", flush=True)
     try:
-        result = subprocess.run(
-            ["powershell.exe", "-NoProfile", "-NonInteractive", "-Command", script],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.DEVNULL,
-            text=True,
-            timeout=10,
-            check=False,
-        )
-        return result.returncode == 0 and result.stdout.strip().lower() == "true"
-    except (OSError, subprocess.SubprocessError, ValueError):
+        process = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except (OSError, ValueError) as exc:
+        raise RuntimeError(f"Microsoft Edge 启动失败：{exc}") from exc
+    _owned_edge_processes[active_port] = process
+    for _ in range(60):  # 最多等 30 秒
+        if cdp_ready(active_port):
+            print("[browser] 已使用 Microsoft Edge", flush=True)
+            return active_port
+        # 进程已经自行退出时直接报错，不再空等 30 秒。
+        if process.poll() is not None:
+            break
+        time.sleep(0.5)
+    # 启动失败也要收掉本次留下的 Edge 进程，避免半启动残留。
+    close_owned_edge(active_port)
+    raise TimeoutError("Microsoft Edge 的 CDP 调试端口未就绪，请检查 Edge 是否可正常启动")
+
+
+def _close_browser_via_cdp(port):
+    """通过本次实例自己的 CDP 端口关闭整个 Edge，而不是只关一个标签页。"""
+    ws = None
+    try:
+        response = requests.get(f"http://127.0.0.1:{port}/json/version", timeout=1)
+        if response.status_code != 200:
+            return False
+        ws_url = response.json().get("webSocketDebuggerUrl")
+        if not ws_url:
+            return False
+        ws = create_connection(ws_url, timeout=1)
+        ws.send(json.dumps({"id": 1, "method": "Browser.close", "params": {}}))
+        return True
+    except Exception:
         return False
+    finally:
+        if ws is not None:
+            try:
+                ws.close()
+            except Exception:
+                pass
 
 
-def _wait_for_cdp_closed(port, timeout=8):
+def _wait_for_cdp_closed(port, timeout=2):
+    """短暂确认指定 CDP 端口已消失，避免退出因网络探测等待很久。"""
+    timeout = max(0.1, float(timeout))
     deadline = time.time() + timeout
     while time.time() < deadline:
-        if not cdp_ready(port):
+        remaining = max(0.1, deadline - time.time())
+        if not cdp_ready(port, timeout=min(0.5, remaining)):
             return True
-        time.sleep(0.25)
-    return not cdp_ready(port)
+        time.sleep(min(0.1, remaining))
+    return not cdp_ready(port, timeout=0.5)
 
 
 def _terminate_process_tree(pid):
-    """按 12 号项目的策略终止进程树；Windows 下覆盖 Chrome 的全部子进程。"""
+    """按 12 号项目的策略终止进程树；Windows 下覆盖浏览器的全部子进程。"""
     if os.name == "nt":
-        result = subprocess.run(
-            ["taskkill.exe", "/PID", str(pid), "/T", "/F"],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            check=False,
-        )
+        try:
+            result = subprocess.run(
+                ["taskkill.exe", "/PID", str(pid), "/T", "/F"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                timeout=3,
+                check=False,
+            )
+        except (OSError, subprocess.SubprocessError, ValueError):
+            return False
         # 进程已自行退出时 taskkill 可能返回非 0，这不应阻断退出清理。
         return result.returncode == 0
 
@@ -164,28 +203,41 @@ def _terminate_process_tree(pid):
     return True
 
 
-def close_owned_chrome(port=DEFAULT_PORT):
-    """关闭当前进程本次启动的专用 Chrome；复用的外部 Chrome 永不由此函数关闭。"""
-    process = _owned_chrome_processes.pop(port, None)
+def _close_owned_edge_port(port):
+    process = _owned_edge_processes.pop(port, None)
     if process is None:
         return False
     pid = int(process.pid)
     try:
-        if _request_graceful_close(pid) and _wait_for_cdp_closed(port):
+        # 端口对应的就是本次启动的 Edge，即使 Edge 主进程已脱离 Popen PID，
+        # Browser.close 仍能关闭真正的浏览器窗口。
+        if _close_browser_via_cdp(port) and _wait_for_cdp_closed(port, timeout=2):
             return True
+        # CDP 关闭失败时只对本次登记的 PID 做一次有上限的进程树清理。
         _terminate_process_tree(pid)
-        _wait_for_cdp_closed(port, timeout=15)
+        _wait_for_cdp_closed(port, timeout=1)
     except Exception as exc:  # noqa: BLE001
-        print(f"[chrome] 退出清理失败（PID={pid}）：{exc}", file=sys.stderr)
+        print(f"[edge] 退出清理失败（PID={pid}）：{exc}", file=sys.stderr)
     return True
 
 
+def close_owned_edge(port=None):
+    """关闭本进程启动的专用 Edge；不传端口时清理本进程登记的全部实例。"""
+    if port is not None:
+        return _close_owned_edge_port(int(port))
+    ports = list(_owned_edge_processes)
+    closed = False
+    for active_port in ports:
+        closed = _close_owned_edge_port(active_port) or closed
+    return closed
+
+
 def open_tab(port=DEFAULT_PORT):
-    """新建一个标签页并返回其 webSocketDebuggerUrl。Chrome 127+ 需 PUT。"""
+    """新建一个标签页并返回其 webSocketDebuggerUrl。现代 Chromium 需 PUT。"""
     for method in (requests.put, requests.get):
         try:
             r = method(f"http://127.0.0.1:{port}/json/new?{urllib.parse.urlencode({'url': SEARCH_PAGE_URL})}", timeout=5)
-            if r.status_code == 200:
+            if 200 <= r.status_code < 300:
                 info = r.json()
                 tab = next(t for t in info if t.get("type") == "page") if isinstance(info, list) else info
                 return tab["webSocketDebuggerUrl"]
@@ -224,13 +276,22 @@ class CDPSession:
 
     def wait_response(self, mid, timeout=30):
         """等待指定 id 的 response（期间消费事件）。返回响应 dict 或 None。"""
+        # recv_event 可能已经先收到了该 response；不能只在 websocket 中继续等。
+        cached = self._pending.pop(mid, None)
+        if cached is not None:
+            return cached
         deadline = time.time() + timeout
         while time.time() < deadline:
             msg = self._recv_json(min(1, max(0.1, deadline - time.time())))
             if msg is None:
                 continue
-            if "id" in msg and msg["id"] == mid:
-                return msg
+            if "id" in msg:
+                if msg["id"] == mid:
+                    self._pending.pop(mid, None)
+                    return msg
+                # 保留其他命令的 response，避免被当前等待消费后永久丢失。
+                self._pending[msg["id"]] = msg
+                continue
             self._handle_event(msg)
         return None
 
@@ -275,11 +336,12 @@ def response_job_list(data):
     """兼容 BOSS joblist 接口的新旧响应结构，返回统一岗位列表。"""
     if not isinstance(data, dict):
         return []
-    if isinstance(data.get("zpList"), list):
-        return data["zpList"]
+    # 当前接口结构优先；旧字段偶尔可能同时存在但为空。
     zp_data = data.get("zpData")
     if isinstance(zp_data, dict) and isinstance(zp_data.get("jobList"), list):
         return zp_data["jobList"]
+    if isinstance(data.get("zpList"), list):
+        return data["zpList"]
     if isinstance(data.get("jobList"), list):
         return data["jobList"]
     return []
@@ -289,41 +351,47 @@ def response_job_list(data):
 
 def login_wait(keyword, city_code, port=DEFAULT_PORT, login_timeout=900, progress=None):
     """只导航一次到搜索页，未登录时保持登录页不动，监听登录后的 joblist 响应。"""
+    try:
+        login_timeout = max(1, int(login_timeout))
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"登录等待时间必须是整数：{login_timeout!r}") from exc
     session = _new_session(port)
-    session.send("Network.enable")
-    session.send("Page.enable")
-    url = search_url(keyword, city_code, 1)
-    deadline = time.time() + login_timeout
-    print("[login] 请在弹出的 Chrome 窗口中完成扫码/验证码登录（若已登录可忽略）…")
-    # 只导航一次：未登录时页面会由 BOSS 自己停留/跳转到登录入口；
-    # 后续只监听这个页面的网络事件，绝不循环刷新或重复 Page.navigate。
-    _joblist_responses.clear()
-    session.send("Page.navigate", {"url": url})
-    print("[login] 登录等待中：浏览器页面保持不动，请直接在窗口内完成登录…")
-    while time.time() < deadline:
-        remaining = max(1, int(deadline - time.time()))
-        data = _await_joblist(
-            session,
-            timeout=min(30, remaining),
-            progress_message="[login] 等待登录后的岗位响应",
-            progress=progress,
-            progress_total=0,
-            progress_stage="等待登录响应",
-        )
-        if data is not None:
-            code = data.get("code")
-            if code == 0:
-                # 登录态判断只看接口成功码，不依赖岗位数量；合法搜索结果可以为空。
-                count = len(response_job_list(data))
-                print(f"[login] 登录态有效（本次搜索返回 {count} 条岗位），已持久化到专用 profile。")
-                session.close()
-                return True
-            if code == 37:
-                print("[login] code:37 环境异常——请确认走的是已登录专用 Chrome，勿直连 API。")
-        # 未登录时只等待事件，不重新加载页面，避免登录页反复抽搐。
-    session.close()
-    print(f"[login] 超时（{login_timeout}s）。请检查窗口内确认登录状态后重试。")
-    return False
+    try:
+        session.send("Network.enable")
+        session.send("Page.enable")
+        url = search_url(keyword, city_code, 1)
+        deadline = time.time() + login_timeout
+        print("[login] 请在弹出的 Microsoft Edge 窗口中完成扫码/验证码登录（若已登录可忽略）…")
+        # 只导航一次：未登录时页面会由 BOSS 自己停留/跳转到登录入口；
+        # 后续只监听这个页面的网络事件，绝不循环刷新或重复 Page.navigate。
+        _joblist_responses.clear()
+        session.send("Page.navigate", {"url": url})
+        print("[login] 登录等待中：浏览器页面保持不动，请直接在窗口内完成登录…")
+        while time.time() < deadline:
+            remaining = max(1, int(deadline - time.time()))
+            data = _await_joblist(
+                session,
+                timeout=min(30, remaining),
+                progress_message="[login] 等待登录后的岗位响应",
+                progress=progress,
+                progress_total=0,
+                progress_stage="等待登录响应",
+            )
+            if data is not None:
+                code = data.get("code")
+                if code == 0:
+                    # 登录态判断只看接口成功码，不依赖岗位数量；合法搜索结果可以为空。
+                    count = len(response_job_list(data))
+                    print(f"[login] 登录态有效（本次搜索返回 {count} 条岗位），已持久化到专用 profile。")
+                    return True
+                if code == 37:
+                    print("[login] code:37 环境异常——请确认走的是已登录专用 Edge，勿直连 API。")
+            # 未登录时只等待事件，不重新加载页面，避免登录页反复抽搐。
+        print(f"[login] 超时（{login_timeout}s）。请检查窗口内确认登录状态后重试。")
+        return False
+    finally:
+        # 成功、超时、CDP 异常都关闭本次登录临时标签页。
+        session.close()
 
 
 # ---------------------------------------------------------------- fetch（模块3）
@@ -406,19 +474,27 @@ def _get_body(session, request_id, timeout=20):
 
 
 def parse_job(item):
-    """把 zpList 单条转成统一 job dict（公司名/岗位/薪资/地区/链接）。"""
+    """把岗位单条转成统一 job dict（公司名/岗位/薪资/地区/链接）。"""
+    if not isinstance(item, dict):
+        raise ValueError("岗位数据必须是对象")
+
+    def _join(value):
+        if isinstance(value, (list, tuple)):
+            return ",".join(str(x) for x in value if x not in (None, ""))
+        return "" if value in (None, "") else str(value)
+
     def _g(*keys):
         for k in keys:
             v = item.get(k)
             if v not in (None, ""):
-                return v
+                return _join(v)
         return ""
 
-    location = "·".join(x for x in (item.get("cityName"), item.get("areaDistrict"),
-                                    item.get("businessDistrict")) if x)
+    location = "·".join(_join(x) for x in (item.get("cityName"), item.get("areaDistrict"),
+                                            item.get("businessDistrict")) if x not in (None, ""))
     ejid = item.get("encryptJobId") or item.get("jobId")
-    tags = ",".join(item.get("jobLabels") or [])
-    skills = ",".join(item.get("skills") or [])
+    tags = _join(item.get("jobLabels"))
+    skills = _join(item.get("skills"))
     return {
         "company": _g("brandName", "brandNameAlias"),
         "title": _g("jobName", "jobTitle"),
@@ -456,7 +532,8 @@ def fetch_page(session, keyword, city_code, page, page_delay=3, total_pages=0, p
     if data.get("code") != 0:
         raise RuntimeError(f"第 {page} 页返回 code:{data.get('code')} {data.get('message', '')}")
     rows = [parse_job(x) for x in response_job_list(data)]
-    if page_delay > 0:
+    # 只在还有下一页时等待，最后一页不做无意义停顿。
+    if page_delay > 0 and (not total_pages or page < total_pages):
         time.sleep(page_delay)  # 低频，避免封号
     return rows
 
@@ -464,10 +541,22 @@ def fetch_page(session, keyword, city_code, page, page_delay=3, total_pages=0, p
 # ---------------------------------------------------------------- export（模块4）
 
 def export_rows(rows, keyword, city_code, fmt, outdir=RESULT_DIR):
-    """增量保存：CSV 追加 / JSON 全量列表。返回 (csv_path, json_path) 或 None。"""
+    """把本次已收集结果写入 CSV/JSON；返回实际生成的路径字典。"""
     os.makedirs(outdir, exist_ok=True)
-    stamp = time.strftime("%Y%m%d_%H%M%S")
-    base = f"boss_jobs_{city_code}_{stamp}"
+    # 时间戳保持可读；关键词只保留安全字符，便于区分不同搜索结果。
+    keyword_part = "".join(
+        ch if ch.isalnum() or ch in "-_" else "_"
+        for ch in str(keyword or "").strip()
+    )[:32] or "keyword"
+    stamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+    stem = f"boss_jobs_{city_code}_{keyword_part}_{stamp}"
+    # 若系统时钟精度不足导致碰撞，则追加序号，绝不覆盖旧结果。
+    extensions = ["csv", "json"] if fmt == "both" else [fmt]
+    base = stem
+    suffix = 1
+    while any(os.path.exists(os.path.join(outdir, f"{base}.{ext}")) for ext in extensions):
+        base = f"{stem}_{suffix}"
+        suffix += 1
     paths = {}
     if fmt in ("csv", "both"):
         p = os.path.join(outdir, f"{base}.csv")
@@ -486,19 +575,31 @@ def export_rows(rows, keyword, city_code, fmt, outdir=RESULT_DIR):
 
 
 def run_fetch(keyword, city, pages, fmt, delay, port, progress=None):
-    # TUI/旧调用方可能传入文本框字符串；业务入口统一成整数，避免 pages + 1 类型错误。
+    # TUI/旧调用方可能传入文本框字符串；业务入口统一规范化，避免类型错误进入分页循环。
+    keyword = str(keyword or "").strip()
+    city = str(city or "").strip()
     try:
         pages = int(pages)
     except (TypeError, ValueError) as exc:
         raise ValueError(f"页数必须是整数：{pages!r}") from exc
     if not 1 <= pages <= 10:
         raise ValueError(f"页数必须是 1-10：{pages}")
-    city_code = city if city in CITY_CODES and city.isdigit() else CITY_CODES.get(city, city)
+    try:
+        delay = float(delay)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"页间隔必须是数字：{delay!r}") from exc
+    if delay < 0:
+        raise ValueError(f"页间隔不能为负数：{delay}")
+    if not keyword:
+        raise ValueError("关键词不能为空")
+    if fmt not in ("csv", "json", "both"):
+        raise ValueError(f"导出格式不支持：{fmt!r}")
+    city_code = city if city.isdigit() else CITY_CODES.get(city, city)
     if not city_code or not str(city_code).isdigit():
         raise ValueError(f"未知城市：{city}，请用 --city-code 传城市码（全量码表见 /wapi/zpCommon/data/cityGroup.json）")
-    ensure_chrome_running(port)
+    port = ensure_edge_running(port)
     if callable(progress):
-        progress(0, pages, "连接专用 Chrome", "正在建立 CDP 会话")
+        progress(0, pages, "连接专用浏览器", "正在建立 CDP 会话")
     print(f"[fetch] 开始抓取：{keyword} @ {city}，共 {pages} 页", flush=True)
     session = None
     all_rows, failed = [], []
@@ -521,7 +622,8 @@ def run_fetch(keyword, city, pages, fmt, delay, port, progress=None):
                 if callable(progress):
                     progress(page, pages, f"第 {page}/{pages} 页失败", str(e))
                 print(f"[fetch] 第 {page} 页失败：{e}", flush=True)
-                time.sleep(delay)  # 失败也给缓冲，不硬闯
+                if delay > 0 and page < pages:
+                    time.sleep(delay)  # 失败也给缓冲，不硬闯
     finally:
         if session is not None:
             session.close()
@@ -529,12 +631,14 @@ def run_fetch(keyword, city, pages, fmt, delay, port, progress=None):
         paths = export_rows(all_rows, keyword, city_code, fmt)
         for k, p in paths.items():
             print(f"[export] {k.upper()} -> {p}")
-    else:
-        print("[fetch] 未抓到岗位数据（可能接口无结果、未捕获响应、登录失效或风控）")
+    elif not failed:
+        print("[fetch] 接口响应成功，但没有岗位结果（当前搜索条件可能无匹配）", flush=True)
     completed_at = time.strftime("%Y-%m-%d %H:%M:%S")
     if failed:
         print(f"[fetch] 失败页：{failed}，已抓数据已保存，可缩小 --pages 重跑。")
         if all_rows:
+            if callable(progress):
+                progress(pages, pages, "部分完成", f"成功 {len(all_rows)} 条，失败页 {failed}")
             print(f"⚠ [fetch] 部分完成：{completed_at}，成功 {len(all_rows)} 条，失败页 {failed}", flush=True)
         else:
             raise RuntimeError(f"所有 {len(failed)} 页均抓取失败，未生成有效岗位数据")
@@ -549,7 +653,7 @@ def main():
     ap = argparse.ArgumentParser(description="BOSS直聘职位/公司名采集（CDP 方案）")
     sub = ap.add_subparsers(dest="cmd", required=True)
 
-    s = sub.add_parser("setup", help="启动专用 Chrome 并等待扫码登录（仅首次）")
+    s = sub.add_parser("setup", help="启动专用 Edge 并等待扫码登录")
     s.add_argument("--keyword", default="内贸", help="探测用关键词（默认：内贸）")
     s.add_argument("--city", default="深圳", help="探测用城市（默认：深圳）")
     s.add_argument("--login-timeout", type=int, default=900, help="等待登录秒数（默认 900）")
@@ -564,16 +668,23 @@ def main():
     f.add_argument("--port", type=int, default=DEFAULT_PORT)
 
     args = ap.parse_args()
-    if args.cmd == "setup":
-        ensure_chrome_running(args.port)
-        cc = CITY_CODES.get(args.city, args.city)
-        login_wait(args.keyword, cc, args.port, args.login_timeout)
-    elif args.cmd == "fetch":
-        try:
+    exit_code = 0
+    try:
+        if args.cmd == "setup":
+            active_port = ensure_edge_running(args.port)
+            cc = CITY_CODES.get(args.city, args.city)
+            if not login_wait(args.keyword, cc, active_port, args.login_timeout):
+                exit_code = 2
+        elif args.cmd == "fetch":
             run_fetch(args.keyword, args.city, args.pages, args.format, args.delay, args.port)
-        except Exception as e:
-            print(f"[error] {e}")
-            sys.exit(1)
+    except Exception as e:
+        print(f"[error] {e}")
+        exit_code = 1
+    finally:
+        # CLI 进程结束时只清理本进程启动的浏览器，不影响端口已有的外部实例。
+        close_owned_edge()
+    if exit_code:
+        sys.exit(exit_code)
 
 
 if __name__ == "__main__":

@@ -6,15 +6,16 @@ selftest.py —— 16 号项目自动化自检（依据 SoftTalk #2705「AI 无�
 - 导出：写真实临时文件并读回校验（CSV BOM/列/中文、JSON 结构）
 - TUI：无头渲染全部页面帧 + 按键分发 + 表单编辑 + 任务线程（真实捕获 stdout）
 - 乱码自检：帧与文件全部按 UTF-8 合法解码，无替换符/无乱码字节
-- Chrome：--with-chrome 真实启动独立 Chrome 并探测 CDP 端口
+- Edge：--with-edge 真实启动独立 Edge 并探测 CDP 端口
 - 真实抓取：--with-real-fetch 且已登录时，真实网络抓 1 页并校验结果文件
 用法：
   python selftest.py                  # 默认：全部逻辑 + 真实文件校验
-  python selftest.py --with-chrome    # 追加真实 Chrome/CDP 探测
+  python selftest.py --with-edge      # 追加真实 Edge/CDP 探测
   python selftest.py --with-real-fetch # 追加真实网络抓取（需已扫码登录）
 """
 
 import argparse
+import contextlib
 import csv
 import io
 import json
@@ -54,6 +55,14 @@ class BusinessTests(unittest.TestCase):
         data = {"code": 0, "zpData": {"resCount": 1, "jobList": [{"jobId": "J1"}]}}
         self.assertEqual(biz.response_job_list(data), [{"jobId": "J1"}])
 
+    def test_response_job_list_prefers_current_shape_over_empty_legacy_field(self):
+        data = {
+            "code": 0,
+            "zpList": [],
+            "zpData": {"jobList": [{"jobId": "CURRENT"}]},
+        }
+        self.assertEqual(biz.response_job_list(data), [{"jobId": "CURRENT"}])
+
     def test_cdp_recv_event_honors_short_timeout(self):
         class FakeWebSocket:
             def __init__(self):
@@ -76,6 +85,12 @@ class BusinessTests(unittest.TestCase):
         self.assertLess(time.monotonic() - started, 0.5)
         self.assertEqual(session.ws.gettimeout(), 60)
 
+    def test_cdp_wait_response_uses_cached_response(self):
+        session = biz.CDPSession.__new__(biz.CDPSession)
+        session._pending = {7: {"id": 7, "result": {"ok": True}}}
+        self.assertEqual(session.wait_response(7, timeout=0.01)["id"], 7)
+        self.assertNotIn(7, session._pending)
+
     def test_parse_job(self):
         item = {
             "jobId": "J1", "encryptJobId": "eJ1", "jobName": "国内电商运营",
@@ -89,6 +104,16 @@ class BusinessTests(unittest.TestCase):
         self.assertEqual(row["salary"], "6-11K")
         self.assertEqual(row["location"], "深圳·龙岗区·南联")
         self.assertEqual(row["job_link"], "https://www.zhipin.com/job_detail/eJ1.html")
+
+    def test_parse_job_normalizes_non_string_fields(self):
+        row = biz.parse_job({
+            "jobId": 123, "jobName": "运营", "cityName": 101,
+            "jobLabels": ["经验不限", 3], "skills": "办公软件",
+        })
+        self.assertEqual(row["job_id"], "123")
+        self.assertEqual(row["location"], "101")
+        self.assertEqual(row["tags"], "经验不限,3")
+        self.assertEqual(row["skills"], "办公软件")
 
     def test_export_csv_real_file(self):
         """真实生成 CSV 文件并读回校验：UTF-8 BOM、表头、中文内容、全列对齐。"""
@@ -111,8 +136,16 @@ class BusinessTests(unittest.TestCase):
             data = json.load(open(paths["json"], encoding="utf-8"))
             self.assertEqual(data[0]["company"], "甲")
 
-    def test_login_state_accepts_chrome_network_cookie_location(self):
-        """Chrome 127+ 的 Cookie 数据位于 Default/Network/Cookies。"""
+    def test_export_names_do_not_overwrite_same_second(self):
+        with tempfile.TemporaryDirectory() as d:
+            first = biz.export_rows([], "kw", "101280600", "csv", d)["csv"]
+            second = biz.export_rows([], "kw", "101280600", "csv", d)["csv"]
+            self.assertNotEqual(first, second)
+            self.assertTrue(os.path.exists(first))
+            self.assertTrue(os.path.exists(second))
+
+    def test_login_state_accepts_edge_network_cookie_location(self):
+        """Edge 127+ 的 Cookie 数据位于 Default/Network/Cookies。"""
         with tempfile.TemporaryDirectory() as d:
             os.makedirs(os.path.join(d, "Default", "Network"), exist_ok=True)
             open(os.path.join(d, "Default", "Network", "Cookies"), "wb").close()
@@ -150,16 +183,27 @@ class BusinessTests(unittest.TestCase):
         self.assertEqual(len(fake.navigate_urls), 1)
         self.assertTrue(fake.closed)
 
-    def test_close_owned_chrome_uses_process_tree_and_is_idempotent(self):
-        """退出只清理本次登记的 Chrome，重复清理不应误伤其他实例。"""
+    def test_close_owned_edge_uses_process_tree_and_is_idempotent(self):
+        """退出只清理本次登记的 Edge，重复清理不应误伤其他实例。"""
         fake_process = type("FakeProcess", (), {"pid": 4321})()
-        with mock.patch.object(biz, "_owned_chrome_processes", {9222: fake_process}), \
-             mock.patch.object(biz, "_request_graceful_close", return_value=False), \
+        with mock.patch.object(biz, "_owned_edge_processes", {9222: fake_process}), \
+             mock.patch.object(biz, "_close_browser_via_cdp", return_value=False), \
              mock.patch.object(biz, "_wait_for_cdp_closed", return_value=False), \
              mock.patch.object(biz, "_terminate_process_tree") as terminate:
-            self.assertTrue(biz.close_owned_chrome(9222))
+            self.assertTrue(biz.close_owned_edge(9222))
             terminate.assert_called_once_with(4321)
-            self.assertFalse(biz.close_owned_chrome(9222))
+            self.assertFalse(biz.close_owned_edge(9222))
+
+    def test_close_owned_edge_prefers_cdp_browser_close(self):
+        """优先按 CDP 端口关闭真实 Edge；成功时不等待或强杀。"""
+        fake_process = type("FakeProcess", (), {"pid": 4321})()
+        with mock.patch.object(biz, "_owned_edge_processes", {9223: fake_process}), \
+             mock.patch.object(biz, "_close_browser_via_cdp", return_value=True) as close_cdp, \
+             mock.patch.object(biz, "_wait_for_cdp_closed", return_value=True), \
+             mock.patch.object(biz, "_terminate_process_tree") as terminate:
+            self.assertTrue(biz.close_owned_edge(9223))
+        close_cdp.assert_called_once_with(9223)
+        terminate.assert_not_called()
 
     def test_login_wait_does_not_renavigate_while_waiting_for_manual_login(self):
         """未登录时浏览器页面只能导航一次，后续必须停留等待用户登录。"""
@@ -199,6 +243,32 @@ class BusinessTests(unittest.TestCase):
         self.assertIn("city=101280600", url)
         self.assertIn("page=2", url)
 
+    def test_fetch_page_skips_delay_after_final_page(self):
+        class FakeSession:
+            def send(self, method, params=None):
+                return 1
+
+        with mock.patch.object(biz, "_await_joblist", return_value={"code": 0, "zpList": []}), \
+             mock.patch.object(biz.time, "sleep") as sleep:
+            self.assertEqual(biz.fetch_page(FakeSession(), "运营", "101280600", 1,
+                                            page_delay=3, total_pages=1), [])
+        sleep.assert_not_called()
+
+    def test_run_fetch_rejects_invalid_inputs_before_edge(self):
+        with mock.patch.object(biz, "ensure_edge_running") as ensure:
+            with self.assertRaises(ValueError):
+                biz.run_fetch("", "深圳", 1, "csv", 0, 9222)
+            ensure.assert_not_called()
+
+    def test_cli_setup_returns_failure_exit_code(self):
+        with mock.patch.object(biz, "ensure_edge_running"), \
+             mock.patch.object(biz, "login_wait", return_value=False), \
+             mock.patch.object(biz, "close_owned_edge"):
+            with mock.patch.object(sys, "argv", ["boss_cdp.py", "setup", "--login-timeout", "1"]):
+                with self.assertRaises(SystemExit) as raised:
+                    biz.main()
+        self.assertEqual(raised.exception.code, 2)
+
     def test_run_fetch_normalizes_string_page_count(self):
         class FakeSession:
             def __init__(self):
@@ -217,7 +287,7 @@ class BusinessTests(unittest.TestCase):
             seen_pages.append((page, total_pages))
             return []
 
-        with mock.patch.object(biz, "ensure_chrome_running"), \
+        with mock.patch.object(biz, "ensure_edge_running"), \
              mock.patch.object(biz, "_new_session", return_value=fake), \
              mock.patch.object(biz, "fetch_page", side_effect=fake_fetch_page), \
              mock.patch.object(biz, "export_rows", return_value={}):
@@ -227,9 +297,46 @@ class BusinessTests(unittest.TestCase):
         self.assertEqual(seen_pages, [(1, 2), (2, 2)])
         self.assertTrue(fake.closed)
 
+    def test_run_fetch_success_log_contains_time_and_celebration(self):
+        class FakeSession:
+            def send(self, method, params=None):
+                return 1
+
+            def close(self):
+                pass
+
+        with mock.patch.object(biz, "ensure_edge_running"), \
+             mock.patch.object(biz, "_new_session", return_value=FakeSession()), \
+             mock.patch.object(biz, "fetch_page", return_value=[]), \
+             mock.patch.object(biz, "export_rows", return_value={}):
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
+                biz.run_fetch("国内电商", "深圳", 1, "csv", 0, 9222)
+
+        text = output.getvalue()
+        self.assertIn("🎉 [fetch] 抓取成功", text)
+        self.assertRegex(text, r"20\d{2}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}")
+
     def test_city_codes_known(self):
         for city in ("深圳", "北京", "上海", "广州", "杭州"):
             self.assertTrue(str(biz.CITY_CODES[city]).isdigit())
+
+    def test_edge_launch_uses_only_edge_candidate(self):
+        class FakeProcess:
+            def __init__(self):
+                self.pid = 4321
+
+            def poll(self):
+                return None
+
+        edge_path = biz.EDGE_CANDIDATES[0]
+        with mock.patch.object(biz.os.path, "exists", side_effect=lambda path: path == edge_path), \
+             mock.patch.object(biz.subprocess, "Popen", return_value=FakeProcess()) as popen, \
+             mock.patch.object(biz, "cdp_ready", side_effect=[False, True]), \
+             mock.patch.object(biz.time, "sleep"):
+            self.assertTrue(biz.ensure_edge_running(9222))
+
+        self.assertEqual(popen.call_args.args[0][0], edge_path)
 
 
 # ---------------------------------------------------------------- TUI（无头真实渲染）
@@ -291,6 +398,9 @@ class TuiTests(unittest.TestCase):
             pages[0].state["selection"] = len(pages[0].items) - 1
             pages[0].handle_key("enter", app)
         self.assertEqual(calls, ["exit", "exit"])
+        app.switch_page(0)
+        pages[0].handle_key("0", app)
+        self.assertEqual(calls, ["exit", "exit", "exit"])
         app.dispatch_key("q")
         self.assertEqual(app.current_page_index, 0)
 
@@ -396,10 +506,10 @@ class TuiTests(unittest.TestCase):
     def test_ctx_cleanup_is_idempotent(self):
         """TUI 退出与 finally 可能各调用一次，资源清理必须只执行一次。"""
         ctx = tui.Ctx()
-        with mock.patch.object(biz, "close_owned_chrome", return_value=True) as close:
+        with mock.patch.object(biz, "close_owned_edge", return_value=True) as close:
             ctx.cleanup()
             ctx.cleanup()
-        close.assert_called_once_with(biz.DEFAULT_PORT)
+        close.assert_called_once_with()
 
     def test_task_runner_captures_real_stdout(self):
         ctx = tui.Ctx()
@@ -481,16 +591,17 @@ class TuiTests(unittest.TestCase):
         self.assertIn("黎路遥", output)
 
 
-# ---------------------------------------------------------------- 真实 Chrome（可选）
+# ---------------------------------------------------------------- 真实 Edge（可选）
 
-@unittest.skipUnless("--with-chrome" in sys.argv, "需 --with-chrome 才启动真实 Chrome")
-class ChromeTests(unittest.TestCase):
-    def test_chrome_launch_and_cdp(self):
-        self.assertTrue(biz.find_chrome(), "应能找到 Chrome")
-        started = biz.ensure_chrome_running(biz.DEFAULT_PORT)
-        self.assertTrue(started or biz.cdp_ready(biz.DEFAULT_PORT))
-        self.assertTrue(biz.cdp_ready(biz.DEFAULT_PORT), "CDP 端口应可访问")
-        info = biz.open_tab(biz.DEFAULT_PORT)
+@unittest.skipUnless("--with-edge" in sys.argv, "需 --with-edge 才启动真实 Edge")
+class EdgeTests(unittest.TestCase):
+    def test_edge_launch_and_cdp(self):
+        self.assertTrue(biz.find_edge(), "应能找到 Edge")
+        active_port = biz.ensure_edge_running(biz.DEFAULT_PORT)
+        started = active_port in biz._owned_edge_processes
+        self.assertTrue(started or biz.cdp_ready(active_port))
+        self.assertTrue(biz.cdp_ready(active_port), "CDP 端口应可访问")
+        info = biz.open_tab(active_port)
         self.assertTrue(info.startswith("ws://"), "应拿到 WebSocket 调试地址")
         # 真正建立 WebSocket 并执行 CDP 请求，不只检查地址字符串。
         sess = biz.CDPSession(info)
@@ -499,14 +610,14 @@ class ChromeTests(unittest.TestCase):
         self.assertIsNotNone(response, "CDP WebSocket 应返回响应")
         self.assertIn("result", response, "CDP 响应应包含 result")
         sess.close()
-        # 只清理本测试实际启动的 Chrome；测试前已有实例绝不触碰。
+        # 只清理本测试实际启动的 Edge；测试前已有实例绝不触碰。
         if started:
-            self.assertTrue(biz.close_owned_chrome(biz.DEFAULT_PORT))
+            self.assertTrue(biz.close_owned_edge(active_port))
             for _ in range(20):
-                if not biz.cdp_ready(biz.DEFAULT_PORT):
+                if not biz.cdp_ready(active_port):
                     break
                 time.sleep(0.1)
-            self.assertFalse(biz.cdp_ready(biz.DEFAULT_PORT), "测试启动的 Chrome 应已被进程树清理")
+            self.assertFalse(biz.cdp_ready(active_port), "测试启动的 Edge 应已被进程树清理")
 
     def test_login_state_detection(self):
         # 真实判断登录态（读专用 profile 目录）
@@ -539,17 +650,17 @@ class RealFetchTests(unittest.TestCase):
                         content = fh.read()
                     self.assertIn(rows[0]["company"], content, "CSV 内容应含抓到的公司名")
         finally:
-            # 真实测试只清理本测试自己启动的 Chrome，不碰测试前已有实例。
-            biz.close_owned_chrome(biz.DEFAULT_PORT)
+            # 真实测试只清理本测试自己启动的 Edge，不碰测试前已有实例。
+            biz.close_owned_edge()
 
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(description="16号项目自动化自检")
-    ap.add_argument("--with-chrome", action="store_true", help="追加：真实启动 Chrome 并探测 CDP")
+    ap.add_argument("--with-edge", action="store_true", help="追加：真实启动 Edge 并探测 CDP")
     ap.add_argument("--with-real-fetch", action="store_true", help="追加：真实网络抓 1 页（需已登录）")
     args, rest = ap.parse_known_args()
-    if args.with_chrome:
-        sys.argv.append("--with-chrome")
+    if args.with_edge:
+        sys.argv.append("--with-edge")
     if args.with_real_fetch:
         sys.argv.append("--with-real-fetch")
     suite = unittest.defaultTestLoader.loadTestsFromModule(sys.modules[__name__])
