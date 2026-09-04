@@ -1,0 +1,21 @@
+const { chromium } = require('playwright-core');
+(async () => {
+  const ctx = await chromium.launchPersistentContext('C:/Users/b3460/.pi-edge-auto', { channel: 'msedge', headless: false, args: ['--start-maximized'], viewport: null });
+  const page = ctx.pages()[0] || await ctx.newPage();
+  await page.goto('http://agent.tanyuai.com/v2/agent-builder', { waitUntil: 'domcontentloaded', timeout: 30000 }).catch(() => {});
+  await page.waitForTimeout(6000);
+  await page.getByText(/^自动发送场景$/).first().click({ timeout: 8000 });
+  await page.waitForTimeout(3000);
+  await page.getByRole('button', { name: /添加策略/ }).click({ timeout: 8000 });
+  await page.waitForTimeout(3000);
+  // 点绑定用户下拉框(用role combobox)
+  const combo = page.locator('[role="combobox"], .ant-select').first();
+  console.log('COMBO-COUNT', await combo.count());
+  await combo.click({ timeout: 8000 });
+  await page.waitForTimeout(2500);
+  await page.screenshot({ path: 'C:/Users/b3460/.pi-edge-work/bind-open.png' });
+  const t = await page.evaluate(() => document.body.innerText.slice(-1500));
+  console.log('DROP', JSON.stringify(t).slice(0, 900));
+  console.log('DONE');
+  await ctx.close();
+})();
