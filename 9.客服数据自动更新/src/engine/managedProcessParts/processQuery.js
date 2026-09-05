@@ -21,7 +21,7 @@ function buildProcessQueryScript(matchTokens) {
     .join(" -and ");
   return [
     "$ids = Get-CimInstance Win32_Process | Where-Object {",
-    "  $cmd = $_.CommandLine",
+    "  $cmd = ([string]$_.CommandLine).Replace('\"', '')",
     `  $cmd -and ${conditionText}`,
     "} | Select-Object -ExpandProperty ProcessId",
     "if ($null -ne $ids) {",

@@ -49,6 +49,7 @@ function validatePlatformStores(platformKey, platformPayload, defaultPlatform, p
       platformStoreName: normalizeString(store?.platformStoreName || fallbackStore.platformStoreName),
       username: normalizeString(store?.username),
       password: normalizeString(store?.password),
+      ...(platformKey === "pdd" ? { expectedIdentityText: normalizeString(store?.expectedIdentityText) } : {}),
       ...(platformKey === "jd"
         ? {
             customerServiceScope: normalizeJdCustomerServiceScope(

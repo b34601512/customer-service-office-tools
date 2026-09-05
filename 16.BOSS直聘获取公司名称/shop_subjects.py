@@ -9,7 +9,7 @@ import time
 from urllib.parse import urlsplit
 
 import requests
-from merchant_subjects import RESULT_DIR, export_subject_rows
+from subject_export import RESULT_DIR, export_subject_rows
 
 FIELDS = ['company', 'shop_url', 'platform', 'scope', 'certification', 'source_url', 'qualification_url', 'status', 'error']
 
@@ -77,7 +77,7 @@ def default_input_path():
     return base / '供应商网店铺清单.txt'
 
 
-def run_shops(fmt='both', progress=None, input_path=None, outdir=RESULT_DIR):
+def run_shops(fmt='both', progress=None, input_path=None, outdir=RESULT_DIR, stop_event=None):
     if fmt not in ('csv', 'json', 'both'):
         raise ValueError('格式必须是 csv/json/both')
     path = Path(input_path) if input_path else default_input_path()
@@ -87,6 +87,8 @@ def run_shops(fmt='both', progress=None, input_path=None, outdir=RESULT_DIR):
         raise ValueError('店铺清单为空，请在供应商网店铺清单.txt中每行填写一家店铺网址')
     rows = []
     for index, url in enumerate(urls, 1):
+        if stop_event is not None and stop_event.is_set():
+            break
         if index > 1:
             time.sleep(1)
         if callable(progress):
@@ -100,6 +102,8 @@ def run_shops(fmt='both', progress=None, input_path=None, outdir=RESULT_DIR):
             rows.append(dict.fromkeys(FIELDS, ''))
             rows[-1].update(shop_url=url, platform='供应商网', scope='B2B商家店铺', source_url=url, status='失败', error=str(exc))
             print(f'[shops] {url} 未取得主体：{exc}', flush=True)
+    if not rows and stop_event is not None and stop_event.is_set():
+        return []
     export_subject_rows(rows, fmt, outdir, 'gys', FIELDS)
     failed = sum(row['status'] != '成功' for row in rows)
     print(f'[shops] 店铺{len(rows)}家，主体成功{len(rows)-failed}家，失败{failed}家。', flush=True)

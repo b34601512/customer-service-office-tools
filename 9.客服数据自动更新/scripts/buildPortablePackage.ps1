@@ -89,6 +89,7 @@ function Assert-PackageSources {
 
   $requiredPaths = @(
     (Join-Path $ProjectRoot "src\cli\startCli.js"),
+    (Join-Path $ProjectRoot "..\共享CLI\最大化控制台窗口.js"),
     (Join-Path $ProjectRoot "node_modules\playwright-core\package.json"),
     (Join-Path $ProjectRoot "node_modules\xlsx\package.json"),
     (Join-Path $ProjectRoot "node_modules\jszip\package.json"),
@@ -184,7 +185,7 @@ function New-PortablePowerShellLauncher {
 `$host.UI.RawUI.WindowTitle = "客服数据自动更新 v$ReleaseVersion"
 `$projectRoot = [System.IO.Path]::GetFullPath((Join-Path `$PSScriptRoot ".."))
 `$nodeExecutable = Join-Path `$projectRoot "程序运行环境\node.exe"
-`$applicationEntry = Join-Path `$projectRoot "src\cli\startCli.js"
+`$applicationEntry = Join-Path `$projectRoot "应用\src\cli\startCli.js"
 
 try {
   Write-Host ""
@@ -198,6 +199,7 @@ try {
     throw "压缩包不完整，缺少程序入口。"
   }
 
+  Set-Location -LiteralPath (Join-Path `$projectRoot "应用")
   & `$nodeExecutable `$applicationEntry
   `$applicationExitCode = `$LASTEXITCODE
   if (`$applicationExitCode -ne 0) {
@@ -227,12 +229,21 @@ function New-EndUserGuide {
 2. 双击“启动客服数据自动更新.bat”。
 3. 首次使用时，在CLI菜单中填写自己的汇总表路径、店铺和账号信息。
 4. 按CLI提示登录天猫、京东、拼多多或抖音后台。
+5. 配置保存在“应用\project-config”，运行数据保存在“应用\runtime”；请保留完整目录结构。
 
 【电脑要求】
 - Windows 10 或 Windows 11（64 位）
 - 已安装 Google Chrome 或 Microsoft Edge
 - 可以正常访问相关电商后台
 - 不需要安装 Node.js、npm 或开发工具
+
+【首次配置顺序】
+1. 进入“店铺”：逐一改好自己使用的示例店铺名称、账号、密码，停用不用的示例店铺；按 A 可新增。
+2. 京东店铺可设置客服筛选范围；拼多多请填后台显示的真实店铺名称；抖音必须填写抖店ID和名称。
+3. 进入“设置”：选择已有的 .xlsx 汇总表，设置下载目录、日期和客服姓名/后台账号对应关系。程序不附带业务汇总表，请使用主管提供的模板。
+4. 需要金山同步时，在“金山”页打开三个脚本模板，配置在线文档分享地址和每个脚本各自的 webhook、令牌。
+5. 退出再启动，确认设置仍在；先运行一家店铺核对结果，再运行全部汇总。
+输入时：直接回车保留默认值，直接键入替换默认值；Esc取消。长内容会显示末尾，密码和令牌以星号显示。
 
 【安全说明】
 - 便携包不包含打包电脑上的账号、密码、登录状态、运行日志和下载数据。
@@ -363,17 +374,20 @@ function New-PortableArchive {
   )
 
   try {
-    Add-DirectoryToZip -Archive $archive -SourceDirectory (Join-Path $ProjectRoot "src") -PackageRootName $PackageRootName -TargetDirectory "src"
-    Add-DirectoryToZip -Archive $archive -SourceDirectory (Join-Path $ProjectRoot "node_modules") -PackageRootName $PackageRootName -TargetDirectory "node_modules"
+    # 保留应用与共享CLI的同级关系，让源码相对引用在独立解压目录中仍成立。
+    $applicationRootName = "$PackageRootName/应用"
+    Add-DirectoryToZip -Archive $archive -SourceDirectory (Join-Path $ProjectRoot "src") -PackageRootName $applicationRootName -TargetDirectory "src"
+    Add-DirectoryToZip -Archive $archive -SourceDirectory (Join-Path $ProjectRoot "node_modules") -PackageRootName $applicationRootName -TargetDirectory "node_modules"
+    Add-FileToZip -Archive $archive -SourceFilePath (Join-Path $ProjectRoot "..\共享CLI\最大化控制台窗口.js") -EntryPath "$PackageRootName/共享CLI/最大化控制台窗口.js"
     Add-FileToZip -Archive $archive -SourceFilePath $NodeExecutable -EntryPath (Join-Path $PackageRootName "程序运行环境\node.exe")
 
     $exampleConfigPath = Join-Path $ProjectRoot "project-config\jd-open-api.local.example.json"
     if (Test-Path -LiteralPath $exampleConfigPath -PathType Leaf) {
-      Add-FileToZip -Archive $archive -SourceFilePath $exampleConfigPath -EntryPath (Join-Path $PackageRootName "project-config\jd-open-api.local.example.json")
+      Add-FileToZip -Archive $archive -SourceFilePath $exampleConfigPath -EntryPath (Join-Path $applicationRootName "project-config\jd-open-api.local.example.json")
     }
 
-    Add-TextToZip -Archive $archive -EntryPath (Join-Path $PackageRootName "package.json") -Content $PackageJsonText
-    Add-TextToZip -Archive $archive -EntryPath (Join-Path $PackageRootName "package-lock.json") -Content $PackageLockText
+    Add-TextToZip -Archive $archive -EntryPath (Join-Path $applicationRootName "package.json") -Content $PackageJsonText
+    Add-TextToZip -Archive $archive -EntryPath (Join-Path $applicationRootName "package-lock.json") -Content $PackageLockText
     $portableStartScript = (New-PortableStartScript) -replace "`r?`n", "`r`n"
     $portablePowerShellLauncher = (New-PortablePowerShellLauncher -ReleaseVersion $ReleaseVersion) -replace "`r?`n", "`r`n"
     Add-TextToZip -Archive $archive -EntryPath (Join-Path $PackageRootName "启动客服数据自动更新.bat") -Content $portableStartScript
@@ -400,11 +414,12 @@ function Test-PortableArchive {
     $entryNames = @($archive.Entries | ForEach-Object { $_.FullName })
     $requiredEntryNames = @(
       "$PackageRootName/程序运行环境/node.exe",
-      "$PackageRootName/src/cli/startCli.js",
-      "$PackageRootName/node_modules/playwright-core/package.json",
-      "$PackageRootName/node_modules/xlsx/package.json",
-      "$PackageRootName/node_modules/jszip/package.json",
-      "$PackageRootName/node_modules/@xmldom/xmldom/package.json",
+      "$PackageRootName/应用/src/cli/startCli.js",
+      "$PackageRootName/共享CLI/最大化控制台窗口.js",
+      "$PackageRootName/应用/node_modules/playwright-core/package.json",
+      "$PackageRootName/应用/node_modules/xlsx/package.json",
+      "$PackageRootName/应用/node_modules/jszip/package.json",
+      "$PackageRootName/应用/node_modules/@xmldom/xmldom/package.json",
       "$PackageRootName/启动客服数据自动更新.bat",
       "$PackageRootName/scripts/startPortableApp.ps1",
       "$PackageRootName/使用说明.txt",
@@ -418,9 +433,9 @@ function Test-PortableArchive {
     }
 
     $forbiddenEntryPatterns = @(
-      "$PackageRootName/runtime/",
-      "$PackageRootName/outputs/",
-      "$PackageRootName/project-config/platform-config.json",
+      "$PackageRootName/应用/runtime/",
+      "$PackageRootName/应用/outputs/",
+      "$PackageRootName/应用/project-config/platform-config.json",
       "$PackageRootName/.git/"
     )
     foreach ($forbiddenEntryPattern in $forbiddenEntryPatterns) {
@@ -500,6 +515,21 @@ try {
     -NodeVersion $nodeVersion
 
   $entryCount = Test-PortableArchive -ArchivePath $archivePath -PackageRootName $packageRootName
+  Write-Section -Message "独立解压启动校验"
+  # 留存校验目录便于排查，不触碰源码目录或使用者配置。
+  $verificationDirectory = Join-Path $backupRootDirectory ("客服数据自动更新\打包校验\" + [Guid]::NewGuid().ToString("N"))
+  [System.IO.Directory]::CreateDirectory($verificationDirectory) | Out-Null
+  [System.IO.Compression.ZipFile]::ExtractToDirectory($archivePath, $verificationDirectory)
+  $verificationRoot = Join-Path $verificationDirectory $packageRootName
+  & (Join-Path $verificationRoot "程序运行环境\node.exe") (Join-Path $PSScriptRoot "verifyPortableSources.js") (Join-Path $verificationRoot "应用")
+  if ($LASTEXITCODE -ne 0) { throw "便携包源码或依赖校验失败：$verificationRoot" }
+  & (Join-Path $verificationRoot "程序运行环境\node.exe") (Join-Path $PSScriptRoot "verifyPortableStartup.js") (Join-Path $verificationRoot "应用")
+  if ($LASTEXITCODE -ne 0) { throw "独立解压启动校验失败：$verificationRoot" }
+  & (Join-Path $verificationRoot "程序运行环境\node.exe") (Join-Path $projectRoot "tests\portableConfiguration.test.js") (Join-Path $verificationRoot "应用")
+  if ($LASTEXITCODE -ne 0) { throw "独立解压配置校验失败：$verificationRoot" }
+  & (Join-Path $verificationRoot "程序运行环境\node.exe") (Join-Path $projectRoot "tests\releaseSafety.test.js") (Join-Path $verificationRoot "应用")
+  if ($LASTEXITCODE -ne 0) { throw "便携包业务回归失败：$verificationRoot" }
+  Write-Host "校验目录：$verificationRoot"
   Update-ProjectVersionFiles `
     -PackageJsonPath $packageJsonPath `
     -PackageLockPath $packageLockPath `

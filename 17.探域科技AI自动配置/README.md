@@ -1,49 +1,39 @@
-# 探域科技AI自动配置 · 脚本复用库
+# 客服主管AI协作与后台配置指南
 
-> 登录态在独立画像 `C:/Users/b3460/.pi-edge-auto`（Edge持久目录，别删）。
-> 所有脚本依赖 `playwright-core`，先执行：`cd C:/Users/b3460/.pi-edge-work && npm i playwright-core`
-> 脚本里写死的画像路径保持不动，拷走也能跑。
+这份项目教AI如何像工作秘书一样：理解主管意图、读取资料、审核问答、逐项请主管拍板、配置后台并核验。默认适配探域后台；使用其他系统时复用工作方法，但必须重新确认接口和字段。
 
-## Cookie直调（免开浏览器）
-- 探域 Cookie：`tanyu-group-id / tanyu-agent-account / tanyu-account-id`
-- 获取：已登录页按F12→控制台输 `document.cookie`
--  base：`http://agent.tanyuai.com`，仪表盘：`POST /api/data-service/business/compass/summary`
-  `{"statType":"natural_day","platform":0,"dimension":"platform"}`
-- 店铺详情：`GET /api/gc/agent-personal/getChatbotShopDetailPage?pageNo=1&pageSize=20`
-- 商品分组：`GET /api/copilot/product-group/group-list`
-- 组内商品：`GET /api/copilot/product-group/list-product?id=分组ID`
-- 知识卡：`POST /api/kbe/v1/knowledge-card/page {"pageNo":1,"pageSize":5}`
-- 学习进度：`GET /api/copilot/product-learning/config/page?pageNo=1&pageSize=30`
+## 给主管：怎么开始
 
-## 脚本对照表（scripts/）
-| 脚本 | 用途 |
-|---|---|
-| control.cjs | 常驻受控Edge（独立窗不关，5秒写一次status.json） |
-| verify.cjs | 一次性验证：标题/URL/调summary/截图dashboard.png |
-| survey.cjs | 采集：Builder+数据罗盘截图，进集团与店铺页 |
-| authcheck.cjs | 店铺管理→店铺列表截图+文本（查授权三列） |
-| simtest.cjs | Agent Builder模拟买家提问并抓回复 |
-| ailearn.cjs / ailearn2.cjs | 商品列表全选→添加AI商品学习→点确定（两页） |
-| prodstatus.cjs | 统计两页“学习中/普通商品”数量 |
-| cfgcheck.cjs / policycheck.cjs | 欢迎语/卖点/触发器/兜底/拦截/记忆/场景库逐项抓文本 |
-| reccheck.cjs / recsub.cjs | 接待设置/协作子项（会话周期/转交话术/称呼/亮灯/抢话/自动发送/标识） |
-| shot3.cjs | 自动发送/抢话/欢迎语截图 |
-| fix2.cjs | 改自动发送+防止抢话（注意：需复核是否落盘） |
-| hsjc.cjs | 话术拦截页抓取 |
-| strat.cjs / bind*.cjs | 新建全自动策略→绑定用户弹窗探查（未保存，需用户定绑定账号） |
-| feishu.cjs / feishu2.cjs | 飞书密码文档解锁（密码见密码本，不入库） |
+把本目录设为AI的工作目录，发送下面这段话：
 
-## 飞书教程
-- 地址：`https://my.feishu.cn/wiki/IANhwhmQCio7cxkBdBacnVK5nBh`
-- 标题：《智能体2026新页面后台（实施版）操作文档》，密码用户保管
-- 要点：知识库、调优工坊、自定义Agent；四步：准备店铺→训大脑→全局协助→诊断优化
+> 请先完整阅读AGENTS.md、README.md、AI工作手册.md。你是我的客服配置助理。先告诉我你理解的目标，以及当前能否读取文件、查看后台和保存配置。先确认我公司的平台、店铺和授权范围，不采用其他公司的政策。业务不确定项记下来，一次只问我一项；明确且获授权的可恢复优化直接处理。每次说明只是本地草稿还是已经写入后台。先不要修改自动接待、学习开关或真实订单。
 
-## 经验索引
-- `AI工作手册.md`：项目主手册与已验证接口/脚本入口
-- `经验沉淀-2026-09-04.md`：本轮新增的无 GUI 诊断、调优工坊店铺上下文、范围/订单阶段审计和安全流程
-- `金山在线Word文档读取经验.md`：KDocs/WPS 在线 Word 的无 GUI 完整读取方法
+主管只需先准备：公司/店铺名称、允许处理的后台、已登录的授权环境、现行话术及政策资料。不用把密码或Cookie发给AI。
 
-## 当前结论（2026-09-04）
-1. 不自动回复主因：自动发送默认=仅生成不发送；次因：防止抢话=人工优先
-2. 26商品已进AI学习，模拟已回通用语
-3. 待定：全自动策略绑定哪个子账号；抢话是否切智能体优先；应用授权三列仍“-”
+Codex可发现工作目录中的AGENTS.md；其他AI是否自动读文件取决于所用软件，因此保留上面这段手动启动话术。文档不是模型训练，也不保证任意弱模型都正确执行；先让AI完成主手册的纸面自检和一条可恢复试改。依据：[OpenAI官方项目指引](https://learn.chatgpt.com/docs/agent-configuration/agents-md)。
+
+## 目录只分四类
+
+| 位置 | 用途 | 分享给其他公司 |
+|---|---|---|
+| AGENTS.md、README.md、AI工作手册.md | AI入口、主管入口、唯一通用流程 | 可以 |
+| 模板/ | 空白接入及拍板记录 | 可以 |
+| 通用经验/ | 在线文档完整读取，按需阅读 | 可以 |
+| 工具/ | 按白名单制作通用分享包 | 可以 |
+| 德达医疗公司专属资料/ | 原话术、政策、记录、图片、旧脚本及旧手册 | 不分享 |
+
+## 对外分享：不要直接发送整个原目录
+
+在本目录打开PowerShell执行：
+
+```powershell
+powershell -NoProfile -File .\工具\导出通用分享包.ps1
+```
+
+脚本只打包明确列出的通用文件，不包含公司目录、登录画像、历史脚本、图片、订单或后台快照。文件新增后不会自动进入白名单。分享生成的ZIP，不分享备份目录或整个Git仓库。即便使用白名单，正式外发前仍应打开ZIP核对目录。
+
+接收方解压后从本README开始，用自己的公司资料和登录环境。通用包不含自动配置后台的成品程序：AI需要具备文件/浏览器或脚本执行工具，并按手册验证当前后台后实施。没有这些能力时先输出草稿交主管手动配置，不能假装已经操作。
+
+## 维护原则
+
+补充方法改主手册，不再建立“新版最终版”等副本。公司记录放专属目录；若接入新公司，用该公司的独立私有工作副本，不在通用目录塞入业务数据。

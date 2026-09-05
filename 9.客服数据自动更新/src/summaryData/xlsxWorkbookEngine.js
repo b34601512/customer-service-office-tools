@@ -60,7 +60,10 @@ async function loadXlsxArchive(workbookPath) {
 
 function resolveArchiveTarget(baseDirectory, target) {
   // 这个函数只把 xlsx 关系文件里的相对目标转换成压缩包路径。
-  return path.posix.normalize(path.posix.join(baseDirectory, String(target || "")));
+  const archiveTarget = String(target || "");
+  return archiveTarget.startsWith("/")
+    ? path.posix.normalize(archiveTarget).replace(/^\/+/, "")
+    : path.posix.normalize(path.posix.join(baseDirectory, archiveTarget));
 }
 
 async function resolveWorksheetArchivePath(archive, sheetMode, sheetName) {

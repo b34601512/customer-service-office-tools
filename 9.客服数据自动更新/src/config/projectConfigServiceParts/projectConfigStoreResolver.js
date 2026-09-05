@@ -2,9 +2,9 @@ const { resolveStoreReportProfile, buildReportScopedStoreConfig } = require("../
 const { readProjectConfig } = require("./projectConfigPersistence");
 const { clone, normalizeString } = require("./projectConfigValuePrimitives");
 
-function resolvePlatformStoreConfig(platformKey, storeKey, reportKey = "performance") {
+function resolvePlatformStoreConfig(platformKey, storeKey, reportKey = "performance", projectConfig) {
   // 这个函数只解析指定平台、店铺和报表的独立运行配置。
-  const config = readProjectConfig();
+  const config = projectConfig || readProjectConfig();
   const platformConfig = config[platformKey];
   if (!platformConfig) {
     throw new Error(`未找到平台配置：${platformKey}`);

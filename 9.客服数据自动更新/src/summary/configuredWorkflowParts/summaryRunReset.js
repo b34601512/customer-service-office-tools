@@ -5,6 +5,7 @@ const { log } = require("../../engine/logger");
 const { readTaskHistory, writeTaskHistory } = require("../../shared/taskHistoryParts/taskHistoryStore");
 const { clearSummaryData } = require("../../summaryData/summaryDataWriter");
 const { formatLocalDayText } = require("../summarySourceReuse");
+const { movePathToBackup } = require("../../engine/fileSystem");
 
 function isFileTodayOrLater(filePath, now) {
   // 这个函数只按文件实际修改时间判断"是否今天下载"（应保留），否则视为旧文件（应清理）。
@@ -19,40 +20,35 @@ function isFileTodayOrLater(filePath, now) {
   }
 }
 
-function collectSourceFilesUnder(directory, collected) {
-  // 这个函数只递归收集目录下全部源文件路径。
-  if (!fs.existsSync(directory)) {
-    return;
-  }
-  for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
-    const entryPath = path.join(directory, entry.name);
-    if (entry.isDirectory()) {
-      collectSourceFilesUnder(entryPath, collected);
-    } else if (entry.isFile() && /\.(xlsx|xlsm|xls)$/i.test(entry.name)) {
-      collected.push(entryPath);
-    }
-  }
-}
-
-function cleanOldSourceFiles(downloadRootDir, now) {
-  // 这个函数只删除下载根目录下今天以前下载的源文件，保留今天的，返回删除数量。
+function cleanOldSourceFiles(downloadRootDir, now, options = {}) {
+  // 只清理下载历史登记过的源表，禁止递归处理使用者的任意 Excel。
   if (!downloadRootDir || !fs.existsSync(downloadRootDir)) {
     return { removedCount: 0 };
   }
-  const sourceFiles = [];
-  collectSourceFilesUnder(downloadRootDir, sourceFiles);
+  const root = fs.realpathSync(downloadRootDir);
+  const history = options.history || readTaskHistory();
+  const protectedWorkbook = options.workbookPath && fs.existsSync(options.workbookPath)
+    ? fs.realpathSync(options.workbookPath).toLowerCase() : "";
+  const sourceFiles = [...new Set((history.downloads || []).map(record => record.filePath).filter(Boolean))];
   let removedCount = 0;
+  const backupPaths = [];
   for (const filePath of sourceFiles) {
-    if (!isFileTodayOrLater(filePath, now)) {
-      try {
-        fs.unlinkSync(filePath);
+    try {
+      if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile() || !/\.(xlsx|xlsm|xls)$/i.test(filePath)) continue;
+      const realPath = fs.realpathSync(filePath);
+      const relative = path.relative(root, realPath);
+      if (!relative || relative === ".." || relative.startsWith(".." + path.sep) || path.isAbsolute(relative)) continue;
+      if (realPath.toLowerCase() === protectedWorkbook) continue;
+      if (!isFileTodayOrLater(realPath, now)) {
+        const backupPath = movePathToBackup(realPath, path.join(path.parse(realPath).root, "备份文件夹"), "旧下载源表", { date: now });
+        backupPaths.push(backupPath);
         removedCount += 1;
-      } catch (error) {
-        log("主线:失败", "批量汇总", "清理旧源文件", `无法删除 ${filePath}：${error?.message || error}`);
       }
+    } catch (error) {
+      log("主线:失败", "批量汇总", "备份旧源文件", `已保留 ${filePath}：${error?.message || error}`);
     }
   }
-  return { removedCount };
+  return { removedCount, backupPaths };
 }
 
 function resetTaskHistory(now) {
@@ -79,10 +75,11 @@ async function resetSummaryRunForToday({
   if (workbookPath) {
     await clearDataDetailImplementation({ workbookPath });
   }
-  const historyResult = resetTaskHistory(now);
+  const history = readTaskHistory();
   const downloadRootDir = String(projectConfig?.globalDefaults?.downloadRootDir || "").trim();
-  const fileResult = cleanOldSourceFiles(downloadRootDir, now);
-  logFn("主线:重置", "批量汇总", "本轮开始", `已清空数据明细、清空导入记录 ${historyResult.clearedImportRecords} 条、清理今天以前源文件 ${fileResult.removedCount} 个。`);
+  const fileResult = cleanOldSourceFiles(downloadRootDir, now, { history, workbookPath });
+  const historyResult = resetTaskHistory(now);
+  logFn("主线:重置", "批量汇总", "本轮开始", `已清空数据明细、清空导入记录 ${historyResult.clearedImportRecords} 条、备份今天以前已登记源文件 ${fileResult.removedCount} 个。`);
   return {
     clearedDataDetail: Boolean(workbookPath),
     historyResult,

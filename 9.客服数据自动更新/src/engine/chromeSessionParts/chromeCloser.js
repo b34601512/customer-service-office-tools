@@ -10,6 +10,7 @@ const {
 const { buildManagedChromeMatchTokens, clearManagedChromeSession } = require("./chromeSessionPaths");
 const { waitForChromeDebugPortClosed } = require("./chromePortWaiters");
 const { releaseDebugPort } = require("./chromePortGuard");
+const { findProcessIdsByCommandLine } = require("../managedProcessParts/processQuery");
 
 async function closeManagedChromeWithDependencies(dependencies = {}) {
   // 这里先尝试正常关闭浏览器主窗口，再在必要时强制清理，既保证干净重置，也尽量避免弹出恢复页面气泡。
@@ -25,8 +26,11 @@ async function closeManagedChromeWithDependencies(dependencies = {}) {
     dependencies.clearManagedChromeSession || clearManagedChromeSession;
   const logFn = dependencies.logFn || log;
   const logErrorFn = dependencies.logErrorFn || logError;
-  const chromePid = readManagedPidFn(appConfig.chromePidPath);
+  const recordedPid = readManagedPidFn(appConfig.chromePidPath);
   const commandLineTokens = buildManagedChromeMatchTokens();
+  const findOwnedPids = dependencies.findProcessIdsByCommandLine || findProcessIdsByCommandLine;
+  const ownedPids = recordedPid ? await findOwnedPids(commandLineTokens) : [];
+  const chromePid = ownedPids.includes(recordedPid) ? recordedPid : 0;
   let closedGracefully = false;
   let debugPortClosed = false;
 

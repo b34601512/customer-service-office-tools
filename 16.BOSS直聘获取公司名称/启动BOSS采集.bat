@@ -11,7 +11,7 @@ if errorlevel 1 (
   exit /b 1
 )
 
-python -c "import requests, websocket" >nul 2>nul
+python -c "import requests, websocket, openpyxl" >nul 2>nul
 if errorlevel 1 (
   echo [INFO] first run: installing dependencies requests + websocket-client...
   python -m pip install -r requirements.txt

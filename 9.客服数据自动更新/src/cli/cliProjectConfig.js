@@ -32,6 +32,7 @@ function addPlatformStore(platformKey) {
     Object.assign(newStore, {
       key: newStoreKey, includedInSummary: true, displayName: "新店铺", platformStoreId: "", platformStoreName: "",
       username: "", password: "", usesGlobalExportDateRange: true,
+      ...(platformKey === "pdd" ? { expectedIdentityText: "" } : {}),
       exportDateRange: clone(draftConfig.globalDefaults.exportDateRange),
       downloadDir: buildStoreDownloadDirFromRoot(draftConfig.globalDefaults.downloadRootDir, platformKey, newStoreKey)
     });

@@ -110,9 +110,12 @@ def find_free_port(preferred=DEFAULT_PORT):
     raise OSError(f"从端口 {preferred} 开始没有找到可用端口")
 
 
-def ensure_edge_running(port=DEFAULT_PORT):
+def ensure_edge_running(port=DEFAULT_PORT, start_url=SEARCH_PAGE_URL):
     """启动独立 Edge；若首选端口被占用则自动换用可用端口。返回实际端口。"""
     requested_port = int(port)
+    for owned_port in tuple(_owned_edge_processes):
+        if cdp_ready(owned_port):
+            return owned_port
     if cdp_ready(requested_port):
         return requested_port  # 已运行，复用
     os.makedirs(PROFILE_DIR, exist_ok=True)
@@ -129,7 +132,7 @@ def ensure_edge_running(port=DEFAULT_PORT):
         "--no-first-run",
         "--no-default-browser-check",
         "--new-window",
-        SEARCH_PAGE_URL,
+        start_url,
     ]
     print("[browser] 启动 Microsoft Edge…", flush=True)
     try:
@@ -237,11 +240,11 @@ def close_owned_edge(port=None):
     return closed
 
 
-def open_tab(port=DEFAULT_PORT):
+def open_tab(port=DEFAULT_PORT, url=SEARCH_PAGE_URL):
     """新建一个标签页并返回其 webSocketDebuggerUrl。现代 Chromium 需 PUT。"""
     for method in (requests.put, requests.get):
         try:
-            r = method(f"http://127.0.0.1:{port}/json/new?{urllib.parse.urlencode({'url': SEARCH_PAGE_URL})}", timeout=5)
+            r = method(f"http://127.0.0.1:{port}/json/new?{urllib.parse.quote(url, safe='')}", timeout=5)
             if 200 <= r.status_code < 300:
                 info = r.json()
                 tab = next(t for t in info if t.get("type") == "page") if isinstance(info, list) else info
@@ -379,7 +382,7 @@ def _browser_has_auth_cookie(session, timeout=2):
     )
 
 
-def login_wait(keyword, city_code, port=DEFAULT_PORT, login_timeout=900, progress=None):
+def login_wait(keyword, city_code, port=DEFAULT_PORT, login_timeout=900, progress=None, stop_event=None):
     """等待人工登录；认证完成后至多补发一次搜索导航，以真实 joblist 响应验真。"""
     try:
         login_timeout = max(1, int(login_timeout))
@@ -427,6 +430,8 @@ def login_wait(keyword, city_code, port=DEFAULT_PORT, login_timeout=900, progres
                 progress(0, 0, "验证登录状态", "正在请求岗位列表")
 
         while time.time() < deadline:
+            if stop_event is not None and stop_event.is_set():
+                return False
             remaining = max(1, int(deadline - time.time()))
             data = _await_joblist(
                 session,
@@ -437,6 +442,7 @@ def login_wait(keyword, city_code, port=DEFAULT_PORT, login_timeout=900, progres
                 progress_stage="等待登录响应",
                 progress_started_at=started_at,
                 on_tick=ensure_post_login_search,
+                stop_event=stop_event,
             )
             if data is not None:
                 code = data.get("code")
@@ -494,12 +500,14 @@ def _joblist_response_data(session, params):
 
 def _await_joblist(session, timeout=60, progress_message="", progress=None,
                    progress_current=0, progress_total=0, progress_stage="等待网络响应",
-                   progress_started_at=None, on_tick=None):
+                   progress_started_at=None, on_tick=None, stop_event=None):
     """等待 joblist 响应并取回 body 解析；按秒返回控制权，保证界面持续有状态。"""
     wait_started_at = time.time() if progress_started_at is None else progress_started_at
     deadline = time.time() + timeout
     last_progress = 0.0
     while time.time() < deadline:
+        if stop_event is not None and stop_event.is_set():
+            return None
         # wait_response 取 body 时可能顺便消费其他 Network 事件，先处理缓存队列，避免漏响应。
         if _joblist_responses:
             params = _joblist_responses.pop(0)
@@ -705,7 +713,7 @@ def deduplicate_job_items(items, seen_job_ids=None):
     return unique, duplicate_count
 
 
-def enrich_company_names(session, items, company_cache=None, page=1, total_pages=0, progress=None):
+def enrich_company_names(session, items, company_cache=None, page=1, total_pages=0, progress=None, stop_event=None):
     """串行、低频补全企业全称；同一企业在本次任务中只请求一次。"""
     cache = company_cache if company_cache is not None else {}
     rows, request_count, missing_count = [], 0, 0
@@ -713,6 +721,8 @@ def enrich_company_names(session, items, company_cache=None, page=1, total_pages
     if total_items:
         print(f"[company] 第 {page} 页：开始补全 {total_items} 条岗位的企业全称…", flush=True)
     for index, item in enumerate(items, 1):
+        if stop_event is not None and stop_event.is_set():
+            break
         brand_id = item.get("encryptBrandId")
         cache_key = str(brand_id).strip() if brand_id not in (None, "") else ""
         if cache_key and cache_key in cache:
@@ -736,7 +746,7 @@ def enrich_company_names(session, items, company_cache=None, page=1, total_pages
         rows.append(parse_job(item, company_name=company_name))
     if total_items:
         print(
-            f"[company] 第 {page} 页完成：全称 {total_items - missing_count} 条，未取得 {missing_count} 条",
+            f"[company] 第 {page} 页已处理 {len(rows)}/{total_items} 条：全称 {len(rows) - missing_count} 条，未取得 {missing_count} 条",
             flush=True,
         )
     return rows
@@ -748,7 +758,7 @@ def filter_job_items(items, title_filter=''):
 
 
 def fetch_page(session, keyword, city_code, page, page_delay=3, total_pages=0, progress=None,
-               seen_job_ids=None, company_cache=None, detail_session=None, page_info=None, title_filter=''):
+               seen_job_ids=None, company_cache=None, detail_session=None, page_info=None, title_filter='', stop_event=None):
     """导航到第 page 页并解析 joblist 数据。返回 row 列表。"""
     session.expected_joblist = {'page': page, 'query': keyword, 'city': city_code}
     if callable(progress):
@@ -769,8 +779,11 @@ def fetch_page(session, keyword, city_code, page, page_delay=3, total_pages=0, p
         progress_current=page - 1,
         progress_total=total_pages,
         progress_stage=f"等待第 {page}/{total_pages} 页响应" if total_pages else f"等待第 {page} 页响应",
+        stop_event=stop_event,
     )
     if data is None:
+        if stop_event is not None and stop_event.is_set():
+            return []
         raise TimeoutError(
             f"第 {page} 页未捕获到 joblist 响应（可能网络超时、CDP监听时序、登录失效或风控）"
         )
@@ -794,10 +807,14 @@ def fetch_page(session, keyword, city_code, page, page_delay=3, total_pages=0, p
         page=page,
         total_pages=total_pages,
         progress=progress,
+        stop_event=stop_event,
     )
     # 只在还有下一页时等待，最后一页不做无意义停顿。
     if page_delay > 0 and (not total_pages or page < total_pages):
-        time.sleep(page_delay)  # 低频，避免封号
+        if stop_event is not None:
+            stop_event.wait(page_delay)
+        else:
+            time.sleep(page_delay)  # 低频，避免封号
     return rows
 
 
@@ -848,10 +865,20 @@ def normalize_page_count(value):
     return pages
 
 
-def run_fetch(keyword, city, pages, fmt, delay, port, progress=None, title_filter=''):
+def normalize_city(city):
+    """配置与所有采集入口共用：规范城市名并校验，不猜测未知城市码。"""
+    value = str(city or '').strip()
+    if value.endswith('市') and value[:-1] in CITY_CODES:
+        value = value[:-1]
+    if value in CITY_CODES or (len(value) == 9 and value.isascii() and value.isdigit()):
+        return value
+    raise ValueError('未知城市：' + (value or '空') + '；请填写支持的城市名或9位城市码（命令行使用 --city）')
+
+
+def run_fetch(keyword, city, pages, fmt, delay, port, progress=None, title_filter='', stop_event=None):
     # TUI/旧调用方可能传入文本框字符串；业务入口统一规范化，避免类型错误进入分页循环。
     keyword = str(keyword or "").strip()
-    city = str(city or "").strip()
+    city = normalize_city(city)
     pages = normalize_page_count(pages)
     try:
         delay = float(delay)
@@ -863,9 +890,9 @@ def run_fetch(keyword, city, pages, fmt, delay, port, progress=None, title_filte
         raise ValueError("关键词不能为空")
     if fmt not in ("csv", "json", "both"):
         raise ValueError(f"导出格式不支持：{fmt!r}")
-    city_code = city if city.isdigit() else CITY_CODES.get(city, city)
-    if not city_code or not str(city_code).isdigit():
-        raise ValueError(f"未知城市：{city}，请用 --city-code 传城市码（全量码表见 /wapi/zpCommon/data/cityGroup.json）")
+    city_code = CITY_CODES.get(city, city)
+    if stop_event is not None and stop_event.is_set():
+        return []
     port = ensure_edge_running(port)
     if callable(progress):
         progress(0, pages, "连接专用浏览器", "正在建立 CDP 会话")
@@ -884,6 +911,8 @@ def run_fetch(keyword, city, pages, fmt, delay, port, progress=None, title_filte
         detail_session.send('Page.enable')
         session.send('Page.bringToFront')
         for page in range(1, pages + 1):
+            if stop_event is not None and stop_event.is_set():
+                break
             try:
                 page_info = {}
                 rows = fetch_page(
@@ -891,9 +920,12 @@ def run_fetch(keyword, city, pages, fmt, delay, port, progress=None, title_filte
                     total_pages=pages, progress=progress,
                     seen_job_ids=seen_job_ids, company_cache=company_cache,
                     detail_session=detail_session, page_info=page_info, title_filter=title_filter,
+                    stop_event=stop_event,
                 )
                 completed_pages = page
                 all_rows.extend(rows)
+                if stop_event is not None and stop_event.is_set():
+                    break
                 if callable(progress):
                     progress(page, pages, f"完成第 {page}/{pages} 页", f"本页 {len(rows)} 条，累计 {len(all_rows)} 条")
                 print(f"[fetch] 第 {page} 页 OK，累计 {len(all_rows)} 条", flush=True)
@@ -919,7 +951,7 @@ def run_fetch(keyword, city, pages, fmt, delay, port, progress=None, title_filte
         paths = export_rows(all_rows, keyword, city_code, fmt)
         for k, p in paths.items():
             print(f"[export] {k.upper()} -> {p}")
-    elif not failed:
+    elif not failed and not (stop_event is not None and stop_event.is_set()):
         print("[fetch] 接口响应成功，但没有岗位结果（当前搜索条件可能无匹配）", flush=True)
     missing_company_count = sum(not row.get("company") for row in all_rows)
     if missing_company_count:
@@ -928,7 +960,11 @@ def run_fetch(keyword, city, pages, fmt, delay, port, progress=None, title_filte
             flush=True,
         )
     completed_at = time.strftime("%Y-%m-%d %H:%M:%S")
-    if failed:
+    if stop_event is not None and stop_event.is_set():
+        print(f'[fetch] 已停止：保存 {len(all_rows)} 条已采集结果。', flush=True)
+        if callable(progress):
+            progress(completed_pages, pages, '已停止', f'已保存 {len(all_rows)} 条')
+    elif failed:
         print(f"[fetch] 失败页：{failed}，已抓数据已保存，可缩小 --pages 重跑。")
         if all_rows:
             if callable(progress):
@@ -974,8 +1010,9 @@ def main():
     exit_code = 0
     try:
         if args.cmd == "setup":
+            city = normalize_city(args.city)
             active_port = ensure_edge_running(args.port)
-            cc = CITY_CODES.get(args.city, args.city)
+            cc = CITY_CODES.get(city, city)
             if not login_wait(args.keyword, cc, active_port, args.login_timeout):
                 exit_code = 2
         elif args.cmd == "fetch":

@@ -2,7 +2,8 @@
 // 页面只负责提供“内容行数组”和“按键处理”，不直接触碰终端底层。
 // 移植自“客服超时督办”项目 TUI，并扩展了模态输入框供配置编辑使用。
 const ansi = require("./ansi");
-const { fit } = require("./width");
+const { fit, displayWidth } = require("./width");
+const { StringDecoder } = require("node:string_decoder");
 const { formatClock } = require("./format");
 
 const ESCAPE_RESOLVE_TIMEOUT_MS = 40;
@@ -81,6 +82,7 @@ class TuiApp {
     this.terminalStarted = false;
     this.renderQueued = false;
     this.escapeBuffer = "";
+    this.inputDecoder = new StringDecoder("utf8");
     this.escapeTimer = null;
     this.inputModal = null; // { mode: "input" | "confirm", title, buffer, secret, resolve }
     this.output = options.output || process.stdout;
@@ -123,6 +125,7 @@ class TuiApp {
         mode: "input",
         title: String(title || "请输入"),
         buffer: String(defaultValue ?? ""),
+        replaceDefault: Boolean(String(defaultValue ?? "")),
         secret: Boolean(secret),
         resolve
       };
@@ -224,7 +227,7 @@ class TuiApp {
   }
 
   consumeInput(chunk) {
-    const text = chunk.toString("utf8");
+    const text = typeof chunk === "string" ? chunk : this.inputDecoder.write(chunk);
     for (const char of text) {
       if (this.escapeBuffer) {
         this.escapeBuffer += char;
@@ -341,11 +344,14 @@ class TuiApp {
       return;
     }
     if (key === "backspace") {
-      modal.buffer = modal.buffer.slice(0, -1);
+      modal.buffer = modal.replaceDefault ? "" : Array.from(modal.buffer).slice(0, -1).join("");
+      modal.replaceDefault = false;
       this.requestRender();
       return;
     }
-    if (typeof key === "string" && key.length === 1) {
+    if (typeof key === "string" && Array.from(key).length === 1 && key.codePointAt(0) >= 32) {
+      if (modal.replaceDefault) modal.buffer = "";
+      modal.replaceDefault = false;
       modal.buffer += key;
       this.requestRender();
     }
@@ -401,7 +407,7 @@ class TuiApp {
     if (this.inputModal) {
       footerText = this.inputModal.mode === "confirm"
         ? "y/回车 确认    n/Esc 取消"
-        : "输入内容后回车确认    Esc 取消";
+        : "输入后回车确认（直接回车保留默认值） Esc取消";
     } else if (this.page && typeof this.page.footer === "function") {
       footerText = this.page.footer(this) || "";
     }
@@ -425,12 +431,14 @@ class TuiApp {
   buildInputOverlay(contentLines, columns, contentHeight) {
     const modal = this.inputModal;
     const overlayLines = contentLines.slice(0, Math.max(0, contentHeight - 3));
-    const shownBuffer = modal.secret ? "*".repeat(modal.buffer.length) : modal.buffer;
-    const promptLine = modal.mode === "confirm"
-      ? ` ${modal.title} (y=确认 n=取消)`
-      : ` ${modal.title}：${shownBuffer}▏`;
+    let shownBuffer = modal.secret ? "*".repeat(Array.from(modal.buffer).length) : modal.buffer;
+    // 标题与输入分行；长路径/令牌始终显示输入末尾和光标。
+    const characters = Array.from(shownBuffer);
+    while (displayWidth(characters.join("")) > columns - 4) characters.shift();
+    shownBuffer = characters.join("");
     overlayLines.push(ansi.colorize(fit("─".repeat(Math.min(columns, 64)), columns), "yellow"));
-    overlayLines.push(ansi.colorize(fit(promptLine, columns), "brightYellow"));
+    overlayLines.push(ansi.colorize(fit(` ${modal.title}`, columns), "brightYellow"));
+    overlayLines.push(ansi.colorize(fit(modal.mode === "confirm" ? " y/回车确认，n/Esc取消" : ` ${shownBuffer}▏`, columns), "brightYellow"));
     return overlayLines;
   }
 

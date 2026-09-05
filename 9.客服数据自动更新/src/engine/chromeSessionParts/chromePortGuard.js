@@ -4,6 +4,8 @@ const { execFile } = require("child_process");
 const { log, logError } = require("../logger");
 const { killProcessTree } = require("../managedProcessParts/processCloser");
 const { isLocalPortOpen, waitForChromeDebugPortClosed } = require("./chromePortWaiters");
+const { findProcessIdsByCommandLine } = require("../managedProcessParts/processQuery");
+const { buildManagedChromeMatchTokens } = require("./chromeSessionPaths");
 
 function findDebugPidsOnPort(port) {
   // 这里找出监听指定端口、且命令行带 --remote-debugging-port=<port> 的进程，双条件才认定为受控调试浏览器。
@@ -50,6 +52,8 @@ async function releaseDebugPort(port, processLabel = "调试浏览器", dependen
     dependencies.waitForChromeDebugPortClosed || waitForChromeDebugPortClosed;
   const logFn = dependencies.logFn || log;
   const logErrorFn = dependencies.logErrorFn || logError;
+  const findDebugPids = dependencies.findDebugPidsOnPort || findDebugPidsOnPort;
+  const findOwnedPids = dependencies.findProcessIdsByCommandLine || findProcessIdsByCommandLine;
 
   if (!(await isLocalPortOpenFn(port))) {
     return true;
@@ -57,13 +61,15 @@ async function releaseDebugPort(port, processLabel = "调试浏览器", dependen
 
   let pids;
   try {
-    pids = await findDebugPidsOnPort(port);
+    const listenerPids = await findDebugPids(port);
+    const ownedPids = new Set(await findOwnedPids(buildManagedChromeMatchTokens()));
+    pids = listenerPids.filter(pid => ownedPids.has(pid));
   } catch (error) {
     logErrorFn("主线:失败", "浏览器引擎", "端口守卫查询", error);
     return false;
   }
   if (!pids.length) {
-    logFn("主线:等待", "浏览器引擎", "端口守卫", `调试端口 ${port} 被非调试进程占用，等待其释放`);
+    logFn("主线:等待", "浏览器引擎", "端口守卫", `调试端口 ${port} 不属于本项目浏览器，请关闭占用程序或退出另一客户端后重试`);
     return false;
   }
 

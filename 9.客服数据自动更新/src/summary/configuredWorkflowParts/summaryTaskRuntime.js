@@ -7,7 +7,7 @@ const { ensurePlatformStoreWindowForSummary } = require("./summaryStoreWindow");
 function buildResolvedConfigForSummaryTask({ platformKey, storeKey, reportKey, dateRange, projectConfig }) {
   // 这个函数只把一个报表锁定到唯一长期汇总表和本轮日期；配置优先用调用方注入的本轮配置，避免隔离运行读串生产路径。
   const activeProjectConfig = projectConfig || readProjectConfig();
-  const resolvedConfig = resolvePlatformStoreConfig(platformKey, storeKey, reportKey);
+  const resolvedConfig = resolvePlatformStoreConfig(platformKey, storeKey, reportKey, activeProjectConfig);
   resolvedConfig.activeStore.exportDateRange = buildManualDateRangeConfig(dateRange);
   resolvedConfig.workbook = { path: String(activeProjectConfig.workbook?.path || "").trim() };
   return { projectConfig: activeProjectConfig, resolvedConfig };

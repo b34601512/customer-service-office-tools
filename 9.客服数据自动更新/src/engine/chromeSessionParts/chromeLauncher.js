@@ -44,10 +44,7 @@ async function launchChromeForManualLogin(targetUrl, options = {}) {
     );
   }
 
-  const child = spawn(executablePath, args, {
-    detached: true,
-    stdio: "ignore"
-  });
+  const child = await spawnManagedChrome(executablePath, args);
 
   child.unref();
   writeManagedPid(appConfig.chromePidPath, child.pid);
@@ -66,6 +63,15 @@ async function launchChromeForManualLogin(targetUrl, options = {}) {
   );
 }
 
+function spawnManagedChrome(executablePath, args, spawnImplementation = spawn) {
+  return new Promise((resolve, reject) => {
+    const child = spawnImplementation(executablePath, args, { detached: true, stdio: "ignore" });
+    child.once("error", error => reject(new Error(`浏览器启动失败：${error.message}`)));
+    child.once("spawn", () => resolve(child));
+  });
+}
+
 module.exports = {
-  launchChromeForManualLogin
+  launchChromeForManualLogin,
+  spawnManagedChrome
 };

@@ -7,6 +7,7 @@ const { formatGlobalDateMode } = require("../../cliDashboard");
 const { createManualExportDateRangeConfig } = require("../../../shared/exportDateRange");
 const { readProjectConfig, saveProjectConfig } = require("../../../config/projectConfigServiceParts/projectConfigPersistence");
 const { updateProjectConfig, normalizeUserPath } = require("../../cliProjectConfig");
+const { selectionViewport } = require("../selectionViewport");
 
 function isValidCalendarDate(dateText) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(dateText || ""))) return false;
@@ -73,7 +74,8 @@ function createSettingsPage() {
       if (this.state.message) {
         lines.push(ansi.colorize(`提示：${this.state.message}`, "brightYellow"));
       }
-      return lines;
+      return selectionViewport(lines, 3 + this.state.selection, app.contentHeight, 1,
+        Number(Boolean(this.state.message)) + Number(Boolean(this.state.busyText)));
     },
     renderPersonEditor(app, lines, columns) {
       const editor = this.state.personEditor;
@@ -86,7 +88,8 @@ function createSettingsPage() {
         const line = `${selected ? "▶ " : "  "}${padEnd(normalizeCellText(mapping.summaryName), 10)} ${padEnd(normalizeCellText(mapping.role || ""), 4)} ${normalizeCellText((mapping.sourceNames || []).join("、"))}`;
         lines.push(selected ? ansi.colorize(fit(line, columns), "reverse") : fit(line, columns));
       });
-      return lines;
+      if (this.state.message) lines.push(ansi.colorize(`提示：${this.state.message}`, "brightYellow"));
+      return selectionViewport(lines, 1 + editor.selection, app.contentHeight, 1, Number(Boolean(this.state.message)));
     },
     footer() {
       if (this.state.personEditor) {
@@ -259,10 +262,14 @@ function createSettingsPage() {
         const mapping = editor.mappings[editor.selection];
         app.requestConfirm(`确认删除客服「${mapping.summaryName}」？`).then((confirmed) => {
           if (!confirmed) return;
-          editor.mappings.splice(editor.selection, 1);
-          editor.selection = Math.max(0, editor.selection - 1);
-          this.savePersonMappings(editor.mappings);
-          this.state.message = "已删除。";
+          try {
+            const nextMappings = editor.mappings.filter((_, index) => index !== editor.selection);
+            editor.mappings = this.savePersonMappings(nextMappings);
+            editor.selection = Math.max(0, editor.selection - 1);
+            this.state.message = "已删除。";
+          } catch (error) {
+            this.state.message = error instanceof Error ? error.message : String(error);
+          }
           app.requestRender();
         });
         return true;
@@ -289,9 +296,11 @@ function createSettingsPage() {
           role,
           sourceNames
         };
-        if (index >= 0) editor.mappings[index] = nextMapping;
-        else editor.mappings.push(nextMapping);
-        this.savePersonMappings(editor.mappings);
+        const nextMappings = editor.mappings.slice();
+        if (index >= 0) nextMappings[index] = nextMapping;
+        else nextMappings.push(nextMapping);
+        editor.mappings = this.savePersonMappings(nextMappings);
+        editor.selection = Math.max(0, Math.min(index >= 0 ? index : editor.mappings.length - 1, editor.mappings.length - 1));
         this.state.message = index >= 0 ? "客服已更新。" : "客服已新增。";
       } catch (error) {
         this.state.message = error instanceof Error ? error.message : String(error);
@@ -299,9 +308,10 @@ function createSettingsPage() {
       app.requestRender();
     },
     savePersonMappings(personMappings) {
-      updateProjectConfig((draftConfig) => {
+      const saved = updateProjectConfig((draftConfig) => {
         draftConfig.globalDefaults.reportProfiles.performance.personMappings = personMappings;
       });
+      return saved.globalDefaults.reportProfiles.performance.personMappings;
     }
   };
   return page;

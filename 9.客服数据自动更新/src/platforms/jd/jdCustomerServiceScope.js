@@ -66,11 +66,13 @@ async function clickExactVisibleOption(surface, value) {
 }
 
 async function clickVisibleScopeOption(surface, value, { allowRoleGroupFallback = false } = {}) {
+  let originalError;
   try {
     await clickExactVisibleOption(surface, value);
     return value;
   } catch (error) {
     if (!allowRoleGroupFallback || value !== "售前") throw error;
+    originalError = error;
   }
 
   const jdOptions = surface.locator(".kf-manage-lite-select-item-option").filter({ hasText: "售前" });
@@ -105,7 +107,7 @@ async function clickVisibleScopeOption(surface, value, { allowRoleGroupFallback 
       return text;
     }
   }
-  throw error;
+  throw originalError;
 }
 
 async function clickVisibleDropdownText(surface, value) {

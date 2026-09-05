@@ -374,10 +374,15 @@ function testCleanOldSourceFilesKeepsOnlyToday() {
     // 清理只看文件修改时间：抖音等文件名带导出范围日期的今天文件也必须保留。
     fs.utimesSync(todayPath, now, now);
     fs.utimesSync(oldPath, new Date("2026-08-01T12:00:00"), new Date("2026-08-01T12:00:00"));
-    const result = cleanOldSourceFiles(temporaryDirectory, now);
+    const unrelatedPath = path.join(storeDir, "其他工作表.xlsx");
+    fs.writeFileSync(unrelatedPath, "must keep");
+    fs.utimesSync(unrelatedPath, new Date("2026-08-01"), new Date("2026-08-01"));
+    const result = cleanOldSourceFiles(temporaryDirectory, now, { history: { downloads: [{ filePath: todayPath }, { filePath: oldPath }] } });
     assert.strictEqual(result.removedCount, 1);
     assert.strictEqual(fs.existsSync(todayPath), true);
     assert.strictEqual(fs.existsSync(oldPath), false);
+    assert.strictEqual(fs.existsSync(unrelatedPath), true);
+    assert.strictEqual(fs.readFileSync(result.backupPaths[0], "utf8"), "x");
   } finally {
     fs.rmSync(temporaryDirectory, { recursive: true, force: true });
   }

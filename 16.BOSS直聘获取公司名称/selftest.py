@@ -20,6 +20,7 @@ import csv
 import io
 import json
 import os
+import subprocess
 import sys
 import tempfile
 import time
@@ -32,7 +33,6 @@ sys.stderr.reconfigure(encoding="utf-8")
 
 import boss_cdp as biz
 import boss_tui as tui
-import merchant_subjects
 import shop_subjects
 
 
@@ -48,6 +48,152 @@ def new_app():
     app = tui.TuiApp(f"BOSS直聘采集工具 {tui.APP_VERSION}", pages, output=FakeTerminal(),
                      status_bar_provider=lambda a: tui.build_status_lines(ctx, a))
     return ctx, pages, app
+
+
+def check_windows_console():
+    """在独立隐藏控制台中注入真实 Win32 事件，经生产输入器和 TUI 主循环读取。"""
+    import ctypes
+    from ctypes import wintypes
+    from console_input import InputRecord, KeyEvent, WindowsConsoleInput
+
+    api = ctypes.WinDLL("kernel32", use_last_error=True)
+    api.CreateFileW.argtypes = [wintypes.LPCWSTR, wintypes.DWORD, wintypes.DWORD,
+                               wintypes.LPVOID, wintypes.DWORD, wintypes.DWORD, wintypes.HANDLE]
+    api.CreateFileW.restype = wintypes.HANDLE
+    api.SetStdHandle.argtypes = [wintypes.DWORD, wintypes.HANDLE]
+    api.CloseHandle.argtypes = [wintypes.HANDLE]
+    api.GetConsoleMode.argtypes = [wintypes.HANDLE, ctypes.POINTER(wintypes.DWORD)]
+    api.WriteConsoleInputW.argtypes = [wintypes.HANDLE, ctypes.POINTER(InputRecord),
+                                     wintypes.DWORD, ctypes.POINTER(wintypes.DWORD)]
+    handle = api.CreateFileW("CONIN$", 0xC0000000, 3, None, 3, 0, None)
+    assert handle != wintypes.HANDLE(-1).value
+    assert api.SetStdHandle(-10, handle)
+
+    def record(char="\x00", vk=0, down=True, repeat=1, kind=1):
+        value = InputRecord()
+        value.type = kind
+        value.event.key = KeyEvent(down, repeat, vk, 0, char, 0)
+        return value
+
+    def write(events):
+        buffer = (InputRecord * len(events))(*events)
+        count = wintypes.DWORD()
+        assert api.WriteConsoleInputW(handle, buffer, len(buffer), ctypes.byref(count))
+        assert count.value == len(buffer)
+
+    original = wintypes.DWORD()
+    assert api.GetConsoleMode(handle, ctypes.byref(original))
+    reader = WindowsConsoleInput()
+    try:
+        assert ctypes.sizeof(InputRecord) == 20
+        mode = wintypes.DWORD()
+        assert api.GetConsoleMode(handle, ctypes.byref(mode))
+        assert mode.value & 0x0247 == 0
+        assert reader.poll() == []
+        for codepage in (936, 65001):
+            assert api.SetConsoleCP(codepage)
+            for char in "济南杭州上海一客服à":
+                write([record(char)])
+                assert reader.poll() == [char]
+                assert reader.poll() == [], "读完中文后不得等待后续按键"
+        # 输入法组合空事件、修饰键、抬键和窗口事件不能阻塞、误保存或重复上屏。
+        write([record(vk=0xE5), record(vk=0x10), record("南", down=False), record(kind=4)])
+        assert reader.poll() == []
+        write([record(vk=0x1B), record("a"), record(vk=0x26), record("x", repeat=3)])
+        assert reader.poll() == ["esc", "a", "up", "x", "x", "x"]
+
+        # 所有配置逐项经过真实事件读取和页面分发，而不是直接改配置字典。
+        ctx, pages, app = new_app()
+        app.running = True
+        app.switch_page(1)
+        config = pages[1]
+
+        def send(*events):
+            write(events)
+            for key in reader.poll():
+                app.dispatch_key(app.translate_char(key))
+
+        def edit(index, value, cancel=False):
+            while config.state["selection"] != index:
+                send(record(vk=0x28))
+            send(record("\r"))
+            length = len(config.state["edit_buffer"])
+            if length:
+                send(record("\x08", repeat=length))
+            for ch in value:
+                send(record(ch))
+            assert app.current_page_index == 1 and config.state["editing"] is not None
+            send(record("\x1b" if cancel else "\r"))
+            assert config.state["editing"] is None
+
+        values = [(0, "keyword", "电商客服qr123"), (1, "city", "济南"),
+                  (2, "pages", "400"), (4, "title_filter", "客服，仓管")]
+        for index, name, value in values:
+            edit(index, value)
+            assert ctx.config[name] == (int(value) if name == "pages" else value)
+            previous = dict(ctx.config)
+            edit(index, "2" if name == "pages" else "取消修改", cancel=True)
+            assert ctx.config == previous
+        for index, name in [(0, "keyword"), (1, "city"), (2, "pages")]:
+            previous = dict(ctx.config)
+            edit(index, "")
+            assert ctx.config == previous and config.state["message"]
+        for value in ("0", "1001"):
+            previous = dict(ctx.config)
+            edit(2, value)
+            assert ctx.config == previous
+        for value, arrow in [("1", 0x25), ("1000", 0x27)]:
+            edit(2, value)
+            send(record("\r"), record(vk=arrow), record("\r"))
+            assert ctx.config["pages"] == int(value)
+        edit(4, "")
+        assert ctx.config["title_filter"] == ""
+        while config.state["selection"] != 3:
+            send(record(vk=0x28))
+        for expected in ("json", "both", "csv"):
+            send(record("\r"), record(vk=0x27), record("\r"))
+            assert ctx.config["format"] == expected
+        send(record("\r"), record(vk=0x27), record("\x1b"))
+        assert ctx.config["format"] == "csv"
+        send(record("r"))
+        assert ctx.config == tui.Ctx().config
+        send(record("q"))
+        assert app.current_page_index == 0
+        app.stop()
+    finally:
+        reader.close()
+    restored = wintypes.DWORD()
+    assert api.GetConsoleMode(handle, ctypes.byref(restored))
+    assert restored.value == original.value
+
+    # 实际 start -> poll -> dispatch -> ConfigPage -> render -> stop 全链路。
+    ctx, pages, app = new_app()
+    app.on_exit_request = app.stop
+    events = [record("2"), record(vk=0x28), record("\r")]
+    events += [record("\x08", repeat=2)] + [record(ch) for ch in "杭州"] + [record("\r")]
+    # 岗位字段保存“客服,仓管”，再输入修改并 Esc 丢弃。
+    events += [record(vk=0x28, repeat=3), record("\r")]
+    events += [record(ch) for ch in "客服,仓管"] + [record("\r"), record("\r"), record("错"), record("\x1b")]
+    # 页数与格式仍能调整保存。
+    events += [record(vk=0x26, repeat=2), record("\r"), record(vk=0x27), record("\r")]
+    events += [record(vk=0x28), record("\r"), record(vk=0x27), record("\r")]
+    events += [record("q"), record("\x03")]
+    write(events)
+    try:
+        with mock.patch.object(app, "_interactive_terminal", return_value=True):
+            app.start()
+        assert ctx.config == dict(keyword="国内电商", city="杭州", pages=2,
+                                  format="json", title_filter="客服,仓管",
+                                  jd_input=str(tui.jd_shops.default_input_path())), ctx.config
+        assert pages[1].state["editing"] is None
+        assert app.current_page_index == 0 and not app.running
+        assert "杭州" in app.output.getvalue() and "客服,仓管" in app.output.getvalue()
+        assert api.GetConsoleMode(handle, ctypes.byref(restored))
+        assert restored.value == original.value
+    finally:
+        app.stop()
+        api.CloseHandle(handle)
+    print("真实控制台中文编辑、取消、保存、返回、退出与模式恢复 PASS")
 
 
 # ---------------------------------------------------------------- 业务真源
@@ -88,15 +234,6 @@ class BusinessTests(unittest.TestCase):
              mock.patch.object(biz, 'fetch_page', side_effect=last_page) as fetch:
             self.assertEqual(biz.run_fetch('客服', '深圳', 1000, 'csv', 0, 9222), [])
         self.assertEqual(fetch.call_count, 1)
-
-    def test_subjects_merge_regions_and_evidence(self):
-        document = '''京东商城自营商品经营者资质信息公示
-        <div class="text-list-title-block">华北</div><a href="/a"><span class="title">甲有限公司</span></a>
-        <div class="text-list-title-block">华东</div><a href="/b"><span class="title">甲有限公司</span></a>'''
-        rows = merchant_subjects.parse_subjects(document)
-        self.assertEqual(len(rows), 1)
-        self.assertEqual(rows[0]['regions'], ['华北', '华东'])
-        self.assertEqual(len(rows[0]['license_urls']), 2)
 
     def test_response_job_list_supports_current_nested_shape(self):
         data = {"code": 0, "zpData": {"resCount": 1, "jobList": [{"jobId": "J1"}]}}
@@ -509,17 +646,17 @@ class TuiTests(unittest.TestCase):
             labels = [item[0] for item in pages[0].items]
             self.assertIn("首次登录", labels[0])
             self.assertIn("检查", labels[0])
-            self.assertEqual(labels[1], "开始抓取")
+            self.assertEqual(labels[1], "采集BOSS招聘企业")
             self.assertEqual(labels[-1], "退出采集工具")
         with mock.patch.object(tui, "has_saved_profile", return_value=True):
             labels = [item[0] for item in pages[0].items]
-            self.assertEqual(labels[0], "开始抓取")
+            self.assertEqual(labels[0], "采集BOSS招聘企业")
             self.assertIn("首次登录", labels[-1])
             rendered = "\n".join(pages[0].render(type("App", (), {"columns": 100, "content_height": 15})()))
             self.assertIn(tui.CODES["brightGreen"], rendered)
             self.assertIn(tui.CODES["brightRed"], rendered)
         self.assertEqual(pages[1].title, "配置")
-        self.assertNotIn("开始抓取", [field["label"] for field in pages[1].fields])
+        self.assertNotIn("采集BOSS招聘企业", [field["label"] for field in pages[1].fields])
 
     def test_frame_structure_and_no_mojibake(self):
         """四页全部渲染：行数=终端行数、版权两行、无乱码（U+FFFD/非法解码）、每行不超宽过多。"""
@@ -562,38 +699,33 @@ class TuiTests(unittest.TestCase):
         app.dispatch_key("q")
         self.assertEqual(app.current_page_index, 0)
 
-    def test_windows_escape_does_not_swallow_following_text(self):
-        """Windows 单独按 Esc 后，后续关键词字符仍应正常进入编辑器。"""
-        class FakeMsvcrt:
-            def __init__(self, chars):
-                self.chars = list(chars)
-
-            def kbhit(self):
-                return bool(self.chars)
-
-            def getwch(self):
-                return self.chars.pop(0)
-
-        app = tui.TuiApp("test", [], output=FakeTerminal())
-        reader = FakeMsvcrt([chr(27), "a", "b"])
-        self.assertEqual(app._read_windows_key(reader), "esc")
-        self.assertEqual(app._read_windows_key(reader), "a")
-        self.assertEqual(app._read_windows_key(reader), "b")
+    @unittest.skipUnless(os.name == "nt", "需要 Windows 控制台 API")
+    def test_real_windows_console_edit_and_return(self):
+        result = subprocess.run(
+            [sys.executable, "-B", "-c", "from selftest import check_windows_console; check_windows_console()"],
+            cwd=os.path.dirname(os.path.abspath(__file__)),
+            creationflags=subprocess.CREATE_NO_WINDOW, capture_output=True,
+            encoding="utf-8", timeout=10,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("PASS", result.stdout)
 
     def test_home_start_fetch_uses_config(self):
         ctx, pages, app = new_app()
-        ctx.config.update(keyword="运营", city="北京", pages=2, format="json")
-        with mock.patch.object(biz, "run_fetch", return_value=[]), \
+        ctx.config.update(keyword="运营", city="北京", pages=2, format="json", title_filter="电商,抖音")
+        with mock.patch.object(biz, "run_fetch", return_value=[]) as fetch, \
              mock.patch.object(tui, "has_saved_profile", return_value=True):
             app.switch_page(0)
             pages[0].state["selection"] = next(
-                index for index, item in enumerate(pages[0].items) if item[0] == "开始抓取"
+                index for index, item in enumerate(pages[0].items) if item[0] == "采集BOSS招聘企业"
             )
             pages[0].handle_key("enter", app)
             while ctx.tasks.running:
                 time.sleep(0.01)
         self.assertEqual(ctx.tasks.task["desc"], "抓取 运营 @ 北京")
         self.assertEqual(app.current_page_index, 2)
+        fetch.assert_called_once_with("运营", "北京", 2, "json", 3, biz.DEFAULT_PORT,
+                                      progress=mock.ANY, title_filter="电商,抖音", stop_event=mock.ANY)
 
     def test_config_text_left_right_do_not_start_editing(self):
         _, pages, app = new_app()
@@ -841,6 +973,8 @@ if __name__ == "__main__":
     if args.with_real_fetch:
         sys.argv.append("--with-real-fetch")
     suite = unittest.defaultTestLoader.loadTestsFromModule(sys.modules[__name__])
+    import test_release_fixes
+    suite.addTests(unittest.defaultTestLoader.loadTestsFromModule(test_release_fixes))
     runner = unittest.TextTestRunner(verbosity=2)
     result = runner.run(suite)
     print("\n[summary] PASS/FAIL/SKIP:",

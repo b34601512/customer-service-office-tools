@@ -1,6 +1,7 @@
 // 金山文档同步页：状态总览 + 三个同步动作 + 脚本/设置/在线文档入口。
 const ansi = require("../ansi");
 const { fit, padEnd, normalizeCellText } = require("../width");
+const { selectionViewport } = require("../selectionViewport");
 const { isKdocsSyncConfigured, requireValidKdocsDocumentUrl, requireValidKdocsWebhookUrl } = require("../../../kdocsSync/kdocsSyncSettings");
 
 function buildActions(settings) {
@@ -52,7 +53,7 @@ function createKdocsPage() {
         lines.push("");
         lines.push(ansi.colorize(`提示：${this.state.message}`, "brightYellow"));
       }
-      return lines;
+      return selectionViewport(lines, 4 + this.state.selection, app.contentHeight, 1, this.state.message ? 1 : this.state.busyText ? 1 : 0);
     },
     footer() {
       return "↑↓选择 回车执行 | ←→切页 Ctrl+C退出";

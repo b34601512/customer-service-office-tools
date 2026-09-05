@@ -6,6 +6,7 @@ const { PLATFORM_META } = require("../../cliConstants");
 const { PLATFORM_KEYS, addPlatformStore, patchPlatformStore, patchReportProfile,
   applyStoreCustomDateRange, restoreStoreGlobalDateRange, normalizeUserPath } = require("../../cliProjectConfig");
 const { listReportModules } = require("../../../config/reportModuleDefinitions");
+const { selectionViewport } = require("../selectionViewport");
 
 function isValidCalendarDate(dateText) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(dateText || ""))) return false;
@@ -28,6 +29,12 @@ function buildStoreActions(store, platformKey) {
 }
 
 function platformStoreExtraFields(store, platformKey) {
+  if (platformKey === "pdd") {
+    return [{ id: "pddIdentity", label: "编辑真实店铺名称", hint: store?.expectedIdentityText || "未配置（按账号识别）" }];
+  }
+  if (platformKey === "jd") {
+    return [{ id: "jdScope", label: "编辑客服筛选范围", hint: `${store?.customerServiceScope?.mode || "客服岗位"}：${(store?.customerServiceScope?.values || []).join("、")}` }];
+  }
   // 抖音店铺额外支持抖店ID/名称编辑。
   if (platformKey === "douyin") {
     return [
@@ -112,7 +119,9 @@ function createStorePage() {
       } else {
         lines.push(ansi.colorize("Esc/q 返回上一级", "gray"));
       }
-      return lines;
+      const selectedLine = this.state.mode === "store" ? 4 + this.state.storeSelection
+        : this.state.mode === "reports" ? 1 + this.state.reportSelection : 1 + this.state.selection;
+      return selectionViewport(lines, selectedLine, app.contentHeight, 1, 1);
     },
     footer() {
       if (this.state.mode === "store") {
@@ -237,6 +246,27 @@ function createStorePage() {
           if (value === null) return;
           patchPlatformStore(platformKey, storeKey, { platformStoreId: value });
           this.state.message = "抖店ID已保存。";
+          return;
+        }
+        if (action.id === "jdScope") {
+          const scope = store.customerServiceScope || { mode: "客服岗位", values: ["售前"] };
+          const modeAnswer = await app.requestInput({ title: "客服筛选类型：1=客服岗位 2=客服组", defaultValue: scope.mode === "客服组" ? "2" : "1" });
+          if (modeAnswer === null) return;
+          if (!["1", "2"].includes(modeAnswer)) throw new Error("筛选类型必须是 1 或 2。");
+          const names = await app.requestInput({ title: "岗位或客服组名称（逗号分隔，须与后台一致）", defaultValue: scope.values.join("，") });
+          if (names === null) return;
+          patchPlatformStore(platformKey, storeKey, { customerServiceScope: {
+            mode: modeAnswer === "1" ? "客服岗位" : "客服组",
+            values: names.split(/[，,]/).map((name) => name.trim()).filter(Boolean)
+          } });
+          this.state.message = "客服筛选范围已保存。";
+          return;
+        }
+        if (action.id === "pddIdentity") {
+          const value = await app.requestInput({ title: "拼多多后台显示的真实店铺名称", defaultValue: store.expectedIdentityText || "" });
+          if (value === null) return;
+          patchPlatformStore(platformKey, storeKey, { expectedIdentityText: value });
+          this.state.message = "真实店铺名称已保存，下载前将核对店铺身份。";
           return;
         }
         if (action.id === "douyinName") {
