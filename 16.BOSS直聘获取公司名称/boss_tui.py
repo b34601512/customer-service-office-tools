@@ -20,6 +20,10 @@ import time
 import unicodedata
 
 import boss_cdp as biz  # 业务真源（BOSS 采集核心）
+import merchant_subjects
+import shop_subjects
+
+APP_VERSION = "v9"
 
 # ---------------------------------------------------------------- ANSI 工具
 ESC = "\x1b"
@@ -506,8 +510,8 @@ class TaskRunner:
         return t
 
 
-def is_logged_in():
-    """只作界面状态提示：兼容 Chromium 浏览器 Cookie 路径；最终以真实 joblist 响应为准。"""
+def has_saved_profile():
+    """只提示专用 Profile 是否已创建；不得据此宣称登录态有效。"""
     if not os.path.isdir(biz.PROFILE_DIR):
         return False
     cookie_paths = (
@@ -531,11 +535,13 @@ class OverviewPage:
         common_items = [
             ("开始抓取", "按配置页参数启动职位采集"),
             ("配置采集参数", "编辑关键词、城市、页数和导出格式"),
+            ('采集京东公开主体', '导出自营经营主体、区域与证照来源'),
+            ('采集供应商网店铺主体', '读取程序旁店铺清单，导出B2B商家企业'),
             ("打开结果目录", "用资源管理器打开输出文件夹"),
             ("退出采集工具", "结束本程序；首页按 0 可直接退出"),
         ]
         # 未登录时把首次登录置顶；已登录时沉底，避免首页每次都先看到低频操作。
-        return [login_item, *common_items] if not is_logged_in() else [*common_items, login_item]
+        return [login_item, *common_items] if not has_saved_profile() else [*common_items, login_item]
 
     def on_enter(self, app):
         self.state["selection"] = min(self.state["selection"], len(self.items) - 1)
@@ -583,6 +589,18 @@ class OverviewPage:
                     self.state["message"] = "已有任务在运行，请先等待完成"
             elif action_label == "配置采集参数":
                 app.switch_page(1)
+            elif action_label == '采集京东公开主体':
+                if self.ctx.tasks.start('采集京东公开自营经营主体', merchant_subjects.run_subjects,
+                                        (self.ctx.config['format'],), with_progress=True, total=1):
+                    app.switch_page(2)
+                else:
+                    self.state['message'] = '已有任务在运行，请先等待完成'
+            elif action_label == '采集供应商网店铺主体':
+                if self.ctx.tasks.start('采集供应商网B2B店铺主体', shop_subjects.run_shops,
+                                        (self.ctx.config['format'],), with_progress=True):
+                    app.switch_page(2)
+                else:
+                    self.state['message'] = '已有任务在运行，请先等待完成'
             elif action_label == "打开结果目录":
                 self.open_result_dir()
             elif action_label == "退出采集工具":
@@ -607,10 +625,11 @@ class ConfigPage:
     @property
     def fields(self):
         return [
-            {"key": "keyword", "label": "关键词", "type": "text"},
+            {"key": "keyword", "label": "搜索词", "type": "text"},
             {"key": "city", "label": "城市", "type": "text"},
             {"key": "pages", "label": "页数", "type": "number"},
             {"key": "format", "label": "格式", "type": "choice", "choices": ["csv", "json", "both"]},
+            {'key': 'title_filter', 'label': '岗位包含词', 'type': 'text'},
         ]
 
     def on_enter(self, app):
@@ -622,12 +641,12 @@ class ConfigPage:
         label_width = 12
         lines = [colorize(fit(f"采集配置（↑↓选择 回车编辑；编辑中 ←→调整 Esc取消 回车保存 r重置 q返回首页）", columns), "brightBlue"), ""]
         for index, field in enumerate(self.fields):
-            if len(lines) >= app.content_height - 3 and self.state["editing"] is None:
-                break
             selected = index == self.state["selection"]
             prefix = "▶ " if selected else "  "
             is_editing_field = self.state["editing"] and self.state["editing"]["key"] == field["key"]
             shown_value = self.state["edit_buffer"] if is_editing_field else self.ctx.config[field["key"]]
+            if field['key'] == 'title_filter' and not shown_value and not is_editing_field:
+                shown_value = '不限（可填客服,仓管等）'
             if field["type"] == "choice":
                 value = f"{shown_value} (←→切换)" if is_editing_field else shown_value
             elif field["type"] == "number":
@@ -659,7 +678,7 @@ class ConfigPage:
         elif key == "enter":
             self._begin_edit(fields[self.state["selection"]])
         elif key == "r":
-            self.ctx.config.update(keyword="国内电商", city="深圳", pages=1, format="csv")
+            self.ctx.config.update(keyword="国内电商", city="深圳", pages=1, format="csv", title_filter='')
             self.state["message"] = "参数已恢复默认"
         else:
             return None
@@ -670,15 +689,15 @@ class ConfigPage:
         if key == "enter":
             value = self.state["edit_buffer"].strip()
             if field["type"] == "text":
-                if value:
+                if value or field['key'] == 'title_filter':
                     self.ctx.config[field["key"]] = value
                 else:
                     self.state["message"] = f"{field['label']}不能为空"
             elif field["type"] == "number":
-                if value.isdigit() and 1 <= int(value) <= 10:
-                    self.ctx.config[field["key"]] = int(value)
-                else:
-                    self.state["message"] = "页数必须是 1-10 的整数"
+                try:
+                    self.ctx.config[field["key"]] = biz.normalize_page_count(value)
+                except ValueError:
+                    self.state["message"] = f"页数必须是 1-{biz.MAX_PAGES} 的整数"
             elif field["type"] == "choice":
                 if value in field["choices"]:
                     self.ctx.config[field["key"]] = value
@@ -696,7 +715,7 @@ class ConfigPage:
                     current = int(self.state["edit_buffer"])
                 except ValueError:
                     current = int(self.ctx.config[field["key"]])
-                self.state["edit_buffer"] = str(max(1, min(10, current + d)))
+                self.state["edit_buffer"] = str(max(1, min(biz.MAX_PAGES, current + d)))
             elif field["type"] == "choice":
                 choices = field["choices"]
                 current = self.state["edit_buffer"]
@@ -789,7 +808,7 @@ class ResultsPage:
 
     def list_files(self):
         os.makedirs(biz.RESULT_DIR, exist_ok=True)
-        files = glob.glob(os.path.join(biz.RESULT_DIR, "boss_jobs_*"))
+        files = glob.glob(os.path.join(biz.RESULT_DIR, "boss_jobs_*")) + glob.glob(os.path.join(biz.RESULT_DIR, 'merchant_subjects_*'))
         files.sort(key=os.path.getmtime, reverse=True)
         return files[:20]
 
@@ -823,7 +842,7 @@ class ResultsPage:
 class Ctx:
     def __init__(self):
         self.tasks = TaskRunner()
-        self.config = {"keyword": "国内电商", "city": "深圳", "pages": 1, "format": "csv"}
+        self.config = {"keyword": "国内电商", "city": "深圳", "pages": 1, "format": "csv", 'title_filter': ''}
         self._cleaned_up = False
 
     @staticmethod
@@ -847,7 +866,7 @@ class Ctx:
         args = (config["keyword"], config["city"], config["pages"], config["format"], 3, biz.DEFAULT_PORT)
         ok = self.tasks.start(
             f"抓取 {config['keyword']} @ {config['city']}",
-            biz.run_fetch,
+            lambda *args, progress=None: biz.run_fetch(*args, progress=progress, title_filter=config['title_filter']),
             args,
             with_progress=True,
             total=config["pages"],
@@ -865,7 +884,8 @@ class Ctx:
 
 
 def build_status_lines(ctx, app):
-    login = "已登录(Profile)" if is_logged_in() else "未登录(首次需扫码)"
+    profile_ready = has_saved_profile()
+    login = "已有Profile(登录以接口为准)" if profile_ready else "未建立Profile(首次需扫码)"
     task = ctx.tasks.task
     if task and not task["done"]:
         elapsed = format_elapsed(time.monotonic() - task.get("started_at", time.monotonic()))
@@ -876,7 +896,7 @@ def build_status_lines(ctx, app):
         )
     else:
         task_text = "任务 [空闲] 等待操作"
-    lines = [fit(f" {task_text}   登录 [{colorize(login, 'brightGreen' if is_logged_in() else 'brightRed')}]", app.columns)]
+    lines = [fit(f" {task_text}   登录资料 [{colorize(login, 'brightCyan' if profile_ready else 'brightRed')}]", app.columns)]
     lines.append(fit(" 提示：登录只做一次，之后无需重复；抓取默认低频(3秒/页)防封。", app.columns))
     return lines
 
@@ -898,18 +918,26 @@ def main(argv=None):
     if argv and argv[0] == "--auto":
         import argparse as _ap
         ap = _ap.ArgumentParser(description="无头自动化运行真实业务")
-        ap.add_argument("--auto", choices=["login", "fetch"], help="login=扫码登录流程 fetch=真实抓取")
+        ap.add_argument("--auto", choices=["login", "fetch", 'subjects', 'shops'], help="login=登录 fetch=招聘 subjects=京东公开主体 shops=供应商网店铺主体")
+        ap.add_argument('--shops-file', default=None, help='供应商网店铺清单路径')
         ap.add_argument("--keyword", default="国内电商")
+        ap.add_argument('--title-filter', default='')
         ap.add_argument("--city", default="深圳")
         ap.add_argument("--pages", type=int, default=1)
         ap.add_argument("--format", choices=["csv", "json", "both"], default="csv")
         ap.add_argument("--login-timeout", type=int, default=900)
         args = ap.parse_args(argv)
         try:
+            if args.auto == 'shops':
+                shop_subjects.run_shops(args.format, input_path=args.shops_file)
+                return
+            if args.auto == 'subjects':
+                merchant_subjects.run_subjects(args.format)
+                return
             if args.auto == "login":
                 ok = Ctx.action_login(timeout=args.login_timeout)
                 sys.exit(0 if ok else 2)
-            biz.run_fetch(args.keyword, args.city, args.pages, args.format, delay=3, port=biz.DEFAULT_PORT)
+            biz.run_fetch(args.keyword, args.city, args.pages, args.format, delay=3, port=biz.DEFAULT_PORT, title_filter=args.title_filter)
             sys.exit(0)
         finally:
             # 自动化入口也遵守同一套浏览器所有权清理规则。
@@ -928,7 +956,7 @@ def main(argv=None):
         ctx.cleanup()
 
     app = TuiApp(
-        title="BOSS直聘采集工具",
+        title=f"BOSS直聘采集工具 {APP_VERSION}",
         pages=pages,
         on_exit_request=request_exit,
         status_bar_provider=lambda a: build_status_lines(ctx, a),

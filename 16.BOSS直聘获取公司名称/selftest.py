@@ -3,7 +3,7 @@
 """
 selftest.py —— 16 号项目自动化自检（依据 SoftTalk #2705「AI 无界面真实运行」原则）
 - 直接调用业务真源 boss_cdp，不绕界面、不留测试旁路、不做假路径
-- 导出：写真实临时文件并读回校验（CSV BOM/列/中文、JSON 结构）
+- 导出：写真实临时文件并读回校验（企业全称/品牌分列、去重、CSV BOM、JSON）
 - TUI：无头渲染全部页面帧 + 按键分发 + 表单编辑 + 任务线程（真实捕获 stdout）
 - 乱码自检：帧与文件全部按 UTF-8 合法解码，无替换符/无乱码字节
 - Edge：--with-edge 真实启动独立 Edge 并探测 CDP 端口
@@ -32,6 +32,8 @@ sys.stderr.reconfigure(encoding="utf-8")
 
 import boss_cdp as biz
 import boss_tui as tui
+import merchant_subjects
+import shop_subjects
 
 
 class FakeTerminal(io.StringIO):
@@ -43,7 +45,7 @@ class FakeTerminal(io.StringIO):
 def new_app():
     ctx = tui.Ctx()
     pages = [tui.OverviewPage(ctx), tui.ConfigPage(ctx), tui.LogPage(ctx), tui.ResultsPage(ctx)]
-    app = tui.TuiApp("BOSS直聘采集工具", pages, output=FakeTerminal(),
+    app = tui.TuiApp(f"BOSS直聘采集工具 {tui.APP_VERSION}", pages, output=FakeTerminal(),
                      status_bar_provider=lambda a: tui.build_status_lines(ctx, a))
     return ctx, pages, app
 
@@ -51,6 +53,51 @@ def new_app():
 # ---------------------------------------------------------------- 业务真源
 
 class BusinessTests(unittest.TestCase):
+    def test_shop_subject_rejects_other_organization(self):
+        data = {'@graph': [{'@type': 'Organization', 'name': '平台有限公司', 'url': 'https://www.gys.cn'},
+                          {'@type': 'Organization', 'name': '店铺企业有限公司', 'url': 'https://example.gys.cn'}]}
+        document = '<script type="application/ld+json">' + json.dumps(data) + '</script>'
+        row = shop_subjects.parse_shop(document, 'https://example.gys.cn/')
+        self.assertEqual(row['company'], '店铺企业有限公司')
+        with self.assertRaises(ValueError):
+            shop_subjects.parse_shop(document, 'https://other.gys.cn/')
+
+    def test_shop_urls_do_not_accept_external_sites(self):
+        for url in ['https://gys.cn.example.com', 'https://www.gys.cn', 'https://example.com']:
+            with self.assertRaises(ValueError):
+                shop_subjects.normalize_shop_url(url)
+
+    def test_title_filter_allows_any_term_and_empty(self):
+        items = [{'jobName': '电商客服'}, {'jobName': '仓管员'}, {'jobName': '运营'}]
+        self.assertEqual(biz.filter_job_items(items, '客服，仓管'), items[:2])
+        self.assertEqual(biz.filter_job_items(items, ''), items)
+
+    def test_wrong_request_page_is_not_accepted(self):
+        session = type('Session', (), {'expected_joblist': {'page': 2, 'query': '客服', 'city': '101280600'},
+                                     'joblist_requests': {'R': {'page': ['1'], 'query': ['客服'], 'city': ['101280600']}}})()
+        with mock.patch.object(biz, '_get_body') as body:
+            self.assertIsNone(biz._joblist_response_data(session, {'requestId': 'R'}))
+            body.assert_not_called()
+
+    def test_pagination_stops_on_site_end(self):
+        session = mock.Mock()
+        def last_page(*args, **kwargs):
+            kwargs['page_info'].update(raw_count=1, new_count=1, has_more=False)
+            return []
+        with mock.patch.object(biz, 'ensure_edge_running'), mock.patch.object(biz, '_new_session', return_value=session), \
+             mock.patch.object(biz, 'fetch_page', side_effect=last_page) as fetch:
+            self.assertEqual(biz.run_fetch('客服', '深圳', 1000, 'csv', 0, 9222), [])
+        self.assertEqual(fetch.call_count, 1)
+
+    def test_subjects_merge_regions_and_evidence(self):
+        document = '''京东商城自营商品经营者资质信息公示
+        <div class="text-list-title-block">华北</div><a href="/a"><span class="title">甲有限公司</span></a>
+        <div class="text-list-title-block">华东</div><a href="/b"><span class="title">甲有限公司</span></a>'''
+        rows = merchant_subjects.parse_subjects(document)
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]['regions'], ['华北', '华东'])
+        self.assertEqual(len(rows[0]['license_urls']), 2)
+
     def test_response_job_list_supports_current_nested_shape(self):
         data = {"code": 0, "zpData": {"resCount": 1, "jobList": [{"jobId": "J1"}]}}
         self.assertEqual(biz.response_job_list(data), [{"jobId": "J1"}])
@@ -98,8 +145,9 @@ class BusinessTests(unittest.TestCase):
             "businessDistrict": "南联", "brandName": "深圳市锦祥桄仓库贸易",
             "bossName": "张三", "bossTitle": "HR", "jobLabels": ["五险一金"], "skills": ["电商"],
         }
-        row = biz.parse_job(item)
-        self.assertEqual(row["company"], "深圳市锦祥桄仓库贸易")
+        row = biz.parse_job(item, company_name="深圳市锦祥桄仓库贸易有限公司")
+        self.assertEqual(row["company"], "深圳市锦祥桄仓库贸易有限公司")
+        self.assertEqual(row["brand"], "深圳市锦祥桄仓库贸易")
         self.assertEqual(row["title"], "国内电商运营")
         self.assertEqual(row["salary"], "6-11K")
         self.assertEqual(row["location"], "深圳·龙岗区·南联")
@@ -115,10 +163,76 @@ class BusinessTests(unittest.TestCase):
         self.assertEqual(row["tags"], "经验不限,3")
         self.assertEqual(row["skills"], "办公软件")
 
+    def test_brand_name_is_not_masqueraded_as_full_company_name(self):
+        row = biz.parse_job({"encryptJobId": "eJ1", "brandName": "宝诚嘉"})
+        self.assertEqual(row["company"], "")
+        self.assertEqual(row["brand"], "宝诚嘉")
+
+    def test_company_name_from_real_detail_shape(self):
+        document = """
+        <ul><li class="company-name"><span>公司名称</span>宝诚嘉科技（深圳）有限公司</li></ul>
+        """
+        self.assertEqual(
+            biz.company_name_from_detail_html(document),
+            "宝诚嘉科技（深圳）有限公司",
+        )
+
+    def test_detail_loader_reads_matching_document_response(self):
+        detail_url = "https://www.zhipin.com/job_detail/J1.html?lid=L1"
+
+        class FakeSession:
+            def __init__(self):
+                self.events = [
+                    {"method": "Network.responseReceived", "params": {
+                        "type": "Document", "requestId": "DOC1",
+                        "response": {"url": detail_url},
+                    }},
+                    {"method": "Network.loadingFinished", "params": {"requestId": "DOC1"}},
+                ]
+
+            def send(self, method, params=None):
+                return 7
+
+            def recv_event(self, timeout=1):
+                return self.events.pop(0)
+
+            def wait_response(self, mid, timeout=0.1):
+                return {"id": mid, "result": {}}
+
+        document = '<li class="company-name"><span>公司名称</span>某某有限公司</li>'
+        with mock.patch.object(biz, "_get_body", return_value=(document, False)) as get_body:
+            self.assertEqual(biz._load_detail_html(FakeSession(), detail_url), document)
+        get_body.assert_called_once_with(mock.ANY, "DOC1", timeout=5)
+
+    def test_deduplicate_job_items_preserves_order_across_pages(self):
+        seen = set()
+        first, removed_first = biz.deduplicate_job_items([
+            {"encryptJobId": "A"}, {"encryptJobId": "B"}, {"encryptJobId": "A"},
+        ], seen)
+        second, removed_second = biz.deduplicate_job_items([
+            {"encryptJobId": "B"}, {"encryptJobId": "C"}, {"jobName": "无ID"}, {"jobName": "无ID"},
+        ], seen)
+        self.assertEqual([item["encryptJobId"] for item in first], ["A", "B"])
+        self.assertEqual([item.get("encryptJobId") for item in second], ["C", None, None])
+        self.assertEqual((removed_first, removed_second), (1, 1))
+
+    def test_company_enrichment_reuses_brand_cache(self):
+        items = [
+            {"encryptJobId": "J1", "encryptBrandId": "B1", "brandName": "简称"},
+            {"encryptJobId": "J2", "encryptBrandId": "B1", "brandName": "简称"},
+        ]
+        with mock.patch.object(biz, "fetch_company_full_name", return_value="某某有限公司") as fetch, \
+             mock.patch.object(biz.time, "sleep"):
+            rows = biz.enrich_company_names(object(), items, company_cache={})
+        self.assertEqual([row["company"] for row in rows], ["某某有限公司", "某某有限公司"])
+        self.assertEqual([row["brand"] for row in rows], ["简称", "简称"])
+        fetch.assert_called_once()
+
     def test_export_csv_real_file(self):
         """真实生成 CSV 文件并读回校验：UTF-8 BOM、表头、中文内容、全列对齐。"""
         row = biz.parse_job({"jobId": "J1", "encryptJobId": "eJ1", "jobName": "运营",
-                             "salaryDesc": "6-11K", "cityName": "深圳", "brandName": "某公司"})
+                             "salaryDesc": "6-11K", "cityName": "深圳", "brandName": "某品牌"},
+                            company_name="某公司有限公司")
         with tempfile.TemporaryDirectory() as d:
             paths = biz.export_rows([row], "kw", "101280600", "csv", d)
             self.assertTrue(os.path.exists(paths["csv"]))
@@ -127,7 +241,8 @@ class BusinessTests(unittest.TestCase):
             raw.decode("utf-8")  # 乱码自检：整文件可 UTF-8 解码
             with open(paths["csv"], "r", encoding="utf-8-sig", newline="") as f:
                 rows = list(csv.DictReader(f))
-            self.assertEqual(rows[0]["company"], "某公司")
+            self.assertEqual(rows[0]["company"], "某公司有限公司")
+            self.assertEqual(rows[0]["brand"], "某品牌")
             self.assertEqual(rows[0]["location"], "深圳")
 
     def test_export_json_real_file(self):
@@ -144,13 +259,13 @@ class BusinessTests(unittest.TestCase):
             self.assertTrue(os.path.exists(first))
             self.assertTrue(os.path.exists(second))
 
-    def test_login_state_accepts_edge_network_cookie_location(self):
-        """Edge 127+ 的 Cookie 数据位于 Default/Network/Cookies。"""
+    def test_saved_profile_accepts_edge_network_cookie_location(self):
+        """Profile 提示只表达本地资料已创建，不声称登录有效。"""
         with tempfile.TemporaryDirectory() as d:
             os.makedirs(os.path.join(d, "Default", "Network"), exist_ok=True)
             open(os.path.join(d, "Default", "Network", "Cookies"), "wb").close()
             with mock.patch.object(biz, "PROFILE_DIR", d):
-                self.assertTrue(tui.is_logged_in())
+                self.assertTrue(tui.has_saved_profile())
 
     def test_login_wait_accepts_logged_in_empty_job_list(self):
         """登录有效不应依赖岗位数量；空列表也必须视为已登录。"""
@@ -176,6 +291,7 @@ class BusinessTests(unittest.TestCase):
 
         with mock.patch.object(biz, "_new_session", return_value=fake), \
              mock.patch.object(biz, "_await_joblist", side_effect=fake_wait), \
+             mock.patch.object(biz, "_browser_has_auth_cookie", return_value=True), \
              mock.patch.object(biz.time, "time", side_effect=lambda: clock[0]):
             result = biz.login_wait("国内电商", "101280600", port=9222, login_timeout=1)
 
@@ -223,12 +339,15 @@ class BusinessTests(unittest.TestCase):
         fake = FakeSession()
         clock = [0.0]
 
-        def fake_wait(_session, timeout=60, **_kwargs):
-            clock[0] += 1.0
+        def fake_wait(_session, timeout=60, **kwargs):
+            for now in (1.0, 3.0, 5.0):
+                clock[0] = now
+                kwargs["on_tick"]()
             return None  # 模拟登录页没有岗位请求，用户尚未登录
 
         with mock.patch.object(biz, "_new_session", return_value=fake), \
              mock.patch.object(biz, "_await_joblist", side_effect=fake_wait), \
+             mock.patch.object(biz, "_browser_has_auth_cookie", return_value=False), \
              mock.patch.object(biz.time, "time", side_effect=lambda: clock[0]):
             result = biz.login_wait("国内电商", "101280600", port=9222, login_timeout=5)
 
@@ -236,6 +355,38 @@ class BusinessTests(unittest.TestCase):
         self.assertEqual(len(fake.navigate_urls), 1,
                          "未登录等待期间不得重复 Page.navigate，页面必须停留给用户扫码")
         self.assertTrue(fake.closed)
+
+    def test_login_wait_reload_search_once_after_auth_cookie_appears(self):
+        class FakeSession:
+            def __init__(self):
+                self.navigate_urls = []
+
+            def send(self, method, params=None):
+                if method == "Page.navigate":
+                    self.navigate_urls.append(params["url"])
+                return 1
+
+            def close(self):
+                pass
+
+        fake = FakeSession()
+        clock = [0.0]
+
+        def fake_wait(_session, timeout=60, **kwargs):
+            clock[0] = 1.0
+            kwargs["on_tick"]()  # 检测到认证 Cookie，先等待自然跳转
+            clock[0] = 3.1
+            kwargs["on_tick"]()  # 仍无 joblist，补发一次验证导航
+            return {"code": 0, "zpData": {"jobList": []}}
+
+        with mock.patch.object(biz, "_new_session", return_value=fake), \
+             mock.patch.object(biz, "_await_joblist", side_effect=fake_wait), \
+             mock.patch.object(biz, "_browser_has_auth_cookie", side_effect=[False, True]), \
+             mock.patch.object(biz.time, "time", side_effect=lambda: clock[0]):
+            result = biz.login_wait("国内电商", "101280600", port=9222, login_timeout=10)
+
+        self.assertTrue(result)
+        self.assertEqual(len(fake.navigate_urls), 2, "登录后只能补发一次搜索导航")
 
     def test_search_url_encoding(self):
         url = biz.search_url("国内电商", "101280600", 2)
@@ -260,6 +411,12 @@ class BusinessTests(unittest.TestCase):
                 biz.run_fetch("", "深圳", 1, "csv", 0, 9222)
             ensure.assert_not_called()
 
+    def test_page_count_accepts_1000_and_rejects_1001(self):
+        self.assertEqual(biz.normalize_page_count("1000"), 1000)
+        for value in (0, 1001, "abc"):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                biz.normalize_page_count(value)
+
     def test_cli_setup_returns_failure_exit_code(self):
         with mock.patch.object(biz, "ensure_edge_running"), \
              mock.patch.object(biz, "login_wait", return_value=False), \
@@ -283,7 +440,8 @@ class BusinessTests(unittest.TestCase):
         fake = FakeSession()
         seen_pages = []
 
-        def fake_fetch_page(session, keyword, city_code, page, delay, total_pages=0, progress=None):
+        def fake_fetch_page(session, keyword, city_code, page, delay, total_pages=0, progress=None,
+                            seen_job_ids=None, company_cache=None, **kwargs):
             seen_pages.append((page, total_pages))
             return []
 
@@ -347,13 +505,13 @@ class TuiTests(unittest.TestCase):
 
     def test_overview_login_action_moves_to_bottom_when_logged_in(self):
         _, pages, _ = new_app()
-        with mock.patch.object(tui, "is_logged_in", return_value=False):
+        with mock.patch.object(tui, "has_saved_profile", return_value=False):
             labels = [item[0] for item in pages[0].items]
             self.assertIn("首次登录", labels[0])
             self.assertIn("检查", labels[0])
             self.assertEqual(labels[1], "开始抓取")
             self.assertEqual(labels[-1], "退出采集工具")
-        with mock.patch.object(tui, "is_logged_in", return_value=True):
+        with mock.patch.object(tui, "has_saved_profile", return_value=True):
             labels = [item[0] for item in pages[0].items]
             self.assertEqual(labels[0], "开始抓取")
             self.assertIn("首次登录", labels[-1])
@@ -394,7 +552,7 @@ class TuiTests(unittest.TestCase):
         self.assertEqual(calls, ["exit"])
         pages[0].handle_key("up", app)  # 回到退出项
         app.switch_page(0)
-        with mock.patch.object(tui, "is_logged_in", return_value=False):
+        with mock.patch.object(tui, "has_saved_profile", return_value=False):
             pages[0].state["selection"] = len(pages[0].items) - 1
             pages[0].handle_key("enter", app)
         self.assertEqual(calls, ["exit", "exit"])
@@ -426,7 +584,7 @@ class TuiTests(unittest.TestCase):
         ctx, pages, app = new_app()
         ctx.config.update(keyword="运营", city="北京", pages=2, format="json")
         with mock.patch.object(biz, "run_fetch", return_value=[]), \
-             mock.patch.object(tui, "is_logged_in", return_value=True):
+             mock.patch.object(tui, "has_saved_profile", return_value=True):
             app.switch_page(0)
             pages[0].state["selection"] = next(
                 index for index, item in enumerate(pages[0].items) if item[0] == "开始抓取"
@@ -488,6 +646,22 @@ class TuiTests(unittest.TestCase):
         self.assertEqual(config.ctx.config["format"], "csv")
         config.handle_key("enter", app)
         self.assertEqual(config.ctx.config["format"], "json")
+
+    def test_config_page_accepts_1000_and_clamps_arrow(self):
+        _, pages, app = new_app()
+        config = pages[1]
+        config.state["selection"] = 2
+        config.handle_key("enter", app)
+        for _ in config.state["edit_buffer"]:
+            config.handle_key("backspace", app)
+        for ch in "1000":
+            config.handle_key(ch, app)
+        config.handle_key("enter", app)
+        self.assertEqual(config.ctx.config["pages"], 1000)
+        config.handle_key("enter", app)
+        config.handle_key("right", app)
+        config.handle_key("enter", app)
+        self.assertEqual(config.ctx.config["pages"], 1000)
 
     def test_config_edit_escape_discards_all_field_types(self):
         _, pages, app = new_app()
@@ -621,8 +795,8 @@ class EdgeTests(unittest.TestCase):
 
     def test_login_state_detection(self):
         # 真实判断登录态（读专用 profile 目录）
-        logged = tui.is_logged_in()
-        print(f"\n[info] 登录态检测：{'已登录' if logged else '未登录（需先扫码一次）'}")
+        profile_ready = tui.has_saved_profile()
+        print(f"\n[info] Profile：{'已创建（登录以接口为准）' if profile_ready else '未创建'}")
 
 
 # ---------------------------------------------------------------- 真实抓取（可选，需已登录）
@@ -638,8 +812,11 @@ class RealFetchTests(unittest.TestCase):
         try:
             rows = biz.run_fetch("国内电商", "深圳", 1, "both", delay=0, port=biz.DEFAULT_PORT)
             self.assertGreater(len(rows), 0, "应抓取到至少一条真实岗位数据")
-            for key in ("company", "title", "salary", "job_link"):
+            for key in ("company", "brand", "title", "salary", "job_link"):
                 self.assertTrue(rows[0][key], f"字段 {key} 不应为空")
+            self.assertTrue(all(row["company"] for row in rows), "每条岗位均应取得企业全称")
+            job_ids = [row["job_id"] for row in rows if row["job_id"]]
+            self.assertEqual(len(job_ids), len(set(job_ids)), "真实导出不得包含重复岗位 ID")
             after = set(os.listdir(biz.RESULT_DIR))
             new_files = after - before
             self.assertTrue(any(f.endswith(".csv") for f in new_files), "应生成真实 CSV 导出文件")

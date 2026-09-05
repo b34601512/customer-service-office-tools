@@ -7,8 +7,8 @@ boss_cdp.py —— BOSS直聘职位/公司名自动采集（Edge CDP 方案，�
   - 不抓 DOM，不用 Selenium/Playwright（受控浏览器指纹明显，极易验证码）
   - 独立 Microsoft Edge 实例（独立 user-data-dir + CDP 调试端口 + --remote-allow-origins=*）
   - 人工扫码登录一次，登录态永久保存在该 profile，后续不再登录
-  - CDP 监听页面自身发出的 /wapi/zpgeek/search/joblist.json 响应，解析明文 JSON（绕开字体反爬）
-  - 低频抓取（默认页间隔 3 秒），逐页收集，单页异常不影响其他页
+  - CDP 监听页面自身发出的 joblist 响应，并从岗位详情主文档补全企业全称
+  - 按岗位 ID 跨页去重；详情串行低频获取，单页异常不影响其他页
 
 用法：
   python boss_cdp.py setup          # 启动专用 Edge 并等待登录
@@ -22,6 +22,7 @@ import argparse
 import csv
 import json
 from datetime import datetime
+from html.parser import HTMLParser
 import os
 import socket
 import subprocess
@@ -47,6 +48,7 @@ EDGE_CANDIDATES = [
 ]
 
 DEFAULT_PORT = 9222
+MAX_PAGES = 1000
 # 独立 profile = 持久登录态（踩坑2：必须独立 user-data-dir，默认 profile 无法开调试端口）
 PROFILE_DIR = os.path.join(os.path.expanduser("~"), ".boss-zhipin-scraper", "edge-profile")
 RESULT_DIR = os.path.join(os.path.expanduser("~"), ".boss-zhipin-scraper", "job-result")
@@ -56,6 +58,9 @@ _owned_edge_processes = {}
 
 JOBLIST_PATH_PART = "/wapi/zpgeek/search/joblist.json"
 SEARCH_PAGE_URL = "https://www.zhipin.com/web/geek/job"
+AUTH_COOKIE_NAMES = frozenset({"wt2", "zp_at"})
+COMPANY_DETAIL_INTERVAL = 1.0
+COMPANY_DETAIL_TIMEOUT = 15
 
 # 常用城市码（全量码表：/wapi/zpCommon/data/cityGroup.json）
 CITY_CODES = {
@@ -68,7 +73,7 @@ CITY_CODES = {
 }
 
 CSV_FIELDS = [
-    "company", "title", "salary", "location", "tags", "skills",
+    "company", "brand", "title", "salary", "location", "tags", "skills",
     "boss_name", "boss_title", "job_link", "job_id",
 ]
 
@@ -255,6 +260,7 @@ class CDPSession:
         self.ws = create_connection(ws_url, timeout=timeout)
         self._id = 0
         self._pending = {}
+        self.joblist_requests = {}
 
     def send(self, method, params=None):
         self._id += 1
@@ -292,6 +298,7 @@ class CDPSession:
                 # 保留其他命令的 response，避免被当前等待消费后永久丢失。
                 self._pending[msg["id"]] = msg
                 continue
+            self._record_request(msg)
             self._handle_event(msg)
         return None
 
@@ -303,7 +310,17 @@ class CDPSession:
         if "id" in msg:
             self._pending[msg["id"]] = msg
             return None
+        self._record_request(msg)
         return msg
+
+    def _record_request(self, msg):
+        if msg.get('method') != 'Network.requestWillBeSent':
+            return
+        params = msg.get('params', {})
+        request = params.get('request', {})
+        if JOBLIST_PATH_PART in request.get('url', ''):
+            fields = urllib.parse.parse_qs(request.get('postData') or urllib.parse.urlsplit(request['url']).query)
+            self.joblist_requests[params['requestId']] = fields
 
     def close(self):
         # open_tab() 创建的是本次任务专用标签页；关闭 WebSocket 不会自动关闭标签页。
@@ -349,8 +366,21 @@ def response_job_list(data):
 
 # ---------------------------------------------------------------- login_wait（模块2）
 
+def _browser_has_auth_cookie(session, timeout=2):
+    """只判断当前浏览器会话是否刚获得认证凭据；最终登录真值仍由 joblist 验证。"""
+    mid = session.send("Network.getCookies", {"urls": ["https://www.zhipin.com/"]})
+    response = session.wait_response(mid, timeout=timeout)
+    if not response or "error" in response:
+        return False
+    cookies = response.get("result", {}).get("cookies", [])
+    return any(
+        cookie.get("name") in AUTH_COOKIE_NAMES and bool(cookie.get("value"))
+        for cookie in cookies
+    )
+
+
 def login_wait(keyword, city_code, port=DEFAULT_PORT, login_timeout=900, progress=None):
-    """只导航一次到搜索页，未登录时保持登录页不动，监听登录后的 joblist 响应。"""
+    """等待人工登录；认证完成后至多补发一次搜索导航，以真实 joblist 响应验真。"""
     try:
         login_timeout = max(1, int(login_timeout))
     except (TypeError, ValueError) as exc:
@@ -360,22 +390,53 @@ def login_wait(keyword, city_code, port=DEFAULT_PORT, login_timeout=900, progres
         session.send("Network.enable")
         session.send("Page.enable")
         url = search_url(keyword, city_code, 1)
-        deadline = time.time() + login_timeout
+        started_at = time.time()
+        deadline = started_at + login_timeout
+        auth_seen_at = started_at if _browser_has_auth_cookie(session) else None
+        validation_reload_sent = False
+        next_cookie_check = started_at
         print("[login] 请在弹出的 Microsoft Edge 窗口中完成扫码/验证码登录（若已登录可忽略）…")
-        # 只导航一次：未登录时页面会由 BOSS 自己停留/跳转到登录入口；
-        # 后续只监听这个页面的网络事件，绝不循环刷新或重复 Page.navigate。
         _joblist_responses.clear()
         session.send("Page.navigate", {"url": url})
         print("[login] 登录等待中：浏览器页面保持不动，请直接在窗口内完成登录…")
+
+        def ensure_post_login_search():
+            """登录凭据出现后给页面自然跳转留出时间；仍无响应才补发一次搜索导航。"""
+            nonlocal auth_seen_at, validation_reload_sent, next_cookie_check
+            if validation_reload_sent:
+                return
+            now = time.time()
+            if auth_seen_at is None:
+                if now < next_cookie_check:
+                    return
+                next_cookie_check = now + 2
+                if not _browser_has_auth_cookie(session):
+                    return
+                auth_seen_at = now
+                print("[login] 已检测到登录凭据，正在等待页面完成跳转…", flush=True)
+                if callable(progress):
+                    progress(0, 0, "验证登录状态", "已检测到登录凭据")
+                return
+            if now - auth_seen_at < 2:
+                return
+            validation_reload_sent = True
+            _joblist_responses.clear()
+            session.send("Page.navigate", {"url": url})
+            print("[login] 登录完成，正在重新打开搜索页验证…", flush=True)
+            if callable(progress):
+                progress(0, 0, "验证登录状态", "正在请求岗位列表")
+
         while time.time() < deadline:
             remaining = max(1, int(deadline - time.time()))
             data = _await_joblist(
                 session,
-                timeout=min(30, remaining),
+                timeout=remaining,
                 progress_message="[login] 等待登录后的岗位响应",
                 progress=progress,
                 progress_total=0,
                 progress_stage="等待登录响应",
+                progress_started_at=started_at,
+                on_tick=ensure_post_login_search,
             )
             if data is not None:
                 code = data.get("code")
@@ -386,7 +447,7 @@ def login_wait(keyword, city_code, port=DEFAULT_PORT, login_timeout=900, progres
                     return True
                 if code == 37:
                     print("[login] code:37 环境异常——请确认走的是已登录专用 Edge，勿直连 API。")
-            # 未登录时只等待事件，不重新加载页面，避免登录页反复抽搐。
+            # 未登录阶段绝不刷新；登录凭据出现后也只补发一次验证导航。
         print(f"[login] 超时（{login_timeout}s）。请检查窗口内确认登录状态后重试。")
         return False
     finally:
@@ -414,6 +475,11 @@ def _joblist_response_data(session, params):
     request_id = params.get("requestId")
     if not request_id:
         return None
+    expected = getattr(session, 'expected_joblist', None)
+    if expected:
+        actual = session.joblist_requests.get(request_id, {})
+        if any(actual.get(key, [None])[0] != str(value) for key, value in expected.items()):
+            return None
     for attempt in range(3):
         body, _ = _get_body(session, request_id, timeout=5)
         if body:
@@ -427,8 +493,10 @@ def _joblist_response_data(session, params):
 
 
 def _await_joblist(session, timeout=60, progress_message="", progress=None,
-                   progress_current=0, progress_total=0, progress_stage="等待网络响应"):
+                   progress_current=0, progress_total=0, progress_stage="等待网络响应",
+                   progress_started_at=None, on_tick=None):
     """等待 joblist 响应并取回 body 解析；按秒返回控制权，保证界面持续有状态。"""
+    wait_started_at = time.time() if progress_started_at is None else progress_started_at
     deadline = time.time() + timeout
     last_progress = 0.0
     while time.time() < deadline:
@@ -451,7 +519,9 @@ def _await_joblist(session, timeout=60, progress_message="", progress=None,
                     if data is not None:
                         return data
 
-        elapsed = int(time.time() - (deadline - timeout))
+        if callable(on_tick):
+            on_tick()
+        elapsed = int(time.time() - wait_started_at)
         if callable(progress):
             progress(progress_current, progress_total, progress_stage, f"已等待 {elapsed}s")
         if progress_message and time.time() - last_progress >= 10:
@@ -473,7 +543,115 @@ def _get_body(session, request_id, timeout=20):
     return None, False
 
 
-def parse_job(item):
+class _CompanyNameParser(HTMLParser):
+    """从岗位详情页的企业信息项提取“公司名称”，不解析整页 DOM。"""
+
+    _VOID_TAGS = {"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"}
+
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self._depth = 0
+        self._parts = []
+
+    def handle_starttag(self, tag, attrs):
+        tag = tag.lower()
+        if self._depth:
+            if tag not in self._VOID_TAGS:
+                self._depth += 1
+            return
+        classes = dict(attrs).get("class", "").split()
+        if tag == "li" and "company-name" in classes:
+            self._depth = 1
+
+    def handle_endtag(self, tag):
+        if self._depth:
+            self._depth -= 1
+
+    def handle_data(self, data):
+        if self._depth:
+            self._parts.append(data)
+
+    def company_name(self):
+        text = " ".join("".join(self._parts).split())
+        label = "公司名称"
+        return text[len(label):].strip() if text.startswith(label) else ""
+
+
+def company_name_from_detail_html(document):
+    """返回岗位详情页披露的企业全称；页面无该字段时返回空字符串。"""
+    if not document:
+        return ""
+    parser = _CompanyNameParser()
+    parser.feed(str(document))
+    parser.close()
+    return parser.company_name()
+
+
+def job_detail_url(item, include_session_context=False):
+    """生成岗位详情地址；内部抓取可附带本次列表响应的会话参数。"""
+    job_id = item.get("encryptJobId") or item.get("jobId")
+    if not job_id:
+        return ""
+    url = f"https://www.zhipin.com/job_detail/{job_id}.html"
+    if include_session_context:
+        params = [(key, item.get(key)) for key in ("lid", "securityId") if item.get(key)]
+        if params:
+            url += "?" + urllib.parse.urlencode(params)
+    return url
+
+
+def _load_detail_html(session, url, timeout=COMPANY_DETAIL_TIMEOUT):
+    """用当前已登录浏览器导航详情页，读取主文档响应体。"""
+    expected_path = urllib.parse.urlsplit(url).path
+    navigation_id = session.send("Page.navigate", {"url": url})
+    document_request_id = None
+    deadline = time.time() + max(1, float(timeout))
+    try:
+        while time.time() < deadline:
+            remaining = max(0.1, deadline - time.time())
+            event = session.recv_event(timeout=min(1, remaining))
+            if event is None:
+                continue
+            method = event.get("method")
+            params = event.get("params", {})
+            if method == "Network.responseReceived":
+                response = params.get("response", {})
+                if params.get("type") != "Document":
+                    continue
+                path = urllib.parse.urlsplit(response.get("url", "")).path
+                if path == expected_path:
+                    document_request_id = params.get("requestId")
+                elif any(part in path for part in ("/passport/", "/security", "/web/user/")):
+                    raise RuntimeError("岗位详情页要求重新登录或安全验证")
+            elif method == "Network.loadingFailed" and params.get("requestId") == document_request_id:
+                raise RuntimeError(params.get("errorText") or "岗位详情页加载失败")
+            elif method == "Network.loadingFinished" and params.get("requestId") == document_request_id:
+                body, _ = _get_body(session, document_request_id, timeout=5)
+                if body:
+                    return body
+        if document_request_id:
+            body, _ = _get_body(session, document_request_id, timeout=2)
+            if body:
+                return body
+        raise TimeoutError("岗位详情页主文档读取超时")
+    finally:
+        # recv_event 已缓存 Page.navigate 的命令响应；取走它，避免长任务累计无用响应。
+        session.wait_response(navigation_id, timeout=0.1)
+
+
+def fetch_company_full_name(session, item, timeout=COMPANY_DETAIL_TIMEOUT):
+    """从岗位详情页取得企业全称；失败时抛错，由调用方明确记录为空。"""
+    url = job_detail_url(item, include_session_context=True)
+    if not url:
+        raise ValueError("岗位缺少详情 ID")
+    document = _load_detail_html(session, url, timeout=timeout)
+    company_name = company_name_from_detail_html(document)
+    if not company_name:
+        raise ValueError("岗位详情页未披露公司名称")
+    return company_name
+
+
+def parse_job(item, company_name=None):
     """把岗位单条转成统一 job dict（公司名/岗位/薪资/地区/链接）。"""
     if not isinstance(item, dict):
         raise ValueError("岗位数据必须是对象")
@@ -492,11 +670,13 @@ def parse_job(item):
 
     location = "·".join(_join(x) for x in (item.get("cityName"), item.get("areaDistrict"),
                                             item.get("businessDistrict")) if x not in (None, ""))
-    ejid = item.get("encryptJobId") or item.get("jobId")
+    brand_name = _g("brandName", "brandNameAlias")
+    full_company_name = _join(company_name) if company_name not in (None, "") else _g("companyName")
     tags = _join(item.get("jobLabels"))
     skills = _join(item.get("skills"))
     return {
-        "company": _g("brandName", "brandNameAlias"),
+        "company": full_company_name,
+        "brand": brand_name,
         "title": _g("jobName", "jobTitle"),
         "salary": _g("salaryDesc"),
         "location": location,
@@ -504,18 +684,83 @@ def parse_job(item):
         "skills": skills,
         "boss_name": _g("bossName"),
         "boss_title": _g("bossTitle"),
-        "job_link": f"https://www.zhipin.com/job_detail/{ejid}.html" if ejid else "",
+        "job_link": job_detail_url(item),
         "job_id": _g("jobId", "encryptJobId"),
     }
 
 
-def fetch_page(session, keyword, city_code, page, page_delay=3, total_pages=0, progress=None):
+def deduplicate_job_items(items, seen_job_ids=None):
+    """按岗位自身 ID 保序去重；无 ID 的记录不猜测、不合并。"""
+    seen = seen_job_ids if seen_job_ids is not None else set()
+    unique, duplicate_count = [], 0
+    for item in items:
+        job_id = item.get("jobId") or item.get("encryptJobId")
+        key = str(job_id).strip() if job_id not in (None, "") else ""
+        if key and key in seen:
+            duplicate_count += 1
+            continue
+        if key:
+            seen.add(key)
+        unique.append(item)
+    return unique, duplicate_count
+
+
+def enrich_company_names(session, items, company_cache=None, page=1, total_pages=0, progress=None):
+    """串行、低频补全企业全称；同一企业在本次任务中只请求一次。"""
+    cache = company_cache if company_cache is not None else {}
+    rows, request_count, missing_count = [], 0, 0
+    total_items = len(items)
+    if total_items:
+        print(f"[company] 第 {page} 页：开始补全 {total_items} 条岗位的企业全称…", flush=True)
+    for index, item in enumerate(items, 1):
+        brand_id = item.get("encryptBrandId")
+        cache_key = str(brand_id).strip() if brand_id not in (None, "") else ""
+        if cache_key and cache_key in cache:
+            company_name = cache[cache_key]
+        else:
+            if request_count:
+                time.sleep(COMPANY_DETAIL_INTERVAL)
+            if callable(progress):
+                stage = f"第 {page}/{total_pages} 页：补全公司全称" if total_pages else f"第 {page} 页：补全公司全称"
+                progress(page - 1, total_pages, stage, f"正在处理 {index}/{total_items}")
+            try:
+                company_name = fetch_company_full_name(session, item)
+            except Exception as exc:  # 单条失败不伪装成全称，也不丢掉岗位
+                company_name = ""
+                print(f"[company] 第 {page} 页第 {index} 条未取得企业全称：{exc}", flush=True)
+            request_count += 1
+            if cache_key and company_name:
+                cache[cache_key] = company_name
+        if not company_name:
+            missing_count += 1
+        rows.append(parse_job(item, company_name=company_name))
+    if total_items:
+        print(
+            f"[company] 第 {page} 页完成：全称 {total_items - missing_count} 条，未取得 {missing_count} 条",
+            flush=True,
+        )
+    return rows
+
+
+def filter_job_items(items, title_filter=''):
+    terms = [term.strip().casefold() for term in str(title_filter).replace('，', ',').split(',') if term.strip()]
+    return [item for item in items if not terms or any(term in str(item.get('jobName') or item.get('jobTitle') or '').casefold() for term in terms)]
+
+
+def fetch_page(session, keyword, city_code, page, page_delay=3, total_pages=0, progress=None,
+               seen_job_ids=None, company_cache=None, detail_session=None, page_info=None, title_filter=''):
     """导航到第 page 页并解析 joblist 数据。返回 row 列表。"""
-    _joblist_responses.clear()
+    session.expected_joblist = {'page': page, 'query': keyword, 'city': city_code}
     if callable(progress):
         progress(page - 1, total_pages, f"打开第 {page}/{total_pages} 页" if total_pages else f"打开第 {page} 页", "正在导航到搜索结果页")
     print(f"[fetch] 第 {page} 页：正在打开搜索结果并等待接口响应…", flush=True)
-    session.send("Page.navigate", {"url": search_url(keyword, city_code, page)})
+    if page == 1:
+        _joblist_responses.clear()
+        session.send("Page.navigate", {"url": search_url(keyword, city_code, 1)})
+    else:
+        session.send('Page.bringToFront')
+        # 页面使用无限滚动；网址page参数不会改变实际接口页码。
+        session.send('Runtime.evaluate', {'expression': 'window.scrollTo(0,document.body.scrollHeight)', 'returnByValue': True})
     data = _await_joblist(
         session,
         timeout=60,
@@ -531,7 +776,25 @@ def fetch_page(session, keyword, city_code, page, page_delay=3, total_pages=0, p
         )
     if data.get("code") != 0:
         raise RuntimeError(f"第 {page} 页返回 code:{data.get('code')} {data.get('message', '')}")
-    rows = [parse_job(x) for x in response_job_list(data)]
+    raw_items = response_job_list(data)
+    items, duplicate_count = deduplicate_job_items(raw_items, seen_job_ids)
+    if page_info is not None:
+        page_info.update(raw_count=len(raw_items), new_count=len(items), has_more=data.get('zpData', {}).get('hasMore'))
+    print(f'[page] 已确认接口第 {page} 页：返回 {len(raw_items)} 条，新增 {len(items)} 条', flush=True)
+    before_filter = len(items)
+    items = filter_job_items(items, title_filter)
+    if before_filter != len(items):
+        print(f'[filter] 岗位标题筛选后保留 {len(items)}/{before_filter} 条', flush=True)
+    if duplicate_count:
+        print(f"[dedupe] 第 {page} 页去除 {duplicate_count} 条重复岗位", flush=True)
+    rows = enrich_company_names(
+        detail_session or session,
+        items,
+        company_cache=company_cache,
+        page=page,
+        total_pages=total_pages,
+        progress=progress,
+    )
     # 只在还有下一页时等待，最后一页不做无意义停顿。
     if page_delay > 0 and (not total_pages or page < total_pages):
         time.sleep(page_delay)  # 低频，避免封号
@@ -574,16 +837,22 @@ def export_rows(rows, keyword, city_code, fmt, outdir=RESULT_DIR):
     return paths
 
 
-def run_fetch(keyword, city, pages, fmt, delay, port, progress=None):
+def normalize_page_count(value):
+    """统一校验 CLI/TUI 的抓取页数。"""
+    try:
+        pages = int(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"页数必须是整数：{value!r}") from exc
+    if not 1 <= pages <= MAX_PAGES:
+        raise ValueError(f"页数必须是 1-{MAX_PAGES}：{pages}")
+    return pages
+
+
+def run_fetch(keyword, city, pages, fmt, delay, port, progress=None, title_filter=''):
     # TUI/旧调用方可能传入文本框字符串；业务入口统一规范化，避免类型错误进入分页循环。
     keyword = str(keyword or "").strip()
     city = str(city or "").strip()
-    try:
-        pages = int(pages)
-    except (TypeError, ValueError) as exc:
-        raise ValueError(f"页数必须是整数：{pages!r}") from exc
-    if not 1 <= pages <= 10:
-        raise ValueError(f"页数必须是 1-10：{pages}")
+    pages = normalize_page_count(pages)
     try:
         delay = float(delay)
     except (TypeError, ValueError) as exc:
@@ -602,37 +871,62 @@ def run_fetch(keyword, city, pages, fmt, delay, port, progress=None):
         progress(0, pages, "连接专用浏览器", "正在建立 CDP 会话")
     print(f"[fetch] 开始抓取：{keyword} @ {city}，共 {pages} 页", flush=True)
     session = None
+    detail_session = None
+    completed_pages = 0
     all_rows, failed = [], []
+    seen_job_ids, company_cache = set(), {}
     try:
         session = _new_session(port)
         session.send("Network.enable")
         session.send("Page.enable")
+        detail_session = _new_session(port)
+        detail_session.send('Network.enable')
+        detail_session.send('Page.enable')
+        session.send('Page.bringToFront')
         for page in range(1, pages + 1):
             try:
+                page_info = {}
                 rows = fetch_page(
                     session, keyword, city_code, page, delay,
                     total_pages=pages, progress=progress,
+                    seen_job_ids=seen_job_ids, company_cache=company_cache,
+                    detail_session=detail_session, page_info=page_info, title_filter=title_filter,
                 )
+                completed_pages = page
                 all_rows.extend(rows)
                 if callable(progress):
                     progress(page, pages, f"完成第 {page}/{pages} 页", f"本页 {len(rows)} 条，累计 {len(all_rows)} 条")
                 print(f"[fetch] 第 {page} 页 OK，累计 {len(all_rows)} 条", flush=True)
+                if page_info.get('has_more') is False or page_info.get('raw_count') == 0:
+                    print('[fetch] 网站已无更多结果，结束翻页。', flush=True)
+                    break
+                if page_info.get('new_count') == 0:
+                    print('[fetch] 本页无新增岗位，停止重复加载。', flush=True)
+                    break
             except Exception as e:
                 failed.append(page)
                 if callable(progress):
                     progress(page, pages, f"第 {page}/{pages} 页失败", str(e))
                 print(f"[fetch] 第 {page} 页失败：{e}", flush=True)
-                if delay > 0 and page < pages:
-                    time.sleep(delay)  # 失败也给缓冲，不硬闯
+                # 滚动页码已不确定，不能继续把下次响应当作后续页。
+                break
     finally:
         if session is not None:
             session.close()
+        if detail_session is not None:
+            detail_session.close()
     if all_rows:
         paths = export_rows(all_rows, keyword, city_code, fmt)
         for k, p in paths.items():
             print(f"[export] {k.upper()} -> {p}")
     elif not failed:
         print("[fetch] 接口响应成功，但没有岗位结果（当前搜索条件可能无匹配）", flush=True)
+    missing_company_count = sum(not row.get("company") for row in all_rows)
+    if missing_company_count:
+        print(
+            f"[company] 警告：{missing_company_count} 条岗位未取得企业全称；company 已留空，brand 保留品牌简称。",
+            flush=True,
+        )
     completed_at = time.strftime("%Y-%m-%d %H:%M:%S")
     if failed:
         print(f"[fetch] 失败页：{failed}，已抓数据已保存，可缩小 --pages 重跑。")
@@ -642,8 +936,16 @@ def run_fetch(keyword, city, pages, fmt, delay, port, progress=None):
             print(f"⚠ [fetch] 部分完成：{completed_at}，成功 {len(all_rows)} 条，失败页 {failed}", flush=True)
         else:
             raise RuntimeError(f"所有 {len(failed)} 页均抓取失败，未生成有效岗位数据")
+    elif missing_company_count:
+        if callable(progress):
+            progress(pages, pages, "部分完成", f"共 {len(all_rows)} 条，{missing_company_count} 条缺少企业全称")
+        print(
+            f"⚠ [fetch] 部分完成：{completed_at}，共 {len(all_rows)} 条，"
+            f"{missing_company_count} 条缺少企业全称",
+            flush=True,
+        )
     else:
-        print(f"🎉 [fetch] 抓取成功：{completed_at}，共 {len(all_rows)} 条，完成 {pages} 页", flush=True)
+        print(f"🎉 [fetch] 抓取成功：{completed_at}，共 {len(all_rows)} 条，实际完成 {completed_pages} 页（上限 {pages}）", flush=True)
     return all_rows
 
 
@@ -661,8 +963,9 @@ def main():
 
     f = sub.add_parser("fetch", help="抓取职位数据（复用持久登录态）")
     f.add_argument("--keyword", required=True, help="搜索关键词，如：国内电商")
+    f.add_argument('--title-filter', default='', help='岗位标题包含词，逗号分隔；空为不限')
     f.add_argument("--city", required=True, help="城市（中文名或城市码均可）")
-    f.add_argument("--pages", type=int, default=1, help="抓取页数（默认 1）")
+    f.add_argument("--pages", type=int, default=1, help=f"抓取页数（1-{MAX_PAGES}，默认 1）")
     f.add_argument("--format", choices=["csv", "json", "both"], default="csv")
     f.add_argument("--delay", type=float, default=3, help="每页间隔秒数（默认 3，低频防封）")
     f.add_argument("--port", type=int, default=DEFAULT_PORT)
@@ -676,7 +979,7 @@ def main():
             if not login_wait(args.keyword, cc, active_port, args.login_timeout):
                 exit_code = 2
         elif args.cmd == "fetch":
-            run_fetch(args.keyword, args.city, args.pages, args.format, args.delay, args.port)
+            run_fetch(args.keyword, args.city, args.pages, args.format, args.delay, args.port, title_filter=args.title_filter)
     except Exception as e:
         print(f"[error] {e}")
         exit_code = 1

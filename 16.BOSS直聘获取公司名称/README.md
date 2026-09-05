@@ -1,6 +1,23 @@
 # 16. BOSS直聘获取公司名称
 
-依据仓库 [issue #636](https://github.com/b34601512/customer-service-office-tools/issues/636) 的完整踩坑经验实现的**可复用采集工具**。输入 `关键词 + 城市`，输出岗位的公司名、岗位、薪资、地区、链接（CSV/JSON）。
+依据仓库 [issue #636](https://github.com/b34601512/customer-service-office-tools/issues/636) 实现的采集工具。当前版本 **v9**。支持招聘企业采集、岗位标题筛选、京东公开自营经营主体及供应商网店铺企业导出。
+
+v9：编辑程序旁的 `供应商网店铺清单.txt`（每行一个 `https://商家域名.gys.cn/`），首页选择“采集供应商网店铺主体”。按店铺网址去重，导出企业名称、店铺网址、平台认证声明、资质页来源和失败原因。结果为 `merchant_subjects_gys_*.csv/json`。只支持已知供应商网B2B店铺清单，不自动搜索全平台；认证为平台声明，不是本工具独立核验证照。京东POP和1688尚未接入。
+
+命令行：`python boss_tui.py --auto shops --shops-file 供应商网店铺清单.txt --format both`。
+
+v8：修正实际翻页。列表页滚动加载，校验网站POST请求的页码、搜索词与城市；详情使用独立标签页。网站无更多结果、没有新增岗位时结束；翻页失败停止并保存已有结果。1-1000是页数上限，不是承诺获取数量。
+
+配置“搜索词”可填客服、仓管等；“岗位包含词”可填 `客服,仓管`（任一词匹配标题即可），留空则不限。先过滤再请求企业详情。
+
+首页“采集京东公开主体”导出公司、区域、公示来源及证照链接。范围为京东官方披露的自营经营主体，不包含任意第三方店铺对应关系。
+
+```powershell
+python boss_cdp.py fetch --keyword 客服 --city 深圳 --pages 2 --title-filter 电商,抖音 --format both
+python merchant_subjects.py --format both
+```
+
+主体结果文件为 `merchant_subjects_jd_*.csv/json`，与招聘结果位于同一结果目录。
 
 ## 快速开始
 
@@ -41,17 +58,19 @@ CSV 为 UTF-8 BOM，Excel 直接打开不乱码。
 | `setup` | `--login-timeout` | 等待扫码秒数，默认 900 |
 | `fetch` | `--keyword` | 必填，搜索关键词 |
 | | `--city` | 城市（中文名或城市码均可，内置 24 个常用城市码） |
-| | `--pages` | 页数，默认 1（BOSS 列表约限 10 页） |
+| | `--pages` | 页数，范围 1-1000，默认 1（实际可用页数由 BOSS 决定） |
 | | `--format` | `csv` / `json` / `both`，默认 csv |
 | | `--delay` | 每页间隔秒数，默认 3（低频防封） |
 
 ## 原理（为什么这么做）
 
 - **不抓 DOM**：Selenium/Playwright 受控指纹明显，极易触发验证码。
-- **直调页面内部 API** `wapi/zpgeek/search/joblist.json`：返回明文薪资 JSON，绕开前端字体反爬；签名/token 由已登录页面会话自动携带，程序零注入、零逆向。
+- **列表数据**：监听页面内部 API `wapi/zpgeek/search/joblist.json`，获取岗位与品牌简称；签名/token 由已登录页面会话自动携带。
+- **企业全称**：列表接口不提供全称，程序复用同一 Edge/CDP 会话，低频打开岗位详情主文档并读取其“公司名称”；`company` 与 `brand` 分列，取不到全称时 `company` 留空并明确警告。
 - **独立 Edge 实例**：独立 user-data-dir + CDP 端口 + 扫码登录一次，登录态永久保存在该 profile；之后 `fetch` 自动复用，**无需重复登录**。
-- **登录态复用**：首页的「首次登录/检查登录态」会先通过真实 `joblist` 接口验证；已登录直接复用，未登录才进入登录页。Edge 新版 `Default/Network/Cookies` 与旧路径均兼容。
-- **未登录处理**：登录流程只导航一次；若未登录，浏览器停留在 BOSS 登录页，程序只监听登录后的网络事件，不循环刷新、不重复跳转；登录成功后自动继续，超时才返回失败。
+- **登录态复用**：首页的「首次登录/检查登录态」最终只以真实 `joblist` 成功响应验真；界面仅提示 Profile 是否存在，不再把 Cookie 文件存在误报为已登录。
+- **未登录处理**：未登录期间浏览器保持在登录页，不循环刷新；检测到认证凭据后等待自然跳转，仍无岗位响应才补发一次搜索导航，登录后无需退出程序重开。
+- **结果去重**：同一次任务只按 `jobId`（缺失时 `encryptJobId`）保序去重；不按公司名或岗位名猜测合并。
 - **配置编辑**：未进入编辑时左右键不会修改任何值；回车进入编辑，Esc丢弃修改，回车提交保存。页数和格式只在编辑状态下响应左右键。
 - **等待反馈**：抓取页数已知时显示 `▰/▱ + 百分比` 进度条；等待登录或网络响应时显示旋转动画、当前阶段和已等待/已运行时长，不再静默等待。
 - **CDP 等待**：WebSocket 按业务传入的短超时读取，响应体被其他网络事件插队时从缓存队列继续处理；避免页面已变化但 TUI 长时间无反馈。
@@ -65,7 +84,9 @@ CSV 为 UTF-8 BOM，Excel 直接打开不乱码。
 | 默认 profile 打不开调试端口 | 强制独立 `user-data-dir` + `--remote-allow-origins=*` |
 | 复制 Cookie 免登录 → 127+ App-Bound 加密无解 | 不复制，仅扫码一次，profile 即持久登录态 |
 | Windows 中文乱码 | 写入 `utf-8-sig`；控制台强制 utf-8 |
-| 单页失败影响整次任务 | 每页成功结果先保存在内存，失败页跳过；正常结束时统一导出已抓数据（进程被强制中断不保证生成文件） |
+| 翻页失败 | 停止翻页并导出已抓数据（进程被强制中断不保证生成文件） |
+| 列表 `brandName` 不是企业全称 | 详情主文档补全 `company`，原值独立保存为 `brand` |
+| 跨页重复岗位 | 按岗位唯一 ID 在本次任务内保序去重 |
 
 ## 自动化测试（AI 无界面真实运行，SoftTalk #2705 原则）
 
@@ -77,11 +98,12 @@ python selftest.py --with-edge      # 追加：真实启动独立 Edge 并探测
 python selftest.py --with-real-fetch # 追加：已登录则真实联网抓 1 页，校验真实导出文件
 ```
 
-覆盖点：CSV 真实写盘带 UTF-8 BOM 并读回、JSON 结构、搜索 URL 编码、当前/旧版 joblist 响应结构、未登录时只导航一次、CDP 短超时与响应事件缓存、TUI 帧结构/版权/无乱码字节、进度条/旋转动画、首页抓取与配置页表单编辑、Windows Esc 后续输入、任务线程真实捕获 stdout、非 TTY 启动不阻塞、Edge/CDP 可选；真实联网抓取仅在已扫码登录时执行，未登录明确 SKIP 不造假。
+覆盖点：CSV 真实写盘带 UTF-8 BOM 并读回、企业全称解析、品牌与全称分列、岗位 ID 跨页去重、登录后单次验证导航、JSON 结构、搜索 URL 编码、当前/旧版 joblist 响应结构、CDP 短超时与响应事件缓存、TUI 四页与乱码自检、Edge/CDP 可选；真实联网抓取仅在已扫码登录时执行，未登录明确 SKIP 不造假。
 
 ## 业务规则与界面分离
 
 - 业务真源：`boss_cdp.py`（`login_wait` / `fetch_page` / `parse_job` / `export_rows`）。
+- 公开电商经营主体业务：`merchant_subjects.py`（解析、主体去重、导出）；CLI/TUI共用。
 - 界面：CLI 入口 `boss_cdp.py` 与 TUI 入口 `boss_tui.py` 均调用同一业务真源 `boss_cdp`，无重复逻辑；其他脚本也可 `import boss_cdp` 复用。
 
 ## 合规提醒
