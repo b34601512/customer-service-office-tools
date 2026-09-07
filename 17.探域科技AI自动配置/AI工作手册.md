@@ -121,16 +121,16 @@ try {
 
 ### 6.2 脚本接口路线（需先核对当前前端）
 
-#### 自定义Agent（2026-09-07实测）
+#### 自定义Agent（平台适配示例）
 
-自定义Agent必须使用 `德达医疗公司专属资料/scripts/custom-agent-api-20260907.cjs` 的无GUI路线。已核实：
+自定义Agent应使用当前公司独立目录中的API脚本；探域平台的接口形状可参考 `通用经验/探域平台API无头执行手册.md`，不得引用其他公司的脚本、登录态或业务正文。已核实的接口类型包括：
 
 - 读取列表：`GET /api/copilot/v1/agent/customized-agent/list`
 - 读取详情：`GET /api/copilot/v1/agent/customized-agent/detail?id=...`
 - 保存草稿：`POST /api/copilot/v1/agent/customized-agent/save-content`
 - 发布正式：`POST /api/copilot/v1/agent/customized-agent/publish`
 
-正文分别在 `draftContent.content`、`onlineContent.content`。保存前必须备份详情并核对当前正文SHA-256；写入后必须详情回读比较完整正文。发布属于外部配置变更，必须有本次明确批准的完整正文，不得用旧GUI脚本或截图代替回读证据。旧GUI脚本已归档，不是可执行经验。
+正文通常分别在 `draftContent.content`、`onlineContent.content`。保存前必须备份详情并核对当前正文SHA-256；写入后必须详情回读比较完整正文。发布属于外部配置变更，必须有本次明确批准的完整正文，不得用旧GUI脚本或截图代替回读证据。具体字段必须以当前公司后台实际响应为准。
 
 | 实测用途 | 路径/请求形状 | 使用前后检查 |
 |---|---|---|

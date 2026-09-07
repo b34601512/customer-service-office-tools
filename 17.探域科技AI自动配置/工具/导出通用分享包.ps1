@@ -9,12 +9,14 @@ if ($exportRoot.Equals($privateRoot,[StringComparison]::OrdinalIgnoreCase) -or $
 }
 # Only this allowlist is eligible for export. Never enumerate the entire project into a zip.
 $allowlist = @(
-    'AGENTS.md',
-    'README.md',
+    '通用经验/通用AI入口.md',
     'AI工作手册.md',
     '模板/公司接入与拍板.md',
     '通用经验/在线文档完整读取.md',
-    '工具/导出通用分享包.ps1'
+    '通用经验/探域平台API无头执行手册.md',
+    '通用经验/探域API只读调用模板.cjs',
+    '通用经验/探域自定义AgentAPI模板.cjs',
+    '通用经验/脚本意图索引.md'
 )
 $sources = @()
 foreach ($relative in $allowlist) {
