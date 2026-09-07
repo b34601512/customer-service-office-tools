@@ -1,0 +1,24 @@
+{
+  "jobs": [
+    {
+      "label": "示例图片",
+      "source": "本次公司的源图片路径.png",
+      "sourceSha256": "可选：源文件SHA256",
+      "output": "处理后图片.png",
+      "edits": [
+        {
+          "type": "mask",
+          "rectangles": [[10, 10, 100, 60]],
+          "fill": "#d6d6d6"
+        },
+        {
+          "type": "text",
+          "rect": [120, 20, 420, 100],
+          "text": "需要替换的文字",
+          "fontPath": "由本次环境提供的字体路径",
+          "preferredSize": 20
+        }
+      ]
+    }
+  ]
+}
