@@ -4,7 +4,9 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-const { chromium } = require('playwright-core');
+const playwrightCoreIndex = process.argv.indexOf('--playwright-core-path');
+const playwrightCorePath = process.env.PLAYWRIGHT_CORE_PATH || (playwrightCoreIndex >= 0 ? process.argv[playwrightCoreIndex + 1] : null);
+const { chromium } = require(playwrightCorePath || 'playwright-core');
 
 function arg(name, fallback) { const i = process.argv.indexOf(`--${name}`); return i >= 0 ? process.argv[i + 1] : fallback; }
 function required(name) { const value = arg(name); if (!value) throw new Error(`缺少参数 --${name}`); return value; }
@@ -16,7 +18,10 @@ function save(file, value) { fs.mkdirSync(path.dirname(file), { recursive: true 
   const profile = required('profile');
   const backupDir = required('backup-dir');
   const action = arg('action', 'list');
-  const context = await chromium.launchPersistentContext(profile, { headless: true });
+  const launchOptions = { headless: true };
+  const browserChannel = arg('browser-channel');
+  if (browserChannel) launchOptions.channel = browserChannel;
+  const context = await chromium.launchPersistentContext(profile, launchOptions);
   try {
     const page = context.pages()[0] || await context.newPage();
     await page.goto(`${baseUrl}/v2/agent-builder/custom-agent`, { waitUntil: 'domcontentloaded', timeout: 45000 });

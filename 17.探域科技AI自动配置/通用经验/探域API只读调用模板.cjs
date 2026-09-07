@@ -2,7 +2,8 @@
 // 范围：调用者明确传入的接口；默认只读，不提供保存/发布动作。
 // 验证：检查HTTP状态和业务JSON；恢复：无外部副作用。
 const fs = require('fs');
-const { chromium } = require('playwright-core');
+const playwrightCorePath = process.env.PLAYWRIGHT_CORE_PATH || argument('--playwright-core-path');
+const { chromium } = require(playwrightCorePath || 'playwright-core');
 
 function argument(name, fallback) {
   const index = process.argv.indexOf(name);
@@ -24,7 +25,10 @@ function required(name) {
   if (!['GET', 'POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) throw new Error('不支持的HTTP方法');
   if (method === 'GET' && bodyFile) throw new Error('GET不得传请求体');
   const body = bodyFile ? fs.readFileSync(bodyFile, 'utf8') : undefined;
-  const context = await chromium.launchPersistentContext(profile, { headless: true });
+  const launchOptions = { headless: true };
+  const browserChannel = argument('--browser-channel');
+  if (browserChannel) launchOptions.channel = browserChannel;
+  const context = await chromium.launchPersistentContext(profile, launchOptions);
   try {
     const page = context.pages()[0] || await context.newPage();
     await page.goto(baseUrl, { waitUntil: 'domcontentloaded', timeout: 45000 });
