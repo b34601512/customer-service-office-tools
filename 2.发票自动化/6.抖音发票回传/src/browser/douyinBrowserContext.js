@@ -6,7 +6,7 @@ const { 确保目录存在 } = require('../common/fs');
 const { 打印日志 } = require('../common/logger');
 const { 项目根目录 } = require('../common/paths');
 const { 迁移到备份目录 } = require('../common/runtimeCleanup/pathMigration');
-const { 获取店铺账号浏览器资料目录 } = require('./storeProfilePaths');
+const { 获取账号浏览器资料目录 } = require('./accountProfilePaths');
 const { 抖音默认后台地址 } = require('./douyinBusinessUrl');
 
 const 浏览器进程名列表 = ['msedge.exe', 'chrome.exe', 'chromium.exe'];
@@ -51,22 +51,13 @@ function 构建抖音浏览器启动参数() {
   ];
 }
 
-function 获取店铺浏览器资料目录(店铺配置) {
-  // 解决：店铺和账号共同决定资料目录，多店铺登录态物理隔离。
-  return 获取店铺账号浏览器资料目录({
-    storeId: 店铺配置.id,
-    username: 店铺配置.username,
-    browserName: 'msedge',
-  });
-}
-
 function 转义PowerShell字符串(text) {
   // 解决：PowerShell 查询进程时要兼容中文路径和空格。
   return `'${String(text || '').replace(/'/g, "''")}'`;
 }
 
 function 查找资料目录浏览器进程(资料目录) {
-  // 解决：只按本店铺资料目录查找浏览器，避免误关用户平时使用的 Edge。
+  // 解决：只按本账号资料目录查找浏览器，避免误关用户平时使用的 Edge。
   const 标准目录 = String(资料目录 || '').trim();
   if (!标准目录) return [];
   const 进程名条件 = 浏览器进程名列表
@@ -159,25 +150,25 @@ function 迁移浏览器会话恢复文件(资料目录, 选项 = {}) {
   return 迁移结果列表;
 }
 
-function 准备抖音店铺浏览器资料目录(资料目录, 选项 = {}) {
+function 准备抖音账号浏览器资料目录(资料目录, 选项 = {}) {
   // 解决：打开浏览器前统一清理残留进程和恢复标签文件，保留登录态但不恢复旧标签。
   确保目录存在(资料目录);
   清理残留店铺浏览器进程(资料目录);
   迁移浏览器会话恢复文件(资料目录, 选项);
 }
 
-async function 创建抖音店铺浏览器上下文(店铺配置, 选项 = {}) {
+async function 创建抖音账号浏览器上下文(店铺配置, 选项 = {}) {
   // 解决：使用持久化真实浏览器资料目录，同一资料目录在进程内复用已打开的浏览器，避免锁冲突；平时不自动关闭。
   const { headless = false } = 选项;
-  const 资料目录 = 获取店铺浏览器资料目录(店铺配置);
+  const 资料目录 = 获取账号浏览器资料目录(店铺配置);
   const 已有上下文 = 已打开浏览器上下文.get(资料目录);
   if (上下文是否可用(已有上下文)) {
-    打印日志('抖音登录', '浏览器', `复用已打开店铺浏览器：${店铺配置.name} profile=${资料目录}`);
+    打印日志('抖音登录', '浏览器', `复用已打开账号浏览器：${店铺配置.name} profile=${资料目录}`);
     return 已有上下文;
   }
   if (已有上下文) 已打开浏览器上下文.delete(资料目录);
-  准备抖音店铺浏览器资料目录(资料目录, 选项);
-  打印日志('抖音登录', '浏览器', `启动店铺浏览器：${店铺配置.name} profile=${资料目录}`);
+  准备抖音账号浏览器资料目录(资料目录, 选项);
+  打印日志('抖音登录', '浏览器', `启动账号浏览器：${店铺配置.name} profile=${资料目录}`);
   const context = await chromium.launchPersistentContext(资料目录, {
     channel: 'msedge',
     headless,
@@ -185,7 +176,7 @@ async function 创建抖音店铺浏览器上下文(店铺配置, 选项 = {}) {
     locale: 'zh-CN',
     args: 构建抖音浏览器启动参数(),
   });
-  context.__douyinStoreProfilePath = 资料目录;
+  context.__douyinAccountProfilePath = 资料目录;
   context.setDefaultTimeout(10_000);
   已打开浏览器上下文.set(资料目录, context);
   const 清理缓存 = () => 已打开浏览器上下文.delete(资料目录);
@@ -299,15 +290,15 @@ async function 获取或打开抖音页面(context, targetUrl) {
 
 module.exports = {
   构建抖音浏览器启动参数,
-  获取店铺浏览器资料目录,
+  获取账号浏览器资料目录,
   转义PowerShell字符串,
   查找资料目录浏览器进程,
   结束浏览器进程树,
   清理残留店铺浏览器进程,
   构建会话恢复路径列表,
   迁移浏览器会话恢复文件,
-  准备抖音店铺浏览器资料目录,
-  创建抖音店铺浏览器上下文,
+  准备抖音账号浏览器资料目录,
+  创建抖音账号浏览器上下文,
   关闭所有已打开抖音浏览器上下文,
   获取已打开抖音浏览器上下文数量,
   上下文是否可用,

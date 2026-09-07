@@ -47,6 +47,8 @@ function 同步抖音待处理订单({ store = {}, orders = [] } = {}, filePath 
   // 抖音后台列表是本店当前事实快照，旧订单不应继续进入回传队列。
   const storeId = String(store.id || store.storeId || '').trim();
   if (!storeId) throw new Error('同步待处理订单失败：店铺标识不能为空。');
+  // 先完成输入校验和同步，再清理过期队列；成功历史作为防重复回传凭证保留。
+  const saved = 服务.同步待处理订单({ store, orders }, filePath);
   const repository = 服务.创建订单仓库(filePath);
   const data = repository.读取订单数据();
   const incomingNumbers = new Set((Array.isArray(orders) ? orders : [])
@@ -54,10 +56,21 @@ function 同步抖音待处理订单({ store = {}, orders = [] } = {}, filePath 
     .filter(Boolean));
   for (const [key, record] of Object.entries(data.orders || {})) {
     if (String(record.storeId || '').trim() === storeId
+      && record.workflowStatus !== 'handled' && !record.invoiceReturned
       && !incomingNumbers.has(String(record.orderNumber || '').trim())) delete data.orders[key];
   }
   repository.保存订单数据(data);
-  return 服务.同步待处理订单({ store, orders }, filePath);
+  return { ...saved, stats: 服务.统计订单列表(filePath) };
+}
+
+function 设置抖音订单回传尝试(key, attempt = {}, filePath = 抖音订单记录文件路径) {
+  if (['downloading', 'uploading'].includes(attempt.status)) {
+    const record = 服务.读取订单列表(filePath).find((item) => item.key === key);
+    if (record && workflow.读取工作流状态(record) === 'pending') {
+      服务.更新订单工作流状态(key, 'processing', filePath);
+    }
+  }
+  return 服务.设置订单回传尝试(key, attempt, filePath);
 }
 
 module.exports = {
@@ -65,5 +78,6 @@ module.exports = {
   构建抖音订单快照,
   ...服务,
   同步待处理订单: 同步抖音待处理订单,
+  设置订单回传尝试: 设置抖音订单回传尝试,
   ...workflow,
 };

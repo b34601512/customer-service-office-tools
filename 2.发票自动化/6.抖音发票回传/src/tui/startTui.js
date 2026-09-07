@@ -1,67 +1,27 @@
 // 抖音发票回传 TUI 入口：复用共享回传平台模板，绑定抖音专属服务。
 const fs = require("fs");
-const path = require("path");
 const { 加载共享框架 } = require("./共享路径");
 const { 创建回传平台TUI } = 加载共享框架("回传平台TUI.js");
-const 共享回传工作台模块路径 = [
-  path.resolve(__dirname, "../../../共享CLI/platformReturnWorkbench.js"),
-  path.resolve(__dirname, "../../共享CLI/platformReturnWorkbench.js"),
-].find((模块路径) => fs.existsSync(模块路径));
-if (!共享回传工作台模块路径) throw new Error("找不到共享平台回传工作台模块。");
-const { 创建平台回传CLI动作 } = require(共享回传工作台模块路径);
 const {
   读取店铺配置,
   保存店铺配置,
-  获取启用店铺列表,
   检测重复账号配置,
 } = require("../store/storeConfigService");
-const { 同步抖音待处理订单 } = require("../app/syncPendingOrders");
-const { 执行抖音发票正式回传 } = require("../app/returnInvoiceToDouyin");
+const { 逐店同步并回传 } = require('../app/processStores');
 const {
   读取订单列表,
-  读取店铺发票已登记订单,
   更新订单工作流状态,
-  设置订单备注,
-  设置订单回传尝试,
 } = require("../order/douyinOrderRecordStore");
-const { 获取店铺账号浏览器资料目录 } = require("../browser/storeProfilePaths");
+const { 获取账号浏览器资料目录 } = require("../browser/accountProfilePaths");
 const { 关闭所有已打开抖音浏览器上下文 } = require("../browser/douyinBrowserContext");
 const { 启动下载中心窗口, 读取下载中心外部服务状态 } = require("../../../共享CLI/启动下载中心");
 const { 最大化当前控制台窗口 } = require("../../../../共享CLI/最大化控制台窗口");
 
 const 标题 = "抖音发票回传控制台";
 
-// TUI 无屏工作台上下文：回传工作台的页面重绘全部转空操作，明细走 console 被日志页捕获。
-const 工作台上下文 = {
-  输出: () => {},
-  终端: {
-    显示页面: () => {},
-    清屏: () => {},
-    输出标题: () => {},
-    主题: { 成功: (文本) => 文本, 失败: (文本) => 文本, 弱化: (文本) => 文本, 提醒: (文本) => 文本, 强调: (文本) => 文本 },
-  },
-  提问器: { 询问: async () => "" },
-  记录运行日志: () => {},
-};
-
-const 回传工作台 = 创建平台回传CLI动作({
-  platformName: "抖音",
-  获取启用店铺列表,
-  同步单个店铺: 同步抖音待处理订单,
-  读取订单列表,
-  读取店铺发票已登记订单,
-  更新订单工作流状态,
-  设置订单备注,
-  执行正式回传: 执行抖音发票正式回传,
-  设置订单回传尝试,
-  回传要求已登记: false,
-});
-
 function 读取本地登录状态(店铺) {
-  const 资料目录 = 获取店铺账号浏览器资料目录({
-    storeId: 店铺.id,
-    username: 店铺.username,
-  });
+  if (!店铺.phoneNumber) return { status: "missing", label: "未配置手机号", 标签: "未配置手机号" };
+  const 资料目录 = 获取账号浏览器资料目录(店铺);
   return fs.existsSync(资料目录)
     ? { status: "ready", 标签: "已有本地资料" }
     : { status: "missing", 标签: "未发现本地资料" };
@@ -114,16 +74,14 @@ function 创建TUI(选项 = {}) {
     操作动作: {
       "return": async (上下文) => {
         await 上下文.services.启动任务(async () => {
-          const 启用店铺 = 获取启用店铺列表();
-          if (!启用店铺.length) throw new Error("当前没有启用中的店铺。");
-          上下文.task.message = "开始自动登录并回传发票…";
-          await 回传工作台.同步待处理订单(工作台上下文, 启用店铺);
-          await 回传工作台.正式回传(工作台上下文, 启用店铺);
-          上下文.task.message = "发票回传流程已结束。";
+          const result = await 逐店同步并回传({
+            onProgress: (progress) => { 上下文.task.message = progress.message; },
+          });
+          上下文.task.message = result.message;
         });
       },
     },
-    配置提示: "新增、修改、删除店铺请使用 CLI 模式：npm run panel:cli",
+    配置提示: "新增、修改、删除店铺请使用 CLI 模式：node src/cli/startCli.js",
   });
   // 浏览器生命周期：除非退出程序，否则不自动关闭；已打开的浏览器在进程内复用，退出时统一关闭。
   const 原始请求退出 = tui.ctx.services.requestExit;

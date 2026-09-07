@@ -3,7 +3,7 @@ const path = require('path');
 const { 初始化运行目录, 确保目录存在 } = require('../common/fs');
 const { 运行目录 } = require('../common/paths');
 const { 打印日志 } = require('../common/logger');
-const { 创建抖音店铺浏览器上下文 } = require('../browser/douyinBrowserContext');
+const { 创建抖音账号浏览器上下文 } = require('../browser/douyinBrowserContext');
 const { 批量从下载中心下载发票 } = require('../invoiceReturn/downloadCenterInvoiceDownloader');
 const {
   打开抖音待回传发票页面,
@@ -299,10 +299,10 @@ async function 执行抖音发票回传(选项 = {}) {
   if (!店铺配置?.id) throw new Error('抖音发票回传失败：缺少店铺配置。');
   初始化运行目录();
   确保目录存在(抖音回传导出目录);
-  const context = await 创建抖音店铺浏览器上下文(店铺配置, { headless });
+  const context = await 创建抖音账号浏览器上下文(店铺配置, { headless });
   try {
-    const page = context.pages().find((item) => !item.isClosed()) || await context.newPage();
-    await 执行带持续进度反馈({
+    let page = context.pages().find((item) => !item.isClosed()) || await context.newPage();
+    page = await 执行带持续进度反馈({
       onProgress,
       action: () => 打开抖音待回传发票页面(page, 店铺配置),
       buildProgress: (等待秒数) => 构建阶段进度(`正在打开抖音待开票列表：${店铺配置.name}，已等待 ${等待秒数} 秒。`),

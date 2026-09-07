@@ -1,8 +1,9 @@
 const { 初始化运行目录 } = require('../common/fs');
 const { 打印日志 } = require('../common/logger');
 const { 获取启用店铺列表, 获取指定或首个启用店铺 } = require('../store/storeConfigService');
-const { 创建抖音店铺浏览器上下文, 获取或打开抖音页面 } = require('../browser/douyinBrowserContext');
+const { 创建抖音账号浏览器上下文, 获取或打开抖音页面 } = require('../browser/douyinBrowserContext');
 const { 等待抖音登录完成 } = require('../browser/douyinAuthenticatedPage');
+const { 获取账号浏览器资料目录 } = require('../browser/accountProfilePaths');
 const { 读取抖音业务后台地址 } = require('../browser/douyinBusinessUrl');
 
 async function 登录单个抖音店铺(店铺配置, 选项 = {}) {
@@ -12,7 +13,7 @@ async function 登录单个抖音店铺(店铺配置, 选项 = {}) {
     登录等待超时毫秒 = 15 * 60_000,
   } = 选项;
   初始化运行目录();
-  const context = await 创建抖音店铺浏览器上下文(店铺配置, { headless });
+  const context = await 创建抖音账号浏览器上下文(店铺配置, { headless });
   try {
     const page = await 获取或打开抖音页面(context, 读取抖音业务后台地址(店铺配置));
     打印日志('抖音登录', '主流程', `开始登录店铺：${店铺配置.name}`);
@@ -21,7 +22,7 @@ async function 登录单个抖音店铺(店铺配置, 选项 = {}) {
     return {
       storeId: 店铺配置.id,
       storeName: 店铺配置.name,
-      profilePath: context.__douyinStoreProfilePath,
+      profilePath: context.__douyinAccountProfilePath,
     };
   } finally {
     // 浏览器保持打开，供人工核实；用户看完手动关闭窗口即可。
@@ -35,15 +36,20 @@ async function 登录首个或指定抖音店铺(storeId = '', 选项 = {}) {
 }
 
 async function 登录全部启用抖音店铺(选项 = {}) {
-  // 解决：多店铺登录串行执行，避免多个验证窗口同时弹出导致人工混乱。
+  // 解决：按手机号串行登录一次，同账号的各店共享登录结果。
   const 店铺列表 = 获取启用店铺列表();
   if (!店铺列表.length) {
     throw new Error('没有启用中的抖音店铺，请先编辑 data/stores.json。');
   }
   const 登录结果列表 = [];
+  const 已登录账号 = new Map();
   for (const [索引, 店铺配置] of 店铺列表.entries()) {
     打印日志('抖音登录', '批量登录', `第 ${索引 + 1}/${店铺列表.length} 个店铺：${店铺配置.name}`);
-    登录结果列表.push(await 登录单个抖音店铺(店铺配置, 选项));
+    const profilePath = 获取账号浏览器资料目录(店铺配置);
+    if (!已登录账号.has(profilePath)) {
+      已登录账号.set(profilePath, await 登录单个抖音店铺(店铺配置, 选项));
+    }
+    登录结果列表.push({ ...已登录账号.get(profilePath), storeId: 店铺配置.id, storeName: 店铺配置.name });
   }
   return 登录结果列表;
 }

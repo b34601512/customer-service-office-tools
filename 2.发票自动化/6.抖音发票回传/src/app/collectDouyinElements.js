@@ -4,7 +4,7 @@ const { 初始化运行目录, 确保目录存在 } = require('../common/fs');
 const { 运行目录 } = require('../common/paths');
 const { 打印日志 } = require('../common/logger');
 const { 获取指定或首个启用店铺 } = require('../store/storeConfigService');
-const { 创建抖音店铺浏览器上下文, 获取或打开抖音页面 } = require('../browser/douyinBrowserContext');
+const { 创建抖音账号浏览器上下文, 获取或打开抖音页面 } = require('../browser/douyinBrowserContext');
 const { 读取抖音业务后台地址 } = require('../browser/douyinBusinessUrl');
 const { 打开抖音待回传发票页面 } = require('../invoiceReturn/douyinInvoicePage');
 
@@ -52,10 +52,10 @@ async function 采集单个抖音店铺元素(店铺配置, 选项 = {}) {
   const { headless = false } = 选项;
   初始化运行目录();
   确保目录存在(抖音元素采集目录);
-  const context = await 创建抖音店铺浏览器上下文(店铺配置, { headless });
+  const context = await 创建抖音账号浏览器上下文(店铺配置, { headless });
   try {
-    const page = await 获取或打开抖音页面(context, 读取抖音业务后台地址(店铺配置));
-    await 打开抖音待回传发票页面(page, 店铺配置);
+    let page = await 获取或打开抖音页面(context, 读取抖音业务后台地址(店铺配置));
+    page = await 打开抖音待回传发票页面(page, 店铺配置);
     const snapshot = await 采集抖音页面快照(page);
     const filePath = 构建采集文件路径(店铺配置);
     fs.writeFileSync(filePath, JSON.stringify(snapshot, null, 2), 'utf8');

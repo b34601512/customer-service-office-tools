@@ -162,12 +162,6 @@ async function 等待目标店铺(originPage, 期望, timeoutMs) {
 }
 
 async function 确保抖音目标店铺(page, 店铺配置, 报告进度, 选项 = {}) {
-  // 若未配置平台店铺ID则跳过切店，仅提示
-  const hasStoreId = String(店铺配置?.platformStoreId || '').trim();
-  if (!hasStoreId) {
-    打印日志('抖音登录', '切店', `店铺「${店铺配置.name}」未配置 platformStoreId，跳过切店（同手机号多店需配置）`);
-    return { page, identity: null, skipped: true };
-  }
   const 期望 = 解析期望店铺身份(店铺配置);
   const 当前 = await 读取当前抖音店铺身份(page);
   if (店铺身份是否一致(当前, 期望)) return { page, identity: 当前 };

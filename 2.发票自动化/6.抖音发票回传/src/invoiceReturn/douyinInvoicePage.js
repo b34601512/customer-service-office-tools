@@ -4,7 +4,8 @@ const zlib = require('zlib');
 const { 等待抖音登录完成, 是抖音登录页面 } = require('../browser/douyinAuthenticatedPage');
 const { 打印日志 } = require('../common/logger');
 const { 截图目录, 规范化店铺标识 } = require('../common/paths');
-const { 确保抖音目标店铺 } = require('../browser/douyinStoreIdentity');
+const { 关闭多余抖音页面 } = require('../browser/douyinBrowserContext');
+const { 确保抖音目标店铺, 解析期望店铺身份, 读取当前抖音店铺身份, 店铺身份是否一致 } = require('../browser/douyinStoreIdentity');
 
 const 抖音待回传发票页面地址 = 'https://fxg.jinritemai.com/ffa/morder/receipt/list';
 const 抖音导出记录页面地址 = 'https://fxg.jinritemai.com/ffa/morder/receipt/report-list';
@@ -164,39 +165,30 @@ async function 等待抖音待开票列表加载(page) {
 }
 
 async function 打开抖音待回传发票页面(page, 店铺配置 = {}, 选项 = {}) {
-  // 解决：所有回传动作都从消费者开票列表进入，同手机号多店需先切到目标店铺（照抄 12.店铺指标的成熟切店方案）。
   const { 登录等待超时毫秒 = 15 * 60_000, onAction = null } = 选项;
-  const 报告进度 = typeof onAction === 'function' ? onAction : null;
-  await page.goto(抖音待回传发票页面地址, { waitUntil: 'domcontentloaded', timeout: 60_000 });
+  const 期望 = 解析期望店铺身份(店铺配置);
+  if (page.url() !== 抖音待回传发票页面地址) {
+    await page.goto(抖音待回传发票页面地址, { waitUntil: 'domcontentloaded', timeout: 60_000 });
+  }
   await page.bringToFront().catch(() => {});
   const 首次状态 = await 等待抖音待开票列表或登录页(page);
-  if (首次状态.state === 'ready') {
-    try {
-      const 切店结果 = await 确保抖音目标店铺(page, 店铺配置, 报告进度);
-      if (切店结果 && !切店结果.skipped && 切店结果.identity) {
-        await page.goto(抖音待回传发票页面地址, { waitUntil: 'domcontentloaded', timeout: 60_000 });
-        return 等待抖音待开票列表加载(page);
-      }
-    } catch (错误) {
-      打印日志('抖音登录', '切店', 错误.message);
-      throw 错误;
-    }
-    return 首次状态.text;
+  if (首次状态.state === 'login') {
+    await 等待抖音登录完成(page, 店铺配置, { timeoutMs: 登录等待超时毫秒 });
+    await page.goto(抖音待回传发票页面地址, { waitUntil: 'domcontentloaded', timeout: 60_000 });
+    await 等待抖音待开票列表加载(page);
   }
-  await 等待抖音登录完成(page, 店铺配置, { timeoutMs: 登录等待超时毫秒 });
-  await page.goto(抖音待回传发票页面地址, { waitUntil: 'domcontentloaded', timeout: 60_000 });
-  const 加载后文本 = await 等待抖音待开票列表加载(page);
-  try {
-    const 切店结果 = await 确保抖音目标店铺(page, 店铺配置, 报告进度);
-    if (切店结果 && !切店结果.skipped && 切店结果.identity) {
-      await page.goto(抖音待回传发票页面地址, { waitUntil: 'domcontentloaded', timeout: 60_000 });
-      return 等待抖音待开票列表加载(page);
-    }
-  } catch (错误) {
-    打印日志('抖音登录', '切店', 错误.message);
-    throw 错误;
+  const 切店结果 = await 确保抖音目标店铺(page, 店铺配置, onAction);
+  const 目标页面 = 切店结果.page;
+  await 关闭多余抖音页面(目标页面.context().pages(), 目标页面);
+  if (目标页面.url() !== 抖音待回传发票页面地址) {
+    await 目标页面.goto(抖音待回传发票页面地址, { waitUntil: 'domcontentloaded', timeout: 60_000 });
   }
-  return 加载后文本;
+  await 等待抖音待开票列表加载(目标页面);
+  // 切店可能打开新页；只把最终业务页核验通过的页面交给读取、上传和截图。
+  if (!店铺身份是否一致(await 读取当前抖音店铺身份(目标页面), 期望)) {
+    throw new Error('抖音待回传页面店铺身份不一致，已停止处理。');
+  }
+  return 目标页面;
 }
 
 function 生成导出文件名(suggestedFilename) {

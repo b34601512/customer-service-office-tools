@@ -1,6 +1,10 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { 读取当前抖音店铺身份 } = require('../src/browser/douyinStoreIdentity');
+const { 读取当前抖音店铺身份, 确保抖音目标店铺 } = require('../src/browser/douyinStoreIdentity');
+
+test('缺少平台店铺ID时阻止处理，不跳过身份核验', async () => {
+  await assert.rejects(确保抖音目标店铺({}, { id: 'a', name: 'A店' }), /尚未配置平台店铺ID/);
+});
 
 function 创建列表(items) {
   return {

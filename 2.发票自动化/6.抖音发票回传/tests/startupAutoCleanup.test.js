@@ -14,7 +14,7 @@ test('启动清理路径不包含登录资料和旧控制台目录', () => {
   const projectRoot = path.join(os.tmpdir(), 'douyin-project');
   const paths = 构建启动清理路径列表(projectRoot);
 
-  assert.equal(paths.some((item) => item.includes(path.join('runtime', 'store-profiles'))), false);
+  assert.equal(paths.some((item) => item.includes(path.join('runtime', 'account-profiles'))), false);
   assert.equal(paths.some((item) => item.includes(path.join('runtime', 'douyin-exports'))), true);
   assert.equal(paths.some((item) => item.includes(path.join('runtime', 'control-center-window'))), false);
 });
@@ -23,7 +23,7 @@ test('启动清理会迁移临时产物但保留店铺资料', async () => {
   const projectRoot = 创建临时项目目录();
   const backupRoot = path.join(projectRoot, 'backup');
   const screenshotsDir = path.join(projectRoot, 'runtime', 'screenshots');
-  const profileDir = path.join(projectRoot, 'runtime', 'store-profiles', 'msedge', 'store-a');
+  const profileDir = path.join(projectRoot, 'runtime', 'account-profiles', 'msedge', 'account-a');
   fs.mkdirSync(screenshotsDir, { recursive: true });
   fs.mkdirSync(profileDir, { recursive: true });
   fs.writeFileSync(path.join(screenshotsDir, 'old.png'), 'image', 'utf8');

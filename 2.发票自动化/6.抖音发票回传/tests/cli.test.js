@@ -15,7 +15,8 @@ test('CLI首页提供一键发票回传和凭证入口', () => {
   assert.match(text, /编号: '6', 名称: '发票回传（自动同步并回传）'/);
   assert.match(text, /编号: '7', 名称: '打开凭证文件夹'/);
   assert.doesNotMatch(text, /同步待处理订单|订单状态管理|正式回传待回传订单/);
-  assert.match(text, /platformReturnWorkbench/);
+  assert.match(text, /processStores/);
+  assert.doesNotMatch(text, /platformReturnWorkbench/);
   assert.doesNotMatch(text, /试跑/);
 });
 
@@ -33,9 +34,13 @@ test('CLI凭证查看模块可以加载', () => {
   assert.equal(typeof evidenceViewer.打开凭证目录, 'function');
 });
 
-test('CLI把独立运行日志通道传给共享回传工作台', () => {
+test('CLI和TUI共用逐店业务入口，删除旧两轮工作台', () => {
   const text = 读取项目文件('src/cli/startCli.js');
 
   assert.match(text, /发票回传\(\{ 提问器, 输出, 终端, 记录运行日志 \}\)/);
-  assert.match(text, /回传工作台\.一键发票回传\(\{ 提问器, 输出, 终端, 记录运行日志 \}\)/);
+  assert.match(text, /await 逐店同步并回传\(/);
+  assert.match(text, /记录运行日志\(progress.message\)/);
+  const tui = 读取项目文件('src/tui/startTui.js');
+  assert.match(tui, /await 逐店同步并回传\(/);
+  assert.doesNotMatch(tui, /工作台上下文|platformReturnWorkbench|回传工作台/);
 });
