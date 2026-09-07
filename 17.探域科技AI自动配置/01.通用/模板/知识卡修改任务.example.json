@@ -1,0 +1,19 @@
+{
+  "company": "示例公司",
+  "scope": {
+    "platform": "示例平台",
+    "shop": "示例店铺"
+  },
+  "items": [
+    {
+      "id": "知识卡ID",
+      "note": "本次为什么修改",
+      "before": ["修改前完整正文"],
+      "after": ["修改后完整正文"],
+      "expected": {
+        "ifOpen": true,
+        "type": "SHOP"
+      }
+    }
+  ]
+}
