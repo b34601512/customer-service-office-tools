@@ -16,7 +16,10 @@ function stable(v) {
   return JSON.stringify(v, (_, x) => x && typeof x === 'object' && !Array.isArray(x)
     ? Object.fromEntries(Object.entries(x).sort(([a], [b]) => a.localeCompare(b))) : x);
 }
-function content(card) { return (card.content || []).map(x => String(x?.content ?? '')).join('\n'); }
+function contentSegments(card) {
+  return (card.content || []).map(x => String(x?.content ?? ''));
+}
+function joinedContent(card) { return contentSegments(card).join('\n'); }
 function normalizeCards(raw) {
   if (Array.isArray(raw)) return raw;
   if (Array.isArray(raw.cards)) return raw.cards;
@@ -30,7 +33,7 @@ function listIds(card, key) {
   ]).filter(Boolean).map(String);
 }
 function matches(card, where = {}) {
-  const body = content(card);
+  const body = joinedContent(card);
   if (where.ids?.length && !where.ids.map(String).includes(String(card.id))) return false;
   if (where.ifOpen != null && Boolean(card.ifOpen) !== Boolean(where.ifOpen)) return false;
   if (where.types?.length && !where.types.map(String).includes(String(card.type))) return false;
@@ -49,24 +52,34 @@ function matches(card, where = {}) {
   }
   return true;
 }
-function applyTransforms(text, transforms = []) {
-  let out = text;
+function applyTransformsToSegments(inputSegments, transforms = []) {
+  let out = [...inputSegments];
   for (const t of transforms) {
     if (t.type === 'replace-literal') {
       const from = String(t.from ?? '');
       if (!from) throw new Error('replace-literal 缺少 from');
-      const parts = out.split(from);
-      if (t.requireMatch !== false && parts.length === 1) throw new Error(`未找到待替换文本: ${from.slice(0, 80)}`);
-      out = parts.join(String(t.to ?? ''));
+      let matched = 0;
+      out = out.map(segment => {
+        const parts = segment.split(from);
+        if (parts.length > 1) matched += parts.length - 1;
+        return parts.join(String(t.to ?? ''));
+      });
+      if (t.requireMatch !== false && matched === 0) throw new Error(`未找到待替换文本: ${from.slice(0, 80)}`);
     } else if (t.type === 'replace-regex') {
-      const re = new RegExp(t.pattern, t.flags || 'g');
-      if (t.requireMatch !== false && !re.test(out)) throw new Error(`正则未匹配: ${t.pattern}`);
-      re.lastIndex = 0;
-      out = out.replace(re, String(t.to ?? ''));
+      let matched = 0;
+      out = out.map(segment => {
+        const re = new RegExp(t.pattern, t.flags || 'g');
+        if (re.test(segment)) matched++;
+        re.lastIndex = 0;
+        return segment.replace(re, String(t.to ?? ''));
+      });
+      if (t.requireMatch !== false && matched === 0) throw new Error(`正则未匹配: ${t.pattern}`);
     } else if (t.type === 'append') {
-      out += String(t.text ?? '');
+      if (!out.length) out = [''];
+      out[out.length - 1] += String(t.text ?? '');
     } else if (t.type === 'prepend') {
-      out = String(t.text ?? '') + out;
+      if (!out.length) out = [''];
+      out[0] = String(t.text ?? '') + out[0];
     } else {
       throw new Error(`未知transform: ${t.type}`);
     }
@@ -106,15 +119,15 @@ function expectedMeta(card) {
     const candidates = cards.filter(card => matches(card, rule.where || {}));
     const report = { name: rule.name || 'unnamed', candidates: candidates.length, changed: 0, unchanged: 0 };
     for (const card of candidates) {
-      const before = content(card);
+      const before = contentSegments(card);
       let after;
       try {
-        after = applyTransforms(before, rule.transforms || []);
+        after = applyTransformsToSegments(before, rule.transforms || []);
       } catch (error) {
         error.message = `[${rule.name || 'unnamed'}][${card.id}] ${error.message}`;
         throw error;
       }
-      if (after === before) {
+      if (stable(after) === stable(before)) {
         report.unchanged++;
         continue;
       }
@@ -123,8 +136,8 @@ function expectedMeta(card) {
       output.items.push({
         id: card.id,
         note: rule.note || rule.name || null,
-        before: [before],
-        after: [after],
+        before,
+        after,
         expected: expectedMeta(card)
       });
       report.changed++;
