@@ -1,0 +1,16 @@
+{
+  "rule": "禁止有头GUI；允许直接API，或headless:true仅作为认证载体并通过fetch传输",
+  "requiredFields": ["intent", "scope", "mode", "verification", "recovery"],
+  "scripts": {
+    "custom-agent-api-20260907.cjs": {"intent":"读取/保存/发布自定义Agent并回读校验","scope":"德达医疗旗舰店自定义Agent","mode":"read;显式save-draft/publish写入","verification":"详情正文SHA-256","recovery":"保存前备份；发布需明确授权"},
+    "agent-config-api-read-20260908.cjs": {"intent":"读取接待、自动发送、转交话术、触发器、意图和风格配置","scope":"thirdShopId=2095398963959042048","mode":"read-only","verification":"输出JSON并检查业务成功码","recovery":"不写后台"},
+    "reception-config-api-20260908.cjs": {"intent":"读取/同文验证接待订单判定配置","scope":"目标店铺salesStageJudgment","mode":"read;显式test-save-same写入","verification":"写入前后完整JSON比较","recovery":"同文写入；快照备份"},
+    "auto-send-api-20260908.cjs": {"intent":"读取自动发送方案；按授权执行同文可恢复回读测试","scope":"目标店铺自动发送方案","mode":"read;显式test-save-same写入","verification":"业务字段归一化比较","recovery":"写入前后备份；已完成一次测试，不重复"},
+    "before-transfer-api-20260908.cjs": {"intent":"读取转交前话术；按授权执行同文回读测试","scope":"目标店铺转交前话术","mode":"read;显式test-save-same写入","verification":"完整结构SHA-256回读","recovery":"写入前后备份"},
+    "simulation-api-read-20260908.cjs": {"intent":"读取模拟上下文和卡片","scope":"目标店铺模拟会话","mode":"read-only","verification":"保存接口响应快照","recovery":"不写后台"},
+    "simulation-api-test-20260908.cjs": {"intent":"通过模拟API发送指定测试问题并轮询回复","scope":"目标店铺隔离测试会话","mode":"reversible test","verification":"发送成功、回复轮询、测试会话重置","recovery":"仅测试会话；结束重置"},
+    "simulate-blood-oxygen-recommend-20260907.cjs": {"intent":"通过无头页面自动化验证血氧咨询承接","scope":"目标店铺两条固定模拟问题","mode":"headless GUI test","verification":"等待页面生成并读取回复","recovery":"仅测试会话；不改正式配置"},
+    "audit-custom-agent-risk-20260908.cjs": {"intent":"审计Agent是否存在疾病/血氧到设备参数的危险映射","scope":"指定Agent正式与草稿正文","mode":"read-only","verification":"SHA、长度、风险命中项","recovery":"不写后台"},
+    "validate-sales-draft-20260908.cjs": {"intent":"验证本地售前缺氧承接草案是否符合业务边界","scope":"本地草案文件","mode":"local read-only","verification":"规则检查全部通过","recovery":"不访问后台"}
+  }
+}

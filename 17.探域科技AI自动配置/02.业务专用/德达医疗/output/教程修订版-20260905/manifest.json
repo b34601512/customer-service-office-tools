@@ -1,0 +1,594 @@
+[
+  {
+    "model": "C1",
+    "source": "D:\\Pictures\\使用教程\\C1使用方法操作图解使用教程.png",
+    "file": "D:\\桌面\\办公软件\\17.探域科技AI自动配置\\output\\教程修订版-20260905\\C1使用方法操作图解使用教程.png",
+    "sourceSha256": "fe9ad14e30fc2664deb297dc234f2bc13ef156b014c9255732e1a7c18eb963ee",
+    "sha256": "94619738132f1368b5ac5b819236eaa65a99b88bbd9a8c630fceb234846ba4f4",
+    "patches": [
+      {
+        "rect": [
+          533,
+          98,
+          870,
+          146
+        ],
+        "text": "吸氧档位及用氧要求请遵医嘱。",
+        "fontSize": 18,
+        "lines": [
+          "吸氧档位及用氧要求请遵医嘱。"
+        ]
+      },
+      {
+        "rect": [
+          301,
+          334,
+          471,
+          476
+        ],
+        "text": "5. 按医生确定的档位及用氧要求使用。",
+        "fontSize": 20,
+        "lines": [
+          "5. 按医生确定的",
+          "档位及用氧要求使",
+          "用。"
+        ]
+      }
+    ],
+    "outsidePixelsUnchanged": true
+  },
+  {
+    "model": "Y105Y106",
+    "source": "D:\\Pictures\\使用教程\\Y105Y106便携制氧机使用图示.png",
+    "file": "D:\\桌面\\办公软件\\17.探域科技AI自动配置\\output\\教程修订版-20260905\\Y105Y106便携制氧机使用图示.png",
+    "sourceSha256": "057f678a9da4ee67896324ca9633afe158098042690ca4d36de019fda92a8ce3",
+    "sha256": "598114dcc12120060cbcd53f3af875438a7cebe14ecd357921158c95bb9a3263",
+    "patches": [
+      {
+        "rect": [
+          612,
+          58,
+          743,
+          175
+        ],
+        "text": "3. 按医生确定的档位及用氧要求使用。",
+        "fontSize": 20,
+        "lines": [
+          "3. 按医生确",
+          "定的档位及用",
+          "氧要求使用。"
+        ]
+      }
+    ],
+    "outsidePixelsUnchanged": true
+  },
+  {
+    "model": "1A",
+    "source": "D:\\Pictures\\使用教程\\1A使用方法操作图示使用教程.png",
+    "file": "D:\\桌面\\办公软件\\17.探域科技AI自动配置\\output\\教程修订版-20260905\\1A使用方法操作图示使用教程.png",
+    "sourceSha256": "6a31f10ed006075b7b1f7b71d3b0714a690d94b13a40109fa1e2803ebfc5297d",
+    "sha256": "80cbde441c4048ed932edcf88adaf2030b1de121a88e3e418ee2355a4687d64a",
+    "patches": [
+      {
+        "rect": [
+          28,
+          88,
+          367,
+          138
+        ],
+        "text": "吸氧档位及用氧要求请遵医嘱。",
+        "fontSize": 18,
+        "lines": [
+          "吸氧档位及用氧要求请遵医嘱。"
+        ]
+      },
+      {
+        "rect": [
+          653,
+          286,
+          942,
+          372
+        ],
+        "text": "6. 按医生确定的档位及用氧要求使用。",
+        "fontSize": 20,
+        "lines": [
+          "6. 按医生确定的档位及用氧要",
+          "求使用。"
+        ]
+      }
+    ],
+    "outsidePixelsUnchanged": true
+  },
+  {
+    "model": "1LW",
+    "source": "D:\\Pictures\\使用教程\\1LW使用方法操作图使用教程.png",
+    "file": "D:\\桌面\\办公软件\\17.探域科技AI自动配置\\output\\教程修订版-20260905\\1LW使用方法操作图使用教程.png",
+    "sourceSha256": "4855d6dc82f2efe6e584b862044f26f55bdf812715cf78fdd32090dbc7c85576",
+    "sha256": "ef69e30a62491f23bc54df0d727aff293a5d1993166270b4597153ead82218e1",
+    "patches": [
+      {
+        "rect": [
+          16,
+          51,
+          355,
+          104
+        ],
+        "text": "吸氧档位及用氧要求请遵医嘱。",
+        "fontSize": 18,
+        "lines": [
+          "吸氧档位及用氧要求请遵医嘱。"
+        ]
+      },
+      {
+        "rect": [
+          400,
+          517,
+          602,
+          658
+        ],
+        "text": "6. 按医生确定的档位及用氧要求使用。",
+        "fontSize": 20,
+        "lines": [
+          "6. 按医生确定的档位",
+          "及用氧要求使用。"
+        ]
+      }
+    ],
+    "outsidePixelsUnchanged": true
+  },
+  {
+    "model": "1SW",
+    "source": "D:\\Pictures\\使用教程\\1SW使用方法操作图解使用教程.png",
+    "file": "D:\\桌面\\办公软件\\17.探域科技AI自动配置\\output\\教程修订版-20260905\\1SW使用方法操作图解使用教程.png",
+    "sourceSha256": "bc6bb83f35d899aec29f90815d6fe7b8c6be045ea7c23b228f2826ae32a3e06d",
+    "sha256": "062b56b87b52b63856a784e806ede8e516390502385a058e501f7a34f2484579",
+    "patches": [
+      {
+        "rect": [
+          22,
+          209,
+          361,
+          264
+        ],
+        "text": "吸氧档位及用氧要求请遵医嘱。",
+        "fontSize": 18,
+        "lines": [
+          "吸氧档位及用氧要求请遵医嘱。"
+        ]
+      },
+      {
+        "rect": [
+          473,
+          468,
+          769,
+          552
+        ],
+        "text": "6. 按医生确定的档位及用氧要求使用。",
+        "fontSize": 20,
+        "lines": [
+          "6. 按医生确定的档位及用氧要求",
+          "使用。"
+        ]
+      }
+    ],
+    "outsidePixelsUnchanged": true
+  },
+  {
+    "model": "2AW",
+    "source": "D:\\Pictures\\使用教程\\2AW使用方法操作图解使用教程.png",
+    "file": "D:\\桌面\\办公软件\\17.探域科技AI自动配置\\output\\教程修订版-20260905\\2AW使用方法操作图解使用教程.png",
+    "sourceSha256": "033209e79a64053b51929ff6ef4e50aec842ae3d8e2d8a97e8812ed1cae9edd6",
+    "sha256": "f823a065e82928a8de265d5dd04be553c9631f606df54433f00cec351815e64c",
+    "patches": [
+      {
+        "rect": [
+          62,
+          81,
+          401,
+          132
+        ],
+        "text": "吸氧档位及用氧要求请遵医嘱。",
+        "fontSize": 18,
+        "lines": [
+          "吸氧档位及用氧要求请遵医嘱。"
+        ]
+      },
+      {
+        "rect": [
+          458,
+          541,
+          675,
+          654
+        ],
+        "text": "6. 按医生确定的档位及用氧要求使用。",
+        "fontSize": 20,
+        "lines": [
+          "6. 按医生确定的档位及",
+          "用氧要求使用。"
+        ]
+      }
+    ],
+    "outsidePixelsUnchanged": true
+  },
+  {
+    "model": "A1",
+    "source": "D:\\Pictures\\使用教程\\A1使用方法操作图解使用教程.png",
+    "file": "D:\\桌面\\办公软件\\17.探域科技AI自动配置\\output\\教程修订版-20260905\\A1使用方法操作图解使用教程.png",
+    "sourceSha256": "da43c1f16d02d33a1e2e007d6a4cc16fa29cf0fc401f266f1c142414d1d1e226",
+    "sha256": "4097bda7406cb940b8353c7c39679069c92b453b3d6957e88bc1e0baf0142047",
+    "patches": [
+      {
+        "rect": [
+          24,
+          129,
+          363,
+          183
+        ],
+        "text": "吸氧档位及用氧要求请遵医嘱。",
+        "fontSize": 18,
+        "lines": [
+          "吸氧档位及用氧要求请遵医嘱。"
+        ]
+      },
+      {
+        "rect": [
+          747,
+          185,
+          938,
+          326
+        ],
+        "text": "5. 按医生确定的档位及用氧要求使用。",
+        "fontSize": 20,
+        "lines": [
+          "5. 按医生确定的档",
+          "位及用氧要求使用。"
+        ]
+      }
+    ],
+    "outsidePixelsUnchanged": true
+  },
+  {
+    "model": "Q1Q2",
+    "source": "D:\\Pictures\\使用教程\\Q1Q2使用方法操作图示使用教程.png",
+    "file": "D:\\桌面\\办公软件\\17.探域科技AI自动配置\\output\\教程修订版-20260905\\Q1Q2使用方法操作图示使用教程.png",
+    "sourceSha256": "4ee2b3fe1beedf5e12d97728cc4b818861124a5d4902f916f53e55fffb517028",
+    "sha256": "81ca3d3d4cd68499363a0da7fb98d7a406fd7388cfb25763607809c06b37bb85",
+    "patches": [
+      {
+        "rect": [
+          25,
+          180,
+          434,
+          244
+        ],
+        "text": "吸氧档位及用氧要求请遵医嘱。",
+        "fontSize": 18,
+        "lines": [
+          "吸氧档位及用氧要求请遵医嘱。"
+        ]
+      },
+      {
+        "rect": [
+          427,
+          20,
+          717,
+          106
+        ],
+        "text": "6. 按医生确定的档位及用氧要求使用。",
+        "fontSize": 20,
+        "lines": [
+          "6. 按医生确定的档位及用氧要",
+          "求使用。"
+        ]
+      }
+    ],
+    "outsidePixelsUnchanged": true
+  },
+  {
+    "model": "Q3L",
+    "source": "D:\\Pictures\\使用教程\\Q3L使用方法操作图解使用教程.png",
+    "file": "D:\\桌面\\办公软件\\17.探域科技AI自动配置\\output\\教程修订版-20260905\\Q3L使用方法操作图解使用教程.png",
+    "sourceSha256": "f7b5c1e7ceaf1c5f8c534c17885ed64d540495ca6ad63cb69305cf4601c4d24d",
+    "sha256": "ff00060ab2deacf86626c9493170ba198644b77e42269cf0c9726f5667f6b733",
+    "patches": [
+      {
+        "rect": [
+          608,
+          65,
+          918,
+          119
+        ],
+        "text": "吸氧档位及用氧要求请遵医嘱。",
+        "fontSize": 18,
+        "lines": [
+          "吸氧档位及用氧要求请遵医嘱。"
+        ]
+      },
+      {
+        "rect": [
+          3,
+          316,
+          193,
+          458
+        ],
+        "text": "7. 按医生确定的档位及用氧要求使用。",
+        "fontSize": 20,
+        "lines": [
+          "7. 按医生确定的档",
+          "位及用氧要求使用。"
+        ]
+      }
+    ],
+    "outsidePixelsUnchanged": true
+  },
+  {
+    "model": "Q5L",
+    "source": "D:\\Pictures\\使用教程\\Q5L使用方法操作图解使用教程.png",
+    "file": "D:\\桌面\\办公软件\\17.探域科技AI自动配置\\output\\教程修订版-20260905\\Q5L使用方法操作图解使用教程.png",
+    "sourceSha256": "485497f6360f8dfebd0b5a4ad3f9feba51593007badfba768d3dd9ac3c3baca7",
+    "sha256": "421a007630322fd51ea0733d5a6340f6e622b6f8650f3e772cd5ab78ba561cdc",
+    "patches": [
+      {
+        "rect": [
+          417,
+          99,
+          828,
+          163
+        ],
+        "text": "吸氧档位及用氧要求请遵医嘱。",
+        "fontSize": 18,
+        "lines": [
+          "吸氧档位及用氧要求请遵医嘱。"
+        ]
+      },
+      {
+        "rect": [
+          27,
+          586,
+          254,
+          700
+        ],
+        "text": "7. 按医生确定的档位及用氧要求使用。",
+        "fontSize": 20,
+        "lines": [
+          "7. 按医生确定的档位及",
+          "用氧要求使用。"
+        ]
+      }
+    ],
+    "outsidePixelsUnchanged": true
+  },
+  {
+    "model": "Q10L",
+    "source": "D:\\Pictures\\使用教程\\Q10L使用方法操作图解使用教程.png",
+    "file": "D:\\桌面\\办公软件\\17.探域科技AI自动配置\\output\\教程修订版-20260905\\Q10L使用方法操作图解使用教程.png",
+    "sourceSha256": "9ab761632f5ceabfdbde469d92b11e8922644ecbc82d8011d772a6bd1195a143",
+    "sha256": "97b85026ec16dacc13b3a5e086da4e61f4931ff8f48c715041b977320c2f4f9b",
+    "patches": [
+      {
+        "rect": [
+          7,
+          364,
+          317,
+          416
+        ],
+        "text": "吸氧档位及用氧要求请遵医嘱。",
+        "fontSize": 18,
+        "lines": [
+          "吸氧档位及用氧要求请遵医嘱。"
+        ]
+      },
+      {
+        "rect": [
+          762,
+          529,
+          952,
+          670
+        ],
+        "text": "7. 按医生确定的档位及用氧要求使用。",
+        "fontSize": 20,
+        "lines": [
+          "7. 按医生确定的档",
+          "位及用氧要求使用。"
+        ]
+      }
+    ],
+    "outsidePixelsUnchanged": true
+  },
+  {
+    "model": "Y300W",
+    "source": "D:\\Pictures\\使用教程\\Y300W使用方法操作图示使用教程.png",
+    "file": "D:\\桌面\\办公软件\\17.探域科技AI自动配置\\output\\教程修订版-20260905\\Y300W使用方法操作图示使用教程.png",
+    "sourceSha256": "f281102b8dbd7b5e8005edc4dc8d548fb5fab97689a945e8b97a3de8ca129d3c",
+    "sha256": "51eeb256b6c95f2eb082ad5cadf76f693c51057246cccb7b33fb958598bb5a7a",
+    "patches": [
+      {
+        "rect": [
+          180,
+          585,
+          490,
+          639
+        ],
+        "text": "吸氧档位及用氧要求请遵医嘱。",
+        "fontSize": 18,
+        "lines": [
+          "吸氧档位及用氧要求请遵医嘱。"
+        ]
+      },
+      {
+        "rect": [
+          308,
+          397,
+          531,
+          511
+        ],
+        "text": "7. 按医生确定的档位及用氧要求使用。",
+        "fontSize": 20,
+        "lines": [
+          "7. 按医生确定的档位及",
+          "用氧要求使用。"
+        ]
+      }
+    ],
+    "outsidePixelsUnchanged": true
+  },
+  {
+    "model": "Y5AW",
+    "source": "D:\\Pictures\\使用教程\\Y5AW使用方法操作图解使用教程.png",
+    "file": "D:\\桌面\\办公软件\\17.探域科技AI自动配置\\output\\教程修订版-20260905\\Y5AW使用方法操作图解使用教程.png",
+    "sourceSha256": "b9ee9655a04be0595e69d727b913b1b8e50528a2489c01b89b80324935e14de2",
+    "sha256": "85a9112466d93f27c47fcb7533ddc14179c345fbc79e8cce687377855c269d2c",
+    "patches": [
+      {
+        "rect": [
+          601,
+          52,
+          911,
+          105
+        ],
+        "text": "吸氧档位及用氧要求请遵医嘱。",
+        "fontSize": 18,
+        "lines": [
+          "吸氧档位及用氧要求请遵医嘱。"
+        ]
+      },
+      {
+        "rect": [
+          534,
+          541,
+          742,
+          655
+        ],
+        "text": "7. 按医生确定的档位及用氧要求使用。",
+        "fontSize": 20,
+        "lines": [
+          "7. 按医生确定的档位",
+          "及用氧要求使用。"
+        ]
+      }
+    ],
+    "outsidePixelsUnchanged": true
+  },
+  {
+    "model": "Y5L",
+    "source": "D:\\Pictures\\使用教程\\Y5L使用方法使用教程使用教程.png",
+    "file": "D:\\桌面\\办公软件\\17.探域科技AI自动配置\\output\\教程修订版-20260905\\Y5L使用方法使用教程使用教程.png",
+    "sourceSha256": "74ba021ece4ee814feb329ecf6f7e790563c7cf5789121587fbd6e1237b0ba60",
+    "sha256": "92612e762e838a5d4818cca65169e12de1ff53c2616737ef21c2eb7adffdfd51",
+    "patches": [
+      {
+        "rect": [
+          563,
+          343,
+          872,
+          395
+        ],
+        "text": "吸氧档位及用氧要求请遵医嘱。",
+        "fontSize": 18,
+        "lines": [
+          "吸氧档位及用氧要求请遵医嘱。"
+        ]
+      },
+      {
+        "rect": [
+          360,
+          481,
+          550,
+          623
+        ],
+        "text": "8. 按医生确定的档位及用氧要求使用。",
+        "fontSize": 20,
+        "lines": [
+          "8. 按医生确定的档",
+          "位及用氧要求使用。"
+        ]
+      }
+    ],
+    "outsidePixelsUnchanged": true
+  },
+  {
+    "model": "Y5W",
+    "source": "D:\\Pictures\\使用教程\\Y5W使用方法使用教程使用教程.png",
+    "file": "D:\\桌面\\办公软件\\17.探域科技AI自动配置\\output\\教程修订版-20260905\\Y5W使用方法使用教程使用教程.png",
+    "sourceSha256": "154a7ed4302022d0b1d7fcfed35a7b21b2325905ab5bfd6069d2c9df1832d0fc",
+    "sha256": "fc154a594b86a5b28c48ee73d9ea57be484efd37bf767586d387f2727068b20e",
+    "patches": [
+      {
+        "rect": [
+          20,
+          416,
+          329,
+          471
+        ],
+        "text": "吸氧档位及用氧要求请遵医嘱。",
+        "fontSize": 18,
+        "lines": [
+          "吸氧档位及用氧要求请遵医嘱。"
+        ]
+      },
+      {
+        "rect": [
+          198,
+          553,
+          388,
+          695
+        ],
+        "text": "7. 按医生确定的档位及用氧要求使用。",
+        "fontSize": 20,
+        "lines": [
+          "7. 按医生确定的档",
+          "位及用氧要求使用。"
+        ]
+      }
+    ],
+    "outsidePixelsUnchanged": true
+  },
+  {
+    "model": "MY-5C",
+    "source": "D:\\Pictures\\使用教程\\MY-5C使用方法？怎么使用？.png",
+    "file": "D:\\桌面\\办公软件\\17.探域科技AI自动配置\\output\\教程修订版-20260905\\MY-5C使用方法？怎么使用？.png",
+    "sourceSha256": "44db59508ce467292f3802648bb2dd5bbfe6f463fc766ab451440787f623b80c",
+    "sha256": "90d6310a83b3aec42967258fcb18af11970036852a22adbf714fb369cb2c09b4",
+    "patches": [
+      {
+        "rect": [
+          591,
+          347,
+          797,
+          406
+        ],
+        "text": "3. 按医生确定的档位及用氧要求使用。",
+        "fontSize": 20,
+        "lines": [
+          "3. 按医生确定的档位",
+          "及用氧要求使用。"
+        ]
+      }
+    ],
+    "outsidePixelsUnchanged": true
+  },
+  {
+    "model": "YS-8Y",
+    "source": "D:\\Pictures\\使用教程\\YS-8Y使用图示，怎么使用？使用方法.png",
+    "file": "D:\\桌面\\办公软件\\17.探域科技AI自动配置\\output\\教程修订版-20260905\\YS-8Y使用图示，怎么使用？使用方法.png",
+    "sourceSha256": "e812517e7d0359e10208d5b1f3fa8aae7770615904989d903477753a45483bb0",
+    "sha256": "02cb063c7866de1a16f4118ecf90c5d8441939df5d5e42f0f2d8ec66cd94cdb3",
+    "patches": [
+      {
+        "rect": [
+          518,
+          357,
+          724,
+          415
+        ],
+        "text": "3. 按医生确定的档位及用氧要求使用。",
+        "fontSize": 20,
+        "lines": [
+          "3. 按医生确定的档位",
+          "及用氧要求使用。"
+        ]
+      }
+    ],
+    "outsidePixelsUnchanged": true
+  }
+]

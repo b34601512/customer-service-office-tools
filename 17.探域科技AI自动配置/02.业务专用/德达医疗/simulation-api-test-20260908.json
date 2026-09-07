@@ -1,0 +1,54 @@
+{
+  "questions": [
+    "我血氧93%，想买制氧机，推荐几升？",
+    "不吸氧血氧93%，平时应该买哪种制氧机？"
+  ],
+  "botId": "SHOP_AGENT_G5_0703",
+  "sends": [
+    {
+      "question": "我血氧93%，想买制氧机，推荐几升？",
+      "send": {
+        "httpStatus": 200,
+        "code": 1,
+        "success": true,
+        "data": "6a9e887406228143ef038b83",
+        "msg": "操作成功!"
+      }
+    },
+    {
+      "question": "不吸氧血氧93%，平时应该买哪种制氧机？",
+      "send": {
+        "httpStatus": 200,
+        "code": 1,
+        "success": true,
+        "data": "6a9e887c01aa795d52c5a31f",
+        "msg": "操作成功!"
+      }
+    }
+  ],
+  "content": {
+    "httpStatus": 200,
+    "code": 1,
+    "success": true,
+    "data": {
+      "contextBodyList": [
+        {
+          "sourceType": 0,
+          "msgTime": 1788774516011,
+          "msgId": 1788774516011,
+          "type": 0,
+          "value": "我血氧93%，想买制氧机，推荐几升？"
+        },
+        {
+          "sourceType": 0,
+          "msgTime": 1788774524105,
+          "msgId": 1788774524105,
+          "type": 0,
+          "value": "不吸氧血氧93%，平时应该买哪种制氧机？"
+        }
+      ]
+    },
+    "msg": "操作成功!"
+  },
+  "testedAt": "2026-09-07T09:48:52.273Z"
+}

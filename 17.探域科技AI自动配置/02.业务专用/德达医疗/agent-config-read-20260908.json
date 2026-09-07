@@ -1,0 +1,298 @@
+{
+  "agent-config-get": {
+    "method": "POST",
+    "endpoint": "/api/shop-config/agent/config/get",
+    "httpStatus": 200,
+    "code": 1,
+    "success": true,
+    "data": {
+      "agent.reception.salesStageJudgment": {
+        "preSalesJudgeRange": 15,
+        "consultOrderStrategy": 1
+      }
+    },
+    "msg": "操作成功！"
+  },
+  "agent-config-list": {
+    "method": "POST",
+    "endpoint": "/api/copilot/agent/config/list",
+    "httpStatus": 200,
+    "code": 1,
+    "success": true,
+    "data": [],
+    "msg": "操作成功!"
+  },
+  "reception-variables": {
+    "method": "GET",
+    "endpoint": "/api/shop-config/agent/config/variables/get",
+    "httpStatus": 200,
+    "code": 1,
+    "success": true,
+    "data": [
+      {
+        "name": "买家称呼",
+        "code": "buyer_name"
+      },
+      {
+        "name": "换行符",
+        "code": "line_feed_param"
+      },
+      {
+        "name": "店铺名称",
+        "code": "shop_name"
+      },
+      {
+        "name": "买家昵称",
+        "code": "wangwangId"
+      },
+      {
+        "name": "客服昵称",
+        "code": "cs_wangwangId"
+      }
+    ],
+    "msg": "操作成功！"
+  },
+  "auto-send-plans": {
+    "method": "GET",
+    "endpoint": "/api/shop-config/agent/auto-send-bind/get/plan-detail",
+    "httpStatus": 200,
+    "code": 1,
+    "success": true,
+    "data": [
+      {
+        "planName": "新建配置1",
+        "planId": "6a9e847a881295349d99d905",
+        "strategies": [
+          {
+            "strategy": "ALL",
+            "bindProducts": [],
+            "bindProductGroups": [],
+            "bindShops": [
+              {
+                "thirdShopId": "2095398963959042048",
+                "categoryIds": []
+              }
+            ]
+          },
+          {
+            "strategy": "BASE_ON_TRUSTED_KNOWLEDGE",
+            "bindProducts": [],
+            "bindProductGroups": [],
+            "bindShops": []
+          },
+          {
+            "strategy": "NEVER",
+            "bindProducts": [],
+            "bindProductGroups": [],
+            "bindShops": []
+          }
+        ],
+        "bindAccounts": [],
+        "services": [
+          {
+            "serviceId": "2728101349076044916",
+            "thirdShopId": "2095398963959042048"
+          },
+          {
+            "serviceId": "2728102268199145545",
+            "thirdShopId": "2095398963959042048"
+          },
+          {
+            "serviceId": "2728922941961995844",
+            "thirdShopId": "2095398963959042048"
+          },
+          {
+            "serviceId": "2728928233362359987",
+            "thirdShopId": "2095398963959042048"
+          }
+        ],
+        "serviceGroups": [],
+        "accountType": 2
+      },
+      {
+        "planName": "默认配置",
+        "planId": "6a9e847a881295349d99d908",
+        "strategies": [
+          {
+            "strategy": "ALL",
+            "bindProducts": [],
+            "bindProductGroups": [],
+            "bindShops": []
+          },
+          {
+            "strategy": "BASE_ON_TRUSTED_KNOWLEDGE",
+            "bindProducts": [],
+            "bindProductGroups": [],
+            "bindShops": [
+              {
+                "thirdShopId": "2095398963959042048",
+                "categoryIds": []
+              }
+            ]
+          },
+          {
+            "strategy": "NEVER",
+            "bindProducts": [],
+            "bindProductGroups": [],
+            "bindShops": []
+          }
+        ],
+        "bindAccounts": [],
+        "services": [],
+        "serviceGroups": [],
+        "accountType": 1
+      }
+    ],
+    "msg": "操作成功！"
+  },
+  "before-transfer": {
+    "method": "GET",
+    "endpoint": "/api/shop-config/v1/agent/before-manual-transfer-rule/get",
+    "httpStatus": 200,
+    "code": 1,
+    "success": true,
+    "data": {
+      "beforeTransferSpeeches": []
+    },
+    "msg": "操作成功！"
+  },
+  "smart-trigger-list": {
+    "method": "GET",
+    "endpoint": "/api/shop-config/v1/agent/smart-trigger-rule/list",
+    "httpStatus": 200,
+    "code": 1,
+    "success": true,
+    "data": {
+      "pageIndex": 1,
+      "pageSize": 10,
+      "total": 0,
+      "results": []
+    },
+    "msg": "操作成功！"
+  },
+  "consult-intent-list": {
+    "method": "GET",
+    "endpoint": "/api/shop-config/agent-consult-intent/list",
+    "httpStatus": 200,
+    "code": 1,
+    "success": true,
+    "data": [
+      {
+        "id": "6a991b37647b71773d936279",
+        "name": "默认配置",
+        "thirdShopIds": [],
+        "sellerGroups": [],
+        "consultAfterSale": false,
+        "negativeEmotions": false,
+        "afterSale": false,
+        "disCount": false,
+        "intentIdList": [],
+        "ifDefault": true
+      }
+    ],
+    "msg": "操作成功！"
+  },
+  "reply-intent-list": {
+    "method": "GET",
+    "endpoint": "/api/shop-config/agent-reply-intent/list",
+    "httpStatus": 200,
+    "code": 1,
+    "success": true,
+    "data": [
+      {
+        "id": "6a991b5f341df8582ed5e681",
+        "name": "默认配置",
+        "sellerGroups": [],
+        "noRepeatSendSwitch": true,
+        "noRepeatSendNum": 2,
+        "noRepeatSendRound": 6,
+        "intentIdList": [],
+        "ifDefault": true
+      }
+    ],
+    "msg": "操作成功！"
+  },
+  "intent-list": {
+    "method": "GET",
+    "endpoint": "/api/shop-config/intents/list",
+    "httpStatus": 200,
+    "code": 1,
+    "success": true,
+    "data": {
+      "results": []
+    },
+    "msg": "操作成功！"
+  },
+  "custom-agent-list": {
+    "method": "GET",
+    "endpoint": "/api/copilot/v1/agent/customized-agent/list",
+    "httpStatus": 200,
+    "code": 1,
+    "success": true,
+    "data": [
+      {
+        "id": "6a9e263e34c0ab0f8e1c0999",
+        "name": "售前咨询",
+        "scope": "SHOP",
+        "relationProducts": [],
+        "relationProductGroups": [],
+        "relationShop": [
+          {
+            "thirdShopId": "2095398963959042048",
+            "cids": []
+          }
+        ],
+        "isRun": true,
+        "draftsIsRun": true,
+        "publishTime": "2026-09-07T17:12:38.343",
+        "orderStatus": [
+          0,
+          100,
+          102,
+          106,
+          105,
+          107
+        ]
+      },
+      {
+        "id": "6a9a628fa56a287c9018754f",
+        "name": "通用规则",
+        "scope": "SHOP",
+        "relationProducts": [],
+        "relationProductGroups": [],
+        "relationShop": [
+          {
+            "thirdShopId": "2095398963959042048",
+            "cids": []
+          }
+        ],
+        "isRun": true,
+        "draftsIsRun": true,
+        "publishTime": "2026-09-07T17:12:38.613",
+        "orderStatus": [
+          0,
+          100,
+          102,
+          101,
+          103,
+          104,
+          105,
+          106,
+          107
+        ]
+      }
+    ],
+    "msg": "操作成功!"
+  },
+  "customer-style-list": {
+    "method": "GET",
+    "endpoint": "/api/shop-config/customer-style/list",
+    "httpStatus": 200,
+    "code": 1,
+    "success": true,
+    "data": {
+      "customerStyleDetailList": []
+    },
+    "msg": "操作成功！"
+  }
+}

@@ -1,0 +1,17 @@
+const fs=require('fs');
+const dir='D:/备份文件夹/探域问答审核-20260905';
+const all=JSON.parse(fs.readFileSync(dir+'/manual-priority-20260906-before.json','utf8'));
+const changes={};
+for(const id of ['6a991bfaaca4a51edb726a39','6a9a32445680f7693636d334','6a9a32525680f7693636d3a6','6a9a32665680f7693636d481','6a9a3239d9b5540ca9f5cca7'])changes[id]=[['204x214x280mm','204×214×281mm']];
+changes['6a9a325e1e53f871f3da20ef']=[['360*196*343mm','360×196×345mm'],['6.2kg','约7kg']];
+changes['6a9a31a8d9b5540ca9f5cad4']=[['360*196*343mm','360×196×345mm']];
+changes['6a9a3224d9b5540ca9f5cc20']=[['22.6kg','约25.9kg'],['510*370*720mm','442×306×622mm'],['（注：以上参数均来自图片中的“产品参数”表格内容，无其他额外信息）','主机尺寸与净重按当前型号口径说明，包装尺寸另行核对。']];
+changes['6a9a3130b952375ec03187bb']=[['净重：25.0kg','主机净重：约30.9kg'],['毛重：30.0kg','包装毛重：需核对对应包装的实测重量']];
+changes['6a9a3130b952375ec03187b7']=[['产品净重：27kg','产品净重：约30.9kg']];
+changes['6a9a30be5680f7693636c89f']=[['净重：12.6kg','主机净重：约11.3kg']];
+changes['6a9a30be5680f7693636c899']=[['产品净重：11kg','产品净重：约11.3kg']];
+changes['6a9a3130b952375ec03187b5']=[['该制氧机设计轻便，让吸氧不负重，重量为27KG。','Q10L制氧机主机净重约30.9kg。']];
+changes['6a9a30be5680f7693636c897']=[['轻便设计，让吸氧不负重。\n产品重量为11KG。','Q3L制氧机主机净重约11.3kg。']];
+const plan=Object.entries(changes).map(([id,pairs])=>{const c=all.find(c=>c.id===id);if(!c||!c.ifOpen||c.type!=='PRODUCT')throw Error('状态变化');const s=c.includeCondition.spu;if(s.length!==1||s[0].thirdShopId!=='2095398963959042048')throw Error('范围变化');const before=c.content.map(x=>x.content).join('\n');let after=before;for(const [old,value]of pairs){if(!after.includes(old))throw Error('正文变化 '+id);after=after.replace(old,value);}return {id,type:c.type,includeCondition:c.includeCondition,before,after};});
+fs.writeFileSync(dir+'/manual-priority-20260906-plan.json',JSON.stringify(plan,null,2));
+console.log('planned '+plan.length);

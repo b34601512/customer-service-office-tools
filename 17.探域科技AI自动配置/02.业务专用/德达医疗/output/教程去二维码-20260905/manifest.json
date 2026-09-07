@@ -1,0 +1,335 @@
+[
+  {
+    "model": "2AW",
+    "source": "D:\\桌面\\办公软件\\17.探域科技AI自动配置\\output\\教程修订版-20260905\\2AW使用方法操作图解使用教程.png",
+    "sourceSha256": "f823a065e82928a8de265d5dd04be553c9631f606df54433f00cec351815e64c",
+    "file": "D:\\桌面\\办公软件\\17.探域科技AI自动配置\\output\\教程去二维码-20260905\\2AW使用方法操作图解使用教程.png",
+    "sha256": "24808b916804f0de7eeabeebcccd382fb8fa4f82102ec5544af53a0525bcd7e2",
+    "polygons": [
+      [
+        [
+          430,
+          487
+        ],
+        [
+          556,
+          487
+        ],
+        [
+          579,
+          537
+        ],
+        [
+          455,
+          537
+        ],
+        [
+          455,
+          617
+        ],
+        [
+          445,
+          609
+        ]
+      ]
+    ],
+    "protectedRects": [
+      [
+        247,
+        475,
+        504,
+        514
+      ],
+      [
+        454,
+        537,
+        679,
+        659
+      ]
+    ],
+    "protectedPolygons": [
+      [
+        [
+          477,
+          411
+        ],
+        [
+          485,
+          411
+        ],
+        [
+          590,
+          539
+        ],
+        [
+          580,
+          539
+        ]
+      ]
+    ],
+    "outsidePixelsUnchanged": true
+  },
+  {
+    "model": "Q1Q2",
+    "source": "D:\\桌面\\办公软件\\17.探域科技AI自动配置\\output\\教程修订版-20260905\\Q1Q2使用方法操作图示使用教程.png",
+    "sourceSha256": "81ca3d3d4cd68499363a0da7fb98d7a406fd7388cfb25763607809c06b37bb85",
+    "file": "D:\\桌面\\办公软件\\17.探域科技AI自动配置\\output\\教程去二维码-20260905\\Q1Q2使用方法操作图示使用教程.png",
+    "sha256": "dd446d227b0af16600fba1d2e419efed292bcb700ff6216ac1122e8b513ebd24",
+    "polygons": [
+      [
+        [
+          888,
+          340
+        ],
+        [
+          978,
+          340
+        ],
+        [
+          978,
+          432
+        ],
+        [
+          888,
+          432
+        ]
+      ],
+      [
+        [
+          890,
+          432
+        ],
+        [
+          949,
+          432
+        ],
+        [
+          949,
+          457
+        ],
+        [
+          890,
+          457
+        ]
+      ],
+      [
+        [
+          244,
+          531
+        ],
+        [
+          266,
+          531
+        ],
+        [
+          266,
+          553
+        ],
+        [
+          244,
+          553
+        ]
+      ],
+      [
+        [
+          223,
+          553
+        ],
+        [
+          267,
+          553
+        ],
+        [
+          267,
+          565
+        ],
+        [
+          223,
+          565
+        ]
+      ]
+    ],
+    "protectedRects": [],
+    "protectedPolygons": [],
+    "outsidePixelsUnchanged": true
+  },
+  {
+    "model": "Y5AW",
+    "source": "D:\\桌面\\办公软件\\17.探域科技AI自动配置\\output\\教程修订版-20260905\\Y5AW使用方法操作图解使用教程.png",
+    "sourceSha256": "85a9112466d93f27c47fcb7533ddc14179c345fbc79e8cce687377855c269d2c",
+    "file": "D:\\桌面\\办公软件\\17.探域科技AI自动配置\\output\\教程去二维码-20260905\\Y5AW使用方法操作图解使用教程.png",
+    "sha256": "0cbf6ea12706bad43a1daf10b89080f28f5232b008479fc7b917a119955d8d0c",
+    "polygons": [
+      [
+        [
+          858,
+          364
+        ],
+        [
+          896,
+          364
+        ],
+        [
+          896,
+          390
+        ],
+        [
+          858,
+          390
+        ]
+      ],
+      [
+        [
+          826,
+          393
+        ],
+        [
+          895,
+          393
+        ],
+        [
+          895,
+          408
+        ],
+        [
+          826,
+          408
+        ]
+      ]
+    ],
+    "protectedRects": [],
+    "protectedPolygons": [],
+    "outsidePixelsUnchanged": true
+  },
+  {
+    "model": "Y5L",
+    "source": "D:\\桌面\\办公软件\\17.探域科技AI自动配置\\output\\教程修订版-20260905\\Y5L使用方法使用教程使用教程.png",
+    "sourceSha256": "92612e762e838a5d4818cca65169e12de1ff53c2616737ef21c2eb7adffdfd51",
+    "file": "D:\\桌面\\办公软件\\17.探域科技AI自动配置\\output\\教程去二维码-20260905\\Y5L使用方法使用教程使用教程.png",
+    "sha256": "308fa040d9f36a6ad883a59af2b20a6f39b5789a419d56c7158af5b81eaea1d4",
+    "polygons": [
+      [
+        [
+          868,
+          216
+        ],
+        [
+          893,
+          209
+        ],
+        [
+          896,
+          333
+        ],
+        [
+          879,
+          338
+        ],
+        [
+          868,
+          301
+        ]
+      ]
+    ],
+    "protectedRects": [
+      [
+        556,
+        302,
+        879,
+        467
+      ]
+    ],
+    "protectedPolygons": [],
+    "outsidePixelsUnchanged": true
+  },
+  {
+    "model": "1LW-filter",
+    "source": "D:\\Pictures\\1.过滤器更换教程\\1LW过滤器更换图.png",
+    "sourceSha256": "7634bcf92ebaea812374068ae31875f9cccdf888fd2ece4f51be037f908546c6",
+    "file": "D:\\桌面\\办公软件\\17.探域科技AI自动配置\\output\\教程去二维码-20260905\\1LW过滤器更换图.png",
+    "sha256": "84b789d824175881d7ff0a3a39b67a8e546e479404d9526cca480bc14d3122ce",
+    "polygons": [
+      [
+        [
+          0,
+          171
+        ],
+        [
+          35,
+          171
+        ],
+        [
+          35,
+          215
+        ],
+        [
+          0,
+          215
+        ]
+      ]
+    ],
+    "protectedRects": [],
+    "protectedPolygons": [],
+    "outsidePixelsUnchanged": true
+  },
+  {
+    "model": "Q10-filter",
+    "source": "D:\\Pictures\\1.过滤器更换教程\\Q10过滤器更换图示.png",
+    "sourceSha256": "b70982bc7cbb6c81a4281e459c96f2ced98675a02c404161d256ff7fb1d82777",
+    "file": "D:\\桌面\\办公软件\\17.探域科技AI自动配置\\output\\教程去二维码-20260905\\Q10过滤器更换图示.png",
+    "sha256": "3ed0fb9a849b2611765be50fdf4c2d7636029590d123b5f7b89ffe0973c28ae0",
+    "polygons": [
+      [
+        [
+          69,
+          389
+        ],
+        [
+          99,
+          400
+        ],
+        [
+          108,
+          494
+        ],
+        [
+          78,
+          480
+        ]
+      ]
+    ],
+    "protectedRects": [],
+    "protectedPolygons": [],
+    "outsidePixelsUnchanged": true
+  },
+  {
+    "model": "Q5L-filter",
+    "source": "D:\\Pictures\\1.过滤器更换教程\\Q5L二级过滤位置.png",
+    "sourceSha256": "8ea293bd22587901478b3c1982812957b342911180d297db0009466be2f144e9",
+    "file": "D:\\桌面\\办公软件\\17.探域科技AI自动配置\\output\\教程去二维码-20260905\\Q5L二级过滤位置.png",
+    "sha256": "7bd8eaf6c1c1a366756d1ca831adaee6405837f1053273b126fcfe56c03c78a4",
+    "polygons": [
+      [
+        [
+          25,
+          150
+        ],
+        [
+          75,
+          157
+        ],
+        [
+          77,
+          201
+        ],
+        [
+          29,
+          194
+        ]
+      ]
+    ],
+    "protectedRects": [],
+    "protectedPolygons": [],
+    "outsidePixelsUnchanged": true
+  }
+]
