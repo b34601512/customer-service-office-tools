@@ -94,7 +94,7 @@ Cookie: tanyu-group-id=2094743970688012288; tanyu-agent-account=o3_sou0z2ywnjz81
 - 卡结构坑: `title` 经常为 null(商品页学来的无标题卡), 正文在 `content[].content` 里; 删卡先按**内容片段 grep 定位 id**, 不要按 title 猜。
 - 无标题长卡(>500 字)多是商品详情重复表, 用 `dedup.cjs`(双字 bigram Jaccard≥0.45 聚类, 每簇留最长)去重。
 
-## 4. 改配置(接待/策略页, 用 Playwright 控件操作，不用 GUI)
+## 4. 改配置(接待/策略页, 仅用 Playwright 脚本/API，不用 GUI)
 - 见 `stratfull.cjs`(4 客服全选+全自动+全店+保存) / `stratverify.cjs`(复查持久化) / `racefix.cjs`(点 `label:has-text("智能体优先")`, 点完 radio 会变 `[false,true]`, 属正常)。
 - 改完必须截图存 `证据截图/`, 并用 verify 脚本复查落盘。
 
