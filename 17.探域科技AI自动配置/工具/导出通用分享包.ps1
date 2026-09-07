@@ -10,6 +10,7 @@ if ($exportRoot.Equals($privateRoot,[StringComparison]::OrdinalIgnoreCase) -or $
 # Only this allowlist is eligible for export. Never enumerate the entire project into a zip.
 $allowlist = @(
     '通用经验/通用AI入口.md',
+    '通用经验/README-目录边界.md',
     'AI工作手册.md',
     '模板/公司接入与拍板.md',
     '通用经验/在线文档完整读取.md',
@@ -18,6 +19,9 @@ $allowlist = @(
     '通用经验/探域自定义AgentAPI模板.cjs',
     '通用经验/探域配置同文回读模板.cjs',
     '通用经验/探域无头模拟测试模板.cjs',
+    '通用经验/执行方式审计模板.cjs',
+    '通用经验/文本规则审计模板.cjs',
+    '通用经验/旧候选迁移映射-20260908.md',
     '通用经验/脚本意图索引.md'
 )
 $sources = @()

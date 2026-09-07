@@ -13,16 +13,12 @@
 - **允许无头/API**：优先使用直接HTTP API；登录态或接口必须依赖浏览器时，可用独立画像的 `headless:true`。无头页面控件操作仅限模拟测试，不作为后台配置正式入口。
 - 每个脚本必须在文件顶部写明：意图、范围、读写级别、验证方式、可恢复边界；脚本名只作索引，不能代替意图。
 - 默认只读；写入脚本必须显式动作参数，并在写入前备份、写入后回读；发布/发送等外部动作仍须本次明确授权。
-- 详细索引见 `scripts/intent-index-20260908.json`；历史有头GUI脚本仅存于备份目录，不得作为当前经验。
+- 通用执行入口见上级 `../通用经验/`；本目录只保留德达业务作业。旧候选脚本统一移至 `D:/备份文件夹/17项目通用候选旧脚本-20260908`，不得作为当前入口。
 
-### API/无头路线
+### 私有业务调用边界
 
-- 自定义Agent：使用 `scripts/custom-agent-api-20260907.cjs`。
-- `--action list` 读取店铺Agent列表；`--action detail --id ID` 读取正文。
-- `--action save-draft --id ID --content-file FILE --expected-sha256 SHA` 保存草稿并回读校验。
-- `--action publish --id ID --content-file FILE --expected-sha256 SHA` 发布正式版本并回读校验；发布前必须有主管确认。
-- 接口：`GET /api/copilot/v1/agent/customized-agent/list|detail`，`POST .../save-content|publish`。
-- 登录态只从独立本机画像携带，脚本不输出Cookie；保存前快照在 `D:/备份文件夹/探域问答审核-20260907-custom-agent`。
+- 自定义Agent、配置和模拟测试统一改用上级通用模板，以参数接入本公司私有登录画像、店铺范围和备份目录。
+- 正式发布仍需主管明确确认；本目录中的业务规则、ID、快照和输出不得复制到通用目录。
 
 ## Cookie直调（免开浏览器）
 - 探域 Cookie：`tanyu-group-id / tanyu-agent-account / tanyu-account-id`
@@ -37,19 +33,10 @@
 
 ## 脚本对照表（scripts/）
 
-当前目录只保留API/无头脚本；有头GUI脚本已移动到 `D:/备份文件夹/17项目GUI历史脚本-20260907`。无头GUI只保留已验证且暂无等效快速API的血氧承接测试，其余重复脚本留档。
+当前目录只保留35个德达业务作业；21个通用候选已移入 `D:/备份文件夹/17项目通用候选旧脚本-20260908`。有头GUI脚本仍在 `D:/备份文件夹/17项目GUI历史脚本-20260907`。通用工具不在本目录重复保存。
 
 | 脚本 | 用途 |
 |---|---|
-| custom-agent-api-20260907.cjs | 自定义Agent列表/详情读取、草稿保存、正式发布及回读校验 |
-| agent-config-api-read-20260908.cjs | 接待、自动发送、转交话术、触发器、意图和风格配置只读快照 |
-| reception-config-api-20260908.cjs | 接待订单判定读取；可选同文保存回读验证 |
-| auto-send-api-20260908.cjs | 自动发送方案读取；可选同文写入回读，未经确认不得执行写入 |
-| before-transfer-api-20260908.cjs | 转交前话术读取；可选同文写入回读，未经确认不得执行写入 |
-| simulation-api-read-20260908.cjs | 模拟上下文/卡片只读读取；不发送消息 |
-| audit-custom-agent-risk-20260908.cjs | 当前Agent正文风险关键词审计，只读不改写 |
-| validate-sales-draft-20260908.cjs | 本地草案规则验收，不访问后台 |
-| simulate-blood-oxygen-recommend-20260907.cjs | 唯一保留的无头GUI血氧承接测试；等待页面生成回复，不改正式配置 |
 | apply-*.cjs / confirm-*.cjs | 已核实的知识卡API原位更新 |
 | collect-*.cjs / inspect-*.cjs / verify-*.cjs | 已核实的无GUI采集与回读 |
 
