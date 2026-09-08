@@ -14,6 +14,27 @@ from subject_export import RESULT_DIR, export_subject_rows
 FIELDS = ['company', 'shop_url', 'platform', 'scope', 'certification', 'source_url', 'qualification_url', 'status', 'error']
 
 
+class SupplierResult(list):
+    """部分店铺失败不能以0退出；保留原list接口，供TUI和CLI共用。"""
+    EXIT_CODES = {'completed': 0, 'partial': 2, 'blocked': 3, 'cancelled': 130, 'failed': 1}
+
+    def __init__(self):
+        super().__init__()
+        self.status = 'completed'
+        self.reason = ''
+        self.paths = {}
+
+    @property
+    def exit_code(self):
+        return self.EXIT_CODES[self.status]
+
+
+class SupplierError(RuntimeError):
+    def __init__(self, message, result):
+        super().__init__(message)
+        self.result = result
+
+
 def normalize_shop_url(value):
     parts = urlsplit(value.strip())
     host = parts.hostname or ''
@@ -85,32 +106,58 @@ def run_shops(fmt='both', progress=None, input_path=None, outdir=RESULT_DIR, sto
     urls = list(dict.fromkeys(normalize_shop_url(v) for v in values))
     if not urls:
         raise ValueError('店铺清单为空，请在供应商网店铺清单.txt中每行填写一家店铺网址')
-    rows = []
+    rows = SupplierResult()
+    stopped = False
+    blocked = False
     for index, url in enumerate(urls, 1):
-        if stop_event is not None and stop_event.is_set():
-            break
-        if index > 1:
-            time.sleep(1)
-        if callable(progress):
-            progress(index - 1, len(urls), '采集供应商网店铺主体', f'{index}/{len(urls)}')
         try:
+            if stop_event is not None and stop_event.is_set():
+                stopped = True
+                break
+            if index > 1:
+                if stop_event is not None:
+                    if stop_event.wait(1):
+                        stopped = True
+                        break
+                else:
+                    time.sleep(1)
+            if callable(progress):
+                progress(index - 1, len(urls), '采集供应商网店铺主体', f'{index}/{len(urls)}')
             response = requests.get(url, timeout=20, allow_redirects=False)
             if response.status_code != 200:
-                raise ValueError(f'店铺返回HTTP {response.status_code}，未取得主体')
+                blocked = response.status_code in (401, 403, 429)
+                raise ValueError(f'店铺返回HTTP {response.status_code}，未取得主体；未自动重试')
             rows.append(parse_shop(response.content.decode('utf-8-sig'), url))
+        except KeyboardInterrupt:
+            stopped = True
+            break
         except (requests.RequestException, ValueError, TypeError, KeyError) as exc:
             rows.append(dict.fromkeys(FIELDS, ''))
-            rows[-1].update(shop_url=url, platform='供应商网', scope='B2B商家店铺', source_url=url, status='失败', error=str(exc))
+            rows[-1].update(shop_url=url, platform='供应商网', scope='B2B商家店铺', source_url=url,
+                            status='需要用户验证' if blocked else '失败', error=str(exc))
             print(f'[shops] {url} 未取得主体：{exc}', flush=True)
-    if not rows and stop_event is not None and stop_event.is_set():
-        return []
-    export_subject_rows(rows, fmt, outdir, 'gys', FIELDS)
+            if blocked:
+                break  # 权限/验证/频率限制不继续请求后续店铺。
+    if rows:
+        rows.paths = export_subject_rows(rows, fmt, outdir, 'gys', FIELDS)
     failed = sum(row['status'] != '成功' for row in rows)
-    print(f'[shops] 店铺{len(rows)}家，主体成功{len(rows)-failed}家，失败{failed}家。', flush=True)
+    success = len(rows) - failed
+    if stopped:
+        rows.status = 'cancelled'
+    elif blocked:
+        rows.status = 'blocked'
+    elif not success:
+        rows.status = 'failed'
+    elif failed or len(rows) != len(urls):
+        rows.status = 'partial'
+    rows.reason = f'已处理{len(rows)}/{len(urls)}家，主体成功{success}家，失败{failed}家'
+    print(f'[shops] {rows.reason}；status={rows.status}，退出码{rows.exit_code}', flush=True)
     if callable(progress):
-        progress(len(urls), len(urls), '部分完成' if failed else '完成', f'成功{len(rows)-failed}，失败{failed}')
-    if failed == len(rows):
-        raise RuntimeError('所有店铺均未取得主体，已导出失败原因')
+        stage = {'completed': '完成', 'partial': '部分完成', 'blocked': '需要用户验证',
+                 'cancelled': '已停止', 'failed': '失败'}[rows.status]
+        progress(len(rows), len(urls), stage, rows.reason)
+    if rows.status == 'failed':
+        raise SupplierError('所有店铺均未取得主体，已导出失败原因', rows)
     return rows
 
 
@@ -120,4 +167,4 @@ if __name__ == '__main__':
     parser.add_argument('--input', type=Path, default=default_input_path())
     parser.add_argument('--format', choices=['csv', 'json', 'both'], default='both')
     args = parser.parse_args()
-    run_shops(args.format, input_path=args.input)
+    raise SystemExit(run_shops(args.format, input_path=args.input).exit_code)

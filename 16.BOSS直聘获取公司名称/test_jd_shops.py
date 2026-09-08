@@ -1,4 +1,4 @@
-"""样表列顺序、外部文本写盘安全及中途停止保存。"""
+"""样表列顺序、外部文本写盘安全及中途停止保存；不依赖未入库的私人样表。"""
 from pathlib import Path
 import tempfile
 import threading
@@ -25,15 +25,10 @@ class JdShopTests(unittest.TestCase):
                 jd.parse_shop_page(html, 'https://mall.jd.com/index-123.html')
 
     def test_template_headers_and_text_roundtrip(self):
-        reference = Path(__file__).with_name('京东耳机商家信息_20260720154222.xlsx')
-        book = load_workbook(reference, read_only=True)
-        try:
-            expected = list(next(book.worksheets[0].iter_rows(values_only=True)))
-            while expected and expected[-1] is None:
-                expected.pop()
-            expected = tuple(expected)
-        finally:
-            book.close()
+        # 固定独立契约，而非读取开发电脑上未提交的 XLSX，也不从 jd.FIELDS 反向推期望值。
+        expected = ('店铺名', '店铺链接', 'VenderId', '店铺ID', '公司名', '法人',
+                    '公司注册时间', '注册资本', '电话', '手机', '邮箱', '公司地址',
+                    '商品评价', '物流履约', '售后服务')
         row = dict.fromkeys(jd.FIELDS, '')
         row.update({'店铺名': '=1+1', '店铺链接': 'https://mall.jd.com/index-123.html',
                     '店铺ID': '123', 'VenderId': '456', '电话': '00123456789'})
