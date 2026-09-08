@@ -136,6 +136,7 @@ function readDashboardSnapshot(config) {
 }
 
 module.exports = {
+  DATA_FRESHNESS_STALE_THRESHOLD_SECONDS,
   buildDataFreshness,
   buildMonitorSummary,
   resolveLatestDecisionScannedAtMs,
