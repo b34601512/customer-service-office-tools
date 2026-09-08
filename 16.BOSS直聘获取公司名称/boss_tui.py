@@ -33,8 +33,8 @@ except ImportError as exc:
     shop_subjects = None
     _shops_import_error = str(exc)
 
-APP_VERSION = "v0.12-rc4"
-BUILD_ID = "refactor-reliability-20260908-r4"
+APP_VERSION = "v0.13"
+BUILD_ID = "refactor-reliability-20260908-v0.13"
 
 
 def print_diagnostics():
