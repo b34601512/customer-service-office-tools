@@ -4,7 +4,7 @@ const { sendWecomRobotTextMessage } = require("../../integrations/wecomRobot");
 const { resolveMentionPlan } = require("../../integrations/wecomTextMention");
 const { resolveEscalationTargets } = require("../timeoutSoothe/timeoutEscalation");
 
-const ONLINE_PRESENCE_MANAGER_NAME = "黎路遥";
+const { resolveManagerStaffName } = require("../../config/managerStaffName");
 
 function buildOnlinePresenceReminderMessage(input) {
   // 这里把无人在线提醒压成最少必要信息，只说谁需要上线和系统看到的名单。
@@ -42,7 +42,7 @@ async function sendOnlinePresenceReminder(input) {
   // 这里统一发送无人在线提醒，工作流只负责判断，不直接拼企微发送细节。
   const config = loadWecomRobotConfig();
   const targetStaffNames = Array.from(
-    new Set([ONLINE_PRESENCE_MANAGER_NAME, ...(input.expectedStaffNames || [])].filter(Boolean))
+    new Set([resolveManagerStaffName(), ...(input.expectedStaffNames || [])].filter(Boolean))
   );
   const mentionPlan = resolveOnlinePresenceMentionPlan(targetStaffNames, config);
   const targets = resolveEscalationTargets(
@@ -82,7 +82,6 @@ async function sendOnlinePresenceReminder(input) {
 }
 
 module.exports = {
-  ONLINE_PRESENCE_MANAGER_NAME,
   buildOnlinePresenceReminderMessage,
   sendOnlinePresenceReminder
 };

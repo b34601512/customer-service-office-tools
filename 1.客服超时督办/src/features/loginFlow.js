@@ -1,8 +1,7 @@
 const readline = require("readline");
 const appConfig = require("../config/appConfig");
-const { isFullTargetUrl, resolveLoginEntryUrl, writeAppRuntimeConfig } = require("../config/appRuntimeConfig");
+const { isFullTargetUrl, writeAppRuntimeConfig } = require("../config/appRuntimeConfig");
 const { log } = require("../engine/logger");
-const { navigateToTargetPage, navigateToUrl } = require("../engine/browser");
 const { assertChatPageReady } = require("./chatPage");
 const {
   markLoginStatusValid,
@@ -16,6 +15,12 @@ function isLoginRequiredError(error) {
   // 这里统一判断异常是不是登录态失效，避免上层流程到处手写字符串匹配。
   const message = error instanceof Error ? error.message : String(error);
   return message.includes(LOGIN_REQUIRED_PREFIX);
+}
+
+function createLoginRequiredError(source, detail) {
+  const error = new Error(`${LOGIN_REQUIRED_PREFIX}，后台监控已停止。请在控制台选择「首次登录」，完成后再「后台启动」。${detail || ""}`);
+  markCurrentLoginStatusInvalid(source, error);
+  return error;
 }
 
 function markCurrentLoginStatusValid(source, detail) {
@@ -36,31 +41,30 @@ function markCurrentLoginStatusInvalid(source, error) {
   });
 }
 
-function waitForEnter(promptText = LOGIN_CONFIRM_PROMPT) {
-  // 这里统一等待人工确认，既能兼容终端回车，也能让网页控制台复用同一条提示文案。
-  return new Promise((resolve) => {
+function waitForEnter(promptText = LOGIN_CONFIRM_PROMPT, { signal } = {}) {
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted) return reject(new Error("登录窗口已关闭，首次登录已取消。"));
+    // Windows 的管道即使 readline.close() 后仍引用事件循环；只在等待输入时持有它。
+    process.stdin.ref?.();
     const rl = readline.createInterface({
       input: process.stdin,
       output: process.stdout
     });
-
-    rl.question(promptText, () => {
+    let settled = false;
+    const finish = (error) => {
+      if (settled) return;
+      settled = true;
+      signal?.removeEventListener("abort", abort);
       rl.close();
-      resolve();
-    });
+      process.stdin.unref?.();
+      if (error) reject(error);
+      else resolve();
+    };
+    const abort = () => finish(new Error("登录窗口已关闭，首次登录已取消。"));
+    signal?.addEventListener("abort", abort, { once: true });
+    rl.on("close", () => finish(new Error("登录确认输入已关闭，首次登录已取消。")));
+    rl.question(`${promptText}\n`, () => finish());
   });
-}
-
-async function defaultReloadTargetPage(page) {
-  // 这里统一按目标页真实可读状态完成刷新，避免登录后靠固定毫秒赌页面何时恢复。
-  await navigateToTargetPage(page);
-}
-
-async function defaultOpenLoginEntryPage(page) {
-  // 这里把失效登录态从有赞 OAuth 错误页带回小蟹账号密码登录入口。
-  const loginEntryUrl = resolveLoginEntryUrl(appConfig.targetUrl);
-  log("主线:执行", "登录流程", "打开登录入口", `准备访问登录入口：${loginEntryUrl}`);
-  await navigateToUrl(page, loginEntryUrl);
 }
 
 function persistCurrentTargetUrlIfReady(page) {
@@ -83,46 +87,46 @@ function persistCurrentTargetUrlIfReady(page) {
 }
 
 async function beginInteractiveLogin(page, options = {}) {
-  // 这里统一执行人工登录确认链路，让首次登录和后台自恢复共用同一套动作。
   const {
     flowLabel,
     assertPageReady = assertChatPageReady,
     waitForConfirmation = waitForEnter,
-    openLoginEntryPage = defaultOpenLoginEntryPage,
-    reloadTargetPage = defaultReloadTargetPage
+    signal
   } = options;
 
   if (typeof page.bringToFront === "function") {
     await page.bringToFront();
   }
 
-  await openLoginEntryPage(page);
-  log("主线:等待", "登录流程", "人工登录", `${flowLabel}检测到未登录，已切换到人工登录，请完成登录后确认继续`);
-  await waitForConfirmation(LOGIN_CONFIRM_PROMPT);
-  log("主线:执行", "登录流程", "确认当前页", "已收到登录完成确认，先检查当前浏览器是否已经在客服聊天页");
-
-  if (!isFullTargetUrl(appConfig.targetUrl)) {
-    await assertPageReady(page);
-    if (persistCurrentTargetUrlIfReady(page)) {
-      markCurrentLoginStatusValid("interactive_login", `${flowLabel}登录完成，已确认当前登录态可继续使用。`);
-      log("主线:完成", "登录流程", "人工登录", `${flowLabel}登录完成，已确认当前登录态可继续使用`);
-      return;
+  log("主线:等待", "登录流程", "人工登录", "请在浏览器登录，并进入需要监控的聊天工作台后确认。支持新标签页，不会跳回旧地址。");
+  while (true) {
+    await waitForConfirmation(LOGIN_CONFIRM_PROMPT, { signal });
+    const pages = page.context().pages().filter((candidate) => !candidate.isClosed());
+    const candidates = pages.filter((candidate) => isFullTargetUrl(candidate.url()));
+    const urls = new Set(candidates.map((candidate) => candidate.url()));
+    if (urls.size !== 1) {
+      log("主线:等待", "登录流程", "人工登录", urls.size > 1
+        ? "检测到多个不同聊天工作台，请关闭不需要监控的工作台标签页，再确认。"
+        : "尚未发现聊天工作台。请在浏览器进入聊天工作台，再点击完成登录；无需重新打开登录入口。");
+      continue;
     }
-
-    throw new Error(
-      `当前配置还只是入口域名，且程序没有自动进入客服聊天工作台。当前配置：${appConfig.targetUrl}，当前页面：${typeof page.url === "function" ? page.url() : "未知"}`
-    );
+    const targetPage = candidates[candidates.length - 1];
+    try {
+      await assertPageReady(targetPage);
+    } catch (error) {
+      if (!isLoginRequiredError(error)) throw error;
+      markCurrentLoginStatusInvalid("interactive_login", error);
+      log("主线:等待", "登录流程", "人工登录", "工作台仍未通过登录校验，请完成登录后再次确认。");
+      continue;
+    }
+    if (!persistCurrentTargetUrlIfReady(targetPage)) {
+      log("主线:等待", "登录流程", "人工登录", "工作台地址已发生跳转，请进入聊天工作台后再次确认。");
+      continue;
+    }
+    markCurrentLoginStatusValid("interactive_login", `${flowLabel}登录完成，已确认当前登录态可继续使用。`);
+    log("主线:完成", "登录流程", "人工登录", `${flowLabel}登录完成，已确认当前登录态可继续使用`);
+    return;
   }
-
-  if (!persistCurrentTargetUrlIfReady(page)) {
-    log("主线:执行", "登录流程", "刷新目标页", `当前页不是聊天工作台，重新加载目标页：${appConfig.targetUrl}`);
-    await reloadTargetPage(page);
-  }
-
-  await assertPageReady(page);
-  persistCurrentTargetUrlIfReady(page);
-  markCurrentLoginStatusValid("interactive_login", `${flowLabel}登录完成，已确认当前登录态可继续使用。`);
-  log("主线:完成", "登录流程", "人工登录", `${flowLabel}登录完成，已确认当前登录态可继续使用`);
 }
 
 async function completeLoginMode(page, options = {}) {
@@ -130,8 +134,11 @@ async function completeLoginMode(page, options = {}) {
   const { assertPageReady = assertChatPageReady } = options;
 
   try {
+    if (!isFullTargetUrl(page.url())) {
+      throw new Error(`${LOGIN_REQUIRED_PREFIX}，请先进入聊天工作台。`);
+    }
     await assertPageReady(page);
-    persistCurrentTargetUrlIfReady(page);
+    if (!persistCurrentTargetUrlIfReady(page)) throw new Error(`${LOGIN_REQUIRED_PREFIX}，工作台已跳转。`);
     markCurrentLoginStatusValid("explicit_login", "当前登录态仍有效，无需重复执行首次登录。");
     log("主线:完成", "登录流程", "登录态复用", "当前登录态仍有效，无需重复执行首次登录");
     return "already_logged_in";
@@ -151,7 +158,7 @@ async function completeLoginMode(page, options = {}) {
 }
 
 async function ensureLoginReadyForRun(page, options = {}) {
-  // 这里在后台启动前先自检登录态，未登录就自动转入人工登录，成功后再继续日常督办。
+  // 无头页面只校验登录，不等待不可见的人工操作；人工登录统一由 login 入口负责。
   const { assertPageReady = assertChatPageReady } = options;
   log("主线:执行", "登录流程", "登录态自检", "后台启动前开始检查当前登录态");
 
@@ -165,19 +172,13 @@ async function ensureLoginReadyForRun(page, options = {}) {
     if (!isLoginRequiredError(error)) {
       throw error;
     }
-    markCurrentLoginStatusInvalid("run_precheck", error);
+    throw createLoginRequiredError("run_precheck", error.message);
   }
-
-  await beginInteractiveLogin(page, {
-    ...options,
-    assertPageReady,
-    flowLabel: "后台督办"
-  });
-  return "login_completed";
 }
 
 module.exports = {
   ensureLoginReadyForRun,
+  createLoginRequiredError,
   completeLoginMode,
   isLoginRequiredError,
   persistCurrentTargetUrlIfReady,

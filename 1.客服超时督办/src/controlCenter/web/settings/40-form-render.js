@@ -3,6 +3,9 @@ function fillConfig(config) {
   // 这里统一把服务端配置写回表单，避免保存后界面继续显示旧值。
   modeChip.textContent = `当前模式：${config.modeName}`;
   document.getElementById("targetUrl").value = config.targetUrl;
+  document.getElementById("targetUrl").defaultValue = config.targetUrl;
+  document.getElementById("scheduleUrl").value = config.scheduleUrl || "";
+  document.getElementById("managerStaffName").value = config.managerStaffName || "";
   document.getElementById("timeoutReminderThresholdSeconds").value = config.timeoutReminderThresholdSeconds;
   document.getElementById("missedReplyMonitorEnabled").checked = Boolean(config.missedReplyMonitorEnabled);
   document.getElementById("onlinePresenceMonitorEnabled").checked = Boolean(config.onlinePresenceMonitorEnabled);

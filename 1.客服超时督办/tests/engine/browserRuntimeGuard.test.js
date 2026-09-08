@@ -1,82 +1,29 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const childProcess = require("child_process");
+const { usesBrowserProfile, assertBrowserProfileAvailable } = require("../../src/engine/browserRuntimeGuard");
 
-function loadBrowserRuntimeGuardWithMockedSpawnSync(mockedSpawnSync) {
-  // 这里在加载模块前替换 spawnSync，专门验证 Windows 守卫的边界分支。
-  const modulePath = require.resolve("../../src/engine/browserRuntimeGuard");
-  const originalSpawnSync = childProcess.spawnSync;
-  childProcess.spawnSync = mockedSpawnSync;
-  delete require.cache[modulePath];
-
-  try {
-    return require("../../src/engine/browserRuntimeGuard");
-  } finally {
-    childProcess.spawnSync = originalSpawnSync;
-    delete require.cache[modulePath];
-  }
-}
-
-test("taskkill 非零但进程已不存在时不应该误报失败", () => {
-  const browserRuntimeGuard = loadBrowserRuntimeGuardWithMockedSpawnSync((command) => {
-    if (command === "taskkill.exe") {
-      return {
-        status: 128,
-        stderr: "错误: 没有找到该进程。",
-        stdout: ""
-      };
-    }
-
-    if (command === "powershell.exe") {
-      return {
-        status: 1,
-        stderr: "",
-        stdout: ""
-      };
-    }
-
-    throw new Error(`未预期的命令：${command}`);
-  });
-
-  assert.doesNotThrow(() => browserRuntimeGuard.killProcessTree(9527));
+test("Edge 目录必须完整匹配参数，不匹配个人目录或相邻目录", () => {
+  const profile = "D:\\任务 空格\\runtime\\edge-user-data";
+  assert.equal(usesBrowserProfile('msedge.exe "--user-data-dir=' + profile + '" --headless', profile), true);
+  assert.equal(usesBrowserProfile('msedge.exe --user-data-dir="' + profile + '"', profile), true);
+  assert.equal(usesBrowserProfile('msedge.exe "--user-data-dir=' + profile + '-other"', profile), false);
+  assert.equal(usesBrowserProfile('msedge.exe --app="' + profile + '"', profile), false);
+  assert.equal(usesBrowserProfile('msedge.exe --user-data-dir=C:\\Users\\personal', profile), false);
 });
 
-test("清理项目 Chrome 时应该只结束根进程树，不重复单杀子进程", () => {
-  const killedPids = [];
-  const browserRuntimeGuard = loadBrowserRuntimeGuardWithMockedSpawnSync((command, args) => {
-    if (command === "powershell.exe") {
-      return {
-        status: 0,
-        stderr: "",
-        stdout: JSON.stringify([
-          {
-            ProcessId: 17668,
-            ParentProcessId: 4,
-            Name: "chrome.exe",
-            CommandLine: "chrome.exe --user-data-dir=E:\\Personal\\codex\\客服超时督办\\runtime\\chrome-user-data"
-          },
-          {
-            ProcessId: 37376,
-            ParentProcessId: 17668,
-            Name: "chrome.exe",
-            CommandLine: "chrome.exe --type=gpu-process --user-data-dir=E:\\Personal\\codex\\客服超时督办\\runtime\\chrome-user-data"
-          }
-        ])
-      };
-    }
+test("资料占用时只报错，不启动 taskkill 或删除文件", { skip: process.platform !== "win32" }, () => {
+  let calls = 0;
+  const query = (command, args) => {
+    calls++;
+    assert.equal(command, "powershell.exe");
+    assert.match(args.join(" "), /msedge\.exe/);
+    assert.doesNotMatch(args.join(" "), /taskkill|Remove-Item/);
+    return { status: 0, stdout: JSON.stringify({ CommandLine: "msedge.exe --user-data-dir=D:\\app\\edge" }) };
+  };
+  assert.throws(() => assertBrowserProfileAvailable("D:\\app\\edge", query), /目录正在使用/);
+  assert.equal(calls, 1);
+});
 
-    if (command === "taskkill.exe") {
-      killedPids.push(String(args[1]));
-      return {
-        status: 0,
-        stderr: "",
-        stdout: ""
-      };
-    }
-
-    throw new Error(`未预期的命令：${command}`);
-  });
-
-  assert.equal(browserRuntimeGuard.killProjectChromeProcesses(), 1);
-  assert.deepEqual(killedPids, ["17668"]);
+test("查询失败不能假装目录空闲", { skip: process.platform !== "win32" }, () => {
+  assert.throws(() => assertBrowserProfileAvailable("D:\\app\\edge", () => ({ status: 1, stderr: "denied" })), /denied/);
 });

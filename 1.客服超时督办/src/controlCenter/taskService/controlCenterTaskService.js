@@ -3,7 +3,6 @@ const { log } = require("../../engine/logger");
 const { attachTaskProcessEventHandlers } = require("./processEventHandlers");
 const { buildTaskConfig } = require("./taskConfig");
 const { handleTaskProcessOutput } = require("./processOutputHandler");
-const { waitForProcessExit } = require("./processExitWaiter");
 
 class ControlCenterTaskService {
   constructor(projectRoot, state, hooks = {}) {
@@ -13,44 +12,49 @@ class ControlCenterTaskService {
     this.currentProcess = null;
     this.pendingStopReason = null;
     this.currentTaskRunId = 0;
+    this.starting = false;
   }
 
   async startTask(taskName) {
     // 这里统一启动登录或督办任务，确保任意时刻只跑一条主线。
-    if (this.currentProcess) {
-      if (taskName === "start" && this.shouldTakeOverConfirmedLoginTask()) {
-        await this.takeOverConfirmedLoginTaskBeforeStart();
-      } else if (taskName === "start" && this.state.currentTask?.taskName === "login") {
-        throw new Error("首次登录还没完成，请先点击“完成登录”，再启动后台督办。");
-      } else {
-        throw new Error("当前已有任务在运行，请先等待当前任务结束。");
-      }
+    if (this.currentProcess || this.starting) {
+      throw new Error("当前已有任务正在启动、运行或收尾，请等待结束或取消当前任务后再启动。");
     }
+    this.starting = true;
+    try {
+      await require("../ensureProjectDependencies").ensureProjectDependencies(this.projectRoot);
+      const taskConfig = buildTaskConfig(taskName, this.projectRoot);
+      log(
+        "主线:启动",
+        "网页控制台",
+        `任务:${taskConfig.windowLabel}`,
+        `准备启动子进程，command=${taskConfig.command} args=${taskConfig.args.join(" ")} cwd=${this.projectRoot}`
+      );
 
-    await require("../ensureProjectDependencies").ensureProjectDependencies(this.projectRoot);
-    const taskConfig = buildTaskConfig(taskName, this.projectRoot);
-    log(
-      "主线:启动",
-      "网页控制台",
-      `任务:${taskConfig.windowLabel}`,
-      `准备启动子进程，command=${taskConfig.command} args=${taskConfig.args.join(" ")} cwd=${this.projectRoot}`
-    );
+      const child = this.spawnTaskProcess(taskConfig);
+      const taskState = this.buildRunningTaskState(taskName, taskConfig, child.pid);
+      this.markTaskAsStarted(child, taskState);
+      const taskRunId = this.currentTaskRunId;
+      child.stdin?.on?.("error", (error) => {
+        if (!this.isCurrentProcess(child, taskRunId)) return;
+        log("主线:失败", "网页控制台", `任务:${taskConfig.windowLabel}`, `登录输入通道失败：${error.message}`);
+        this.state.setTask({ ...this.state.currentTask, awaitingConfirmation: false,
+          message: `登录确认通道已关闭：${error.message}。请取消任务后重新登录。` });
+      });
 
-    const child = this.spawnTaskProcess(taskConfig);
-    const taskState = this.buildRunningTaskState(taskName, taskConfig, child.pid);
-    this.markTaskAsStarted(child, taskState);
-    const taskRunId = this.currentTaskRunId;
+      child.stdout.setEncoding("utf8");
+      child.stderr.setEncoding("utf8");
+      child.stdout.on("data", (chunk) => {
+        if (this.isCurrentProcess(child, taskRunId)) this.handleProcessOutput(String(chunk), false);
+      });
+      child.stderr.on("data", (chunk) => {
+        if (this.isCurrentProcess(child, taskRunId)) this.handleProcessOutput(String(chunk), true);
+      });
 
-    child.stdout.setEncoding("utf8");
-    child.stderr.setEncoding("utf8");
-    child.stdout.on("data", (chunk) => {
-      this.handleProcessOutput(String(chunk), false);
-    });
-    child.stderr.on("data", (chunk) => {
-      this.handleProcessOutput(String(chunk), true);
-    });
-
-    attachTaskProcessEventHandlers(this, child, taskConfig, taskState, taskRunId, taskName);
+      attachTaskProcessEventHandlers(this, child, taskConfig, taskState, taskRunId, taskName);
+    } finally {
+      this.starting = false;
+    }
   }
 
   spawnTaskProcess(taskConfig) {
@@ -59,7 +63,8 @@ class ControlCenterTaskService {
       return childProcess.spawn(taskConfig.command, taskConfig.args, {
         cwd: this.projectRoot,
         env: process.env,
-        stdio: ["pipe", "pipe", "pipe"]
+        stdio: ["pipe", "pipe", "pipe"],
+        windowsHide: true
       });
     } catch (error) {
       log(
@@ -88,6 +93,7 @@ class ControlCenterTaskService {
   markTaskAsStarted(child, taskState) {
     // 这里统一记录当前子进程和网页状态，保证运行序号只在新任务启动时递增。
     this.currentProcess = child;
+    this.loginPromptTail = "";
     this.currentTaskRunId += 1;
     this.pendingStopReason = null;
     this.state.setTask(taskState);
@@ -104,54 +110,6 @@ class ControlCenterTaskService {
     return this.currentProcess === child && this.currentTaskRunId === taskRunId;
   }
 
-  shouldTakeOverConfirmedLoginTask() {
-    // 这里只允许后台启动接管“已完成确认后的首次登录任务”，等待用户确认时不能自动跳过。
-    const currentTask = this.state.currentTask;
-    return (
-      Boolean(this.currentProcess) &&
-      currentTask?.taskName === "login" &&
-      currentTask.status === "running" &&
-      currentTask.awaitingConfirmation === false
-    );
-  }
-
-  async takeOverConfirmedLoginTaskBeforeStart() {
-    // 这里在用户明确点击后台启动时收掉已确认的登录进程，后台任务会再次真实校验登录态。
-    const loginProcess = this.currentProcess;
-    const loginTask = this.state.currentTask;
-    const stopReason = "首次登录已发送完成确认，后台启动将接管并重新校验登录态。";
-
-    log(
-      "主线:执行",
-      "网页控制台",
-      `任务:${loginTask.label}`,
-      `后台启动接管首次登录任务，准备结束旧进程 PID=${loginProcess.pid}`
-    );
-    this.pendingStopReason = stopReason;
-    this.state.setTask({
-      ...loginTask,
-      status: "stopping",
-      message: "正在收尾首次登录，准备启动后台督办。"
-    });
-
-    const exitPromise = waitForProcessExit(loginProcess);
-    await require("../processTree").killProcessTree(loginProcess.pid);
-    await exitPromise;
-
-    if (this.currentProcess === loginProcess) {
-      this.currentProcess = null;
-      this.currentTaskRunId += 1;
-      this.pendingStopReason = null;
-      this.state.setTask({
-        ...loginTask,
-        endedAt: new Date().toISOString(),
-        status: "idle",
-        awaitingConfirmation: false,
-        message: "首次登录已收尾，正在启动后台督办。"
-      });
-    }
-  }
-
   async stopCurrentTask() {
     // 这里统一停止当前后台任务，并强制结束整个进程树，避免内层 Node 进程残留。
     const currentTask = this.state.currentTask;
@@ -159,23 +117,26 @@ class ControlCenterTaskService {
       throw new Error("当前没有可停止的任务。");
     }
 
-    if (currentTask.taskName !== "start") {
-      throw new Error("当前只有「后台督办」任务支持网页内停止。");
-    }
+    if (currentTask.status === "stopping") return;
+    const child = this.currentProcess;
 
     const stopMessage = `正在停止「${currentTask.label}」，请稍等几秒。`;
     log("主线:停止", "网页控制台", `任务:${currentTask.label}`, `准备停止进程树，PID=${this.currentProcess.pid}`);
     this.state.setTask({
       ...currentTask,
       status: "stopping",
+      awaitingConfirmation: false,
       message: stopMessage
     });
     this.pendingStopReason = `任务「${currentTask.label}」已由网页控制台手动停止。`;
 
     try {
-      await require("../processTree").killProcessTree(this.currentProcess.pid);
+      await require("../processTree").killProcessTree(child.pid);
     } catch (error) {
-      this.pendingStopReason = null;
+      if (this.currentProcess === child) {
+        this.pendingStopReason = null;
+        this.state.setTask({ ...currentTask, message: `停止失败：${error.message}，可以重试。` });
+      }
       throw error;
     }
   }
@@ -204,18 +165,17 @@ class ControlCenterTaskService {
   }
 
   confirmLoginCompleted() {
-    // 这里在网页按钮点击后把回车写回等待中的登录流程，支持首次登录和后台启动里的自动登录续跑。
+    // 人工确认只属于可见首次登录任务；后台运行不等待人工输入。
     if (!this.currentProcess || !this.state.currentTask) {
       throw new Error("当前没有等待确认的登录任务。");
     }
 
-    if (!this.state.currentTask.awaitingConfirmation) {
+    if (this.state.currentTask.taskName !== "login" || this.state.currentTask.status !== "running" || !this.state.currentTask.awaitingConfirmation) {
       throw new Error("当前登录流程还没进入确认阶段，请先在浏览器完成登录。");
     }
 
     const child = this.currentProcess;
     if (child.exitCode !== null && child.exitCode !== undefined) {
-      this.currentProcess = null;
       throw new Error("登录流程已结束，无法再发送确认，请重新执行首次登录。");
     }
 
@@ -224,29 +184,10 @@ class ControlCenterTaskService {
       throw new Error("登录流程输入通道已关闭，无法发送确认，请重新执行首次登录。");
     }
 
-    // 这里给输入管道挂一次性错误监听，避免子进程刚退出时写回车触发未捕获 EPIPE 把整个控制台带崩。
-    // 监听器在写入回调或管道关闭后再移除，确保异步错误事件始终有人接住。
-    let removeWriteGuard = null;
-    if (typeof stdin.once === "function" && typeof stdin.removeListener === "function") {
-      const handleWriteError = (writeError) => {
-        log(
-          "主线:失败",
-          "网页控制台",
-          `任务:${this.state.currentTask?.label || ""}`,
-          `发送登录确认失败：${writeError.message}`
-        );
-      };
-      stdin.once("error", handleWriteError);
-      removeWriteGuard = () => {
-        stdin.removeListener("error", handleWriteError);
-      };
-      stdin.once("close", removeWriteGuard);
-    }
-    stdin.write("\n", removeWriteGuard || undefined);
+    // 错误监听跟随整个子进程输入流，避免回调先于 error 事件移除监听造成 EPIPE 崩溃。
+    stdin.write("\n");
 
-    const nextMessage = this.state.currentTask.taskName === "start"
-      ? "已发送登录完成确认，程序会在保存登录态后继续后台督办。"
-      : "已发送登录完成确认，正在保存登录态。";
+    const nextMessage = "已发送确认，正在验证聊天工作台并保存登录态。";
     this.state.setTask({
       ...this.state.currentTask,
       awaitingConfirmation: false,

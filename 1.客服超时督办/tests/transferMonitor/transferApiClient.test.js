@@ -323,3 +323,17 @@ test("读取转接消息时应该把 accessToken 带进消息接口请求", asyn
   assert.equal(messages.length, 1);
   assert.equal(messages[0].id, "msg_1");
 });
+
+test("接口明确鉴权失效时提示可见登录，不伪装成JSON解析错误", async () => {
+  for (const response of [
+    { ok: false, status: 401, text: "unauthorized" },
+    { ok: true, status: 200, text: JSON.stringify({ code: 3 }) }
+  ]) {
+    const page = { evaluate: async (_fn, input) => input ? response : JSON.stringify({ token: "fake" }) };
+    await assert.rejects(fetchTransferMonitorSnapshot(page), (error) => {
+      assert.match(error.message, /当前登录态已失效.*首次登录/);
+      assert.doesNotMatch(error.message, /不是合法 JSON/);
+      return true;
+    });
+  }
+});

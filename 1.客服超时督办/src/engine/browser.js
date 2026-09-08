@@ -5,7 +5,7 @@ const { resolveLoginEntryUrl, resolveWorkEntryUrl } = require("../config/appRunt
 const { log } = require("./logger");
 const { waitForReadableBody } = require("./pageReadiness");
 const { prepareBrowserRuntimeForLaunch } = require("./browserRuntimeGuard");
-const { resolveChromePath } = require("./browserExecutable");
+const { resolveEdgePath } = require("./browserExecutable");
 
 function ensureRuntimeDir() {
   // 这里先创建运行目录，避免首次启动时因为目录不存在直接失败。
@@ -17,14 +17,14 @@ async function launchBrowser(mode) {
   // 这里统一管理持久化浏览器上下文，保证首次登录后的状态能被后续后台启动复用。
   ensureRuntimeDir();
   prepareBrowserRuntimeForLaunch();
-  const executablePath = resolveChromePath("浏览器引擎");
+  const executablePath = resolveEdgePath("浏览器引擎");
   const headless = mode === "run" ? appConfig.runHeadless : false;
 
   log(
     "主线:启动",
     "浏览器引擎",
     "启动参数",
-    `准备启动 Chrome，模式=${mode}，headless=${headless}，说明=${headless ? "无头后台" : "可见独立窗口"}`
+    `准备启动 Edge，模式=${mode}，headless=${headless}，说明=${headless ? "无头后台" : "可见独立窗口"}`
   );
 
   let context;
@@ -50,7 +50,7 @@ async function launchBrowser(mode) {
       message.includes("exitCode=21")
     ) {
       throw new Error(
-        `Chrome 启动失败：运行目录已被其他实例占用。请先关闭现有自动回复窗口或结束旧的 node/chrome 进程，再重新启动。运行目录=${appConfig.userDataDir}`
+        `Edge 启动失败，可能是目录占用、浏览器版本或企业策略限制。请查看原始错误，不要关闭个人浏览器。运行目录=${appConfig.userDataDir}。原始错误：${message}`
       );
     }
 
@@ -91,7 +91,7 @@ async function navigateToUrl(page, targetUrl, windowLabel = "") {
 }
 
 async function applyBrowserWindowIdentity(page, windowLabel) {
-  // 这里给受控业务页补清晰标题和红色“督”图标，避免多个 Chrome 窗口堆在一起无法分辨。
+  // 这里给受控业务页补清晰标题和红色“督”图标。
   if (typeof page.evaluate !== "function") {
     throw new Error("浏览器窗口标识设置失败：页面对象不支持脚本注入。");
   }

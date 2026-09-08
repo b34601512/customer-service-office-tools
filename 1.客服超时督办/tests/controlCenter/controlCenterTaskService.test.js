@@ -117,7 +117,7 @@ test("后台任务异常退出后应该保留控制台状态并触发退出事�
   }
 });
 
-test("后台启动应该接管已发送完成确认但未退出的首次登录任务", async () => {
+test("确认已发送仍须等登录任务自然结束，不强行接管浏览器", async () => {
   const loginChild = createFakeChildProcess(41001);
   const startChild = createFakeChildProcess(41002);
   const children = [loginChild, startChild];
@@ -145,9 +145,10 @@ test("后台启动应该接管已发送完成确认但未退出的首次登录�
     assert.equal(state.currentTask.taskName, "login");
     assert.equal(state.currentTask.awaitingConfirmation, false);
 
+    await assert.rejects(service.startTask("start"), /等待结束或取消/);
+    assert.deepEqual(killedPids, []);
+    loginChild.emit("exit", 0, null);
     await service.startTask("start");
-
-    assert.deepEqual(killedPids, [41001]);
     assert.equal(state.currentTask.taskName, "start");
     assert.equal(state.currentTask.status, "running");
     assert.equal(state.currentTask.pid, 41002);
@@ -174,7 +175,7 @@ test("后台启动不应该接管仍在等待确认的首次登录任务", async
 
     await assert.rejects(
       () => service.startTask("start"),
-      /首次登录还没完成，请先点击“完成登录”/
+      /等待结束或取消/
     );
     assert.equal(state.currentTask.taskName, "login");
     assert.equal(state.currentTask.awaitingConfirmation, true);
@@ -228,7 +229,7 @@ test("后台任务启动失败时应该直接暴露启动异常", async () => {
   }
 });
 
-test("后台启动进入登录确认阶段后应该允许网页按钮继续执行", async () => {
+test("首次登录进入确认阶段后应该允许网页按钮继续执行", async () => {
   const fakeChild = createFakeChildProcess();
   const { ControlCenterTaskService, restore } = loadTaskServiceWithMocks(() => fakeChild);
   const state = {
@@ -241,7 +242,7 @@ test("后台启动进入登录确认阶段后应该允许网页按钮继续执�
   const service = new ControlCenterTaskService("E:\\Personal\\codex\\客服超时督办", state);
 
   try {
-    await service.startTask("start");
+    await service.startTask("login");
     service.handleProcessOutput("请在浏览器中完成登录，完成后回到这里按回车继续：", false);
 
     assert.equal(state.currentTask.awaitingConfirmation, true);
@@ -250,7 +251,7 @@ test("后台启动进入登录确认阶段后应该允许网页按钮继续执�
 
     assert.deepEqual(fakeChild.stdinWrites, ["\n"]);
     assert.equal(state.currentTask.awaitingConfirmation, false);
-    assert.match(state.currentTask.message, /继续后台督办/);
+    assert.match(state.currentTask.message, /验证聊天工作台/);
   } finally {
     restore();
   }
@@ -266,6 +267,31 @@ test("控制台父进程应该识别子进程已经写过的结构化日志", ()
     true
   );
   assert.equal(isStructuredChildLogLine("请在浏览器中完成登录，完成后回到这里按回车继续："), false);
+});
+
+test("并发启动只产生一个子进程，登录可独立取消，旧进程输出不污染新任务", async () => {
+  const first = createFakeChildProcess(43001);
+  const second = createFakeChildProcess(43002);
+  let spawns = 0;
+  const { ControlCenterTaskService, restore } = loadTaskServiceWithMocks(() => ++spawns === 1 ? first : second, {
+    killProcessTree: async () => first.emit("exit", 1, null)
+  });
+  const state = { currentTask: null, setTask(task) { this.currentTask = task; }, appendLog() {} };
+  const service = new ControlCenterTaskService("C:\\test-project", state);
+  try {
+    const results = await Promise.allSettled([service.startTask("login"), service.startTask("login")]);
+    assert.equal(results.filter((result) => result.status === "fulfilled").length, 1);
+    assert.equal(spawns, 1);
+    first.stdout.write("请在浏览器中完成登录，完成后");
+    first.stdout.write("回到这里按回车继续：");
+    assert.equal(state.currentTask.awaitingConfirmation, true);
+    await service.stopCurrentTask();
+    assert.equal(state.currentTask.status, "idle");
+    await service.startTask("start");
+    first.stdout.write("请在浏览器中完成登录，完成后回到这里按回车继续：");
+    assert.equal(state.currentTask.awaitingConfirmation, false);
+    assert.equal(state.currentTask.pid, 43002);
+  } finally { restore(); }
 });
 
 test("控制台父进程转发子进程错误日志时不应该写入宿主 stderr", () => {

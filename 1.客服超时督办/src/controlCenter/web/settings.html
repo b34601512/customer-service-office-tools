@@ -48,6 +48,14 @@
               <span>提醒阈值(秒)</span>
               <input id="timeoutReminderThresholdSeconds" name="timeoutReminderThresholdSeconds" inputmode="numeric" />
             </label>
+            <label class="wide-field">
+              <span>排班表地址（保存后重启后台监控）</span>
+              <input id="scheduleUrl" name="scheduleUrl" placeholder="https://www.kdocs.cn/l/..." />
+            </label>
+            <label>
+              <span>主管姓名（与企微成员一致）</span>
+              <input id="managerStaffName" name="managerStaffName" />
+            </label>
             <label class="checkbox-field">
               <span>启用漏回复监控</span>
               <span class="checkbox-row">
@@ -61,6 +69,18 @@
                 <input id="onlinePresenceMonitorEnabled" name="onlinePresenceMonitorEnabled" type="checkbox" />
                 <em>启用中</em>
               </span>
+            </label>
+            <label class="checkbox-field">
+              <span>自动打开转接待</span>
+              <span class="checkbox-row"><input id="transferAutoOpenEnabled" name="transferAutoOpenEnabled" type="checkbox" /><em>已关闭</em></span>
+            </label>
+            <label class="checkbox-field">
+              <span>自动关闭转接待</span>
+              <span class="checkbox-row"><input id="transferAutoCloseEnabled" name="transferAutoCloseEnabled" type="checkbox" /><em>已关闭</em></span>
+            </label>
+            <label class="checkbox-field">
+              <span>群聊识别</span>
+              <span class="checkbox-row"><input id="groupChatFilterEnabled" name="groupChatFilterEnabled" type="checkbox" /><em>已关闭</em></span>
             </label>
             <label>
               <span>上班监控扫描间隔(ms)</span>

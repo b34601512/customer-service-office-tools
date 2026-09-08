@@ -2,6 +2,7 @@ const { randomUUID } = require("crypto");
 const appConfig = require("../../config/appConfig");
 const { assertFullTargetUrl } = require("../../config/appRuntimeConfig");
 const { log } = require("../../engine/logger");
+const { createLoginRequiredError } = require("../loginFlow");
 const { parseStaffDisplayName, parseStaffRoleGroup } = require("../shared/staffIdentity");
 const { filterGroupChatContacts, isOfficialGroupChatContact, normalizeGroupChatFilterConfig } = require("./groupChatFilter");
 
@@ -87,7 +88,7 @@ function extractAccessTokenFromStoredUser(storedUserText) {
   // 这里统一从页面登录信息里拿 Bearer Token，保证我们和页面自己的接口请求口径一致。
   const normalizedStoredUserText = String(storedUserText || "").trim();
   if (!normalizedStoredUserText) {
-    throw new Error("当前页面 localStorage.user 为空，无法读取转接监控接口鉴权 token。");
+    throw createLoginRequiredError("api_auth", "当前页面没有登录信息。");
   }
 
   let storedUserPayload;
@@ -99,7 +100,7 @@ function extractAccessTokenFromStoredUser(storedUserText) {
 
   const accessToken = String(storedUserPayload?.token || "").trim();
   if (!accessToken) {
-    throw new Error("当前页面登录信息缺少 token，无法调用转接监控接口。");
+    throw createLoginRequiredError("api_auth", "当前页面登录信息缺少 token。");
   }
 
   return accessToken;
@@ -114,6 +115,8 @@ async function readTransferMonitorAccessToken(page) {
 function assertTransferMonitorApiSuccess(payload, requestPath, requestLabel) {
   // 这里统一校验接口业务返回码，一旦平台拒绝请求就直接抛出中文根因。
   const responseCode = Number(payload?.code);
+  // 平台前端明确把 code=3 定义为 tokenInvalid，不能在无头状态下无限重试。
+  if (responseCode === 3) throw createLoginRequiredError("api_auth", `${requestLabel} 返回 tokenInvalid(code=3)。`);
   if (Number.isFinite(responseCode) && responseCode !== 0) {
     throw new Error(
       `${requestLabel} 返回失败，code=${responseCode}，路径=${requestPath}，响应片段=${JSON.stringify(payload).slice(0, 300)}`
@@ -139,20 +142,18 @@ async function fetchJsonInPage(page, requestPath, requestLabel, accessToken) {
   }, { requestPath, accessToken });
 
   if (!responsePayload.ok) {
+    if (responsePayload.status === 401) throw createLoginRequiredError("api_auth", `${requestLabel} 返回 HTTP 401。`);
     throw new Error(`${requestLabel} 请求失败：HTTP ${responsePayload.status}，路径=${requestPath}`);
   }
 
+  let payload;
   try {
-    const payload = JSON.parse(responsePayload.text);
-    assertTransferMonitorApiSuccess(payload, requestPath, requestLabel);
-    return payload;
+    payload = JSON.parse(responsePayload.text);
   } catch (error) {
-    if (error instanceof Error && error.message.includes("返回失败")) {
-      throw error;
-    }
-
     throw new Error(`${requestLabel} 返回的不是合法 JSON：${error.message}`);
   }
+  assertTransferMonitorApiSuccess(payload, requestPath, requestLabel);
+  return payload;
 }
 
 function extractContacts(payload) {

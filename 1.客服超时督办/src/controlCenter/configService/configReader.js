@@ -1,4 +1,5 @@
 const appConfig = require("../../config/appConfig");
+const { readAppRuntimeConfig } = require("../../config/appRuntimeConfig");
 const { loadReplyConfig } = require("../../config/replyConfigLoader");
 const { buildOffDutyConfig } = require("../../features/offDutyClose/offDutyConfig");
 const { readUtf8Text } = require("./fileStore");
@@ -77,7 +78,7 @@ function readControlCenterConfig() {
   });
 
   return {
-    targetUrl: appConfig.targetUrl,
+    ...readAppRuntimeConfig(appConfig.appRuntimeConfigPath),
     modeName: offDutyConfig.offDutyAutomationEnabled
       ? "超时提醒 + 上班监控 + 下班监控"
       : "超时提醒 + 上班监控",

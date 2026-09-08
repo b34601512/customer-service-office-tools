@@ -11,6 +11,7 @@ const {
   summarizeOnlinePresenceStatus
 } = require("./onlinePresencePolicy");
 const { sendOnlinePresenceReminder } = require("./onlinePresenceNotifier");
+const { isLoginRequiredError } = require("../loginFlow");
 
 const ONLINE_PRESENCE_LOG_MODULE_NAME = "上班监控";
 
@@ -306,6 +307,7 @@ async function monitorOnlinePresenceWorkflow(createOnlinePresencePage, stopState
       try {
         await runOnlinePresenceScan(onlinePresencePage, scheduleService, stateStore, runtimeState);
       } catch (error) {
+        if (isLoginRequiredError(error)) throw error;
         logError("主线:失败", ONLINE_PRESENCE_LOG_MODULE_NAME, "单轮扫描失败", error);
       }
 

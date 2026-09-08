@@ -1,7 +1,7 @@
 const { loadReplyConfig } = require("../../config/replyConfigLoader");
 const { log, logError } = require("../../engine/logger");
 const { clickLeftAllMenu } = require("../chatPage");
-const { ensureLoginReadyForRun } = require("../loginFlow");
+const { ensureLoginReadyForRun, isLoginRequiredError } = require("../loginFlow");
 const {
   TRANSFER_MONITOR_CONTACTS_PAGE_SIZE,
   fetchTransferMonitorSnapshot
@@ -140,6 +140,7 @@ async function monitorSharedChatWorkflow(createChatPage, stopState) {
       try {
         await runDueChatMonitorTasks(chatPage, runtimeState, replyConfig, dueTasks);
       } catch (error) {
+        if (isLoginRequiredError(error)) throw error;
         logError("主线:失败", CHAT_MONITOR_LOG_MODULE_NAME, "共享快照读取失败", error);
       } finally {
         markChatMonitorTaskScheduled(runtimeState, replyConfig, dueTasks, Date.now());

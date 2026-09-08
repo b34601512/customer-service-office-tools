@@ -15,6 +15,32 @@ test("配置页：关键词数组应该序列化成一行一条的编辑文本",
   assert.deepEqual(lines, ["稍等 | startsWith", "谢谢 | exact"]);
 });
 
+test("配置页：末尾字段可见、编辑区不溢出、再次编辑保留草稿", () => {
+  const page = createConfigPage();
+  page.state.config = { targetUrl: "https://old.example.test" };
+  page.state.selection = FIELDS.length - 1;
+  const app = { columns: 80, contentHeight: 10 };
+  let lines = page.render(app);
+  assert.ok(lines.some((line) => line.includes(FIELDS.at(-1).label)));
+  assert.ok(lines.length <= app.contentHeight);
+  page.state.selection = 0;
+  page.state.edits.targetUrl = "https://new.example.test";
+  page.handleListKey("enter", app);
+  assert.equal(page.state.editBuffer, "https://new.example.test");
+  lines = page.render(app);
+  assert.ok(lines.length <= app.contentHeight);
+  assert.ok(lines.some((line) => line.includes("回车确认")));
+  assert.deepEqual(serializeKeywords("稍等 | exact\n查一下 | includes"), ["稍等 | exact", "查一下 | includes"]);
+});
+
+test("总览页：登录可取消，收尾期间启动和确认均不可用", () => {
+  const loginActions = buildActions({ currentTask: { taskName: "login", status: "running", awaitingConfirmation: true } });
+  assert.ok(loginActions.some((action) => action.id === "stop" && action.enabled));
+  const stoppingActions = buildActions({ currentTask: { taskName: "login", status: "stopping", awaitingConfirmation: true } });
+  assert.ok(stoppingActions.filter((action) => ["start", "login", "stop"].includes(action.id)).every((action) => !action.enabled));
+  assert.ok(!stoppingActions.some((action) => action.id === "confirm"));
+});
+
 test("配置页：字段值格式化应该覆盖全部字段类型", () => {
   const config = {
     targetUrl: "https://example.com",
@@ -353,7 +379,7 @@ test("报表页：柱状对比不超终端宽度且可切换范围和排序", ()
   page.onEnter(app);
   const lines = page.render(app);
   assert.ok(lines.some((line) => stripAnsi(line).includes("无超时")));
-  assert.ok(lines.some((line) => stripAnsi(line).includes("累计/平均按单次漏回复阈值封顶")));
+  assert.ok(lines.some((line) => stripAnsi(line).includes("累计按单次漏回复阈值封顶")));
   assert.ok(lines.every((line) => displayWidth(line) <= 80));
   app.columns = 120;
   assert.ok(page.render(app).every((line) => displayWidth(line) <= 120));

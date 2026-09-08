@@ -143,7 +143,11 @@ function bindConfigActions() {
     try {
       syncAllKeywordEditorsToTextareas();
       const payload = {
-        targetUrl: document.getElementById("targetUrl").value.trim(),
+        // 未编辑的地址不回写，登录子进程可能已捕获新的真实工作台地址。
+        targetUrl: document.getElementById("targetUrl").value.trim() === document.getElementById("targetUrl").defaultValue
+          ? undefined : document.getElementById("targetUrl").value.trim(),
+        scheduleUrl: document.getElementById("scheduleUrl").value.trim(),
+        managerStaffName: document.getElementById("managerStaffName").value.trim(),
         timeoutReminderThresholdSeconds: document.getElementById("timeoutReminderThresholdSeconds").value.trim(),
         missedReplyMonitorEnabled: document.getElementById("missedReplyMonitorEnabled").checked,
         onlinePresenceMonitorEnabled: document.getElementById("onlinePresenceMonitorEnabled").checked,

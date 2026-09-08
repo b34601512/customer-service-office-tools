@@ -67,10 +67,8 @@ function buildStatusLines(ctx, app, serverPort) {
   lines.push(fit(line1, app.columns));
 
   if (state.currentTask?.awaitingConfirmation) {
-    app.needsLoginConfirm = true;
-    lines.push(ansi.colorize(fit("⚠ 请在程序打开的浏览器里完成登录，完成后按【回车】确认", app.columns), "brightYellow"));
+    lines.push(ansi.colorize(fit("请进入聊天工作台，再到【1总览】选择【完成登录并继续】确认", app.columns), "brightYellow"));
   } else {
-    app.needsLoginConfirm = false;
     if (task?.message) {
       lines.push(fit(`   ${task.message}`, app.columns));
     } else {
@@ -115,13 +113,6 @@ function createTui(options) {
     output: options.output,
     onExitRequest: () => {
       ctx.services.requestExit();
-    },
-    onLoginConfirm: () => {
-      try {
-        ctx.services.confirmLogin();
-      } catch (error) {
-        // 这里确认失败只留日志，不打断用户操作，真正原因会出现在日志页。
-      }
     },
     statusBarProvider: (tuiApp) => buildStatusLines(ctx, tuiApp, options.serverPort)
   });

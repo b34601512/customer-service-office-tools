@@ -179,6 +179,8 @@ function bindActions() {
         }
       }, 200);
     } catch (error) {
+      isControlCenterClosing = false;
+      if (!eventSource) subscribeEvents();
       setFeedback(error.message, true, {
         title: "退出失败",
         workflowStep: currentTask?.taskName || "start"

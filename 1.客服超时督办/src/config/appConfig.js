@@ -7,14 +7,13 @@ const projectConfigDir = path.join(projectRoot, "project-config");
 const appRuntimeConfigPath = path.join(projectConfigDir, "app-config.json");
 const appRuntimeConfig = readAppRuntimeConfig(appRuntimeConfigPath);
 const runtimeDir = path.join(projectRoot, "runtime");
-const userDataDir = path.join(runtimeDir, "chrome-user-data");
-const controlCenterUserDataDir = path.join(runtimeDir, "control-center-browser");
-const legacyBrowserDataDirs = [
-  path.join(runtimeDir, "chrome-profile")
-];
+const userDataDir = path.join(runtimeDir, "edge-user-data");
+const controlCenterUserDataDir = path.join(runtimeDir, "edge-control-center");
 
 module.exports = {
   targetUrl: appRuntimeConfig.targetUrl,
+  scheduleUrl: appRuntimeConfig.scheduleUrl,
+  managerStaffName: appRuntimeConfig.managerStaffName,
   defaultTargetUrl: DEFAULT_TARGET_URL,
   projectRoot,
   projectConfigDir,
@@ -23,14 +22,13 @@ module.exports = {
   backupRoot: resolveCurrentDiskBackupRoot(projectRoot),
   userDataDir,
   controlCenterUserDataDir,
-  legacyBrowserDataDirs,
   runtimeProfileName: "Default",
-  runHeadless: false,
+  runHeadless: true,
   replyConfigPath: path.join(projectConfigDir, "reply-config.js"),
   wecomRobotConfigPath: path.join(projectConfigDir, "wecom-robot.json"),
   supervisionProcessStatePath: path.join(runtimeDir, "supervision", "process-records.json"),
   timeoutPerformanceLedgerPath: path.join(runtimeDir, "timeout-performance", "ledger.jsonl"),
-  loginStatusPath: path.join(runtimeDir, "login-status.json"),
+  loginStatusPath: path.join(userDataDir, "supervisor-login-status.json"),
   transferMonitorStatePath: path.join(runtimeDir, "transfer-monitor", "state.json"),
   missedReplyMonitorStatePath: path.join(runtimeDir, "missed-reply-monitor", "state.json"),
   onlinePresenceStatePath: path.join(runtimeDir, "online-presence-monitor", "state.json"),
@@ -45,15 +43,7 @@ module.exports = {
   defaultTimeout: 30000,
   pageReadyTimeout: 60000,
   workbenchReadyTimeout: 20000,
-  chromePaths: [
-    "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
-    "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
-    path.join(
-      process.env.LOCALAPPDATA || "",
-      "Google",
-      "Chrome",
-      "Application",
-      "chrome.exe"
-    )
-  ]
+  edgePaths: [process.env["ProgramFiles(x86)"], process.env.ProgramFiles, process.env.LOCALAPPDATA]
+    .filter(Boolean)
+    .map((root) => path.join(root, "Microsoft", "Edge", "Application", "msedge.exe"))
 };

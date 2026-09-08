@@ -2,7 +2,7 @@ const path = require("path");
 const appConfig = require("../../config/appConfig");
 
 module.exports = {
-  defaultScheduleUrl: "https://www.kdocs.cn/l/cga7jWGHxzkp",
+  get defaultScheduleUrl() { return appConfig.scheduleUrl; },
   snapshotDir: path.join(appConfig.runtimeDir, "schedule-query-snapshot"),
   browserViewport: {
     width: 1600,

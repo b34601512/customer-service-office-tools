@@ -51,6 +51,7 @@ class DownloadPage(Page):
 
     def on_enter(self, app: Any) -> None:
         if not self.state.get("started"):
+            self.periodic_refresh = False
             self.state["task_id"] = None
             self.state["finished"] = False
             self.state["message"] = ""
@@ -77,12 +78,6 @@ class DownloadPage(Page):
         task = DOWNLOAD_TASKS.get(task_id, {}) if task_id else {}
         status = task.get("status")
 
-        # 进度行：进度条 + 百分比 + 当前阶段
-        progress = int(task.get("progress") or 0)
-        stage = str(task.get("stage") or "下载中")
-        bar = render_bar(progress, 100, width=20)
-        lines.append(colorize(f"[{bar}]  {progress:>3}%   {spinner_frame()} {stage}", "brightCyan"))
-
         if status == "done" and not self.state.get("finished"):
             self.state["finished"] = True
             app.application.refresh_result()
@@ -90,6 +85,22 @@ class DownloadPage(Page):
         if status == "error" and not self.state.get("finished"):
             self.state["finished"] = True
             self.state["message"] = str(task.get("message") or "下载并分析失败")
+
+        # 任务结束后不再定时重绘，避免完成状态继续播放加载动画。
+        self.periodic_refresh = status not in ("done", "error")
+
+        # 进度行：进度条 + 百分比 + 当前阶段
+        progress = int(task.get("progress") or 0)
+        stage = str(task.get("stage") or "下载中")
+        bar = render_bar(progress, 100, width=20)
+        if status == "done":
+            progress_marker = "✓"
+            stage = "完成"
+        elif status == "error":
+            progress_marker = "✗"
+        else:
+            progress_marker = spinner_frame()
+        lines.append(colorize(f"[{bar}]  {progress:>3}%   {progress_marker} {stage}", "brightCyan"))
 
         if status == "done":
             lines.append("")
@@ -144,6 +155,7 @@ class DownloadPage(Page):
                 self.state["started"] = True
                 self.state["finished"] = False
                 self.state["message"] = ""
+                self.periodic_refresh = True
                 return True
             return False
 

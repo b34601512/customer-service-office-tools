@@ -16,6 +16,7 @@ const {
 function createFakePage() {
   // 这里构造最小页面桩，专门验证登录流程是否按预期触发前台与刷新动作。
   return {
+    url: () => appConfig.targetUrl,
     broughtToFrontCount: 0,
     bringToFront() {
       this.broughtToFrontCount += 1;
@@ -37,7 +38,7 @@ async function withTempLoginStatusPath(callback) {
   }
 }
 
-test("后台启动遇到未登录时应自动转入人工登录并在确认后继续", async () => {
+test("后台未登录必须明确失败，不能在无头页面等待人工确认", async () => {
   await withTempLoginStatusPath(async (loginStatusPath) => {
     const page = createFakePage();
     const originalTargetUrl = appConfig.targetUrl;
@@ -49,7 +50,7 @@ test("后台启动遇到未登录时应自动转入人工登录并在确认后�
     appConfig.targetUrl = "https://zan-mh.xiaoshunai.com/main/mock-org/mock-group/chat";
 
     try {
-      const result = await ensureLoginReadyForRun(page, {
+      await assert.rejects(ensureLoginReadyForRun(page, {
         assertPageReady: async () => {
           // 这里先模拟首次检查命中未登录，再模拟登录完成后的复检成功。
           assertCount += 1;
@@ -66,18 +67,64 @@ test("后台启动遇到未登录时应自动转入人工登录并在确认后�
         reloadTargetPage: async () => {
           reloadCount += 1;
         }
-      });
+      }), /后台监控已停止.*首次登录/);
 
-      assert.equal(result, "login_completed");
-      assert.equal(assertCount, 2);
-      assert.equal(confirmationCount, 1);
-      assert.equal(loginEntryCount, 1);
-      assert.equal(reloadCount, 1);
-      assert.equal(page.broughtToFrontCount, 1);
-      assert.equal(readLoginStatus(loginStatusPath).isValid, true);
+      assert.equal(assertCount, 1);
+      assert.equal(confirmationCount, 0);
+      assert.equal(loginEntryCount, 0);
+      assert.equal(reloadCount, 0);
+      assert.equal(page.broughtToFrontCount, 0);
+      assert.equal(readLoginStatus(loginStatusPath).isValid, false);
     } finally {
       appConfig.targetUrl = originalTargetUrl;
     }
+  });
+});
+
+test("新标签页登录只验证真实聊天页，不重载旧地址；未进入工作台允许再次确认", async () => {
+  await withTempLoginStatusPath(async (loginStatusPath) => {
+    const original = { targetUrl: appConfig.targetUrl, appRuntimeConfigPath: appConfig.appRuntimeConfigPath };
+    appConfig.targetUrl = "https://example.test/main/old/old/chat";
+    appConfig.appRuntimeConfigPath = path.join(path.dirname(loginStatusPath), "app.json");
+    const pages = [];
+    const page = { url: () => "https://example.test/auth/login", context: () => ({ pages: () => pages }), bringToFront: async () => {}, isClosed: () => false };
+    const chat = { url: () => "https://example.test/main/new/group/chat", isClosed: () => false };
+    pages.push(page);
+    let confirmations = 0;
+    const checked = [];
+    try {
+      const result = await completeLoginMode(page, {
+        waitForConfirmation: async () => { if (++confirmations === 2) pages.push(chat); },
+        assertPageReady: async (candidate) => checked.push(candidate)
+      });
+      assert.equal(result, "login_completed");
+      assert.equal(confirmations, 2);
+      assert.deepEqual(checked, [chat]);
+      assert.equal(appConfig.targetUrl, chat.url());
+      assert.equal(readLoginStatus(loginStatusPath).isValid, true);
+    } finally { Object.assign(appConfig, original); }
+  });
+});
+
+test("多个不同工作台不自动选择组织；关闭多余页后才保存", async () => {
+  await withTempLoginStatusPath(async (loginStatusPath) => {
+    const original = { targetUrl: appConfig.targetUrl, appRuntimeConfigPath: appConfig.appRuntimeConfigPath };
+    appConfig.appRuntimeConfigPath = path.join(path.dirname(loginStatusPath), "app.json");
+    const chat = { url: () => "https://example.test/main/org/group/chat", isClosed: () => false };
+    const other = { url: () => "https://example.test/main/other/group/chat", isClosed: () => false };
+    const pages = [chat, other];
+    const page = { url: () => "https://example.test/auth/login", context: () => ({ pages: () => pages }) };
+    let confirmations = 0;
+    let checks = 0;
+    try {
+      await completeLoginMode(page, {
+        waitForConfirmation: async () => { if (++confirmations === 2) pages.pop(); },
+        assertPageReady: async () => { checks += 1; }
+      });
+      assert.equal(confirmations, 2);
+      assert.equal(checks, 1);
+      assert.equal(appConfig.targetUrl, chat.url());
+    } finally { Object.assign(appConfig, original); }
   });
 });
 

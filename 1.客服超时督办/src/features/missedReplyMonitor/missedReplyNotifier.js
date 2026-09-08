@@ -7,7 +7,7 @@ const {
   ASSIGNMENT_STATUS,
   normalizeAssignmentStatus
 } = require("../shared/currentAssignment");
-const MANAGER_STAFF_NAME = "黎路遥";
+const { resolveManagerStaffName } = require("../../config/managerStaffName");
 
 function formatDurationText(seconds) {
   // 这里把秒数压成客服一眼能看懂的等待时长，群里不展示多余小数。
@@ -86,6 +86,7 @@ function buildUnresolvedReplyReminderMessage(input) {
 }
 
 function resolveMissedReplyMentionPlan(assigneeMember, config) {
+  const MANAGER_STAFF_NAME = resolveManagerStaffName();
   // 当前接待最多一人；未分配或映射缺失时只 @ 主管，不再拼接历史处理人。
   const staffName = String(assigneeMember?.staffName || "").trim();
   const managerIsResponsible = staffName === MANAGER_STAFF_NAME;
@@ -180,7 +181,6 @@ async function sendUnresolvedReplyReminder(input) {
 }
 
 module.exports = {
-  MANAGER_STAFF_NAME,
   buildUnresolvedReplyReminderMessage,
   formatDurationText,
   resolveAssigneeActionLine,

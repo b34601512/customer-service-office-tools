@@ -10,7 +10,7 @@ const { createServer } = require("./controlCenterServer");
 const { startControlCenterCleanupWatchdog } = require("./controlCenterCleanupWatchdog");
 const { startControlCenterWindowLifecycleMonitor } = require("./controlCenterWindowLifecycleMonitor");
 const { createTui } = require("./tui/startTui");
-const { 最大化当前控制台窗口 } = require("../../../共享CLI/最大化控制台窗口");
+const { assertBrowserProfileAvailable } = require("../engine/browserRuntimeGuard");
 const {
   runControlCenterRuntimeMaintenanceBeforeLaunch,
   startRuntimeMaintenanceLoop
@@ -215,7 +215,6 @@ async function main() {
 
   if (consoleMode === "tui") {
     // TUI 模式：接管当前终端渲染控制台，不再拉起独立浏览器窗口。
-    最大化当前控制台窗口();
     restoreConsoleOutput = suppressConsoleOutput();
     tuiHandle = createTui({
       state,
@@ -230,6 +229,7 @@ async function main() {
     tuiHandle.app.start();
     log("主线:完成", "网页控制台", "TUI 界面", `终端控制台已接管，网页版仍可访问：${url}`);
   } else {
+    assertBrowserProfileAvailable(appConfig.controlCenterUserDataDir);
     runControlCenterRuntimeMaintenanceBeforeLaunch();
     await browserWindow.open(url);
     stopWindowLifecycleMonitor = startControlCenterWindowLifecycleMonitor({

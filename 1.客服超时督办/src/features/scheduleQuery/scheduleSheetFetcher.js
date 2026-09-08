@@ -2,7 +2,7 @@ const { chromium } = require("playwright-core");
 const { waitForReadableBody } = require("../../engine/pageReadiness");
 const { log } = require("../../engine/logger");
 const { waitForPageFunction } = require("../../engine/pageWait");
-const { resolveChromePath } = require("../../engine/browserExecutable");
+const { resolveEdgePath } = require("../../engine/browserExecutable");
 const scheduleQueryConfig = require("./scheduleQueryConfig");
 const { resolveMonthSheetName } = require("./scheduleMatrixParser");
 
@@ -47,9 +47,10 @@ async function waitForScheduleWorkbookReady(page, monthSheetName) {
 }
 
 async function readScheduleSheetMatrix(targetDate, scheduleUrl = scheduleQueryConfig.defaultScheduleUrl) {
+  if (!scheduleUrl) throw new Error("尚未配置排班表地址，请在控制台「配置」填写并重新启动后台监控。");
   // 这里统一负责打开金山排班表并直接读取目标月份工作表矩阵。
   const monthSheetName = resolveMonthSheetName(targetDate);
-  const executablePath = resolveChromePath("排班读取");
+  const executablePath = resolveEdgePath("排班读取");
 
   log("主线:启动", "排班读取", "准备浏览器", `目标工作表：${monthSheetName}`);
 

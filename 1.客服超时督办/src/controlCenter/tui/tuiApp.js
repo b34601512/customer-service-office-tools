@@ -86,8 +86,6 @@ class TuiApp {
     this.footerProvider = options.footerProvider || (() => "");
     this.onExitRequest = options.onExitRequest || (() => {});
     this.onGlobalKey = options.onGlobalKey || null;
-    this.onLoginConfirm = options.onLoginConfirm || null;
-    this.needsLoginConfirm = false;
     this.exitConfirmPending = false;
     this.running = false;
     this.terminalStarted = false;
@@ -153,6 +151,7 @@ class TuiApp {
   }
 
   stop() {
+    clearTimeout(this.escapeTimer);
     if (!this.terminalStarted) {
       return;
     }
@@ -187,6 +186,7 @@ class TuiApp {
     const text = chunk.toString("utf8");
     for (const char of text) {
       if (this.escapeBuffer) {
+        clearTimeout(this.escapeTimer);
         this.escapeBuffer += char;
         const resolvedKey = resolveEscapeKey(this.escapeBuffer);
         if (resolvedKey) {
@@ -199,6 +199,10 @@ class TuiApp {
       }
       if (char === "\x1b") {
         this.escapeBuffer = "\x1b";
+        this.escapeTimer = setTimeout(() => {
+          this.escapeBuffer = "";
+          this.dispatchKey("esc");
+        }, 50);
         continue;
       }
       const key = translateChar(char);
@@ -227,12 +231,6 @@ class TuiApp {
     if (key === "ctrl-c") {
       this.exitConfirmPending = true;
       this.requestRender();
-      return;
-    }
-
-    // 登录确认等待中：任意回车都先完成登录确认，避免用户找不到确认入口。
-    if (key === "enter" && this.needsLoginConfirm && typeof this.onLoginConfirm === "function") {
-      this.onLoginConfirm();
       return;
     }
 

@@ -11,6 +11,8 @@ const MATCH_MODE_LABELS = {
 
 const FIELDS = [
   { key: "targetUrl", label: "客服工作台地址", type: "text" },
+  { key: "scheduleUrl", label: "排班表地址(重启后台生效)", type: "text" },
+  { key: "managerStaffName", label: "主管姓名(与企微成员一致)", type: "text" },
   { key: "timeoutReminderThresholdSeconds", label: "超时提醒阈值(秒)", type: "number" },
   { key: "missedReplyMonitorEnabled", label: "漏回复监控", type: "bool" },
   { key: "onlinePresenceMonitorEnabled", label: "上班监控", type: "bool" },
@@ -41,6 +43,7 @@ const FIELDS = [
 
 function serializeKeywords(value) {
   // 这里把规则数组压成“关键词 | 匹配方式”一行一条的文本，供子编辑器直接展示和编辑。
+  if (typeof value === "string") return value.split(/\r?\n/).filter((line) => line.trim());
   const rules = Array.isArray(value) ? value : [];
   return rules
     .map((rule) => {
@@ -70,6 +73,7 @@ function createConfigPage() {
     state: {
       config: null,
       selection: 0,
+      scrollOffset: 0,
       edits: {},
       editing: null,
       editBuffer: "",
@@ -118,10 +122,13 @@ function createConfigPage() {
         return lines;
       }
 
-      const labelWidth = 28;
+      const labelWidth = Math.min(28, Math.floor(columns / 2));
+      const visibleCount = Math.max(1, contentHeight - 1 - (this.state.editing ? 3 : 0) - (this.state.message ? 2 : 0));
+      this.state.scrollOffset = Math.max(0, Math.min(this.state.scrollOffset, this.state.selection, FIELDS.length - visibleCount));
+      if (this.state.selection >= this.state.scrollOffset + visibleCount) this.state.scrollOffset = this.state.selection - visibleCount + 1;
       let shown = 0;
-      for (let index = 0; index < FIELDS.length; index += 1) {
-        if (shown >= contentHeight - 2) {
+      for (let index = this.state.scrollOffset; index < FIELDS.length; index += 1) {
+        if (shown >= visibleCount) {
           break;
         }
         const field = FIELDS[index];
@@ -139,7 +146,7 @@ function createConfigPage() {
         if (isEdited) {
           valueText = ansi.colorize(`${valueText} ✎`, "brightYellow");
         }
-        const line = `${prefix}${padEnd(field.label, labelWidth)} ${fit(valueText, columns - labelWidth - 3)}`;
+        const line = `${prefix}${fit(field.label, labelWidth)} ${fit(valueText, columns - labelWidth - 3)}`;
         lines.push(selected ? ansi.colorize(fit(line, columns), "reverse") : fit(line, columns));
         shown += 1;
       }
@@ -163,9 +170,11 @@ function createConfigPage() {
       const lines = [];
       lines.push(ansi.colorize(fit(`编辑【${editor.label}】共 ${editor.lines.length} 条（a新增 e编辑 d删除 s保存 q取消）`, columns), "brightBlue"));
 
+      const visibleCount = Math.max(1, contentHeight - 1 - (editor.inputActive ? 2 : 0));
+      const startIndex = Math.max(0, editor.selection - visibleCount + 1);
       let shown = 0;
-      for (let index = 0; index < editor.lines.length; index += 1) {
-        if (shown >= contentHeight - 3) {
+      for (let index = startIndex; index < editor.lines.length; index += 1) {
+        if (shown >= visibleCount) {
           break;
         }
         const selected = index === editor.selection;
@@ -250,7 +259,7 @@ function createConfigPage() {
           return true;
         }
         this.state.editing = field;
-        this.state.editBuffer = String(this.state.config[field.key] ?? "");
+        this.state.editBuffer = String(this.state.edits[field.key] ?? this.state.config[field.key] ?? "");
         return true;
       }
       if (key === "s") {
@@ -345,6 +354,8 @@ function createConfigPage() {
     },
     save(app) {
       try {
+        // 只把本次编辑叠加到文件最新值，避免登录子进程捕获的新地址被旧页面覆盖。
+        this.state.config = app.ctx.services.readConfig();
         const payload = this.buildPayload();
         const savedConfig = app.ctx.services.saveConfig(payload);
         this.state.config = savedConfig;

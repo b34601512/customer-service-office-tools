@@ -102,6 +102,16 @@ test("单个字符应该翻译成统一按键", () => {
   assert.equal(translateChar("1"), "1");
 });
 
+test("单独 Esc 可取消，分段方向键仍解析正常", async () => {
+  const keys = [];
+  const app = new TuiApp({ pages: [{ handleKey: (key) => { keys.push(key); return true; } }] });
+  app.consumeInput(Buffer.from("\x1b"));
+  await new Promise((resolve) => setTimeout(resolve, 80));
+  app.consumeInput(Buffer.from("\x1b"));
+  app.consumeInput(Buffer.from("[B"));
+  assert.deepEqual(keys, ["esc", "down"]);
+});
+
 test("buildStatusLines 应该固定输出两行并在登录确认时提示", () => {
   const ctx = {
     state: {

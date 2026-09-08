@@ -2,7 +2,8 @@ const fs = require("fs");
 const { spawn } = require("child_process");
 const appConfig = require("../config/appConfig");
 const { log } = require("../engine/logger");
-const { resolveChromePath } = require("../engine/browserExecutable");
+const { resolveEdgePath } = require("../engine/browserExecutable");
+const { assertBrowserProfileAvailable } = require("../engine/browserRuntimeGuard");
 const { processExistsByPid } = require("../engine/processPid");
 const { killProcessTree } = require("./processTree");
 
@@ -73,7 +74,8 @@ class ControlCenterBrowserWindow {
     }
 
     fs.mkdirSync(appConfig.controlCenterUserDataDir, { recursive: true });
-    const executablePath = resolveChromePath("网页控制台");
+    assertBrowserProfileAvailable(appConfig.controlCenterUserDataDir);
+    const executablePath = resolveEdgePath("网页控制台");
     const args = buildControlCenterBrowserArgs(url);
     log("主线:启动", "网页控制台", "拉起控制台网页", `准备启动独立控制台窗口，url=${url}`);
     const pid = await launchDetachedBrowserWindow(executablePath, args, this.projectRoot);

@@ -26,7 +26,7 @@ function renderTask(task) {
   }
 
   stopTaskButton.classList.remove("hidden");
-  stopTaskButton.disabled = task.status === "stopping" || task.taskName !== "start";
+  stopTaskButton.disabled = task.status === "stopping";
   stopTaskButton.textContent = task.status === "stopping" ? "正在退出" : (task.taskName === "start" ? "停止并退出" : "退出控制台");
   renderRuntimeDuration();
 }

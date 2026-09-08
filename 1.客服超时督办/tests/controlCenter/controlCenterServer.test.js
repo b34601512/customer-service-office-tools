@@ -30,7 +30,7 @@ test("登录态未验证时首次登录请求应该继续走登录任务", async
   });
 });
 
-test("登录态已验证有效时首次登录请求应该直接转成后台启动", async () => {
+test("历史登录态有效也不能把人工登录请求改成后台业务执行", async () => {
   await withTempLoginStatusPath(async (loginStatusPath) => {
     markLoginStatusValid(loginStatusPath, {
       targetUrl: "https://zan-mh.xiaoshunai.com/main/org/group/chat",
@@ -40,8 +40,8 @@ test("登录态已验证有效时首次登录请求应该直接转成后台启�
 
     const taskRequest = resolveTaskStartRequest("login");
 
-    assert.equal(taskRequest.taskName, "start");
-    assert.equal(taskRequest.message, "当前登录态已验证有效，已直接启动后台督办。");
+    assert.equal(taskRequest.taskName, "login");
+    assert.equal(taskRequest.message, "任务已启动。");
   });
 });
 

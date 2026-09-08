@@ -46,8 +46,8 @@ function deduplicatePaths(paths) {
 }
 
 function collectBusinessBrowserDataDirs() {
-  // 该函数用于收集业务浏览器目录，只清后台督办使用的登录态目录和历史目录。
-  return deduplicatePaths([appConfig.userDataDir, ...(appConfig.legacyBrowserDataDirs || [])]);
+  // 只清当前应用 Edge 目录，不触碰旧 Chrome 资料或个人浏览器。
+  return [appConfig.userDataDir];
 }
 
 function collectControlCenterBrowserDataDirs() {

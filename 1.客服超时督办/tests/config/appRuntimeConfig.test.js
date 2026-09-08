@@ -93,3 +93,27 @@ test("完整聊天页后台运行时应该直接沿用原地址", () => {
 
   assert.equal(resolveWorkEntryUrl(targetUrl), targetUrl);
 });
+
+test("登录捕获地址不得丢失排班链接和主管姓名", () => {
+  const configPath = createTempConfigPath();
+  writeAppRuntimeConfig(configPath, { targetUrl: "https://example.test/", scheduleUrl: "https://example.test/roster", managerStaffName: "王主管" });
+  writeAppRuntimeConfig(configPath, { targetUrl: "https://example.test/main/org/group/chat" });
+  const config = readAppRuntimeConfig(configPath);
+  assert.equal(config.scheduleUrl, "https://example.test/roster");
+  assert.equal(config.managerStaffName, "王主管");
+});
+
+test("新电脑默认配置不能含原主管姓名、组织ID或排班链接", () => {
+  const config = readAppRuntimeConfig(createTempConfigPath());
+  assert.equal(new URL(config.targetUrl).pathname, "/");
+  assert.equal(config.scheduleUrl, "");
+  assert.equal(config.managerStaffName, "");
+});
+
+test("只更新主管姓名必须保留现有工作台地址", () => {
+  const configPath = createTempConfigPath();
+  const targetUrl = "https://example.test/main/new/group/chat";
+  writeAppRuntimeConfig(configPath, { targetUrl });
+  writeAppRuntimeConfig(configPath, { managerStaffName: "李主管" });
+  assert.equal(readAppRuntimeConfig(configPath).targetUrl, targetUrl);
+});

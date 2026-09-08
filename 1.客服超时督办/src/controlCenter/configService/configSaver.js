@@ -1,5 +1,5 @@
 const appConfig = require("../../config/appConfig");
-const { normalizeTargetUrl, writeAppRuntimeConfig } = require("../../config/appRuntimeConfig");
+const { normalizeTargetUrl, normalizeScheduleUrl, readAppRuntimeConfig, writeAppRuntimeConfig } = require("../../config/appRuntimeConfig");
 const { normalizeTimeText } = require("../../features/offDutyClose/offDutyConfig");
 const { log } = require("../../engine/logger");
 const { readControlCenterConfig } = require("./configReader");
@@ -16,8 +16,11 @@ const appRuntimeConfigPath = appConfig.appRuntimeConfigPath;
 
 function saveControlCenterConfig(payload) {
   // 这里统一验证并保存主管端高频参数，避免网页层各自散落校验逻辑。
+  const currentRuntimeConfig = readAppRuntimeConfig(appRuntimeConfigPath);
   const nextConfig = {
-    targetUrl: normalizeTargetUrl(payload.targetUrl),
+    targetUrl: normalizeTargetUrl(payload.targetUrl ?? currentRuntimeConfig.targetUrl),
+    scheduleUrl: normalizeScheduleUrl(payload.scheduleUrl ?? currentRuntimeConfig.scheduleUrl),
+    managerStaffName: String(payload.managerStaffName ?? currentRuntimeConfig.managerStaffName).trim(),
     timeoutReminderThresholdSeconds: parsePositiveInteger(
       payload.timeoutReminderThresholdSeconds,
       "提醒阈值(秒)"
@@ -229,9 +232,13 @@ function saveControlCenterConfig(payload) {
 
   writeUtf8Text(replyConfigPath, content);
   const runtimeConfig = writeAppRuntimeConfig(appRuntimeConfigPath, {
-    targetUrl: nextConfig.targetUrl
+    targetUrl: nextConfig.targetUrl,
+    scheduleUrl: nextConfig.scheduleUrl,
+    managerStaffName: nextConfig.managerStaffName
   });
   appConfig.targetUrl = runtimeConfig.targetUrl;
+  appConfig.scheduleUrl = runtimeConfig.scheduleUrl;
+  appConfig.managerStaffName = runtimeConfig.managerStaffName;
   log("主线:完成", "网页控制台", "保存配置", "主管端生产配置写入完成");
   return readControlCenterConfig();
 }

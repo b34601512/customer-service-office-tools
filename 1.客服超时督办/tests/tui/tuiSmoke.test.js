@@ -87,7 +87,7 @@ test("冒烟：日志页应该展示结构化日志并能按关键字过滤", ()
   dispose();
 });
 
-test("冒烟：登录确认横幅出现时回车应该触发确认回调", () => {
+test("冒烟：登录等待时仅总览确认动作发送确认，不劫持配置页回车", () => {
   const { createTui } = require("../../src/controlCenter/tui/startTui");
   const runtime = buildMockRuntime();
   runtime.output = createMockOutput();
@@ -107,8 +107,11 @@ test("冒烟：登录确认横幅出现时回车应该触发确认回调", () =>
 
   const { app, dispose } = createTui(runtime);
   app.running = true;
-  app.buildFrame(); // 触发 statusBarProvider 更新 needsLoginConfirm
-  assert.equal(app.needsLoginConfirm, true);
+  app.switchPage(3);
+  app.dispatchKey("enter");
+  assert.equal(confirmed, false);
+  app.switchPage(0);
+  app.buildFrame();
   app.dispatchKey("enter");
   assert.equal(confirmed, true);
   dispose();

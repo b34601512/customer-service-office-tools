@@ -11,15 +11,15 @@ const {
 
 function buildActions(state, loginStatus = {}) {
   const task = state.currentTask;
-  const running = Boolean(task && task.status === "running");
-  const awaiting = Boolean(task?.awaitingConfirmation);
+  const running = Boolean(task && ["running", "stopping"].includes(task.status));
+  const awaiting = Boolean(task?.status === "running" && task.awaitingConfirmation);
   // 登录态无效（未验证/已失效）且当前没有任务在跑时，首次登录最需要被看到。
   const loginNeedsAttention = !running && loginStatus?.isValid !== true;
 
   const loginAction = { id: "login", label: "首次登录", enabled: !running, hint: "新电脑或登录态失效时执行" };
   const startAction = { id: "start", label: "后台启动", enabled: !running && !awaiting, hint: "启动超时/转接/漏回复/上班监控/下班监控" };
   const confirmAction = { id: "confirm", label: "完成登录并继续", enabled: true, urgent: true, hint: "已在浏览器完成登录后回车确认" };
-  const stopAction = { id: "stop", label: "停止并退出任务", enabled: true, hint: "结束后台督办轮询" };
+  const stopAction = { id: "stop", label: task?.taskName === "login" ? "取消首次登录" : "停止并退出任务", enabled: task?.status === "running", hint: "结束当前任务，保留控制台" };
   const exitAction = { id: "exit", label: "退出控制台", enabled: true, danger: true, hint: "停止全部后台进程并关闭" };
 
   const actions = [];
@@ -31,7 +31,7 @@ function buildActions(state, loginStatus = {}) {
   if (awaiting) {
     actions.push(confirmAction);
   }
-  if (task?.taskName === "start" && running) {
+  if (running) {
     actions.push(stopAction);
   }
   actions.push(exitAction);

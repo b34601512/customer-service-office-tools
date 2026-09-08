@@ -48,6 +48,14 @@ test("运营接待但未配置运营手机号时应该只@主管", () => {
   assert.equal(result.managerIncluded, true);
 });
 
+test("客服与主管同一手机号时只艾特一次", () => {
+  const result = resolveEscalationMentionPlan({ staffName: "苏哲", staffGroup: "after_sales" }, {
+    memberMobileMap: { 苏哲: "13800000000", 黎路遥: "13800000000" }
+  });
+  assert.deepEqual(result.mentionedMobileList, ["13800000000"]);
+  assert.equal(result.managerIncluded, true);
+});
+
 test("客服有手机号时应该走底部@并保留主管@", () => {
   const result = resolveEscalationMentionPlan(
     {
@@ -56,7 +64,7 @@ test("客服有手机号时应该走底部@并保留主管@", () => {
     },
     {
       memberMobileMap: {
-        苏哲: "13800000000",
+        苏哲: "13900000000",
         黎路遥: "13800000000"
       },
       memberUserIdMap: {
@@ -69,7 +77,7 @@ test("客服有手机号时应该走底部@并保留主管@", () => {
   );
 
   assert.deepEqual(result.inlineMentionTokenMap, {});
-  assert.deepEqual(result.mentionedMobileList, ["13800000000", "13800000000"]);
+  assert.deepEqual(result.mentionedMobileList, ["13900000000", "13800000000"]);
   assert.equal(result.mobileConfigured, true);
 });
 
@@ -81,7 +89,7 @@ test("正文@开关关闭后，超时提醒仍然应该只走底部手机号@", 
     },
     {
       memberMobileMap: {
-        苏哲: "13800000000",
+        苏哲: "13900000000",
         黎路遥: "13800000000"
       },
       memberUserIdMap: {
@@ -94,7 +102,7 @@ test("正文@开关关闭后，超时提醒仍然应该只走底部手机号@", 
   );
 
   assert.deepEqual(result.inlineMentionTokenMap, {});
-  assert.deepEqual(result.mentionedMobileList, ["13800000000", "13800000000"]);
+  assert.deepEqual(result.mentionedMobileList, ["13900000000", "13800000000"]);
   assert.equal(result.mobileConfigured, true);
 });
 

@@ -143,3 +143,14 @@ test("配置中心保存关键词规则时写错匹配方式应该直接报错",
     /匹配方式无效/
   );
 });
+
+test("控制台读取必须看到登录子进程写入的新地址", () => {
+  const { service } = loadControlCenterConfigServiceWithTempFiles();
+  const { writeAppRuntimeConfig } = require("../../src/config/appRuntimeConfig");
+  const targetUrl = "https://example.test/main/new-org/new-group/chat";
+  writeAppRuntimeConfig(appConfig.appRuntimeConfigPath, { targetUrl, managerStaffName: "测试主管" });
+  assert.notEqual(appConfig.targetUrl, targetUrl);
+  const config = service.readControlCenterConfig();
+  assert.equal(config.targetUrl, targetUrl);
+  assert.equal(config.managerStaffName, "测试主管");
+});

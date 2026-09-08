@@ -2,7 +2,16 @@ const fs = require("fs");
 const path = require("path");
 
 const DEFAULT_TARGET_URL =
-  "https://zan-mh.xiaoshunai.com/main/6925159c6cb1d36684d91499/6925159c6cb1d36684d91568/chat";
+  "https://zan-mh.xiaoshunai.com/";
+
+function normalizeScheduleUrl(value) {
+  const text = String(value || "").trim();
+  if (!text) return "";
+  let url;
+  try { url = new URL(text); } catch { throw new Error("排班表地址不是合法 URL。"); }
+  if (url.protocol !== "https:") throw new Error("排班表地址必须使用 https。");
+  return url.toString();
+}
 
 function normalizeTargetUrl(value) {
   // 这里只校验基础 URL 格式，允许先填域名；登录成功后再自动捕获完整聊天页地址。
@@ -73,7 +82,9 @@ function readAppRuntimeConfig(configPath) {
   // 这里统一读取本机运行配置；文件不存在时走默认值，保证老项目复制后还能启动。
   if (!fs.existsSync(configPath)) {
     return {
-      targetUrl: DEFAULT_TARGET_URL
+      targetUrl: DEFAULT_TARGET_URL,
+      scheduleUrl: "",
+      managerStaffName: ""
     };
   }
 
@@ -85,14 +96,19 @@ function readAppRuntimeConfig(configPath) {
   }
 
   return {
-    targetUrl: normalizeTargetUrl(payload.targetUrl || payload.target_url || DEFAULT_TARGET_URL)
+    targetUrl: normalizeTargetUrl(payload.targetUrl || payload.target_url || DEFAULT_TARGET_URL),
+    scheduleUrl: normalizeScheduleUrl(payload.scheduleUrl),
+    managerStaffName: String(payload.managerStaffName || "").trim()
   };
 }
 
 function writeAppRuntimeConfig(configPath, payload) {
   // 这里统一写入本机运行配置，避免客服工作台地址继续散落在代码里。
+  const currentConfig = readAppRuntimeConfig(configPath);
   const nextConfig = {
-    targetUrl: normalizeTargetUrl(payload?.targetUrl || payload?.target_url || DEFAULT_TARGET_URL)
+    targetUrl: normalizeTargetUrl(payload?.targetUrl ?? payload?.target_url ?? currentConfig.targetUrl),
+    scheduleUrl: normalizeScheduleUrl(payload?.scheduleUrl ?? currentConfig.scheduleUrl),
+    managerStaffName: String(payload?.managerStaffName ?? currentConfig.managerStaffName).trim()
   };
   fs.mkdirSync(path.dirname(configPath), { recursive: true });
   fs.writeFileSync(configPath, `${JSON.stringify(nextConfig, null, 2)}\n`, "utf8");
@@ -101,6 +117,7 @@ function writeAppRuntimeConfig(configPath, payload) {
 
 module.exports = {
   DEFAULT_TARGET_URL,
+  normalizeScheduleUrl,
   normalizeTargetUrl,
   readAppRuntimeConfig,
   writeAppRuntimeConfig,

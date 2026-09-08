@@ -1,4 +1,5 @@
 const { log } = require("../../engine/logger");
+const { resolveManagerStaffName } = require("../../config/managerStaffName");
 
 function resolveEscalationMentionPlan(assignee, config) {
   // 这里统一把超时提醒改成底部手机号艾特，正文不再依赖 userid 行内 @。
@@ -7,9 +8,10 @@ function resolveEscalationMentionPlan(assignee, config) {
   const mentionedMobileList = [];
   const staffMobile = String(config.memberMobileMap?.[staffName] || "").trim();
   const operationMobile = String(config.memberMobileMap?.["运营"] || "").trim();
-  const managerMobile = String(config.memberMobileMap["黎路遥"] || "").trim();
+  const managerName = resolveManagerStaffName();
+  const managerMobile = String(config.memberMobileMap[managerName] || "").trim();
   if (!managerMobile) {
-    throw new Error("企微机器人配置缺失：黎路遥手机号未填写，无法执行升级提醒。");
+    throw new Error(`企微机器人配置缺失：${managerName}手机号未填写，无法执行升级提醒。`);
   }
   mentionedMobileList.push(managerMobile);
 
@@ -28,7 +30,7 @@ function resolveEscalationMentionPlan(assignee, config) {
     if (!operationMobile) {
       log("主线:执行", "超时提醒", "缺少@映射", "当前会话由运营接待，但成员「运营」未配置手机号，本轮只能提醒主管");
     }
-    log("主线:执行", "超时提醒", "运营接待升级", `当前会话由运营接待，本轮${operationMobile ? "已追加@运营并同步提醒主管" : "只@黎路遥"}`);
+    log("主线:执行", "超时提醒", "运营接待升级", `当前会话由运营接待，本轮${operationMobile ? "已追加@运营并同步提醒主管" : "只@主管"}`);
   }
 
   return {

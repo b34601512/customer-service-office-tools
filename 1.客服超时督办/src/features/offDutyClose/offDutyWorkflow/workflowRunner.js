@@ -16,6 +16,7 @@ const {
 const { closeOffDutyPage } = require("./pageLifecycle");
 const { processCandidate } = require("./candidateProcessor");
 const { waitForStopOrTimeout } = require("./stopWait");
+const { isLoginRequiredError } = require("../../loginFlow");
 
 async function scanOffDutyDate({
   page,
@@ -158,6 +159,7 @@ async function monitorOffDutyWorkflow(createOffDutyPage, stopState) {
       await waitForStopOrTimeout(stopState, config.offDutyScanIntervalMs, 5000);
     } catch (error) {
       activePage = await closeOffDutyPage(activePage);
+      if (isLoginRequiredError(error)) throw error;
       logError("主线:失败", "下班监控", "轮询失败", error);
       await waitForStopOrTimeout(stopState, 5000, 1000);
     }
