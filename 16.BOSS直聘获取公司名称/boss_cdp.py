@@ -21,6 +21,7 @@ import urllib.parse
 import requests
 from websocket import create_connection, WebSocketTimeoutException
 from boss_transport import CDPSession, JOBLIST_PATH_PART
+from boss_pagination import advance_page, request_diagnostics
 from boss_types import (FetchResult, FetchError, FetchCancelled, ProtocolError,
                         ResponseSchemaError, SiteResponseError, VerificationRequired,
                         positive_integer, finite_seconds, check_cancelled)
@@ -494,7 +495,9 @@ def _load_detail_html(session, url, timeout=COMPANY_DETAIL_TIMEOUT):
             if response.get("status") in (401, 403, 429) or any(part in path for part in ("/passport/", "/security", "/web/user/")):
                 session.keep_open = True
                 status = response.get("status", "详情验证")
-                location = response.get("url") or path or "未知响应地址"
+                parsed_location = urllib.parse.urlsplit(response.get("url") or path)
+                location = urllib.parse.urlunsplit((parsed_location.scheme, parsed_location.hostname or "",
+                                                     parsed_location.path, "", ""))
                 raise VerificationRequired(status, f"岗位详情页要求登录或安全验证；响应地址：{location}")
             if path == expected_path:
                 if response.get("status", 200) >= 400:
@@ -574,7 +577,7 @@ def _search_response(session, page, total_pages, progress, stop_event, verificat
         if remaining <= 0:
             if blocked is not None:
                 raise blocked
-            raise TimeoutError(f"第 {page} 页未捕获到匹配的 joblist 完整响应")
+            raise TimeoutError(f"第 {page} 页未捕获到匹配的 joblist 完整响应；{request_diagnostics(session)}")
         try:
             data = _await_joblist(session, timeout=remaining, progress=progress,
                                   progress_current=page - 1, progress_total=total_pages,
@@ -586,7 +589,7 @@ def _search_response(session, page, total_pages, progress, stop_event, verificat
             if data is None:
                 if blocked is not None:
                     raise blocked
-                raise TimeoutError(f"第 {page} 页未捕获到匹配的 joblist 完整响应")
+                raise TimeoutError(f"第 {page} 页未捕获到匹配的 joblist 完整响应；{request_diagnostics(session)}")
             if data["code"] == 0:
                 response_job_list(data)  # 校验通过才恢复，不把 HTML/未知结构当作成功。
                 session.keep_open = False
@@ -617,8 +620,7 @@ def fetch_page(session, keyword, city_code, page, page_delay=3, total_pages=0, p
         session.command("Page.navigate", {"url": search_url(keyword, city_code, 1)})
     else:
         # 由真实页面滚动触发翻页，不伪造网址页码或直接调用网站接口。
-        session.command("Page.bringToFront")
-        session.command("Runtime.evaluate", {"expression": "window.scrollTo(0,document.body.scrollHeight)", "returnByValue": True})
+        advance_page(session)
     data = _search_response(session, page, total_pages, progress, stop_event, verification_timeout)
     raw_items = response_job_list(data)
     items, duplicates = deduplicate_job_items(raw_items, seen_job_ids)
@@ -661,6 +663,7 @@ def run_fetch(keyword, city, pages, fmt, delay, port, progress=None, title_filte
         return result
     session = detail_session = store = None
     failure = None
+    saving_page = False
     page = 0
     try:
         store = CheckpointStore(folder, keyword, city_code, pages)
@@ -687,7 +690,9 @@ def run_fetch(keyword, city, pages, fmt, delay, port, progress=None, title_filte
             if not isinstance(rows, list) or any(not isinstance(row, dict) for row in rows):
                 raise ResponseSchemaError("单页采集未返回有效岗位列表")
             result.extend(rows)
+            saving_page = True
             store.write_page(page, rows)
+            saving_page = False
             result.completed_pages = page
             if callable(progress):
                 progress(page, pages, f"完成第 {page}/{pages} 页", f"累计 {len(result)} 条，已写检查点")
@@ -714,12 +719,15 @@ def run_fetch(keyword, city, pages, fmt, delay, port, progress=None, title_filte
                 except OSError as save_error:
                     print(f"[checkpoint] 保存本页失败：{save_error}", file=sys.stderr)
                     failure = save_error
-        if isinstance(failure, (FetchCancelled, KeyboardInterrupt)):
+                    saving_page = True
+        if saving_page:
+            result.status = "failed"
+        elif isinstance(failure, (FetchCancelled, KeyboardInterrupt)):
             result.status = "cancelled"
         elif isinstance(failure, VerificationRequired):
             result.status = "blocked"
         else:
-            result.status = "partial" if result and not isinstance(failure, (OSError, SystemExit)) else "failed"
+            result.status = "partial" if result and not isinstance(failure, SystemExit) else "failed"
         result.reason = f"{type(failure).__name__}: {failure}"
         if page and result.status != "cancelled":
             result.failed_pages.append(page)
@@ -754,16 +762,19 @@ def run_fetch(keyword, city, pages, fmt, delay, port, progress=None, title_filte
                 result.reason = f"{result.missing_company_count} 条岗位缺少企业全称"
             else:
                 result.status = "completed" if result else "empty"
+        if store is not None:
+            try:
+                store.finish(result)
+            except OSError as exc:
+                failure = exc
+                result.status = "failed"
+                result.reason = f"状态清单保存失败：{exc}；已保存数据：{result.checkpoint}"
+                print(f"[checkpoint] 状态清单保存失败，已落盘页面仍保留：{exc}", file=sys.stderr)
         stage = {"completed": "已完成", "empty": "无匹配结果", "partial": "部分完成",
                  "blocked": "需要用户验证", "cancelled": "已停止", "failed": "失败"}[result.status]
         print(f"[fetch] {time.strftime('%Y-%m-%d %H:%M:%S')} {stage}：{len(result)} 条，完成 {result.completed_pages}/{pages} 页；{result.reason}", flush=True)
         if callable(progress):
             progress(result.completed_pages, pages, stage, result.reason or f"共 {len(result)} 条")
-        if store is not None:
-            try:
-                store.finish(result)
-            except OSError as exc:
-                print(f"[checkpoint] 状态清单保存失败，已落盘页面仍保留：{exc}", file=sys.stderr)
     finally:
         if store is not None:
             store.close()
