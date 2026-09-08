@@ -1,4 +1,4 @@
-"""Issue #654/#655 的回归测试；不启动真实浏览器、不访问网站。"""
+"""Issue #654/#655/#656/#657 的回归测试；不启动真实浏览器、不访问网站。"""
 import contextlib
 import io
 import json
@@ -12,6 +12,7 @@ from unittest import mock
 import boss_cdp as biz
 import boss_tui as tui
 import edge_profile
+import jd_fields
 import jd_session
 import jd_shops as jd
 
@@ -92,7 +93,7 @@ class JdInfrastructureTests(unittest.TestCase):
         urls = [f'https://mall.jd.com/index-{number}.html' for number in (1, 2, 3)]
         reader = mock.Mock()
         reader.read.side_effect = jd_session.BrowserSessionError('无法连接专用 Edge/CDP')
-        manager = mock.Mock()
+        manager = mock.MagicMock()
         manager.return_value.__enter__.return_value = reader
         with mock.patch.object(jd, 'read_shop_urls', return_value=urls), \
              mock.patch.object(jd, 'JdPageReader', manager), \
@@ -104,6 +105,48 @@ class JdInfrastructureTests(unittest.TestCase):
         reports = export.call_args.args[1]
         self.assertEqual(reports[0]['状态'], '失败')
         self.assertIn('无法连接专用 Edge/CDP', reports[0]['原因'][0])
+
+    def test_target_match_accepts_jd_added_query_only(self):
+        expected = 'https://mall.jd.com/showLicence-123.html?from=tool'
+        self.assertTrue(jd_session._target_matches(
+            'https://mall.jd.com/showLicence-123.html?from=tool&scene=pc', expected))
+        self.assertFalse(jd_session._target_matches(
+            'https://mall.jd.com/showLicence-123.html?scene=pc', expected))
+        self.assertFalse(jd_session._target_matches(
+            'https://mall.jd.com/showLicence-999.html?from=tool', expected))
+
+    def test_modern_script_metadata_is_recognized(self):
+        document = '''<html><head><title>测试官方旗舰店 - 京东</title></head>
+        <script>window.__SHOP__={"shopId":"123","venderId":"456","appId":"789"};</script></html>'''
+        metadata = jd.extract_shop_metadata(document)
+        self.assertEqual((metadata['shop_id'], metadata['vender_id'], metadata['app_id']), ('123', '456', '789'))
+        row = jd.parse_shop_page(document, 'https://mall.jd.com/index-123.html')
+        self.assertEqual((row['店铺名'], row['店铺ID'], row['VenderId']), ('测试官方旗舰店', '123', '456'))
+
+    def test_missing_vender_keeps_verified_base_row(self):
+        document = '<title>测试官方旗舰店 - 京东</title>'
+        row = jd.parse_shop_page(document, 'https://mall.jd.com/index-123.html')
+        self.assertEqual(row['店铺ID'], '123')
+        self.assertEqual(row['店铺名'], '测试官方旗舰店')
+        self.assertEqual(row['VenderId'], '')
+
+    def test_current_score_line_and_structured_company_fields(self):
+        scores, conflicts = jd_fields.page_fields(
+            '店铺星级 商品评价 9.5 高 物流履约 9.7 高 售后服务 8.0 高', '', jd_fields.SCORE_FIELDS)
+        self.assertFalse(conflicts)
+        self.assertEqual(scores, {'商品评价': '9.5', '物流履约': '9.7', '售后服务': '8.0'})
+        company, conflicts = jd_fields.page_fields('',
+            '<script>window.data={"companyName":"甲公司","legalPerson":"张三","regCapital":"50万元"}</script>',
+            jd_fields.COMPANY_FIELDS)
+        self.assertFalse(conflicts)
+        self.assertEqual(company['公司名'], '甲公司')
+        self.assertEqual(company['法人'], '张三')
+        self.assertEqual(company['注册资本'], '50万元')
+
+    def test_partial_result_has_nonzero_exit_code(self):
+        result = jd.JdResult([{'店铺名': '测试店'}], status='partial', reason='字段未披露')
+        self.assertEqual(result.exit_code, 2)
+        self.assertIsInstance(result, list)
 
 
 class TuiAcceptanceTests(unittest.TestCase):
@@ -120,6 +163,15 @@ class TuiAcceptanceTests(unittest.TestCase):
             tui.ensure_console_utf8()
         stdout.reconfigure.assert_called_once_with(encoding='utf-8', errors='replace')
         stderr.reconfigure.assert_called_once_with(encoding='utf-8', errors='replace')
+
+    def test_auto_jd_propagates_partial_exit_code(self):
+        result = jd.JdResult([{'店铺名': '测试店'}], status='partial')
+        with mock.patch.object(tui, 'print_diagnostics'), \
+             mock.patch.object(tui.jd_shops, 'run_shops', return_value=result), \
+             mock.patch.object(tui.biz, 'close_owned_edge'):
+            with self.assertRaises(SystemExit) as raised:
+                tui.main(['--auto', 'jd', '--jd-file', 'ignored.txt'])
+        self.assertEqual(raised.exception.code, 2)
 
 
 if __name__ == '__main__':
