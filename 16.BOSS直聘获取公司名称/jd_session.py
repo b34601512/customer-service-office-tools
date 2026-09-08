@@ -3,6 +3,7 @@ import time
 from urllib.parse import urlsplit
 
 import boss_cdp
+import edge_profile
 
 
 class CollectionStopped(Exception):
@@ -10,6 +11,11 @@ class CollectionStopped(Exception):
 
 
 class VerificationTimeout(TimeoutError):
+    pass
+
+
+class BrowserSessionError(RuntimeError):
+    """专用 Edge/CDP 会话无法建立；属于共享基础设施故障，不是单个店铺缺字段。"""
     pass
 
 
@@ -55,8 +61,14 @@ class JdPageReader:
 
     def _connect(self):
         if self.session is None:
-            port = boss_cdp.ensure_edge_running(start_url='about:blank')
-            self.session = boss_cdp.CDPSession(boss_cdp.open_tab(port, url='about:blank'))
+            try:
+                port = edge_profile.ensure_profile_edge(boss_cdp, boss_cdp.DEFAULT_PORT, start_url='about:blank')
+                self.session = boss_cdp.CDPSession(boss_cdp.open_tab(port, url='about:blank'))
+            except Exception as exc:
+                self.session = None
+                raise BrowserSessionError(
+                    f'无法连接专用 Edge/CDP：{type(exc).__name__}: {exc}'
+                ) from exc
 
     def _snapshot(self):
         mid = self.session.send('Runtime.evaluate', {'expression': SNAPSHOT_JS, 'returnByValue': True})
