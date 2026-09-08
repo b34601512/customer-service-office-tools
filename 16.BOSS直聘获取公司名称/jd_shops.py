@@ -24,7 +24,7 @@ FIELDS = ('店铺名', '店铺链接', 'VenderId', '店铺ID', '公司名', '法
 
 class JdResult(list):
     """兼容旧 list 调用，同时携带真实完成状态与退出码。"""
-    EXIT_CODES = {'completed': 0, 'partial': 2, 'cancelled': 130, 'failed': 1}
+    EXIT_CODES = {'completed': 0, 'partial': 2, 'blocked': 3, 'cancelled': 130, 'failed': 1}
 
     def __init__(self, *args, status='completed', reason='', reports=None, paths=None):
         super().__init__(*args)
@@ -247,7 +247,7 @@ def enrich_shop(reader, page, row, reasons, evidence):
                 header.feed(raw_header)
                 merge(''.join(header.parts), raw_header,
                       [field for field in SCORE_FIELDS if not row[field]], source)
-            except VerificationTimeout:
+            except (VerificationTimeout, BrowserSessionError, CollectionStopped):
                 raise
             except (ValueError, RuntimeError, OSError, WebSocketException) as exc:
                 reasons.append('评分读取失败：' + str(exc))
@@ -261,7 +261,7 @@ def enrich_shop(reader, page, row, reasons, evidence):
         missing_company = [field for field in COMPANY_FIELDS if not row[field]]
         if missing_company:
             reasons.append('资质页未披露可识别字段：' + '、'.join(missing_company))
-    except VerificationTimeout:
+    except (VerificationTimeout, BrowserSessionError, CollectionStopped):
         raise
     except (ValueError, RuntimeError, OSError, WebSocketException) as exc:
         reasons.append('经营资质读取失败：' + str(exc))
@@ -272,6 +272,7 @@ def run_shops(input_path=None, progress=None, outdir=RESULT_DIR, stop_event=None
     result = JdResult(status='completed')
     reports = result.reports
     stopped = False
+    blocked = False
     fatal_error = None
 
     def notify(stage, detail):
@@ -307,7 +308,10 @@ def run_shops(input_path=None, progress=None, outdir=RESULT_DIR, stop_event=None
             except BrowserSessionError as exc:
                 fatal_error = exc
                 reasons.append(str(exc))
-            except (VerificationTimeout, CollectionStopped, KeyboardInterrupt) as exc:
+            except VerificationTimeout as exc:
+                blocked = True
+                reasons.append(str(exc))
+            except (CollectionStopped, KeyboardInterrupt) as exc:
                 stopped = True
                 reasons.append(str(exc) or '用户中断，保存当前已取得的数据')
             except (ValueError, RuntimeError, OSError, WebSocketException) as exc:
@@ -316,13 +320,15 @@ def run_shops(input_path=None, progress=None, outdir=RESULT_DIR, stop_event=None
             if missing and not reasons:
                 reasons.append('已读取的页面未披露这些字段的可识别文本；不以推测值补齐')
             result.append(row)
+            page_state = getattr(reader, 'last_diagnostics', {})
             reports.append({'店铺链接': url, '采集时间': datetime.now().isoformat(timespec='seconds'),
                             '状态': ('部分完成' if missing else '完成') if row['店铺名'] else '失败',
-                            '缺失列': missing, '原因': reasons, '字段来源': evidence})
+                            '缺失列': missing, '原因': reasons, '字段来源': evidence,
+                            '页面状态': dict(page_state) if isinstance(page_state, dict) else {}})
             print(f'[jd] {index}/{len(urls)} {row["店铺名"] or url}：缺少{len(missing)}列', flush=True)
             for reason in reasons:
                 print(f'[jd]   - {reason}', flush=True)
-            if stopped or fatal_error is not None:
+            if stopped or blocked or fatal_error is not None:
                 break
 
     if result:
@@ -339,6 +345,9 @@ def run_shops(input_path=None, progress=None, outdir=RESULT_DIR, stop_event=None
     if stopped:
         result.status = 'cancelled'
         result.reason = f'用户停止；已保存 {len(result)}/{len(urls)} 家当前结果'
+    elif blocked:
+        result.status = 'blocked'
+        result.reason = '等待用户验证未完成；已保留原页面及已取得资料，未自动重试'
     elif result and not any(row['店铺名'] for row in result):
         result.status = 'failed'
         result.reason = '所有店铺均未取得有效基础资料，失败链接及原因已保存'
@@ -350,8 +359,9 @@ def run_shops(input_path=None, progress=None, outdir=RESULT_DIR, stop_event=None
         result.status = 'completed'
         result.reason = f'{len(result)} 家全部15列已取得'
 
+    print(f'[jd] status={result.status}，退出码{result.exit_code}；{result.reason}', flush=True)
     if callable(progress):
-        stage = {'completed': '完成', 'partial': '部分完成', 'cancelled': '已停止', 'failed': '失败'}[result.status]
+        stage = {'completed': '完成', 'partial': '部分完成', 'blocked': '需要用户验证', 'cancelled': '已停止', 'failed': '失败'}[result.status]
         progress(len(result), len(urls), stage, result.reason)
     if result.status == 'failed':
         raise RuntimeError(result.reason)
