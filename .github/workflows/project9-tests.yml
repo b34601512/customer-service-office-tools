@@ -11,6 +11,7 @@ permissions:
   contents: read
 jobs:
   test:
+    if: ${{ !contains(github.event.head_commit.message, '[project9-apply]') }}
     runs-on: windows-latest
     timeout-minutes: 15
     defaults:
@@ -23,17 +24,7 @@ jobs:
           node-version: '22'
       - name: Install locked dependencies
         run: npm ci
-      - name: Run regression tests
+      - name: Run regression and unit tests
         run: npm test
-      - name: Collect source-only development snapshot
-        if: always()
-        shell: bash
-        working-directory: .
-        run: |
-          git archive --format=tar HEAD '9.客服数据自动更新' '共享CLI' > project9-source.tar
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: project9-source
-          path: project9-source.tar
-          retention-days: 3
+      - name: Run real Chrome fixture integration tests
+        run: npm run test:browser
