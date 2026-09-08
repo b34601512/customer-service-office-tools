@@ -1,3 +1,4 @@
+const { checkBrowserHumanRequirement } = require("../../../engine/browserHumanGuard");
 // 该文件只负责天猫服务质量报表的入口、登录就绪与店铺身份确认。
 const appConfig = require("../../../config/appConfig");
 const { log } = require("../../../engine/logger");
@@ -114,6 +115,7 @@ async function waitForTmallResponseTimeLoginReady(page, timeoutMs = appConfig.tm
 
   log("主线:等待", "天猫平均响应时间", "千牛入口就绪", "等待真实体检分/服务体验分析入口出现");
   while (Date.now() <= deadline) {
+    await checkBrowserHumanRequirement();
     const loginSubmitted = await tryAutofillTmallLoginPage(
       page,
       options.storeConfig,

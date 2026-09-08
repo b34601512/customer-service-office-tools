@@ -65,13 +65,19 @@ async function waitForHumanResolution(page, reason, isStillBlocked) {
   await page.bringToFront?.();
   const now = scope.now || Date.now;
   const wait = scope.wait || (ms => new Promise(resolve => setTimeout(resolve, ms)));
-  const deadline = now() + scope.humanTimeoutMs;
-  while (true) {
-    assertAutomationActive();
-    if (page.isClosed?.()) throw new Error("人工验证浏览器已关闭，请重新运行当前店铺。");
-    if (!(await isStillBlocked())) return true;
-    if (now() >= deadline) throw new Error("等待人工验证超时；未跳过验证，也未重复提交导出。");
-    await wait(Math.min(1000, deadline - now()));
+  const startedAt = now();
+  const deadline = startedAt + scope.humanTimeoutMs;
+  try {
+    while (true) {
+      assertAutomationActive();
+      if (page.isClosed?.()) throw new Error("人工验证浏览器已关闭，请重新运行当前店铺。");
+      if (!(await isStillBlocked())) return true;
+      if (now() >= deadline) throw new Error("等待人工验证超时；未跳过验证，也未重复提交导出。");
+      await wait(Math.min(1000, deadline - now()));
+    }
+  } finally {
+    // 人工等待不应消耗页面动作、弹窗治理和下载轮询的自动操作时限。
+    scope.humanWaitMs = (scope.humanWaitMs || 0) + Math.max(0, now() - startedAt);
   }
 }
 

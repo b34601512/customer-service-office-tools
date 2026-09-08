@@ -1,3 +1,4 @@
+const { resolveBrowserMode, isBrowserModeCompatible } = require("../../engine/browserAutomationScope");
 const { waitForChromeDebugPortReady, readManagedChromeSession } = require("../../engine/chromeSession");
 const { resolveManagedOpenWindowMeta, runManagedOpenWindowEngine } = require("../../shared/managedOpenWindowEngine");
 const { startJdLoginAssist } = require("../../platforms/jd/jdLoginAssist");
@@ -18,6 +19,7 @@ async function resolveManagedBrowserReadinessForStore(platformKey, storeKey, dep
   if (session.platformKey !== platformKey || session.storeKey !== storeKey) {
     return { ready: false, reason: `当前窗口属于「${session.platformKey || "未知平台"}:${session.storeKey || "未知店铺"}」，不是本店。` };
   }
+  if (!isBrowserModeCompatible(session)) return { ready: false, reason: "当前浏览器模式与所选模式不一致。" };
   return { ready: true, reason: "当前店铺已有可接管窗口。" };
 }
 
@@ -50,6 +52,7 @@ async function openPlatformStoreWindowForSummary(input, dependencies = {}) {
   });
   await runOpenEngine({
     platformKey: task.platformKey,
+    browserMode: resolveBrowserMode(),
     storeConfig: resolvedConfig.activeStore,
     openMeta,
     actionName: "批量汇总打开后台页面",

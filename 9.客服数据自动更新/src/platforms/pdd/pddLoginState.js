@@ -1,3 +1,4 @@
+const { checkBrowserHumanRequirement } = require("../../engine/browserHumanGuard");
 const { isPddStoreIdentityMatched } = require("./pddStoreIdentity");
 const { isPddPageLoadingText, readPddPageBodyText } = require("./pddPageText");
 
@@ -139,6 +140,7 @@ async function findPddLoginReadyPage(browser, options = {}) {
   const deadline = Date.now() + timeoutMs;
 
   while (Date.now() <= deadline) {
+    await checkBrowserHumanRequirement();
     const page = findBestPddPage(browser, storeConfig);
     if (page && (await isPddLoginReadyPage(page, storeConfig))) {
       return page;

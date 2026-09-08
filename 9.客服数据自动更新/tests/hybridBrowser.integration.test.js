@@ -13,6 +13,7 @@ const { runHybridSourceDownload } = require('../src/summary/storeSummaryParts/hy
 const { waitForDownloadArtifactState } = require('../src/shared/downloadEventEngine');
 const { requestChromeCloseOverCDP } = require('../src/engine/chromeSessionParts/chromeHeadlessCloser');
 
+const chromeOptions = process.env.CHROME_BIN ? { executablePath: process.env.CHROME_BIN } : { channel: 'chrome' };
 const base = 'https://kf.jd.com/fixture';
 async function eventually(check, milliseconds = 5000) {
   const deadline = Date.now() + milliseconds;
@@ -20,12 +21,13 @@ async function eventually(check, milliseconds = 5000) {
   assert.fail('fixture condition did not become true');
 }
 async function fixture(t, html) {
-  const browser = await chromium.launch({ channel: 'chrome', headless: true });
+  const browser = await chromium.launch({ ...chromeOptions, headless: true });
   t.after(() => browser.close());
   const context = await browser.newContext({ serviceWorkers: 'block' });
-  await context.route('**/*', route => route.fulfill({ contentType: 'text/html', body: html }));
+  await context.route('**/*', route => route.fulfill({ contentType: 'text/html; charset=utf-8', body: html }));
   const page = await context.newPage();
   await page.goto(base);
+  assert.equal(await page.evaluate(() => document.characterSet), 'UTF-8');
   await installBrowserPopupGuard(browser);
   return { browser, context, page };
 }
@@ -68,7 +70,12 @@ test('real headless browser writes a download to the selected directory', async 
     contentType: 'text/csv', headers: { 'Content-Disposition': 'attachment; filename="fixture.csv"' }, body: 'name,value\nfixture,1\n'
   }));
   const cdp = await context.newCDPSession(page);
-  await cdp.send('Browser.setDownloadBehavior', { behavior: 'allow', downloadPath: directory });
+  const { targetInfo } = await cdp.send('Target.getTargetInfo');
+  // 此夹具是隔离上下文；生产浏览器为默认持久上下文，不能混用下载策略作用域。
+  await cdp.send('Browser.setDownloadBehavior', {
+    behavior: 'allow', downloadPath: directory,
+    ...(targetInfo.browserContextId ? { browserContextId: targetInfo.browserContextId } : {})
+  });
   await page.locator('#export').click();
   const filename = path.join(directory, 'fixture.csv');
   assert.equal(await waitForDownloadArtifactState(() => fs.existsSync(filename) ? filename : null, 10000, 50), filename);
@@ -79,9 +86,10 @@ test('real Windows Chrome handoff reuses the profile without simultaneous owners
   let context; let page; let opens = 0; let attempts = 0;
   t.after(async () => { await context?.close(); fs.rmSync(directory, { recursive: true, force: true }); });
   async function open(headless) {
-    context = await chromium.launchPersistentContext(directory, { channel: 'chrome', headless, serviceWorkers: 'block' });
-    await context.route('**/*', route => route.fulfill({ contentType: 'text/html', body: '<p id="challenge">请完成安全验证</p><button id="done" onclick="document.querySelector(\'#challenge\').remove()">完成验证</button>' }));
+    context = await chromium.launchPersistentContext(directory, { ...chromeOptions, headless, serviceWorkers: 'block' });
+    await context.route('**/*', route => route.fulfill({ contentType: 'text/html; charset=utf-8', body: '<p id="challenge">请完成安全验证</p><button id="done" onclick="document.querySelector(\'#challenge\').remove()">完成验证</button>' }));
     page = await context.newPage(); await page.goto(base);
+    assert.equal(await page.evaluate(() => document.characterSet), 'UTF-8');
   }
   await open(true);
   await context.addCookies([{ name: 'fixture_cookie', value: 'not-a-real-session', domain: 'kf.jd.com', path: '/', expires: Date.now() / 1000 + 3600 }]);
@@ -105,7 +113,7 @@ test('Browser.close really terminates a headless Chrome reached through CDP', as
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   const port = server.address().port;
   await new Promise(resolve => server.close(resolve));
-  const browser = await chromium.launch({ channel: 'chrome', headless: true, args: [`--remote-debugging-port=${port}`] });
+  const browser = await chromium.launch({ ...chromeOptions, headless: true, args: [`--remote-debugging-port=${port}`] });
   t.after(() => browser.close());
   await requestChromeCloseOverCDP(`http://127.0.0.1:${port}`);
   await eventually(() => !browser.isConnected());

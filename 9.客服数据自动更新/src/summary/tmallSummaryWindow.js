@@ -1,3 +1,4 @@
+const { resolveBrowserMode, isBrowserModeCompatible } = require("../engine/browserAutomationScope");
 // 该文件只负责天猫整店汇总需要的窗口和登录准备。
 const { waitForChromeDebugPortReady, readManagedChromeSession } = require("../engine/chromeSession");
 const { runManagedOpenWindowEngine, resolveManagedOpenWindowMeta } = require("../shared/managedOpenWindowEngine");
@@ -16,7 +17,7 @@ async function isManagedBrowserReadyForStore(platformKey, storeKey) {
     return false;
   }
   const session = readManagedChromeSession();
-  return session?.platformKey === platformKey && session?.storeKey === storeKey;
+  return session?.platformKey === platformKey && session?.storeKey === storeKey && isBrowserModeCompatible(session);
 }
 
 function notifyProgress(onProgress, patch) {
@@ -44,6 +45,7 @@ async function ensureTmallSummaryWindow(options = {}) {
   });
   await runManagedOpenWindowEngine({
     platformKey: "tmall",
+    browserMode: resolveBrowserMode(),
     storeConfig: store,
     openMeta,
     actionName: "汇总前打开后台页面",

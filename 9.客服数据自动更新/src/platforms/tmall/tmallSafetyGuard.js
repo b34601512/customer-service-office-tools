@@ -1,4 +1,6 @@
 const fs = require("fs");
+const { getAutomationScope } = require("../../engine/browserAutomationScope");
+const { waitForHumanResolution } = require("../../engine/browserHumanGuard");
 const path = require("path");
 const appConfig = require("../../config/appConfig");
 const { log } = require("../../engine/logger");
@@ -95,6 +97,10 @@ async function assertNoTmallSafetyChallenge(page, phaseText) {
     return false;
   }
   const phase = String(phaseText || "天猫页面操作").trim();
+  if (getAutomationScope()) {
+    await waitForHumanResolution(page, `天猫：${result.text}`, async () => (await detectTmallSafetyChallenge(page)).type !== "none");
+    return false;
+  }
   if (result.type === "security_notice") {
     return refreshTmallSecurityNoticeOnce(page, phase, result);
   }

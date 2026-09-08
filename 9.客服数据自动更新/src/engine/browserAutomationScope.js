@@ -29,6 +29,11 @@ class HumanInterventionRequiredError extends Error {
 
 function getAutomationScope() { return scopes.getStore(); }
 
+function getAutomationTime() {
+  const scope = getAutomationScope();
+  return (scope?.now || Date.now)() - (scope?.humanWaitMs || 0);
+}
+
 function isBrowserModeCompatible(session, mode = resolveBrowserMode()) {
   return mode === "hybrid" || (mode === "headless") === (session?.headless === true);
 }
@@ -74,7 +79,7 @@ async function runInAutomationScope(scope, action) {
 }
 
 module.exports = {
-  resolveBrowserMode, resolveHumanTimeoutMs, isBrowserModeCompatible, getAutomationScope,
+  resolveBrowserMode, resolveHumanTimeoutMs, isBrowserModeCompatible, getAutomationScope, getAutomationTime,
   assertAutomationActive, requireHeadedBrowser, registerAutomationBrowser,
   markExportAttempted, runInAutomationScope, HumanInterventionRequiredError
 };

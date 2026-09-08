@@ -1,3 +1,4 @@
+const { requireHeadedBrowser } = require("../../../engine/browserAutomationScope");
 // 该文件只负责把身份读取、菜单操作和切店验收组合成抖音店铺状态流程。
 const {
   DOUYIN_POLL_INTERVAL_MS,
@@ -70,6 +71,7 @@ async function ensureDouyinActiveStore(page, storeConfig, reportProgress, option
   if (exactStoreOption) {
     await clickDouyinStoreOption(exactStoreOption.page, exactStoreOption.option, expectedIdentity.storeName);
   } else {
+    requireHeadedBrowser("抖音需要人工确认目标店铺");
     reportProgress("等待人工切店", "未找到目标完整店名的唯一可点项，请在当前页面手动切换，程序会自动续跑");
     await page.bringToFront();
   }

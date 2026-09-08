@@ -1,3 +1,5 @@
+const { markExportAttempted } = require("../../../engine/browserAutomationScope");
+const { checkBrowserHumanRequirement } = require("../../../engine/browserHumanGuard");
 const appConfig = require("../../../config/appConfig");
 const { clickVisibleButton } = require("../../../shared/visibleButtonActionEngine");
 const { captureDownloadEvidence } = require("../../../shared/downloadEvidence");
@@ -52,6 +54,8 @@ async function triggerTmallReportDownload(page, input) {
     await waitForTmallPerformanceReportStable(page, exportRange);
   }
   await captureDownloadEvidence(page, options, buildTmallDownloadEvidenceLabel(sourceReportKeys, "下载前"));
+  await checkBrowserHumanRequirement({ force: true });
+  markExportAttempted();
   if (reportType.isCustomerSatisfactionReport) {
     await triggerTmallCustomerSatisfactionDownload(page);
     return;

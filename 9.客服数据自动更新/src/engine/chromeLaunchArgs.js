@@ -19,11 +19,12 @@ function buildManagedChromeLaunchArgs(options = {}) {
     `--user-data-dir=${options.userDataDir}`,
     ...buildChromeCacheLimitArgs(options.cacheOptions),
     "--no-first-run",
-    "--disable-popup-blocking",
+    ...(options.allowPopups === true ? ["--disable-popup-blocking"] : []),
     "--hide-crash-restore-bubble",
     "--disable-session-crashed-bubble",
-    "--start-maximized",
-    "--new-window",
+    ...(options.headless === true
+      ? ["--headless=new", "--window-size=1440,1000"]
+      : ["--start-maximized", "--new-window"]),
     options.targetUrl
   ];
 }

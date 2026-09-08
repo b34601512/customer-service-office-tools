@@ -1,3 +1,4 @@
+const { checkBrowserHumanRequirement } = require("../../../engine/browserHumanGuard");
 const appConfig = require("../../../config/appConfig");
 const { waitForPage } = require("../../../engine/chromeSession");
 const { log } = require("../../../engine/logger");
@@ -30,6 +31,7 @@ async function waitForJdLoginReady(browser, options = {}) {
   const startAt = Date.now();
   let targetPageBlocked = false;
   while (Date.now() - startAt <= timeoutMs) {
+    await checkBrowserHumanRequirement();
     await stabilizeJdBrowser(browser);
     await advanceJdSessionBeforeReadyCheck(browser, storeConfig);
     if (ensureTargetPage) {

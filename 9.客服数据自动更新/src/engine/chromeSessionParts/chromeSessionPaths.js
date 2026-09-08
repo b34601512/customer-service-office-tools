@@ -46,6 +46,8 @@ function buildManagedChromeSessionMeta(options = {}) {
     accountProfileKey: String(options.accountProfileKey || "").trim(),
     userDataDir: resolveManagedChromeUserDataDir(options),
     targetUrl: String(options.targetUrl || "").trim(),
+    headless: options.headless === true,
+    browserMode: String(options.browserMode || "headed"),
     remoteDebuggingPort: appConfig.tmall.remoteDebuggingPort,
     recordedAt: new Date().toISOString()
   };

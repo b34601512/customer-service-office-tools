@@ -1,3 +1,6 @@
+const { checkBrowserHumanRequirement } = require("../engine/browserHumanGuard");
+const { assertAutomationActive, getAutomationTime } = require("../engine/browserAutomationScope");
+
 async function waitForDownloadArtifactState(readArtifact, timeoutMs, pollIntervalMs) {
   // 这里统一重复读取下载产物状态，命中即返回，读取错误直接暴露。
   if (typeof readArtifact !== "function") {
@@ -5,14 +8,16 @@ async function waitForDownloadArtifactState(readArtifact, timeoutMs, pollInterva
   }
   const safeTimeoutMs = Math.max(1, Number(timeoutMs) || 120000);
   const safePollIntervalMs = Math.max(20, Number(pollIntervalMs) || 2000);
-  const deadline = Date.now() + safeTimeoutMs;
+  const deadline = getAutomationTime() + safeTimeoutMs;
 
   while (true) {
-    const artifact = readArtifact();
+    assertAutomationActive();
+    const artifact = await readArtifact();
     if (artifact) {
       return artifact;
     }
-    const remainingMs = deadline - Date.now();
+    await checkBrowserHumanRequirement();
+    const remainingMs = deadline - getAutomationTime();
     if (remainingMs <= 0) {
       return null;
     }

@@ -49,16 +49,26 @@ async function installBrowserPopupGuard(browser, options = {}) {
       });
     }
   }
+  const cleanup = () => {
+    for (const dispose of disposers) dispose();
+    installedBrowsers.delete(browser);
+  };
+  browser.once("disconnected", cleanup);
+  try {
   for (const context of browser.contexts()) {
     const onPage = page => { void attachPage(page).catch(warn); };
     context.on("page", onPage);
     disposers.push(() => context.off("page", onPage));
-    for (const page of context.pages()) await attachPage(page);
+    for (const page of context.pages()) {
+      try { await attachPage(page); }
+      catch (error) { if (!page.isClosed()) throw error; }
+    }
   }
-  browser.once("disconnected", () => {
-    for (const dispose of disposers) dispose();
-    installedBrowsers.delete(browser);
-  });
+  } catch (error) {
+    browser.off("disconnected", cleanup);
+    cleanup();
+    throw error;
+  }
 }
 
 module.exports = { AD_HOSTS, MARKETING_TEXTS, PROTECTED_TEXTS, isKnownAdUrl, buildMarketingSelectors, installBrowserPopupGuard };

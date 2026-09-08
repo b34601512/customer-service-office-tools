@@ -1,4 +1,6 @@
+const { getAutomationTime, getAutomationScope } = require("../engine/browserAutomationScope");
 const { log } = require("../engine/logger");
+const { checkBrowserHumanRequirement } = require("../engine/browserHumanGuard");
 
 const DEFAULT_DIALOG_SELECTORS = [
   "[role='dialog']",
@@ -82,9 +84,9 @@ async function waitForPopupTransition(surface, popupElementHandle, originalSigna
   // 该函数只等待刚才操作的真实节点消失或内容推进，避免宽泛定位器串到下一层。
   const timeoutMs = Number(options.popupTransitionTimeoutMs) || DEFAULT_POPUP_TRANSITION_TIMEOUT_MS;
   const pollIntervalMs = Number(options.popupPollIntervalMs) || DEFAULT_POPUP_POLL_INTERVAL_MS;
-  const deadline = Date.now() + timeoutMs;
+  const deadline = getAutomationTime() + timeoutMs;
 
-  while (Date.now() <= deadline) {
+  while (getAutomationTime() <= deadline) {
     try {
       const currentSignature = await readPopupSignature(popupElementHandle);
       if (hasPopupSignatureAdvanced(currentSignature, originalSignature)) {
@@ -226,19 +228,24 @@ async function dismissBlockingPopups(surface, options = {}) {
   const resolvedOptions = { ...options, platformName };
   const idleTimeoutMs = Math.max(0, Number(options.popupIdleTimeoutMs) || 0);
   const pollIntervalMs = Number(options.popupPollIntervalMs) || DEFAULT_POPUP_POLL_INTERVAL_MS;
+  const maxPopups = Math.max(1, Math.min(30, Number(options.maxPopups) || 12));
+  const overallDeadline = getAutomationTime() + Math.max(1000, Math.min(60000, Number(options.totalTimeoutMs) || 20000));
   let closedPopupCount = 0;
-  let idleDeadline = Date.now() + idleTimeoutMs;
+  let idleDeadline = getAutomationTime() + idleTimeoutMs;
 
   while (true) {
+    await checkBrowserHumanRequirement();
+    if (getAutomationTime() >= overallDeadline) throw buildPopupFailure(platformName, "弹窗处理超过总时限");
     const popup = await findOnlyVisiblePopup(surface, resolvedOptions);
     if (!popup) {
-      if (Date.now() >= idleDeadline) {
+      if (getAutomationTime() >= idleDeadline) {
         return closedPopupCount;
       }
       await surface.waitForTimeout(pollIntervalMs);
       continue;
     }
 
+    if (closedPopupCount >= maxPopups) throw buildPopupFailure(platformName, "连续弹窗超过安全次数上限");
     const closeTarget = await findOnlyExplicitCloseTarget(popup, resolvedOptions);
     const popupElementHandle = await popup.elementHandle();
     if (!popupElementHandle) {
@@ -262,7 +269,7 @@ async function dismissBlockingPopups(surface, options = {}) {
           `平台=${platformName}，明确关闭入口在点击时已随弹层消失`
         );
         closedPopupCount += 1;
-        idleDeadline = Date.now() + idleTimeoutMs;
+        idleDeadline = getAutomationTime() + idleTimeoutMs;
         continue;
       }
       await waitForPopupTransition(surface, popupElementHandle, originalSignature, resolvedOptions);
@@ -270,7 +277,7 @@ async function dismissBlockingPopups(surface, options = {}) {
       await popupElementHandle.dispose().catch(() => {});
     }
     closedPopupCount += 1;
-    idleDeadline = Date.now() + idleTimeoutMs;
+    idleDeadline = getAutomationTime() + idleTimeoutMs;
     log("主线:完成", "弹窗治理", "关闭遮挡弹窗", `平台=${platformName}，已关闭=${closedPopupCount}`);
   }
 }
@@ -285,7 +292,8 @@ async function runAfterDismissingBlockingPopups(surface, action, options = {}) {
       ...options,
       popupIdleTimeoutMs: 0
     });
-    if (recoveredPopupCount === 0) {
+    // 导出是否已提交不确定时，不因出现弹窗而重放业务动作。
+    if (recoveredPopupCount === 0 || getAutomationScope()?.exportAttempted) {
       throw firstError;
     }
     return action();

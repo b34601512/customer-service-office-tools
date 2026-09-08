@@ -7,7 +7,8 @@ const {
   killProcessTree,
   killProcessesByCommandLine
 } = require("../managedProcessParts/processCloser");
-const { buildManagedChromeMatchTokens, clearManagedChromeSession } = require("./chromeSessionPaths");
+const { buildManagedChromeMatchTokens, clearManagedChromeSession, readManagedChromeSession } = require("./chromeSessionPaths");
+const { requestChromeCloseOverCDP } = require("./chromeHeadlessCloser");
 const { waitForChromeDebugPortClosed } = require("./chromePortWaiters");
 const { releaseDebugPort } = require("./chromePortGuard");
 const { findProcessIdsByCommandLine } = require("../managedProcessParts/processQuery");
@@ -37,7 +38,11 @@ async function closeManagedChromeWithDependencies(dependencies = {}) {
   try {
     if (chromePid) {
       try {
-        const requestedGracefulClose = await closeProcessMainWindowFn(chromePid, "调试浏览器");
+        const currentSession = (dependencies.readManagedChromeSession || readManagedChromeSession)();
+        // 只在 PID 已通过本项目资料目录和端口归属检查后发 CDP 关闭命令。
+        const requestedGracefulClose = currentSession?.headless === true
+          ? await (dependencies.requestChromeCloseOverCDP || requestChromeCloseOverCDP)(appConfig.tmall.cdpEndpoint)
+          : await closeProcessMainWindowFn(chromePid, "调试浏览器");
         if (requestedGracefulClose) {
           logFn("主线:等待", "浏览器引擎", "优雅关闭", `已发送主窗口关闭请求，PID=${chromePid}，等待调试端口释放`);
           closedGracefully = await waitForChromeDebugPortClosedFn({

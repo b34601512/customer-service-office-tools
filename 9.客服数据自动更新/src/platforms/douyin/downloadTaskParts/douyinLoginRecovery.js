@@ -1,3 +1,4 @@
+const { requireHeadedBrowser } = require("../../../engine/browserAutomationScope");
 // 该文件只负责识别抖音登录失效、打开真实登录页并等待人工登录恢复。
 const {
   DOUYIN_LOGIN_RECOVERY_TIMEOUT_MS,
@@ -110,6 +111,7 @@ async function ensureDouyinMerchantSession(browser, page, reportProgress, option
     return page;
   }
 
+  requireHeadedBrowser("抖音需要手机号验证码登录");
   reportProgress("等待人工登录", "登录已过期；请在浏览器完成手机号验证码登录，程序会自动续跑");
   await openDouyinLoginPage(page);
   return waitForDouyinLoginRecovery(browser, page, options);

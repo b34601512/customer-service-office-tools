@@ -1,3 +1,5 @@
+const { markExportAttempted } = require("../../../engine/browserAutomationScope");
+const { checkBrowserHumanRequirement } = require("../../../engine/browserHumanGuard");
 const { log } = require("../../../engine/logger");
 const { dismissBlockingPopups } = require("../../../shared/blockingPopupEngine");
 
@@ -44,6 +46,8 @@ async function dispatchPddDownloadButtonEvents(page) {
 async function clickPddDownloadButton(page) {
   // 该函数只先清除唯一明确遮挡弹窗，再触发拼多多已验证的下载入口。
   await dismissBlockingPopups(page, { platformName: "拼多多" });
+  await checkBrowserHumanRequirement({ force: true });
+  markExportAttempted();
   await dispatchPddDownloadButtonEvents(page);
   log("主线:执行", "拼多多下载", "触发下载表单", "已按拼多多已验证事件顺序触发唯一下载入口");
 }

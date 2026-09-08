@@ -212,3 +212,50 @@ test('shutdown during old-browser close cannot spawn the replacement', async () 
     assert.equal(launches, 0);
   } finally { resetApplicationShutdownSignal(); }
 });
+
+
+test('human verification time is excluded from the popup safety deadline', async () => {
+  let clock = 0;
+  const page = fakePage();
+  page.getByText = expression => locator(clock < 2000 && expression.test('请完成安全验证'));
+  const { getAutomationTime } = require('../src/engine/browserAutomationScope');
+  await runInAutomationScope(scope({ headless: false, humanTimeoutMs: 5000, now: () => clock,
+    wait: async ms => { clock += ms; } }), async () => {
+    registerAutomationBrowser(browserFor(page));
+    const surface = { locator: () => ({ count: async () => 0 }) };
+    assert.equal(await dismissBlockingPopups(surface, { totalTimeoutMs: 1000 }), 0);
+    assert.equal(clock, 2000);
+    assert.equal(getAutomationTime(), 0);
+  });
+});
+test('a page closing during popup-handler installation cannot fail browser connection', async () => {
+  const { EventEmitter } = require('node:events');
+  const { installBrowserPopupGuard } = require('../src/engine/browserPopupGuard');
+  let closed = false;
+  const page = Object.assign(new EventEmitter(), {
+    isClosed: () => closed, url: () => 'about:blank',
+    locator: () => ({ first: () => ({}) }),
+    addLocatorHandler: async () => { closed = true; throw new Error('Target page, context or browser has been closed'); }
+  });
+  const context = Object.assign(new EventEmitter(), { pages: () => [page] });
+  const browser = Object.assign(new EventEmitter(), { contexts: () => [context] });
+  await installBrowserPopupGuard(browser);
+  browser.emit('disconnected');
+  assert.equal(context.listenerCount('page'), 0);
+  assert.equal(page.listenerCount('framenavigated'), 0);
+});
+
+
+test('a late popup cannot replay a possibly submitted export action', async () => {
+  const { runAfterDismissingBlockingPopups } = require('../src/shared/blockingPopupEngine');
+  let visible = false; let attempts = 0; let closed = 0;
+  const popup = {
+    locator: () => ({ count: async () => 1, first: () => ({ click: async () => { visible = false; closed++; } }) }),
+    elementHandle: async () => ({ evaluate: async () => ({ className: 'promo', text: 'promo', visible }), dispose: async () => {} })
+  };
+  const surface = { locator: () => ({ count: async () => visible ? 1 : 0, first: () => popup }), waitForTimeout: async () => {} };
+  await assert.rejects(runInAutomationScope(scope(), () => runAfterDismissingBlockingPopups(surface, async () => {
+    attempts++; markExportAttempted(); visible = true; throw new Error('export result unknown');
+  })), /export result unknown/);
+  assert.equal(attempts, 1); assert.equal(closed, 1);
+});
