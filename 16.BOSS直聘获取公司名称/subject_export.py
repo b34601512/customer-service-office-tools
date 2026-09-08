@@ -13,6 +13,7 @@ def export_subject_rows(rows, fmt, outdir, source, fields):
     directory = Path(outdir)
     directory.mkdir(parents=True, exist_ok=True)
     stem = 'merchant_subjects_' + source + '_' + datetime.now().strftime('%Y%m%d_%H%M%S_%f')
+    paths = {}
     for extension in (['csv', 'json'] if fmt == 'both' else [fmt]):
         path = directory / f'{stem}.{extension}'
         with path.open('x', encoding='utf-8-sig' if extension == 'csv' else 'utf-8', newline='') as output:
@@ -22,4 +23,6 @@ def export_subject_rows(rows, fmt, outdir, source, fields):
                 writer = csv.DictWriter(output, fieldnames=fields)
                 writer.writeheader()
                 writer.writerows({key: ' | '.join(value) if isinstance(value, list) else value for key, value in row.items()} for row in rows)
+        paths[extension] = str(path)
         print(f'[export] {extension.upper()} -> {path}', flush=True)
+    return paths
