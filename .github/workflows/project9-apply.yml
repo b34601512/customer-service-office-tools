@@ -5,7 +5,7 @@ on:
   push:
     branches: [refactor/9-hybrid-headless]
     paths:
-      - '.github/project9-updates.json'
+      - '.github/project9*-updates.json'
       - '.github/workflows/project9-apply.yml'
 permissions:
   contents: write
@@ -25,27 +25,28 @@ jobs:
         shell: python
         run: |
           import hashlib, json, pathlib, subprocess
-          data = json.loads(pathlib.Path('.github/project9-updates.json').read_text(encoding='utf-8'))
-          subprocess.run(['git', 'merge-base', '--is-ancestor', data['base'], 'HEAD'], check=True)
           def blob(content):
               return hashlib.sha1(b'blob ' + str(len(content)).encode() + b'\0' + content).hexdigest()
-          for item in data['files']:
-              name = item['path']
-              parts = pathlib.PurePosixPath(name).parts
-              assert parts[0] == '9.客服数据自动更新' and '..' not in parts and '\\' not in name
-              source = subprocess.check_output(['git', 'show', 'HEAD:' + name]).replace(b'\r\n', b'\n')
-              assert blob(source) == item['before'], 'Unexpected base content: ' + name
-              lines = source.decode('utf-8').splitlines(keepends=True)
-              for start, end, text in reversed(item['edits']):
-                  assert 0 <= start <= end <= len(lines)
-                  lines[start:end] = text.splitlines(keepends=True)
-              output = ''.join(lines).encode('utf-8')
-              assert blob(output) == item['after'], 'Unexpected result content: ' + name
-              pathlib.Path(name).write_bytes(output)
-              subprocess.run(['git', 'add', '--', name], check=True)
-              staged = subprocess.check_output(['git', 'rev-parse', ':' + name]).decode().strip()
-              assert staged == item['after'], 'Unexpected staged content: ' + name
-          print('Verified and staged', len(data['files']), 'source edits; no runtime files staged')
+          for manifest in ['.github/project9-updates.json', '.github/project9-extra-updates.json']:
+              data = json.loads(pathlib.Path(manifest).read_text(encoding='utf-8'))
+              subprocess.run(['git', 'merge-base', '--is-ancestor', data['base'], 'HEAD'], check=True)
+              for item in data['files']:
+                  name = item['path']
+                  parts = pathlib.PurePosixPath(name).parts
+                  assert parts[0] == '9.客服数据自动更新' and '..' not in parts and '\\' not in name
+                  source = subprocess.check_output(['git', 'show', ':' + name]).replace(b'\r\n', b'\n')
+                  assert blob(source) == item['before'], 'Unexpected base content: ' + name
+                  lines = source.decode('utf-8').splitlines(keepends=True)
+                  for start, end, text in reversed(item['edits']):
+                      assert 0 <= start <= end <= len(lines)
+                      lines[start:end] = text.splitlines(keepends=True)
+                  output = ''.join(lines).encode('utf-8')
+                  assert blob(output) == item['after'], 'Unexpected result content: ' + name
+                  pathlib.Path(name).write_bytes(output)
+                  subprocess.run(['git', 'add', '--', name], check=True)
+                  staged = subprocess.check_output(['git', 'rev-parse', ':' + name]).decode().strip()
+                  assert staged == item['after'], 'Unexpected staged content: ' + name
+              print('Verified and staged', len(data['files']), 'source edits; no runtime files staged')
       - name: Install locked dependencies
         working-directory: 9.客服数据自动更新
         run: npm ci
