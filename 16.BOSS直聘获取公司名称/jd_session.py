@@ -1,6 +1,6 @@
 """京东页面会话：用户负责认证，程序读取完成认证后的页面。"""
 import time
-from urllib.parse import urlsplit
+from urllib.parse import parse_qs, urlsplit
 
 import boss_cdp
 import edge_profile
@@ -20,17 +20,36 @@ class BrowserSessionError(RuntimeError):
 
 
 # 验证页不读取HTML或账号输入；只返回认证状态。普通页面只读公开页面内容。
+# showLicence 资质页可能在原 URL 内嵌图片验证码，因此不能只按 hostname/title 判断。
 SNAPSHOT_JS = r'''(() => {
     const url = location.href, title = document.title;
     const text = document.body ? document.body.innerText : '';
+    const path = location.pathname || '';
+    const challengeText = /请.{0,8}(完成|进行).{0,8}(安全)?验证|拖动滑块|验证码|验证后查看|点击验证/.test(text);
+    const challengeNode = !!document.querySelector(
+        'input[name*=captcha i], input[id*=captcha i], input[class*=captcha i], ' +
+        'input[name*=verify i], input[id*=verify i], img[class*=captcha i], ' +
+        '[class*=verify-code i], [class*=verification i], [class*=captcha i]');
+    const licenceChallenge = /\/showLicence-\d+\.html/i.test(path) && (challengeText || challengeNode);
     const blocked = /(^|\.)passport\.jd\.com$/.test(location.hostname)
         || /(^|\.)cfe\.m\.jd\.com$/.test(location.hostname)
-        || /欢迎登录|京东验证/.test(title)
-        || /请完成安全验证|拖动滑块|请输入.{0,8}验证码/.test(text);
+        || /欢迎登录|京东验证|安全验证/.test(title)
+        || /请完成安全验证|拖动滑块|请输入.{0,12}验证码/.test(text)
+        || licenceChallenge;
     return {url, title, blocked, ready: document.readyState === 'complete',
         text: blocked ? '' : text,
         html: blocked ? '' : document.documentElement.outerHTML};
 })()'''
+
+
+def _target_matches(actual_url, expected_url):
+    """允许站点追加无害查询参数，但目标 host/path 与请求参数必须保持一致。"""
+    actual, expected = urlsplit(actual_url or ''), urlsplit(expected_url or '')
+    if (actual.scheme, actual.hostname, actual.path) != (expected.scheme, expected.hostname, expected.path):
+        return False
+    expected_query = parse_qs(expected.query, keep_blank_values=True)
+    actual_query = parse_qs(actual.query, keep_blank_values=True)
+    return all(actual_query.get(key) == values for key, values in expected_query.items())
 
 
 class JdPageReader:
@@ -111,21 +130,20 @@ class JdPageReader:
                         self.session.wait_response(foreground, timeout=1)
                     self.notify('等待用户验证', f'请在Edge完成验证，剩余{max(0, int(deadline-now))}秒；0/Ctrl+C停止并保存')
                 else:
-                    current = urlsplit(page.get('url', ''))
-                    # 必须回到本次请求的路径及查询参数，不能把登录首页或其他店铺当作完成。
-                    matches = (current.hostname, current.path, current.query) == (parts.hostname, parts.path, parts.query)
-                    if matches and page.get('ready') and (page.get('text') or page.get('html')):
+                    current_url = page.get('url', '')
+                    if _target_matches(current_url, url) and page.get('ready') and (page.get('text') or page.get('html')):
                         if ready_since is None:
                             ready_since = now
-                        if now - ready_since >= 2:
+                        if now - ready_since >= 1:
                             self.notify('继续采集', '用户验证已完成' if verifying else '页面读取完成')
                             return page
                     else:
                         ready_since = None
                         if verifying:
+                            current = urlsplit(current_url)
+                            # 登录完成后若落在京东首页，仅补发一次目标导航；验证页内始终不刷新。
                             if (page.get('ready') and current.hostname in ('mall.jd.com', 'www.jd.com')
                                     and not return_navigation_sent):
-                                # 仅登录完成后补发一次目标导航；验证页内始终不刷新。
                                 return_navigation_sent = True
                                 mid = self.session.send('Page.navigate', {'url': url})
                                 self.session.wait_response(mid, timeout=2)
