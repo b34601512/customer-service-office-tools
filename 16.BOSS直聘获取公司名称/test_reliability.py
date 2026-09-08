@@ -151,6 +151,17 @@ class ContractTests(unittest.TestCase):
 
 
 class TransportTests(unittest.TestCase):
+    def test_response_body_retries_transient_missing_resource(self):
+        current = mock.Mock()
+        current.send.side_effect = [1, 2]
+        current.wait_response.side_effect = [
+            {"id": 1, "error": {"message": "No resource with given identifier found"}},
+            {"id": 2, "result": {"body": '{"code": 0}', "base64Encoded": False}},
+        ]
+        with mock.patch.object(biz.time, "sleep") as sleep:
+            self.assertEqual(biz._get_body(current, "R1"), ('{"code": 0}', False))
+        sleep.assert_called_once_with(0.1)
+
     def test_body_is_not_read_before_loading_finished(self):
         ws = FakeSocket(events=network_events()[:2])
         current = session(ws)

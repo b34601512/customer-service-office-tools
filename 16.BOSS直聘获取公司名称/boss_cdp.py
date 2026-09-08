@@ -258,18 +258,28 @@ def response_job_list(data):
 
 
 def _get_body(session, request_id, timeout=20):
-    mid = session.send("Network.getResponseBody", {"requestId": request_id})
-    response = session.wait_response(mid, timeout=timeout)
-    if response is None:
-        raise TimeoutError("读取响应正文超时")
-    if "error" in response:
-        raise ProtocolError("响应正文不可读：" + str(response["error"].get("message", "未知错误")))
-    result = response.get("result", {})
-    body = result.get("body", "")
-    encoded = result.get("base64Encoded", False)
-    if encoded:
-        body = base64.b64decode(body, validate=True).decode("utf-8")
-    return body, encoded
+    # Edge 偶尔在 loadingFinished 后短暂返回 -32000；同一 requestId
+    # 仍有效时重取正文，避免把瞬时 CDP 竞态误报为采集失败。
+    last_error = None
+    for attempt in range(3):
+        mid = session.send("Network.getResponseBody", {"requestId": request_id})
+        response = session.wait_response(mid, timeout=timeout)
+        if response is None:
+            raise TimeoutError("读取响应正文超时")
+        if "error" in response:
+            message = str(response["error"].get("message", "未知错误"))
+            last_error = message
+            if "No resource with given identifier found" in message and attempt < 2:
+                time.sleep(0.1)
+                continue
+            raise ProtocolError("响应正文不可读：" + message)
+        result = response.get("result", {})
+        body = result.get("body", "")
+        encoded = result.get("base64Encoded", False)
+        if encoded:
+            body = base64.b64decode(body, validate=True).decode("utf-8")
+        return body, encoded
+    raise ProtocolError("响应正文不可读：" + (last_error or "未知错误"))
 
 
 def _joblist_response_data(session, params):
@@ -483,7 +493,9 @@ def _load_detail_html(session, url, timeout=COMPANY_DETAIL_TIMEOUT):
             path = urllib.parse.urlsplit(response.get("url", "")).path
             if response.get("status") in (401, 403, 429) or any(part in path for part in ("/passport/", "/security", "/web/user/")):
                 session.keep_open = True
-                raise VerificationRequired(response.get("status", "详情验证"), "岗位详情页要求登录或安全验证")
+                status = response.get("status", "详情验证")
+                location = response.get("url") or path or "未知响应地址"
+                raise VerificationRequired(status, f"岗位详情页要求登录或安全验证；响应地址：{location}")
             if path == expected_path:
                 if response.get("status", 200) >= 400:
                     raise SiteResponseError(response["status"], "岗位详情页加载失败")

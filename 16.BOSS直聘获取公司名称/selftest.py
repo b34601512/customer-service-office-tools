@@ -111,8 +111,9 @@ class LiveTests(unittest.TestCase):
         result = subprocess.run(
             [sys.executable, '-B', '-c', 'from selftest import check_windows_console; check_windows_console()'],
             cwd=Path(__file__).parent, creationflags=subprocess.CREATE_NO_WINDOW,
-            capture_output=True, encoding='utf-8', timeout=15)
-        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            capture_output=True, encoding='utf-8', errors='replace', timeout=15)
+        output = (result.stdout or '') + (result.stderr or '')
+        self.assertEqual(result.returncode, 0, output)
         self.assertIn('PASS', result.stdout)
 
     def test_edge_launch_and_cdp(self):
