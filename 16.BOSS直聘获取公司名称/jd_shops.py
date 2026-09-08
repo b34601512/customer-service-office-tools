@@ -14,7 +14,7 @@ from openpyxl.styles import Alignment, Font
 from websocket import WebSocketException
 
 from subject_export import RESULT_DIR
-from jd_session import JdPageReader, CollectionStopped, VerificationTimeout
+from jd_session import JdPageReader, CollectionStopped, VerificationTimeout, BrowserSessionError
 from jd_fields import labeled_fields, header_html, SCORE_FIELDS, COMPANY_FIELDS
 
 FIELDS = ('店铺名', '店铺链接', 'VenderId', '店铺ID', '公司名', '法人',
@@ -207,6 +207,7 @@ def run_shops(input_path=None, progress=None, outdir=RESULT_DIR, stop_event=None
     urls = read_shop_urls(input_path or default_input_path())
     rows, reports = [], []
     stopped = False
+    fatal_error = None
     def notify(stage, detail):
         if callable(progress):
             progress(len(rows), len(urls), stage, detail)
@@ -236,6 +237,11 @@ def run_shops(input_path=None, progress=None, outdir=RESULT_DIR, stop_event=None
                 row = parse_shop_page(page['html'], url)
                 evidence.update({field: url for field in FIELDS[:4]})
                 enrich_shop(reader, page, row, reasons, evidence)
+            except BrowserSessionError as exc:
+                # 一个共享 Edge/CDP 会话失败时，继续把后续所有店铺标成“字段缺失”会掩盖根因；
+                # 保存当前失败证据后立即停止批次，让用户/自动化得到明确基础设施错误。
+                fatal_error = exc
+                reasons.append(str(exc))
             except (VerificationTimeout, CollectionStopped, KeyboardInterrupt) as exc:
                 stopped = True
                 reasons.append(str(exc) or '用户中断，保存当前已取得的数据')
@@ -249,10 +255,16 @@ def run_shops(input_path=None, progress=None, outdir=RESULT_DIR, stop_event=None
                             '状态': ('部分完成' if missing else '完成') if row['店铺名'] else '失败',
                             '缺失列': missing, '原因': reasons, '字段来源': evidence})
             print(f'[jd] {index}/{len(urls)} {row["店铺名"] or url}：缺少{len(missing)}列', flush=True)
-            if stopped:
+            if stopped or fatal_error is not None:
                 break
     if rows:
         export_rows(rows, reports, outdir)
+    if fatal_error is not None:
+        if callable(progress):
+            progress(len(rows), len(urls), '失败', '专用 Edge/CDP 会话不可用；已保存当前失败证据')
+        raise RuntimeError(
+            f'京东浏览器会话不可用，已停止后续 {max(0, len(urls) - len(rows))} 家店铺：{fatal_error}'
+        ) from fatal_error
     if callable(progress):
         partial = len(rows) != len(urls) or any(report['缺失列'] for report in reports)
         progress(len(rows), len(urls), '部分完成' if partial else '完成', '已保存；字段来源和缺失原因见采集说明')
@@ -262,8 +274,12 @@ def run_shops(input_path=None, progress=None, outdir=RESULT_DIR, stop_event=None
 
 
 def main():
-    if hasattr(sys.stdout, 'reconfigure'):
-        sys.stdout.reconfigure(encoding='utf-8')
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, 'reconfigure'):
+            try:
+                stream.reconfigure(encoding='utf-8', errors='replace')
+            except (AttributeError, OSError, ValueError):
+                pass
     parser = argparse.ArgumentParser(description='京东店铺采集，用户完成验证后继续，按样表15列输出Excel')
     parser.add_argument('--input', type=Path, default=default_input_path(), help='店铺链接TXT或含店铺链接列的XLSX')
     parser.add_argument('--outdir', type=Path, default=RESULT_DIR)
