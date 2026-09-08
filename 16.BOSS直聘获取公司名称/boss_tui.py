@@ -10,13 +10,16 @@ boss_tui.py —— BOSS直聘采集工具 终端图形界面（参考 1.客服�
 
 import contextlib
 import glob
+import hashlib
 import io
 import os
 import shutil
 import subprocess
 import sys
+import tempfile
 import threading
 import time
+import traceback
 import unicodedata
 
 import boss_cdp as biz  # 业务真源（BOSS 采集核心）
@@ -24,6 +27,7 @@ import jd_shops
 import shop_subjects
 
 APP_VERSION = "v0.11"
+BUILD_ID = "fix-none-20260908"
 
 # ---------------------------------------------------------------- ANSI 工具
 ESC = "\x1b"
@@ -384,9 +388,36 @@ class TuiApp:
                 self.output.flush()
 
 
+def run_boss_fetch(*args, **kwargs):
+    """TUI/--auto 共用结果契约：None 不是空列表，更不是抓取成功。"""
+    print(f"[diagnostic] build={BUILD_ID}; Python={sys.version.split()[0]}", flush=True)
+    print(f"[diagnostic] executable={sys.executable}", flush=True)
+    for label, path in (("boss_tui", __file__), ("boss_cdp", getattr(biz, "__file__", None))):
+        print(f"[diagnostic] {label}={path or '无法定位模块文件'}", flush=True)
+        if path:
+            try:
+                with open(path, "rb") as source:
+                    digest = hashlib.sha256(source.read()).hexdigest()
+                print(f"[diagnostic] {label}.sha256={digest}", flush=True)
+            except OSError as exc:
+                # 冻结程序可能没有独立源码文件；诊断失败不能阻断采集。
+                print(f"[diagnostic] {label} 源码指纹不可读：{exc}", flush=True)
+    try:
+        rows = biz.run_fetch(*args, **kwargs)
+    except SystemExit as exc:
+        # sys.exit(0) 在工作线程中同样不是有效采集结果；--auto 也不能以 0 退出。
+        raise RuntimeError(f"抓取函数提前退出（SystemExit: {exc.code!r}），未返回岗位列表") from exc
+    if rows is None:
+        raise RuntimeError("抓取函数未返回结果（None），无法确认成功；请核对诊断中的代码路径和版本")
+    if not isinstance(rows, list):
+        raise TypeError(f"抓取函数返回 {type(rows).__name__}，预期岗位列表（list）")
+    return rows
+
+
 # ---------------------------------------------------------------- 任务线程容器
 class TaskRunner:
-    def __init__(self):
+    def __init__(self, log_dir=None):
+        self.log_dir = log_dir
         self.task = None
         self._lock = threading.Lock()
         self._thread = None
@@ -399,9 +430,11 @@ class TaskRunner:
         if self.running:
             return False
         buf = io.StringIO()
+        buf.write(f"[task] {desc}\n")
         task = {
             "desc": desc, "fn": fn, "args": args, "buf": buf,
             "done": False, "error": None, "result": None,
+            "log_path": None, "log_error": None,
             "current": 0, "total": int(total or 0), "stage": "准备中",
             "detail": "任务已创建", "started_at": time.monotonic(),
             "stop_event": threading.Event(),
@@ -422,18 +455,40 @@ class TaskRunner:
 
         def worker():
             try:
-                with contextlib.redirect_stdout(buf):
+                with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(buf):
                     kwargs = {"stop_event": task["stop_event"]} if cancellable else {}
                     if with_progress:
                         task["result"] = fn(*args, progress=report_progress, **kwargs)
                     else:
                         task["result"] = fn(*args, **kwargs)
-            except Exception as exc:  # noqa: BLE001
+            except (Exception, SystemExit, KeyboardInterrupt) as exc:
+                # 只在线程边界记录退出异常；不能让 finally 把未返回结果伪装成完成。
                 task["error"] = exc
+                task["stage"] = "失败"
+                task["detail"] = f"{type(exc).__name__}: {exc}"
+                traceback.print_exc(file=buf)
             finally:
-                task["done"] = True
                 task["updated_at"] = time.monotonic()
                 task["finished_at"] = time.time()
+                buf.write(f"[task] 结束：stage={task['stage']}; result_type={type(task['result']).__name__}\n")
+                try:
+                    if self.log_dir is not None:
+                        os.makedirs(self.log_dir, exist_ok=True)
+                        with tempfile.NamedTemporaryFile(
+                            mode="w", encoding="utf-8", errors="replace", delete=False,
+                            dir=self.log_dir, prefix="task_" + time.strftime("%Y%m%d_%H%M%S_"),
+                            suffix=".log",
+                        ) as logfile:
+                            logfile.write(buf.getvalue())
+                            log_path = logfile.name
+                        task["log_path"] = log_path
+                except OSError as exc:
+                    # 日志落盘失败单独提示，不能覆盖采集原始异常或伪造采集失败。
+                    task["log_error"] = str(exc)
+                    buf.write(f"[log] 日志保存失败：{exc}\n")
+                finally:
+                    # 最后发布 done，避免界面读到未保存完的日志状态。
+                    task["done"] = True
 
         self._thread = threading.Thread(target=worker, daemon=False)
         self._thread.start()
@@ -448,7 +503,7 @@ class TaskRunner:
             self._thread.join()
 
     def snapshot_lines(self, max_lines=200):
-        if not self.task:
+        if not self.task or max_lines <= 0:
             return []
         tail = self.task["buf"].getvalue().splitlines()[-max_lines:]
         return tail
@@ -718,13 +773,28 @@ class LogPage:
                 lines.append(colorize(fit(f"  详情：{task['detail']}", columns), "gray"))
         else:
             t = tasks.task
-            if t["error"]:
-                summary = f"✗ 任务失败：{t['desc']} → {t['error']}"
+            if t["error"] is not None:
+                summary = f"✗ 任务失败：{t['desc']} → {type(t['error']).__name__}: {t['error']}"
                 summary_color = "brightRed"
             else:
                 result = t["result"]
                 partial = str(t.get("stage", "")) == "部分完成"
-                if isinstance(result, list) and partial:
+                stop_event = t.get("stop_event")
+                stopped = t.get("stage") == "已停止" or (stop_event is not None and stop_event.is_set())
+                if result is None:
+                    summary = f"✗ 结果异常：{t['desc']} → 未返回结果（None），无法确认成功"
+                    summary_color = "brightRed"
+                elif stopped:
+                    count = f"，本次返回 {len(result)} 条" if isinstance(result, list) else ""
+                    summary = f"⚠ 已停止：{t['desc']}{count}；详情见日志"
+                    summary_color = "brightYellow"
+                elif result is False:
+                    summary = f"⚠ 未完成：{t['desc']} → 登录未完成，请检查浏览器页面"
+                    summary_color = "brightYellow"
+                elif isinstance(result, list) and not result:
+                    summary = f"⚠ 无结果：{t['desc']} → 0 条；详情见日志"
+                    summary_color = "brightYellow"
+                elif isinstance(result, list) and partial:
                     finished_at = time.strftime(
                         "%Y-%m-%d %H:%M:%S",
                         time.localtime(t.get("finished_at", time.time())),
@@ -745,15 +815,23 @@ class LogPage:
                     summary = f"✓ 已完成：{t['desc']} → 结果：{result}"
                     summary_color = "brightGreen"
             lines.append(colorize(fit(summary, columns), summary_color))
+        if tasks.task.get("log_path"):
+            lines.append(colorize(fit(f"完整日志（按 o 打开目录）：{tasks.task['log_path']}", columns), "gray"))
+        if tasks.task.get("log_error"):
+            lines.append(colorize(fit(f"日志保存失败：{tasks.task['log_error']}", columns), "brightYellow"))
         lines.append("")
-        # 缓冲输出尾部
-        tail = tasks.snapshot_lines(app.content_height - 3)
+        # 按实际剩余行数取尾部，窄窗口也不让日志挤掉状态信息。
+        tail = tasks.snapshot_lines(max(0, app.content_height - len(lines)))
         for line in tail:
             lines.append(fit(line, columns))
         return lines
 
     def handle_key(self, key, app):
-        return None  # 纯展示页，按键走全局（左右切页/数字键）
+        task = self.ctx.tasks.task
+        if key == "o" and task and task.get("log_path"):
+            subprocess.Popen(["explorer", os.path.dirname(task["log_path"])])
+            return True
+        return None  # 其余按键走全局（左右切页/数字键）
 
 
 # ---------------------------------------------------------------- 页面：最近结果
@@ -800,7 +878,7 @@ class ResultsPage:
 # ---------------------------------------------------------------- 组装与启动
 class Ctx:
     def __init__(self):
-        self.tasks = TaskRunner()
+        self.tasks = TaskRunner(log_dir=os.path.join(os.path.dirname(biz.RESULT_DIR), "logs"))
         self.config = {"keyword": "国内电商", "city": "深圳", "pages": 1, "format": "csv", 'title_filter': '', 'jd_input': str(jd_shops.default_input_path())}
         self._cleaned_up = False
         self.exiting = False
@@ -829,7 +907,7 @@ class Ctx:
         args = (config["keyword"], config["city"], config["pages"], config["format"], 3, biz.DEFAULT_PORT)
         ok = self.tasks.start(
             f"抓取 {config['keyword']} @ {config['city']}",
-            lambda *args, progress=None, stop_event=None: biz.run_fetch(
+            lambda *args, progress=None, stop_event=None: run_boss_fetch(
                 *args, progress=progress, title_filter=config['title_filter'], stop_event=stop_event),
             args,
             with_progress=True,
@@ -854,7 +932,7 @@ class Ctx:
         if self.exiting and not self.tasks.running:
             self.exiting = False
             app.exit_pending = False
-            if self.tasks.task and self.tasks.task["error"]:
+            if self.tasks.task and self.tasks.task["error"] is not None:
                 # 保存失败等错误留在日志页，避免退出掩盖失败。
                 app.request_render()
                 return
@@ -929,7 +1007,7 @@ def main(argv=None):
             if args.auto == "login":
                 ok = Ctx.action_login(timeout=args.login_timeout)
                 sys.exit(0 if ok else 2)
-            biz.run_fetch(args.keyword, args.city, args.pages, args.format, delay=3, port=biz.DEFAULT_PORT, title_filter=args.title_filter)
+            run_boss_fetch(args.keyword, args.city, args.pages, args.format, delay=3, port=biz.DEFAULT_PORT, title_filter=args.title_filter)
             sys.exit(0)
         finally:
             # 自动化入口也遵守同一套浏览器所有权清理规则。
