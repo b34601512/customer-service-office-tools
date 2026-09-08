@@ -38,18 +38,17 @@ _EMPTY_VALUES = {'暂无', '暂无信息', '--', '-', '无', '未披露', 'null'
 
 
 def _clean_value(value):
-    value = html.unescape(str(value or '')).replace('\u00a0', ' ')
+    value = html.unescape(str('' if value is None else value)).replace('\u00a0', ' ')
     value = ' '.join(value.split()).strip(' ：:\t\r\n')
     return '' if value in _EMPTY_VALUES else value
 
 
 def _score_value(value):
-    # 京东常见展示为“9.5 高”或“9.5分”；只取明确的 0-10 数值。
-    match = re.search(r'(?<!\d)(\d+(?:\.\d+)?)(?:\s*分)?(?!\d)', str(value))
+    # 只读本字段的完整评分；不能把负分、百分比或说明中的数字当作评分。
+    match = re.fullmatch(r'([0-9]+(?:\.[0-9]+)?)\s*分?(?:\s*(?:高|中|低|较高|较低|一般))?', str(value).strip())
     if not match:
         return ''
-    number = float(match.group(1))
-    return match.group(1) if 0 <= number <= 10 else ''
+    return match[1] if 0 <= float(match[1]) <= 10 else ''
 
 
 def _add_candidate(candidates, field, value):
@@ -72,45 +71,45 @@ def _line_pairs(line, labels):
     aliases = sorted(labels, key=len, reverse=True)
     alternation = '|'.join(re.escape(alias) for alias in aliases)
     # 不使用 lookbehind，兼容 Python 3.10；分隔符本身单独占 group 1。
-    token = re.compile(r'(^|[\s|｜;；])(' + alternation + r')\s*[:：]?\s*')
+    token = re.compile(r'(^|[\s|｜;；,，、])(' + alternation + r')(?=\s|[:：]|[0-9]|$)\s*[:：]?\s*')
     matches = list(token.finditer(line))
-    if not matches:
-        # 兼容没有明显分隔符但以标签开头的情况。
-        for alias in aliases:
-            if line.startswith(alias):
-                rest = line[len(alias):].lstrip(' ：:\t')
-                return [(alias, rest)] if rest else [(alias, '')]
-        return []
     pairs = []
     for index, match in enumerate(matches):
         value_start = match.end()
         value_end = matches[index + 1].start() if index + 1 < len(matches) else len(line)
-        pairs.append((match.group(2), line[value_start:value_end].strip(' ：:\t|｜;；')))
+        pairs.append((match.group(2), line[value_start:value_end].strip(' ：:\t|｜;；,，、')))
     return pairs
 
 
 def labeled_fields(text, fields):
-    """读取可见文本中的明确标签值；支持冒号、空白/表格分隔及一行多字段。"""
-    labels = {alias: field for field in fields for alias in ALIASES[field]}
-    lines = [_clean_value(line) for line in str(text or '').replace('\r', '\n').split('\n')]
+    """按标签就近读取；正向与反向评分布局互斥，绝不跨标签取前缀数字。"""
+    fields = tuple(fields)
+    labels = {alias: field for field, aliases in ALIASES.items() for alias in aliases}
+    score_aliases = '|'.join(re.escape(alias) for field in SCORE_FIELDS for alias in ALIASES[field])
+    reverse = re.compile(r'([0-9]+(?:\.[0-9]+)?)\s*分?\s*(' + score_aliases + r')')
+    lines = [_clean_value(line) for line in str(text or '').splitlines()]
     lines = [line for line in lines if line]
     candidates = {field: set() for field in fields}
     for index, line in enumerate(lines):
+        # 反向布局必须是独立的“数值 标签”块；不能从整行前缀提取第一个数。
+        reverse_matches = list(reverse.finditer(line))
+        rest = reverse.sub('', line).strip(' \t|｜;；,，、')
+        if reverse_matches and not rest:
+            for match in reverse_matches:
+                field = labels[match[2]]
+                if field in candidates:
+                    _add_candidate(candidates, field, match[1])
+            continue
         pairs = _line_pairs(line, labels)
         for alias, value in pairs:
+            field = labels[alias]
+            if field not in candidates:
+                continue
             if not value and index + 1 < len(lines):
                 next_line = lines[index + 1]
-                # 下一行如果本身是另一个标签，则不能当作当前字段值。
                 if not _line_pairs(next_line, labels):
                     value = next_line
-            _add_candidate(candidates, labels[alias], value)
-        # 评分有时表现为“9.5 商品评价”，补充反向布局。
-        for alias, field in labels.items():
-            if field not in SCORE_FIELDS or alias not in line:
-                continue
-            prefix = line.split(alias, 1)[0].strip()
-            if prefix:
-                _add_candidate(candidates, field, prefix)
+            _add_candidate(candidates, field, value)
     conflicts = [field for field, values in candidates.items() if len(values) > 1]
     return {field: next(iter(values)) for field, values in candidates.items() if len(values) == 1}, conflicts
 
@@ -156,7 +155,13 @@ def header_html(text):
         if not match:
             raise ValueError('店铺评分头部未返回JSON/JSONP')
         text = match[1]
-    data = json.loads(text)
+    try:
+        data = json.loads(text)
+    except json.JSONDecodeError as exc:
+        # 仅兼容 HTML 字符串中的原始换行/Tab；不修补截断、坏引号或执行 JSONP。
+        if not exc.msg.startswith('Invalid control character'):
+            raise
+        data = json.loads(text, strict=False)
     if not isinstance(data, dict) or data.get('result') is not True or not isinstance(data.get('html'), str):
         raise ValueError('店铺评分头部未返回有效html')
     return data['html']
