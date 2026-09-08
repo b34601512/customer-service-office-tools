@@ -12,6 +12,7 @@ import tempfile
 import time
 
 import boss_cdp as biz
+import edge_profile
 from boss_terminal import (CODES, ESC, ANSI_PATTERN, ANSI_TOKEN_PATTERN, ANSI_PART_PATTERN,
                            WIDE_RANGES, TuiApp, is_wide_char, _is_zero_width, display_width,
                            colorize, pad_end, pad_start, truncate, fit, move_to, clear_line,
@@ -32,15 +33,15 @@ except ImportError as exc:
     shop_subjects = None
     _shops_import_error = str(exc)
 
-APP_VERSION = "v0.12-rc1"
-BUILD_ID = "refactor-reliability-20260908"
+APP_VERSION = "v0.12-rc2"
+BUILD_ID = "refactor-reliability-20260908-r2"
 
 
 def print_diagnostics():
     print(f"[diagnostic] build={BUILD_ID}; previous=fix-none-20260908; Python={sys.version.split()[0]}", flush=True)
     print(f"[diagnostic] executable={sys.executable}", flush=True)
     files = [("boss_tui", __file__), ("boss_cdp", getattr(biz, "__file__", None))]
-    for name in ("boss_transport", "boss_types", "boss_storage", "task_runtime", "boss_terminal"):
+    for name in ("boss_transport", "boss_types", "boss_storage", "task_runtime", "boss_terminal", "edge_profile"):
         files.append((name, str(Path(__file__).with_name(name + ".py"))))
     for label, path in files:
         print(f"[diagnostic] {label}={path or '无法定位模块文件'}", flush=True)
@@ -54,8 +55,16 @@ def print_diagnostics():
 
 def run_boss_fetch(*args, **kwargs):
     print_diagnostics()
+    # 只在参数里替换已经确认属于本项目 Profile 的现有端口，不在这里启动浏览器；
+    # 因此无效关键词/城市/页数仍由业务层先校验，不会因为诊断逻辑提前拉起 Edge。
+    call_args = list(args)
+    call_kwargs = dict(kwargs)
+    if "port" in call_kwargs:
+        call_kwargs["port"] = edge_profile.resolve_profile_port(biz, call_kwargs["port"])
+    elif len(call_args) >= 6:
+        call_args[5] = edge_profile.resolve_profile_port(biz, call_args[5])
     try:
-        rows = biz.run_fetch(*args, **kwargs)
+        rows = biz.run_fetch(*call_args, **call_kwargs)
     except SystemExit as exc:
         raise RuntimeError(f"抓取函数提前退出（SystemExit: {exc.code!r}），未返回岗位列表") from exc
     if rows is None:
@@ -393,7 +402,7 @@ class Ctx:
             return False
         if callable(progress):
             progress(0, 0, "连接专用浏览器", "正在建立登录会话")
-        port = biz.ensure_edge_running(biz.DEFAULT_PORT)
+        port = edge_profile.ensure_profile_edge(biz, biz.DEFAULT_PORT)
         ok = biz.login_wait("国内电商", biz.CITY_CODES["深圳"], port, timeout, progress=progress, stop_event=stop_event)
         if callable(progress):
             progress(1 if ok else 0, 1, "登录完成" if ok else "登录未完成", "以真实接口响应为准")
@@ -458,6 +467,14 @@ def ensure_console_utf8():
         ctypes.windll.kernel32.SetConsoleCP(65001)
     except (AttributeError, OSError):
         pass
+    # 重定向到日志/管道时 Python 的 TextIO 编码不会随控制台代码页自动变化；
+    # 显式统一为 UTF-8，避免 Issue 中中文被二次解码成乱码。
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            try:
+                stream.reconfigure(encoding="utf-8", errors="replace")
+            except (AttributeError, OSError, ValueError):
+                pass
 
 
 def main(argv=None):
