@@ -33,8 +33,8 @@ except ImportError as exc:
     shop_subjects = None
     _shops_import_error = str(exc)
 
-APP_VERSION = "v0.12-rc2"
-BUILD_ID = "refactor-reliability-20260908-r2"
+APP_VERSION = "v0.12-rc3"
+BUILD_ID = "refactor-reliability-20260908-r3"
 
 
 def print_diagnostics():
@@ -43,6 +43,9 @@ def print_diagnostics():
     files = [("boss_tui", __file__), ("boss_cdp", getattr(biz, "__file__", None))]
     for name in ("boss_transport", "boss_types", "boss_storage", "task_runtime", "boss_terminal", "edge_profile"):
         files.append((name, str(Path(__file__).with_name(name + ".py"))))
+    if jd_shops is not None:
+        for name in ("jd_shops", "jd_session", "jd_fields"):
+            files.append((name, str(Path(__file__).with_name(name + ".py"))))
     for label, path in files:
         print(f"[diagnostic] {label}={path or '无法定位模块文件'}", flush=True)
         if path:
@@ -147,7 +150,12 @@ class OverviewPage:
                     if jd_shops is None:
                         self.state["message"] = "京东功能依赖未就绪：" + _jd_import_error
                         return True
-                    desc, fn, args = "采集京东店铺（样表15列）", jd_shops.run_shops, (self.ctx.config["jd_input"],)
+                    timeout = self.ctx.config["verification_timeout"]
+                    desc = "采集京东店铺（样表15列）"
+                    fn = lambda input_path, progress=None, stop_event=None: jd_shops.run_shops(
+                        input_path=input_path, progress=progress, stop_event=stop_event,
+                        verification_timeout=timeout)
+                    args = (self.ctx.config["jd_input"],)
                 else:
                     if shop_subjects is None:
                         self.state["message"] = "供应商网功能依赖未就绪：" + _shops_import_error
@@ -506,9 +514,11 @@ def main(argv=None):
             if args.auto == "jd":
                 if jd_shops is None:
                     raise RuntimeError("京东功能依赖未就绪：" + _jd_import_error)
-                jd_shops.run_shops(input_path=args.jd_file,
-                                   verification_timeout=900 if args.verification_timeout is None else args.verification_timeout)
-                return
+                print_diagnostics()
+                result = jd_shops.run_shops(
+                    input_path=args.jd_file,
+                    verification_timeout=900 if args.verification_timeout is None else args.verification_timeout)
+                sys.exit(getattr(result, "exit_code", 0))
             if args.auto == "login":
                 sys.exit(0 if Ctx.action_login(timeout=args.login_timeout) else 2)
             rows = run_boss_fetch(args.keyword, args.city, args.pages, args.format, delay=3, port=biz.DEFAULT_PORT,
