@@ -1,0 +1,39 @@
+name: Project 9 regression tests
+on:
+  push:
+    branches: [refactor/9-hybrid-headless]
+  pull_request:
+    paths:
+      - '9.客服数据自动更新/**'
+      - '共享CLI/**'
+      - '.github/workflows/project9-tests.yml'
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: 9.客服数据自动更新
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Run regression tests
+        run: npm test
+      - name: Collect source-only development snapshot
+        if: always()
+        shell: bash
+        working-directory: .
+        run: |
+          git archive --format=tar HEAD '9.客服数据自动更新' '共享CLI' > project9-source.tar
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: project9-source
+          path: project9-source.tar
+          retention-days: 3
