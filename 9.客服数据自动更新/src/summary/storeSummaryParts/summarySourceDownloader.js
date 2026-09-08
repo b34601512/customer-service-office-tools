@@ -4,6 +4,11 @@ const { downloadPddReport } = require("../../platforms/pdd/downloadTaskParts/pdd
 const { downloadDouyinReport } = require("../../platforms/douyin/downloadTaskParts/douyinReportDownloader");
 const { ensureTmallSummaryWindow } = require("../tmallSummaryWindow");
 const { notifyStoreProgress } = require("./summaryProgress");
+const { readManagedChromeSession } = require("../../engine/chromeSession");
+const { runManagedOpenWindowEngine } = require("../../shared/managedOpenWindowEngine");
+const { startJdLoginAssist } = require("../../platforms/jd/jdLoginAssist");
+const { startPddLoginAssist } = require("../../platforms/pdd/pddLoginAssist");
+const { runHybridSourceDownload } = require("./hybridSourceRunner");
 
 const defaultDownloadFunctionByPlatform = {
   tmall: downloadTmallReport,
@@ -62,16 +67,30 @@ async function downloadSummarySource(input) {
   }
   await ensureSummarySourceBrowser({ task, sourceGroup, onTaskProgress, evidenceFiles, ensurePlatformWindow });
   const resolvedConfig = buildSourceDownloadConfig(sourceGroup);
-  return downloadFn(
-    (stageText, detail = "") => {
+  const reportProgress = (stageText, detail = "") => {
       notifyStoreProgress(task, onTaskProgress, {
         status: "running",
         action: `下载：${stageText}`,
         detail,
         evidenceFiles
       });
-    },
-    {
+    };
+  const session = readManagedChromeSession();
+  const ownsSession = session?.platformKey === task.platformKey && session?.storeKey === resolvedConfig.activeStore.key;
+  const startAssist = task.platformKey === "jd" ? startJdLoginAssist : task.platformKey === "pdd" ? startPddLoginAssist : null;
+  return runHybridSourceDownload({
+    platformKey: task.platformKey,
+    headless: ownsSession && session.headless === true,
+    onProgress: reportProgress,
+    async openHeaded() {
+      await runManagedOpenWindowEngine({
+        platformKey: task.platformKey, storeConfig: resolvedConfig.activeStore,
+        browserMode: "headed", preserveCache: true,
+        actionName: "人工验证切换可见浏览器", moduleName: "批量汇总",
+        startAssist: startAssist ? ({ forceRestart }) => startAssist({ forceRestart, reportKey: resolvedConfig.reportKey, resolvedConfig }) : null
+      });
+    }
+  }, () => downloadFn(reportProgress, {
       reportKey: sourceGroup.downloadReportKey,
       resolvedConfig,
       exportRange: dateRange,
@@ -79,7 +98,7 @@ async function downloadSummarySource(input) {
       evidenceFiles,
       evidenceFileNamePrefix,
       sourceReportKeys: sourceGroup.reportKeys
-    }
+    })
   );
 }
 

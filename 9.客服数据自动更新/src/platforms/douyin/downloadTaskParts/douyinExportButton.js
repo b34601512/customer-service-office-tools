@@ -1,3 +1,5 @@
+const { markExportAttempted } = require("../../../engine/browserAutomationScope");
+const { checkBrowserHumanRequirement } = require("../../../engine/browserHumanGuard");
 const {
   dismissBlockingPopups,
   runAfterDismissingBlockingPopups
@@ -48,7 +50,11 @@ async function clickDouyinExportButton(page) {
   await waitForDouyinExportButtonReady(page);
   await runAfterDismissingBlockingPopups(
     page,
-    () => getDouyinExportButton(page).click({ timeout: 10000 }),
+    async () => {
+      await checkBrowserHumanRequirement({ force: true });
+      markExportAttempted();
+      return getDouyinExportButton(page).click({ timeout: 10000 });
+    },
     { platformName: "抖音" }
   );
 }

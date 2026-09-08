@@ -1,0 +1,31 @@
+name: Project 9 regression tests
+on:
+  push:
+    branches: [refactor/9-hybrid-headless]
+  pull_request:
+    paths:
+      - '9.客服数据自动更新/**'
+      - '共享CLI/**'
+      - '.github/workflows/project9-tests.yml'
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: 9.客服数据自动更新
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Run regression and unit tests
+        run: npm test
+      - name: Run real Chrome fixture integration tests
+        run: npm run test:browser

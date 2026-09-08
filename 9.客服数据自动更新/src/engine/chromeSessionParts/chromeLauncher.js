@@ -1,5 +1,6 @@
 // 该文件用于解决可见调试 Chrome 拉起、默认下载目录设置和会话状态写入问题。
 const { spawn } = require("child_process");
+const { isApplicationShutdownRequested } = require("../../shared/applicationShutdownSignal");
 const appConfig = require("../../config/appConfig");
 const { buildManagedChromeLaunchArgs } = require("../chromeLaunchArgs");
 const { log } = require("../logger");
@@ -33,7 +34,9 @@ async function launchChromeForManualLogin(targetUrl, options = {}) {
   const args = buildManagedChromeLaunchArgs({
     remoteDebuggingPort: appConfig.tmall.remoteDebuggingPort,
     userDataDir,
-    targetUrl
+    targetUrl,
+    headless: options.headless === true,
+    allowPopups: options.allowPopups === true
   });
 
   // 启动前端口守卫：若调试端口仍被占用，先清理带调试标志的残留浏览器，避免新浏览器抢端口失败。
@@ -44,6 +47,7 @@ async function launchChromeForManualLogin(targetUrl, options = {}) {
     );
   }
 
+  if (isApplicationShutdownRequested()) throw new Error("程序正在退出，已取消浏览器启动。");
   const child = await spawnManagedChrome(executablePath, args);
 
   child.unref();
@@ -58,7 +62,7 @@ async function launchChromeForManualLogin(targetUrl, options = {}) {
   log(
     "主线:启动",
     "浏览器引擎",
-    "人工登录",
+    options.headless === true ? "无头采集" : "可见浏览器",
     `已拉起 Chrome，PID=${child.pid}，调试端口=${appConfig.tmall.remoteDebuggingPort}，资料目录=${userDataDir}，目标页=${targetUrl}，默认下载目录=${downloadDir || "沿用 Chrome 当前设置"}`
   );
 }

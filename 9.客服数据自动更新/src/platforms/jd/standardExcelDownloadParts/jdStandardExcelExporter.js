@@ -119,7 +119,7 @@ async function exportJdStandardExcel({
   await captureDownloadEvidence(exportPage, evidenceOptions, "京东业绩指标下载前");
   const downloadStart = await triggerDownloadAndWait(
     () => waitForDownloadStart(runDownloadDir, beforeFiles, 60000),
-    () => clickLocatorWhenReady(exportButton, "京东导出按钮", { timeoutMs: 5000 })
+    () => clickLocatorWhenReady(exportButton, "京东导出按钮", { timeoutMs: 5000, downloadCommit: true })
   );
 
   reportProgress(onProgress, "等待下载开始", "点击完成，正在确认浏览器是否真的开始下载");

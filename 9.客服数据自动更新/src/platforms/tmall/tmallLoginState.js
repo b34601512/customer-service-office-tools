@@ -1,3 +1,4 @@
+const { checkBrowserHumanRequirement } = require("../../engine/browserHumanGuard");
 const appConfig = require("../../config/appConfig");
 const { waitForPage } = require("../../engine/chromeSession");
 const { log } = require("../../engine/logger");
@@ -134,6 +135,7 @@ async function waitForTmallLoginReady(browser, options = {}) {
   const autofilledFrames = new WeakSet();
 
   while (Date.now() <= deadline) {
+    await checkBrowserHumanRequirement();
     let loginSubmitted = false;
     for (const context of browser.contexts()) {
       for (const page of context.pages()) {

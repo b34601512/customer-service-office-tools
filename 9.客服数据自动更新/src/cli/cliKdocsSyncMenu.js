@@ -274,7 +274,7 @@ async function runKdocsCustomerServiceNameFilterReapply(terminal) {
 
 async function openAirScriptTemplate(templatePath = airScriptSyncTemplatePath) {
   if (!fs.existsSync(templatePath)) {
-    throw new Error(`找不到 AirScript 脚本文件：${templatePath}`);
+    throw new Error(`找不到本地 AirScript 模板：${templatePath}。公开仓库未包含该 .txt 文件；请恢复本机已有脚本后运行 npm run test:kdocs-templates 验证。`);
   }
   await openLocalFile(templatePath);
 }

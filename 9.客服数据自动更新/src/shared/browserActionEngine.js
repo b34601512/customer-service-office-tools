@@ -1,4 +1,6 @@
 const { log } = require("../engine/logger");
+const { checkBrowserHumanRequirement } = require("../engine/browserHumanGuard");
+const { markExportAttempted, getAutomationTime } = require("../engine/browserAutomationScope");
 
 const DEFAULT_ACTION_TIMEOUT_MS = 15000;
 const DEFAULT_ACTION_POLL_INTERVAL_MS = 100;
@@ -117,11 +119,12 @@ async function waitForLocatorActionable(locator, actionName, options = {}) {
   const requireTrialClick = Boolean(
     resolveOptionWithPlatformDefault(options, platformDefaults, "requireTrialClick", true)
   );
-  const deadline = Date.now() + timeoutMs;
+  const deadline = getAutomationTime() + timeoutMs;
   let lastState = { count: 0, visible: false, disabled: false };
   let lastTrialError = null;
 
-  while (Date.now() <= deadline) {
+  while (getAutomationTime() <= deadline) {
+    await checkBrowserHumanRequirement();
     lastState = await readLocatorActionabilityState(locator);
     if (isLocatorActionableState(lastState)) {
       try {
@@ -129,7 +132,7 @@ async function waitForLocatorActionable(locator, actionName, options = {}) {
         if (requireTrialClick) {
           await locator.click({
             trial: true,
-            timeout: Math.max(1, Math.min(1500, deadline - Date.now()))
+            timeout: Math.max(1, Math.min(1500, deadline - getAutomationTime()))
           });
         }
         return locator;
@@ -138,7 +141,7 @@ async function waitForLocatorActionable(locator, actionName, options = {}) {
       }
     }
 
-    await wait(Math.min(pollIntervalMs, Math.max(0, deadline - Date.now())));
+    await wait(Math.min(pollIntervalMs, Math.max(0, deadline - getAutomationTime())));
   }
 
   const suffix = lastTrialError ? `，最后一次试点失败：${lastTrialError.message}` : "";
@@ -155,6 +158,8 @@ async function clickLocatorWhenReady(locator, actionName, options = {}) {
 
   try {
     await waitForClickCadence(actionName, options);
+    await checkBrowserHumanRequirement({ force: true });
+    if (options.downloadCommit === true) markExportAttempted();
     await actionableLocator.click({ timeout: timeoutMs });
     rememberCommittedClick(options);
     return actionableLocator;

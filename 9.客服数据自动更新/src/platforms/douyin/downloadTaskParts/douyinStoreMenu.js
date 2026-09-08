@@ -20,6 +20,12 @@ async function findVisibleDouyinSwitchStoreEntries(page) {
   return visibleSwitchEntries;
 }
 
+async function isDouyinStoreMenuIdentityVisible(page) {
+  // 店铺菜单展开后会出现“店铺ID”；它与后续身份校验使用同一真源，只用于判断是否已经展开，绝不代替切店入口。
+  const pageText = await page.locator("body").innerText({ timeout: 3000 }).catch(() => "");
+  return /店铺\s*ID\s*[:：]?\s*\d+/i.test(String(pageText || ""));
+}
+
 async function waitForOnlyVisibleDouyinSwitchStoreEntry(page, timeoutMs = 10000) {
   // 该函数只等待菜单动画完成，并要求最终只有一个可见切店入口。
   const deadline = Date.now() + timeoutMs;
@@ -38,19 +44,62 @@ async function waitForOnlyVisibleDouyinSwitchStoreEntry(page, timeoutMs = 10000)
 }
 
 async function ensureDouyinStoreMenuOpenWithoutPopupHandling(page, existingShopHeader = null) {
-  // 该函数只按当前菜单状态完成一次“必要时展开并等待入口”动作。
-  const visibleSwitchEntries = await findVisibleDouyinSwitchStoreEntries(page);
-  if (visibleSwitchEntries.length === 1) {
-    return visibleSwitchEntries[0];
+  // 人工登录后的 SPA 可能先显示店铺标题、稍后才挂载菜单点击逻辑；这里有限重试同一安全入口，不放宽店铺身份校验。
+  const initialEntries = await findVisibleDouyinSwitchStoreEntries(page);
+  if (initialEntries.length === 1) {
+    return initialEntries[0];
   }
-  if (visibleSwitchEntries.length > 1) {
-    throw new Error(`抖音切店入口不唯一：识别到 ${visibleSwitchEntries.length} 个可见“切换组织/店铺”。`);
+  if (initialEntries.length > 1) {
+    throw new Error(`抖音切店入口不唯一：识别到 ${initialEntries.length} 个可见“切换组织/店铺”。`);
   }
 
   const shopHeader = existingShopHeader || page.locator(".headerShopName").first();
   await shopHeader.waitFor({ state: "visible", timeout: 15000 });
-  await shopHeader.click({ timeout: 5000 });
-  return waitForOnlyVisibleDouyinSwitchStoreEntry(page);
+
+  const deadline = Date.now() + 12000;
+  let clickAttempts = 0;
+  let menuIdentitySeen = false;
+  let visibleSwitchEntries = [];
+
+  while (Date.now() <= deadline) {
+    visibleSwitchEntries = await findVisibleDouyinSwitchStoreEntries(page);
+    if (visibleSwitchEntries.length === 1) {
+      return visibleSwitchEntries[0];
+    }
+    if (visibleSwitchEntries.length > 1) {
+      throw new Error(`抖音切店入口不唯一：识别到 ${visibleSwitchEntries.length} 个可见“切换组织/店铺”。`);
+    }
+
+    menuIdentitySeen = menuIdentitySeen || await isDouyinStoreMenuIdentityVisible(page);
+    if (!menuIdentitySeen) {
+      // 最多重复点击同一个店铺头部。若第一次点击发生在页面 hydration 前，后续点击可在事件挂载后正常展开。
+      await shopHeader.click({ timeout: 5000, noWaitAfter: true });
+      clickAttempts += 1;
+    }
+
+    const settleDeadline = Math.min(deadline, Date.now() + Math.max(2000, DOUYIN_POLL_INTERVAL_MS * 2));
+    while (Date.now() <= settleDeadline) {
+      visibleSwitchEntries = await findVisibleDouyinSwitchStoreEntries(page);
+      if (visibleSwitchEntries.length === 1) {
+        return visibleSwitchEntries[0];
+      }
+      if (visibleSwitchEntries.length > 1) {
+        throw new Error(`抖音切店入口不唯一：识别到 ${visibleSwitchEntries.length} 个可见“切换组织/店铺”。`);
+      }
+      menuIdentitySeen = menuIdentitySeen || await isDouyinStoreMenuIdentityVisible(page);
+      await page.waitForTimeout(DOUYIN_POLL_INTERVAL_MS);
+    }
+
+    if (menuIdentitySeen) {
+      // 菜单已展开时不再重复点头部，避免把菜单重新收起；只继续等既有唯一入口完成渲染。
+      await page.waitForTimeout(DOUYIN_POLL_INTERVAL_MS);
+    }
+  }
+
+  const detail = menuIdentitySeen
+    ? "店铺菜单已展开并读取到店铺ID，但未出现唯一的“切换组织/店铺”入口，可能是入口文案或DOM结构发生变化。"
+    : `店铺头部已可见，但连续 ${clickAttempts} 次尝试后菜单仍未展开，可能仍处于登录后页面初始化状态。`;
+  throw new Error(`抖音切店入口不唯一：识别到 0 个可见“切换组织/店铺”。${detail}`);
 }
 
 async function ensureDouyinStoreMenuOpen(page, existingShopHeader = null) {

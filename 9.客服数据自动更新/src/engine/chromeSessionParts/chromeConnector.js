@@ -1,5 +1,7 @@
 // 该文件用于解决 CDP 连接、目标页面等待和只断开 Playwright 会话问题。
 const appConfig = require("../../config/appConfig");
+const { registerAutomationBrowser, assertAutomationActive } = require("../browserAutomationScope");
+const { installBrowserPopupGuard } = require("../browserPopupGuard");
 const { log } = require("../logger");
 const { loadPlaywrightCore } = require("../playwrightProvider");
 const { wait } = require("./chromeSessionPaths");
@@ -12,6 +14,7 @@ process.env.no_proxy = process.env.NO_PROXY;
 
 async function connectToChrome(options = {}) {
   // 这里通过 CDP 接管已打开的 Chrome，保证用户登录后无需重新开浏览器。
+  assertAutomationActive();
   const { chromium } = loadPlaywrightCore();
   const timeoutMs = Number(options.timeoutMs ?? appConfig.tmall.connectTimeoutMs);
   const shouldLog = options.shouldLog !== false;
@@ -44,9 +47,19 @@ async function connectToChrome(options = {}) {
   while (Date.now() <= deadline) {
     const remainingMs = deadline - Date.now();
     try {
-      return await chromium.connectOverCDP(appConfig.tmall.cdpEndpoint, {
+      const browser = await chromium.connectOverCDP(appConfig.tmall.cdpEndpoint, {
         timeout: Math.max(1000, Math.min(timeoutMs, remainingMs || timeoutMs, 5000))
       });
+      try {
+        registerAutomationBrowser(browser);
+        await installBrowserPopupGuard(browser, {
+          onWarning: message => log("主线:提示", "弹窗治理", "监听页面", message)
+        });
+        return browser;
+      } catch (error) {
+        await browser.close().catch(() => {});
+        throw error;
+      }
     } catch (error) {
       if (!isRetryableChromeConnectError(error)) {
         throw error;
