@@ -23,7 +23,7 @@ from test_compatibility import new_app
 
 
 TEST_MODULES = ('test_fetch_result', 'test_reliability', 'test_compatibility',
-                'test_release_fixes', 'test_jd_shops')
+                'test_release_fixes', 'test_jd_shops', 'test_acceptance_fixes')
 
 
 def check_windows_console():
@@ -56,7 +56,7 @@ def check_windows_console():
         buffer = (InputRecord * len(events))(*events)
         count = wintypes.DWORD()
         assert api.WriteConsoleInputW(handle, buffer, len(buffer), ctypes.byref(count))
-        assert count.value == len(buffer)
+        assert count.value == len(events)
 
     try:
         reader = WindowsConsoleInput()
