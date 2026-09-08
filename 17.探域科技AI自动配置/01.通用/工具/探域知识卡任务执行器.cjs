@@ -37,7 +37,8 @@ function save(file, value) {
 
 const FIELDS = [
   'id', 'title', 'content', 'labels', 'ifBelievable', 'type', 'ifOpen',
-  'includeCondition', 'excludeCondition', 'timeliness', 'cycleTimeliness', 'orderStatus'
+  'includeCondition', 'excludeCondition', 'timeliness', 'cycleTimeliness', 'orderStatus',
+  'lastUpdatedAt'
 ];
 function payloadFrom(card, after) {
   const out = {};
@@ -47,7 +48,12 @@ function payloadFrom(card, after) {
 }
 function businessMeta(card) {
   const out = {};
-  for (const key of FIELDS) if (key !== 'content') out[key] = card[key];
+  for (const key of FIELDS) if (key !== 'content' && key !== 'lastUpdatedAt') out[key] = card[key];
+  if (out.excludeCondition && typeof out.excludeCondition === 'object') {
+    for (const key of ['spu', 'shop', 'rules', 'productGroupId', 'sellerGroup', 'platform']) {
+      if (out.excludeCondition[key] == null) out.excludeCondition[key] = [];
+    }
+  }
   return out;
 }
 function checkExpected(card, expected = {}) {
