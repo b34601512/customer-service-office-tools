@@ -1,4 +1,4 @@
-"""v0.10 交付回归：城市、备用端口、停止保存与退出顺序。"""
+"""交付回归：城市、备用端口、停止保存、退出顺序；保留旧用例并适配明确终态。"""
 import csv
 import io
 import json
@@ -10,6 +10,7 @@ from unittest import mock
 
 import boss_cdp as biz
 import boss_tui as tui
+from boss_types import FetchCancelled
 
 
 class ReleaseFixTests(unittest.TestCase):
@@ -43,42 +44,46 @@ class ReleaseFixTests(unittest.TestCase):
             self.assertEqual(biz.ensure_edge_running(9222), 9223)
             launch.assert_not_called()
 
-    def test_stop_inside_page_exports_completed_items(self):
+    def test_stop_inside_page_exports_received_items(self):
         stop = threading.Event()
         items = [{'jobId': '1', 'jobName': '客服'}, {'jobId': '2', 'jobName': '客服'}]
         def detail(*args, **kwargs):
             stop.set()
             return '已完成企业'
-        real_export = biz.export_rows
+        sessions = [mock.Mock(keep_open=False), mock.Mock(keep_open=False)]
         with tempfile.TemporaryDirectory() as directory, \
              mock.patch.object(biz, 'ensure_edge_running', return_value=9222), \
-             mock.patch.object(biz, '_new_session', side_effect=[mock.Mock(), mock.Mock()]), \
+             mock.patch.object(biz, '_new_session', side_effect=sessions), \
              mock.patch.object(biz, '_await_joblist', return_value={'code': 0, 'zpData': {'jobList': items}}), \
-             mock.patch.object(biz, 'fetch_company_full_name', side_effect=detail) as details, \
-             mock.patch.object(biz, 'export_rows', side_effect=lambda *a: real_export(*a, outdir=directory)):
-            rows = biz.run_fetch('客服', '济南市', 400, 'both', 3, 9222, stop_event=stop)
-            self.assertEqual(len(rows), 1)
+             mock.patch.object(biz, 'fetch_company_full_name', side_effect=detail) as details:
+            rows = biz.run_fetch('客服', '济南市', 400, 'both', 3, 9222, stop_event=stop, outdir=directory)
+            # 两条列表都已经收到；停止只终止详情请求，不删除尚未补全的岗位。
+            self.assertEqual(len(rows), 2)
+            self.assertEqual(rows.status, 'cancelled')
             self.assertEqual(details.call_count, 1)
-            files = list(Path(directory).iterdir())
+            files = list(Path(directory).glob('boss_jobs_*'))
             self.assertEqual(len(files), 2)
             for path in files:
                 with path.open(encoding='utf-8-sig', newline='') as stream:
                     saved = list(csv.DictReader(stream)) if path.suffix == '.csv' else json.load(stream)
                 self.assertEqual(saved[0]['company'], '已完成企业')
-                self.assertEqual(len(saved), 1)
+                self.assertEqual(saved[1]['company'], '')
+                self.assertEqual(len(saved), 2)
+            recovered, _ = biz.recover_checkpoint(rows.checkpoint)
+            self.assertEqual(recovered, rows)
 
     def test_exit_waits_for_save_then_closes_browser(self):
         ctx = tui.Ctx()
         app = tui.TuiApp('test', [mock.Mock(), mock.Mock(), mock.Mock()], output=io.StringIO())
         app.switch_page = mock.Mock()
         app.running = True
-        saved = threading.Event()
-        release = threading.Event()
+        saved, release = threading.Event(), threading.Event()
         def work(stop_event):
             stop_event.wait(2)
             release.wait(2)
             saved.set()
-        with mock.patch.object(biz, 'close_owned_edge') as close:
+        with tempfile.TemporaryDirectory() as folder, mock.patch.object(biz, 'close_owned_edge') as close:
+            ctx.tasks.log_dir = folder
             ctx.tasks.start('test', work, cancellable=True)
             ctx.request_exit(app)
             self.assertTrue(app.running)
@@ -106,5 +111,6 @@ class ReleaseFixTests(unittest.TestCase):
         stop = threading.Event()
         stop.set()
         session = mock.Mock()
-        self.assertIsNone(biz._await_joblist(session, stop_event=stop))
+        with self.assertRaises(FetchCancelled):
+            biz._await_joblist(session, stop_event=stop)
         session.recv_event.assert_not_called()
