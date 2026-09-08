@@ -47,9 +47,19 @@ jobs:
                   staged = subprocess.check_output(['git', 'rev-parse', ':' + name]).decode().strip()
                   assert staged == item['after'], 'Unexpected staged content: ' + name
               print('Verified and staged', len(data['files']), 'source edits; no runtime files staged')
+      - name: Apply upstream xmldom security patch and lock dependencies
+        working-directory: 9.客服数据自动更新
+        shell: bash
+        run: |
+          npm install @xmldom/xmldom@0.9.12 --save-exact --ignore-scripts
+          git add -- package.json package-lock.json
       - name: Install locked dependencies
         working-directory: 9.客服数据自动更新
         run: npm ci
+      - name: Record dependency audit
+        working-directory: 9.客服数据自动更新
+        continue-on-error: true
+        run: npm audit --json
       - name: Run original regression and new unit tests
         working-directory: 9.客服数据自动更新
         run: npm test
