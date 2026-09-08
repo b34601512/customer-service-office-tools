@@ -12,6 +12,8 @@ const { checkBrowserHumanRequirement } = require('../src/engine/browserHumanGuar
 const { runHybridSourceDownload } = require('../src/summary/storeSummaryParts/hybridSourceRunner');
 const { waitForDownloadArtifactState } = require('../src/shared/downloadEventEngine');
 const { requestChromeCloseOverCDP } = require('../src/engine/chromeSessionParts/chromeHeadlessCloser');
+const { readCurrentTmallShopName } = require('../src/platforms/tmall/storeSwitcherParts/tmallCurrentShopReader');
+const { ensureDouyinStoreMenuOpen } = require('../src/platforms/douyin/downloadTaskParts/douyinStoreMenu');
 
 const chromeOptions = process.env.CHROME_BIN ? { executablePath: process.env.CHROME_BIN } : { channel: 'chrome' };
 const base = 'https://kf.jd.com/fixture';
@@ -80,6 +82,38 @@ test('real headless browser writes a download to the selected directory', async 
   const filename = path.join(directory, 'fixture.csv');
   assert.equal(await waitForDownloadArtifactState(() => fs.existsSync(filename) ? filename : null, 10000, 50), filename);
   assert.match(fs.readFileSync(filename, 'utf8'), /fixture,1/);
+});
+test('Tmall shop reader waits for the canonical header after login hydration', async t => {
+  const { page } = await fixture(t, `<title>生意参谋</title><main>登录已完成，业务框架渲染中</main>
+    <script>
+      setTimeout(() => {
+        const title = document.createElement('span');
+        title.className = 'Frame-module-title_fixture';
+        title.textContent = '天猫2店';
+        document.body.appendChild(title);
+      }, 350);
+    </script>`);
+  assert.equal(await readCurrentTmallShopName(page, 3000), '天猫2店');
+});
+test('Douyin store menu retries the same safe header after login hydration', async t => {
+  const { page } = await fixture(t, `<div class="headerShopName"><span data-bytereplay-mask="true">DEDAKJ医疗器械旗舰店</span></div>
+    <script>
+      setTimeout(() => {
+        document.querySelector('.headerShopName').addEventListener('click', () => {
+          if (document.querySelector('#store-menu')) return;
+          const menu = document.createElement('section');
+          menu.id = 'store-menu';
+          menu.append('店铺ID 162329841 ');
+          const switchEntry = document.createElement('button');
+          switchEntry.textContent = '切换组织/店铺';
+          menu.appendChild(switchEntry);
+          document.body.appendChild(menu);
+        });
+      }, 350);
+    </script>`);
+  const entry = await ensureDouyinStoreMenuOpen(page);
+  assert.equal(await entry.innerText(), '切换组织/店铺');
+  assert.equal(await page.locator('#store-menu').count(), 1);
 });
 test('real Windows Chrome handoff reuses the profile without simultaneous ownership', { skip: process.platform !== 'win32' }, async t => {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'project9-profile-'));
