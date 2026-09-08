@@ -1,36 +1,25 @@
 """浏览器页面翻页与脱敏诊断；不直连接口，不刷新、不循环触发下一页。"""
 
-# 详情标签页可能暂时遮住列表。等待两帧布局后，仅滚动实际承载岗位的容器一次。
-# setTimeout 是布局等待的上限，不是网络重试；没有匹配响应仍须由业务层报超时。
+# 旧实现自动挑选带 overflow 的岗位祖先容器，但实机 r4 连续出现“容器已滚到底、却完全
+# 没有第2页请求”。r3 使用文档滚动时同命令曾成功，因此这里回到页面自身滚动上下文。
+# 只做一次有界的“接近底部 -> 底部”动作，让页面原生 scroll / IntersectionObserver 有机会
+# 触发；不循环滚动、不直接调用网站接口、不伪造翻页请求。
 SCROLL_ONCE_JS = r'''new Promise(resolve => {
-    let finished = false;
-    const run = () => {
-        if (finished) return;
-        finished = true;
-        const root = document.scrollingElement || document.documentElement;
-        const cards = Array.from(document.querySelectorAll('a[href*="/job_detail/"], .job-card-wrapper'));
-        const candidates = new Set();
-        for (const card of cards) {
-            for (let el = card.parentElement; el && el !== document.body; el = el.parentElement) {
-                const style = getComputedStyle(el);
-                if (el.clientHeight > 0 && el.scrollHeight > el.clientHeight + 1 &&
-                    /^(auto|scroll)$/.test(style.overflowY)) candidates.add(el);
-            }
-        }
-        let target = root, most = 0;
-        for (const el of candidates) {
-            const count = cards.filter(card => el.contains(card)).length;
-            if (count > most) { target = el; most = count; }
-        }
-        if (!target) { resolve({container: 'none', moved: false}); return; }
-        const before = target.scrollTop;
-        target.scrollTo({top: target.scrollHeight, behavior: 'instant'});
-        resolve({container: target === root ? 'document' : 'job-list', cards: cards.length,
-                 before, after: target.scrollTop, height: target.scrollHeight,
-                 viewport: target.clientHeight, moved: target.scrollTop !== before});
-    };
-    setTimeout(run, 250);
-    requestAnimationFrame(() => requestAnimationFrame(run));
+    const root = document.scrollingElement || document.documentElement;
+    const cards = document.querySelectorAll('a[href*="/job_detail/"], .job-card-wrapper').length;
+    const before = root.scrollTop;
+    const maxTop = Math.max(0, root.scrollHeight - root.clientHeight);
+    const nearBottom = Math.max(0, maxTop - Math.min(240, Math.max(80, root.clientHeight / 4)));
+    window.scrollTo(0, nearBottom);
+    requestAnimationFrame(() => {
+        window.scrollTo(0, maxTop);
+        setTimeout(() => resolve({
+            container: 'document', cards,
+            before, after: root.scrollTop,
+            height: root.scrollHeight, viewport: root.clientHeight,
+            moved: root.scrollTop !== before
+        }), 350);
+    });
 })'''
 
 
@@ -72,6 +61,6 @@ def advance_page(session):
     if isinstance(metrics, dict):
         safe = {key: metrics[key] for key in ('cards', 'before', 'after', 'height', 'viewport', 'moved')
                 if key in metrics and isinstance(metrics[key], (int, float, bool))}
-        print(f'[pagination] 单次滚动布局：{safe}', flush=True)
+        print(f'[pagination] 单次文档滚动：{safe}', flush=True)
     else:
-        print('[pagination] 已执行单次滚动；布局诊断不可用，仍以匹配接口响应为准', flush=True)
+        print('[pagination] 已执行单次文档滚动；布局诊断不可用，仍以匹配接口响应为准', flush=True)
