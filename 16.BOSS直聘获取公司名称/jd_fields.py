@@ -71,7 +71,8 @@ def _line_pairs(line, labels):
     # 长别名优先，避免“法人”抢先匹配“法定代表人”。
     aliases = sorted(labels, key=len, reverse=True)
     alternation = '|'.join(re.escape(alias) for alias in aliases)
-    token = re.compile(r'(?:(?<=^)|(?<=[\s|｜;；]))(' + alternation + r')\s*[:：]?\s*')
+    # 不使用 lookbehind，兼容 Python 3.10；分隔符本身单独占 group 1。
+    token = re.compile(r'(^|[\s|｜;；])(' + alternation + r')\s*[:：]?\s*')
     matches = list(token.finditer(line))
     if not matches:
         # 兼容没有明显分隔符但以标签开头的情况。
@@ -84,7 +85,7 @@ def _line_pairs(line, labels):
     for index, match in enumerate(matches):
         value_start = match.end()
         value_end = matches[index + 1].start() if index + 1 < len(matches) else len(line)
-        pairs.append((match.group(1), line[value_start:value_end].strip(' ：:\t|｜;；')))
+        pairs.append((match.group(2), line[value_start:value_end].strip(' ：:\t|｜;；')))
     return pairs
 
 
