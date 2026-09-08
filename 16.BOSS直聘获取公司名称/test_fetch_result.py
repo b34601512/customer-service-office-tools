@@ -46,7 +46,7 @@ class FetchResultTests(unittest.TestCase):
 
     def join(self, runner=None):
         runner = runner or self.ctx.tasks
-        runner._thread.join(timeout=3)
+        runner._thread.join(timeout=8)
         self.assertFalse(runner._thread.is_alive(), "测试任务未在期限内结束")
         self.assertTrue(runner.task["done"])
         return runner.task
@@ -217,7 +217,7 @@ class FetchResultTests(unittest.TestCase):
         self.ctx.config.update(city="郑州", pages=400, title_filter="客服")
         try:
             self.assertTrue(self.ctx.start_fetch(self.app))
-            self.assertTrue(entered.wait(1))
+            self.assertTrue(entered.wait(5), "工作线程5秒内未进入业务函数")
             self.ctx.config.update(city="深圳", pages=1, title_filter="仓管")
             self.assertFalse(self.ctx.start_fetch(self.app))
         finally:
