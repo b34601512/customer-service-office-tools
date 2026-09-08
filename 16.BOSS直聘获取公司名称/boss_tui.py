@@ -33,15 +33,15 @@ except ImportError as exc:
     shop_subjects = None
     _shops_import_error = str(exc)
 
-APP_VERSION = "v0.12-rc3"
-BUILD_ID = "refactor-reliability-20260908-r3"
+APP_VERSION = "v0.12-rc4"
+BUILD_ID = "refactor-reliability-20260908-r4"
 
 
 def print_diagnostics():
     print(f"[diagnostic] build={BUILD_ID}; previous=fix-none-20260908; Python={sys.version.split()[0]}", flush=True)
     print(f"[diagnostic] executable={sys.executable}", flush=True)
     files = [("boss_tui", __file__), ("boss_cdp", getattr(biz, "__file__", None))]
-    for name in ("boss_transport", "boss_types", "boss_storage", "task_runtime", "boss_terminal", "edge_profile"):
+    for name in ("boss_transport", "boss_types", "boss_storage", "task_runtime", "boss_terminal", "edge_profile", "boss_pagination", "shop_subjects", "subject_export"):
         files.append((name, str(Path(__file__).with_name(name + ".py"))))
     if jd_shops is not None:
         for name in ("jd_shops", "jd_session", "jd_fields"):
@@ -509,8 +509,9 @@ def main(argv=None):
             if args.auto == "shops":
                 if shop_subjects is None:
                     raise RuntimeError("供应商网功能依赖未就绪：" + _shops_import_error)
-                shop_subjects.run_shops(args.format, input_path=args.shops_file)
-                return
+                print_diagnostics()
+                result = shop_subjects.run_shops(args.format, input_path=args.shops_file)
+                sys.exit(getattr(result, "exit_code", 0))
             if args.auto == "jd":
                 if jd_shops is None:
                     raise RuntimeError("京东功能依赖未就绪：" + _jd_import_error)
