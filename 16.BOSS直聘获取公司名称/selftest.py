@@ -23,7 +23,7 @@ from test_compatibility import new_app
 
 
 TEST_MODULES = ('test_fetch_result', 'test_reliability', 'test_compatibility',
-                'test_release_fixes', 'test_jd_shops', 'test_acceptance_fixes')
+                'test_release_fixes', 'test_jd_shops', 'test_acceptance_fixes', 'test_round4')
 
 
 def check_windows_console():
