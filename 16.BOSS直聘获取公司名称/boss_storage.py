@@ -98,13 +98,14 @@ class CheckpointStore:
         self._write({"page": page, "rows": list(rows)})
 
     def finish(self, result):
+        # 状态清单使用 ASCII 转义：仍是合法 UTF-8，同时兼容 Windows 默认 GBK 的普通文本读取。
         # 清单和数据分别写，清单写失败不能使已保存页面消失。
         metadata = {"status": result.status, "row_count": len(result),
                     "requested_pages": result.requested_pages, "completed_pages": result.completed_pages,
                     "failed_pages": result.failed_pages, "paths": result.paths,
                     "reason": result.reason, "missing_company_count": result.missing_company_count}
         atomic_write(self.path + ".status.json",
-                     lambda stream: json.dump(metadata, stream, ensure_ascii=False, indent=2))
+                     lambda stream: json.dump(metadata, stream, ensure_ascii=True, indent=2))
 
     def close(self):
         self.stream.close()
