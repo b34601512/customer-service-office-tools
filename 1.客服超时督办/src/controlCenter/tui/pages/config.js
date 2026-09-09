@@ -14,6 +14,7 @@ const FIELDS = [
   { key: "scheduleUrl", label: "排班表地址(重启后台生效)", type: "text" },
   { key: "managerStaffName", label: "主管姓名(与企微成员一致)", type: "text" },
   { key: "timeoutReminderThresholdSeconds", label: "超时提醒阈值(秒)", type: "number" },
+  { key: "timeoutAutoTransferEnabled", label: "运营超时自动转接", type: "bool" },
   { key: "missedReplyMonitorEnabled", label: "漏回复监控", type: "bool" },
   { key: "onlinePresenceMonitorEnabled", label: "上班监控", type: "bool" },
   { key: "transferAutoOpenEnabled", label: "自动打开转接待", type: "bool" },

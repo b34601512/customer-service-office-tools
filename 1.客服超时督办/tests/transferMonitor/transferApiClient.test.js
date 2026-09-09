@@ -8,6 +8,7 @@ const {
   extractContacts,
   extractMessages,
   extractMembers,
+  assignChatToMember,
   fetchTransferMessages,
   fetchTransferMonitorSnapshot,
   normalizeContactsPageSize,
@@ -322,6 +323,36 @@ test("读取转接消息时应该把 accessToken 带进消息接口请求", asyn
   assert.match(seenInputs[0].requestPath, /id=chat_1/);
   assert.equal(messages.length, 1);
   assert.equal(messages[0].id, "msg_1");
+});
+
+test("自动转接接口应该带页面 token、会话 ID 和目标成员 ID", async () => {
+  const seenInputs = [];
+  const page = {
+    async evaluate(pageFunction, input) {
+      if (input === undefined) {
+        return JSON.stringify({ token: "token_assign" });
+      }
+
+      seenInputs.push(input);
+      return {
+        ok: true,
+        status: 200,
+        text: JSON.stringify({ code: 0, data: { assigned: true } })
+      };
+    }
+  };
+
+  const result = await assignChatToMember(page, "chat_assign", "pre_sales_1", { logResult: false });
+
+  assert.equal(result.chatId, "chat_assign");
+  assert.equal(result.assigneeId, "pre_sales_1");
+  assert.match(seenInputs[0].requestPath, /\/api\/chat\/assign$/);
+  assert.equal(seenInputs[0].accessToken, "token_assign");
+  assert.deepEqual(seenInputs[0].body, {
+    token: "token_assign",
+    chatId: "chat_assign",
+    assigneeId: "pre_sales_1"
+  });
 });
 
 test("接口明确鉴权失效时提示可见登录，不伪装成JSON解析错误", async () => {

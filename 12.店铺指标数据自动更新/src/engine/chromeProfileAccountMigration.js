@@ -1,4 +1,4 @@
-// 该文件用于解决旧店铺级 Chrome 资料目录迁移到账号级资料目录的问题。
+// 该文件用于解决旧店铺级 Edge 资料目录迁移到账号级资料目录的问题；保留历史函数名以兼容既有调用方。
 const fs = require("fs");
 const path = require("path");
 const { log } = require("./logger");
@@ -11,7 +11,7 @@ function isAccountProfileDirName(dirName) {
 }
 
 function isLegacyChromeProfileEntry(entryName) {
-  // 该函数用于识别旧 Chrome 资料目录里的真实资料文件，而不是新账号目录。
+  // 该函数用于识别旧 Edge 资料目录里的真实资料文件，而不是新账号目录。
   const text = String(entryName || "").trim();
   return Boolean(text) && !isAccountProfileDirName(text);
 }
@@ -34,7 +34,7 @@ function listLegacyChromeProfileEntries(storeProfileDir, accountProfileDir) {
 }
 
 function hasChromeProfileMarker(entries) {
-  // 该函数用于确认店铺根目录确实是旧 Chrome 资料目录，避免误搬普通空目录。
+  // 该函数用于确认店铺根目录确实是旧 Edge 资料目录，避免误搬普通空目录。
   return entries.some((entry) => ["Default", "Local State", "BrowserMetrics"].includes(entry.name));
 }
 

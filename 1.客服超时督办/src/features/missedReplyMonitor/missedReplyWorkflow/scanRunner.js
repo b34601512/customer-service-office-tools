@@ -35,7 +35,7 @@ function selectContactsFromSharedSnapshot(snapshot) {
   return Array.isArray(snapshot?.contacts) ? snapshot.contacts : [];
 }
 
-async function runMissedReplyMonitorScanWithSnapshot(page, runtimeState, snapshot) {
+async function runMissedReplyMonitorScanWithSnapshot(page, runtimeState, snapshot, options = {}) {
   // 这里执行单轮统一未回复扫描：消费共享联系人快照，只对本轮候选读取消息。
   const replyConfig = loadReplyConfig();
   if (!replyConfig.missedReplyMonitorEnabled) {
@@ -100,7 +100,17 @@ async function runMissedReplyMonitorScanWithSnapshot(page, runtimeState, snapsho
 
       if (reminderDecision.shouldRemind) {
         incrementReminderCandidateSummary(summary, reminderDecision);
-        const sent = await processReminderCandidate(runtimeState, reminderDecision, snapshot.memberMapByUserId);
+        const sent = await processReminderCandidate(
+          runtimeState,
+          reminderDecision,
+          snapshot.memberMapByUserId,
+          {
+            page,
+            scheduleService: options.scheduleService,
+            replyConfig,
+            now: new Date(scanNowMs)
+          }
+        );
         if (sent) {
           incrementReminderSentSummary(summary, reminderDecision);
         } else {
@@ -123,14 +133,14 @@ async function runMissedReplyMonitorScanWithSnapshot(page, runtimeState, snapsho
   logMissedReplySummary(runtimeState, summary);
 }
 
-async function runMissedReplyMonitorScan(page, runtimeState) {
+async function runMissedReplyMonitorScan(page, runtimeState, options = {}) {
   // 这里保留单轮扫描入口给测试和临时排障使用，正式后台运行走共享聊天采集器。
   const replyConfig = loadReplyConfig();
   const snapshot = await fetchTransferMonitorSnapshot(page, {
     logModuleName: MISSED_REPLY_LOG_MODULE_NAME,
     contactPageSize: TRANSFER_MONITOR_CONTACTS_PAGE_SIZE
   });
-  await runMissedReplyMonitorScanWithSnapshot(page, runtimeState, snapshot);
+  await runMissedReplyMonitorScanWithSnapshot(page, runtimeState, snapshot, options);
 }
 
 module.exports = {

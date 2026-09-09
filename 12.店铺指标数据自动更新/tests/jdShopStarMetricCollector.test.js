@@ -79,3 +79,18 @@ test("店铺星级新增售后服务时长和平台介入率评分，且保留�
   ) < 1e-12);
   assert.equal(skipped.length, 9);
 });
+
+test("店铺星级缺少可选指标时写入0并记录无数据标记", () => {
+  const basicResult = listBasicIndicatorMetrics({ zbs: {} });
+  assert.equal(basicResult.definitions.length, 11);
+  assert.equal(basicResult.skipped.length, 11);
+  assert.ok(basicResult.definitions.every((metric) => metric.metricValue === 0 && metric.zeroData === true));
+
+  const summaryMetrics = listSummaryMetrics({}, {});
+  assert.equal(summaryMetrics.length, 9);
+  assert.ok(summaryMetrics.every((metric) => metric.metricValue === 0 && metric.zeroData === true));
+
+  const scoreMetrics = listShopStarIndicatorScoreMetrics({});
+  assert.equal(scoreMetrics.length, 2);
+  assert.ok(scoreMetrics.every((metric) => metric.metricValue === 0 && metric.zeroData === true));
+});

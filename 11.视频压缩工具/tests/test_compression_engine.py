@@ -14,6 +14,7 @@ from video_compressor.compression.bitrate_calculator import (
 from video_compressor.compression.compression_engine import compress_video_file
 from video_compressor.media.ffmpeg_provider import get_ffmpeg_executable
 from video_compressor.utils.subprocess_window import get_hidden_process_kwargs
+from video_compressor.ui.tui_app import VideoCompressorTui
 
 
 class BitrateCalculatorTests(unittest.TestCase):
@@ -35,6 +36,13 @@ class SubprocessWindowTests(unittest.TestCase):
             self.assertIn("creationflags", hidden_kwargs)
         else:
             self.assertEqual(hidden_kwargs, {})
+
+
+class TuiTests(unittest.TestCase):
+    def test_parse_input_paths_should_keep_one_path_per_line(self) -> None:
+        paths = VideoCompressorTui.parse_input_paths('"D:\\视频\\a.mp4"\n\nD:\\视频\\b.mov  ')
+
+        self.assertEqual(paths, ["D:\\视频\\a.mp4", "D:\\视频\\b.mov"])
 
 
 class CompressionEngineIntegrationTests(unittest.TestCase):

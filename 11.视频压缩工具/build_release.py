@@ -43,7 +43,7 @@ def build_release() -> Path:
         "PyInstaller",
         "--noconfirm",
         "--clean",
-        "--windowed",
+        "--console",
         "--onefile",
         "--name",
         PACKAGE_NAME,

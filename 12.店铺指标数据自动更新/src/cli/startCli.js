@@ -1,7 +1,7 @@
 const path = require("path");
 
 // 本机代理工具（如 Clash）会把 HTTP_PROXY/HTTPS_PROXY 注入环境变量，
-// 而 playwright 接管本地调试 Chrome 时会按代理访问 127.0.0.1 的调试端口，
+// 而 playwright 接管本地调试 Edge 时会按代理访问 127.0.0.1 的调试端口，
 // 导致 CDP 连接被代理拦截（Unexpected status 400）。
 // 这里显式声明 localhost 不走代理，保证店铺采集的浏览器接管链路稳定。
 process.env.NO_PROXY = [process.env.NO_PROXY, "127.0.0.1,localhost"].filter(Boolean).join(",");

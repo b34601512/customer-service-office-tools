@@ -9,17 +9,17 @@ const DOUYIN_SOURCE_PAGE_BY_TYPE = {
 };
 
 const DOUYIN_METRIC_DEFINITIONS = [
-  { metricName: "服务体验得分", unit: "分", sourceMetricNames: ["服务体验得分"] },
+  { metricName: "服务体验得分", unit: "分", sourceMetricNames: ["服务体验得分", "服务体验"] },
   { metricName: "飞鸽平均响应时长得分", unit: "分", sourceMetricNames: ["飞鸽平均响应时长得分"] },
-  { metricName: "飞鸽平均响应时长", unit: "秒", sourceMetricNames: ["飞鸽平均响应时长"], skipSuffixes: ["得分"] },
+  { metricName: "飞鸽平均响应时长", unit: "秒", sourceMetricNames: ["飞鸽平均响应时长", "飞鸽人工会话平响时长"], skipSuffixes: ["得分"] },
   { metricName: "售后平均审核时长得分", unit: "分", sourceMetricNames: ["售后平均审核时长得分"] },
   { metricName: "售后平均审核时长", unit: "小时", sourceMetricNames: ["售后平均审核时长"], skipSuffixes: ["得分"] },
   { metricName: "飞鸽会话不满意率得分", unit: "分", sourceMetricNames: ["飞鸽会话不满意率得分"] },
-  { metricName: "飞鸽会话不满意率", unit: "%", sourceMetricNames: ["飞鸽会话不满意率"], skipSuffixes: ["得分"] },
+  { metricName: "飞鸽会话不满意率", unit: "%", sourceMetricNames: ["飞鸽会话不满意率", "飞鸽人工会话不满意率"], skipSuffixes: ["得分"] },
   { metricName: "平台求助率得分", unit: "分", sourceMetricNames: ["平台求助率得分"] },
   { metricName: "平台求助率", unit: "%", sourceMetricNames: ["平台求助率"], skipSuffixes: ["得分"] },
-  { metricName: "差行为扣分", unit: "分", sourceMetricNames: ["差行为扣分"] },
-  { metricName: "虚假交易刷体验分扣分", unit: "分", sourceMetricNames: ["虚假交易刷体验分扣分"] },
+  { metricName: "差行为扣分", unit: "分", sourceMetricNames: ["差行为扣分", "扣分项"] },
+  { metricName: "虚假交易刷体验分扣分", unit: "分", sourceMetricNames: ["虚假交易刷体验分扣分", "虚假交易刷体验分"] },
   { metricName: "影响消费者体验扣分", unit: "分", sourceMetricNames: ["影响消费者体验扣分"] },
   { metricName: "虚假交易刷体验分次数", unit: "次", sourceMetricNames: ["虚假交易刷体验分"], skipSuffixes: ["扣分"] },
   { metricName: "影响消费者体验次数", unit: "次", sourceMetricNames: ["影响消费者体验"], skipSuffixes: ["扣分"] }
@@ -31,7 +31,7 @@ function normalizeDouyinText(value) {
 
 function resolveDouyinDataDate(pageText, fallbackDate = new Date()) {
   const normalizedText = normalizeDouyinText(pageText);
-  const labeledDateMatch = normalizedText.match(/(?:统计时间|数据时间|统计日期|截至)\s*[:：]?\s*([^\s，。,；;]+)/);
+  const labeledDateMatch = normalizedText.match(/(?:更新时间|统计时间|数据时间|统计日期|截至)\s*[:：]?\s*([^\s，。,；;]+)/);
   const labeledDate = normalizeLooseDateText(labeledDateMatch?.[1]);
   if (labeledDate) return labeledDate;
   return formatDate(fallbackDate);
@@ -126,15 +126,41 @@ function buildDouyinMetricRecord({ store, definition, pageText, sourceUrl, colle
   });
 }
 
+function buildDouyinZeroDataMetricRecord({ store, definition, pageText, sourceUrl, collectedAt, fallbackDate }) {
+  const dataDate = resolveDouyinDataDate(pageText, fallbackDate);
+  const statisticsRange = resolveDouyinStatisticsRange(dataDate);
+  return createStoreMetricRecord({
+    platform: "抖音",
+    storeKey: store.key,
+    storeName: store.displayName,
+    dataDate,
+    statisticsStartDate: statisticsRange.statisticsStartDate,
+    statisticsEndDate: statisticsRange.statisticsEndDate,
+    metricName: definition.metricName,
+    metricValue: 0,
+    unit: definition.unit,
+    originalStatisticsWindow: statisticsRange.originalStatisticsWindow,
+    sourcePage: DOUYIN_SOURCE_PAGE_BY_TYPE.experienceScore,
+    sourceUrl,
+    sourceOriginalMetricName: definition.sourceMetricNames?.[0] || definition.metricName,
+    collectedAt
+  });
+}
+
 function buildDouyinStoreMetricRecords({ store, pageText, sourceUrl, collectedAt = new Date().toISOString(), fallbackDate = new Date() }) {
   const skipped = [];
-  const records = DOUYIN_METRIC_DEFINITIONS.flatMap((definition) => {
+  const zeroDataMetrics = [];
+  const normalizedPageText = normalizeDouyinText(pageText);
+  if (!/(?:体验分概览|服务体验得分|服务体验\s*\d)/.test(normalizedPageText)) {
+    throw new Error("抖音服务体验页面没有读取到有效店铺指标。");
+  }
+  const records = DOUYIN_METRIC_DEFINITIONS.map((definition) => {
     const record = buildDouyinMetricRecord({ store, definition, pageText, sourceUrl, collectedAt, fallbackDate });
-    if (!record) { skipped.push(definition.metricName); return []; }
-    return [record];
+    if (record) return record;
+    zeroDataMetrics.push(definition.metricName);
+    return buildDouyinZeroDataMetricRecord({ store, definition, pageText, sourceUrl, collectedAt, fallbackDate });
   });
-  if (!records.length) throw new Error("抖音服务体验页面没有读取到有效店铺指标。");
-  return { records, skipped };
+  return { records, skipped, zeroDataMetrics };
 }
 
 module.exports = {
@@ -146,5 +172,6 @@ module.exports = {
   findDouyinMetricValue,
   resolveDouyinStatisticsRange,
   buildDouyinMetricRecord,
+  buildDouyinZeroDataMetricRecord,
   buildDouyinStoreMetricRecords
 };

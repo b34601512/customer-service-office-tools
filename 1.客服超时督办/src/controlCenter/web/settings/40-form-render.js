@@ -7,6 +7,7 @@ function fillConfig(config) {
   document.getElementById("scheduleUrl").value = config.scheduleUrl || "";
   document.getElementById("managerStaffName").value = config.managerStaffName || "";
   document.getElementById("timeoutReminderThresholdSeconds").value = config.timeoutReminderThresholdSeconds;
+  document.getElementById("timeoutAutoTransferEnabled").checked = Boolean(config.timeoutAutoTransferEnabled);
   document.getElementById("missedReplyMonitorEnabled").checked = Boolean(config.missedReplyMonitorEnabled);
   document.getElementById("onlinePresenceMonitorEnabled").checked = Boolean(config.onlinePresenceMonitorEnabled);
   document.getElementById("transferAutoOpenEnabled").checked = Boolean(config.transferAutoOpenEnabled);
@@ -36,6 +37,7 @@ function fillConfig(config) {
   );
   updateCheckboxHint(document.getElementById("offDutyAutomationEnabled"), "启用中", "已关闭");
   updateCheckboxHint(document.getElementById("missedReplyMonitorEnabled"), "启用中", "已关闭");
+  updateCheckboxHint(document.getElementById("timeoutAutoTransferEnabled"), "启用中", "已关闭");
   updateCheckboxHint(document.getElementById("onlinePresenceMonitorEnabled"), "启用中", "已关闭");
   updateCheckboxHint(document.getElementById("transferAutoOpenEnabled"), "自动补开", "已关闭");
   updateCheckboxHint(document.getElementById("transferAutoCloseEnabled"), "自动关闭", "已关闭");

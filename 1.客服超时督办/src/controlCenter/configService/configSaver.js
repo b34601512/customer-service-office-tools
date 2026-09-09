@@ -6,6 +6,7 @@ const { readControlCenterConfig } = require("./configReader");
 const { readUtf8Text, writeUtf8Text } = require("./fileStore");
 const { parsePositiveInteger } = require("./literalParsers");
 const { parseKeywordRulesInput, serializeKeywordRuleListLiteral } = require("./keywordRuleText");
+const { loadReplyConfig } = require("../../config/replyConfigLoader");
 const {
   setReplyConfigSerializedValue,
   setReplyConfigValue
@@ -17,6 +18,7 @@ const appRuntimeConfigPath = appConfig.appRuntimeConfigPath;
 function saveControlCenterConfig(payload) {
   // 这里统一验证并保存主管端高频参数，避免网页层各自散落校验逻辑。
   const currentRuntimeConfig = readAppRuntimeConfig(appRuntimeConfigPath);
+  const currentReplyConfig = loadReplyConfig();
   const nextConfig = {
     targetUrl: normalizeTargetUrl(payload.targetUrl ?? currentRuntimeConfig.targetUrl),
     scheduleUrl: normalizeScheduleUrl(payload.scheduleUrl ?? currentRuntimeConfig.scheduleUrl),
@@ -25,6 +27,9 @@ function saveControlCenterConfig(payload) {
       payload.timeoutReminderThresholdSeconds,
       "提醒阈值(秒)"
     ),
+    timeoutAutoTransferEnabled: payload.timeoutAutoTransferEnabled === undefined
+      ? currentReplyConfig.timeoutAutoTransferEnabled
+      : Boolean(payload.timeoutAutoTransferEnabled),
     missedReplyMonitorEnabled: Boolean(payload.missedReplyMonitorEnabled),
     onlinePresenceMonitorEnabled: Boolean(payload.onlinePresenceMonitorEnabled),
     onlinePresenceScanIntervalMs: parsePositiveInteger(payload.onlinePresenceScanIntervalMs, "上班监控扫描间隔"),
@@ -107,6 +112,11 @@ function saveControlCenterConfig(payload) {
     content,
     "timeoutReminderThresholdSeconds",
     nextConfig.timeoutReminderThresholdSeconds
+  );
+  content = setReplyConfigValue(
+    content,
+    "timeoutAutoTransferEnabled",
+    JSON.stringify(nextConfig.timeoutAutoTransferEnabled)
   );
   content = setReplyConfigSerializedValue(
     content,

@@ -64,6 +64,21 @@ test("应该能构建出当天全员班次映射", () => {
   });
 });
 
+test("应该只把有背景色的当天排班标记为值班候选", () => {
+  const backgroundMatrix = sampleMatrix.map((row) => row.map(() => ""));
+  backgroundMatrix[3][3] = "#E2F0D9";
+  const shiftMap = buildDailyShiftMap(
+    sampleMatrix,
+    new Date(2026, 2, 25),
+    backgroundMatrix
+  );
+
+  assert.equal(shiftMap["易凡"].hasBackgroundColor, true);
+  assert.equal(shiftMap["易凡"].backgroundColor, "#E2F0D9");
+  assert.equal(shiftMap["苏哲"].hasBackgroundColor, false);
+  assert.equal(shiftMap["苏哲"].backgroundColor, "");
+});
+
 test("表头/汇总结构行（月份、早班、休息、上班人数等）不应该被当成员工", () => {
   const realMatrix = [
     ["2026年8月客服排班表"],

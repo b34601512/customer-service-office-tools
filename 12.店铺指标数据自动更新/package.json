@@ -7,6 +7,9 @@
   "scripts": {
     "start": "node src/cli/startCli.js",
     "cli": "node src/cli/startCli.js",
+    "cli:hybrid": "node scripts/startBrowserMode.js hybrid",
+    "cli:headed": "node scripts/startBrowserMode.js headed",
+    "cli:headless": "node scripts/startBrowserMode.js headless",
     "panel": "node src/cli/startCli.js",
     "test": "node --test tests/*.test.js"
   },

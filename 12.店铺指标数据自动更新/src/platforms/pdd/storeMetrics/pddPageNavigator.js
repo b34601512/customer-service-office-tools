@@ -1,4 +1,5 @@
 const { readPddPageBodyText } = require("../pddPageText");
+const { checkBrowserHumanRequirement } = require("../../../engine/browserHumanGuard");
 
 const PDD_TAB_NAMES = {
   customer: "客服数据",
@@ -60,6 +61,7 @@ async function waitForPddTabContent(page, pageType, timeoutMs = 30000) {
   const deadline = Date.now() + timeoutMs;
   let latestText = "";
   while (Date.now() <= deadline) {
+    await checkBrowserHumanRequirement({ includeLogin: true });
     latestText = await readPddPageBodyText(page).catch(() => "");
     if (expectedTexts.some((text) => latestText.includes(text)) &&
       isPddMetricContentReady(pageType, latestText)) return latestText;

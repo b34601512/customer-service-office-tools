@@ -1,4 +1,4 @@
-// 该文件用于解决 Chrome 缓存从源头限制体积的问题。
+// 该文件用于解决 Edge（Chromium）缓存从源头限制体积的问题。
 const DEFAULT_DISK_CACHE_SIZE_BYTES = 64 * 1024 * 1024;
 const DEFAULT_MEDIA_CACHE_SIZE_BYTES = 16 * 1024 * 1024;
 
@@ -13,7 +13,7 @@ function normalizeChromeCacheSizeBytes(value, fallbackValue) {
 }
 
 function buildChromeCacheLimitArgs(options = {}) {
-  // 这个函数只生成 Chrome 缓存上限参数，避免各启动入口各自硬编码。
+  // 这个函数只生成 Edge 缓存上限参数，避免各启动入口各自硬编码。
   const diskCacheSizeBytes = normalizeChromeCacheSizeBytes(
     options.diskCacheSizeBytes,
     DEFAULT_DISK_CACHE_SIZE_BYTES

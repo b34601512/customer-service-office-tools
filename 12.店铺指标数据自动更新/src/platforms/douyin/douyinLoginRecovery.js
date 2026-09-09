@@ -1,4 +1,5 @@
 const appConfig = require("../../config/appConfig");
+const { requireHeadedBrowser } = require("../../engine/browserAutomationScope");
 
 function readDouyinPageText(page) {
   return page.locator("body").innerText({ timeout: 5000 }).catch(() => "");
@@ -59,6 +60,9 @@ async function ensureDouyinMerchantSession(browser, page, reportProgress, option
       waitUntil: "domcontentloaded",
       timeout: appConfig.douyin.connectTimeoutMs
     }).catch(() => {});
+  }
+  if (options.headless) {
+    requireHeadedBrowser("抖音需要人工登录");
   }
   await page.bringToFront().catch(() => {});
   return waitForDouyinLoginRecovery(browser, page, options);

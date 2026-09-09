@@ -1,5 +1,6 @@
 const { log } = require("../engine/logger");
 const { escapeRegExp } = require("./escapeRegExp");
+const { checkBrowserHumanRequirement } = require("../engine/browserHumanGuard");
 
 const DEFAULT_DIALOG_SELECTORS = [
   "[role='dialog']",
@@ -178,6 +179,7 @@ async function dismissBlockingPopups(surface, options = {}) {
   let idleDeadline = Date.now() + idleTimeoutMs;
 
   while (true) {
+    await checkBrowserHumanRequirement();
     const popup = await findOnlyVisiblePopup(surface, resolvedOptions);
     if (!popup) {
       if (Date.now() >= idleDeadline) {

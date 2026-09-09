@@ -13,6 +13,7 @@ const {
 const { createMissedReplyMonitorRuntimeState } = require("../missedReplyMonitor/missedReplyWorkflow/runtimeState");
 const { runMissedReplyMonitorScanWithSnapshot } = require("../missedReplyMonitor/missedReplyWorkflow/scanRunner");
 const { recordActiveStaffSnapshot } = require("../timeoutPerformance/timeoutPerformanceLedger");
+const { createDailyScheduleService } = require("../scheduleQuery/dailyScheduleService");
 
 const CHAT_MONITOR_LOG_MODULE_NAME = "聊天监控";
 
@@ -91,20 +92,25 @@ async function runTransferTaskIfDue(page, runtimeState, dueTasks, snapshot) {
   }
 }
 
-async function runMissedReplyTaskIfDue(page, runtimeState, dueTasks, snapshot) {
+async function runMissedReplyTaskIfDue(page, runtimeState, dueTasks, snapshot, scheduleService) {
   // 这里只调度未实质回复规则，失败时不影响转接规则。
   if (!dueTasks.missedReplyDue) {
     return;
   }
 
   try {
-    await runMissedReplyMonitorScanWithSnapshot(page, runtimeState.missedReplyRuntimeState, snapshot);
+    await runMissedReplyMonitorScanWithSnapshot(
+      page,
+      runtimeState.missedReplyRuntimeState,
+      snapshot,
+      { scheduleService }
+    );
   } catch (error) {
     logError("主线:失败", "未实质回复监控", "单轮扫描失败", error);
   }
 }
 
-async function runDueChatMonitorTasks(page, runtimeState, replyConfig, dueTasks) {
+async function runDueChatMonitorTasks(page, runtimeState, replyConfig, dueTasks, options = {}) {
   // 这里完成一轮共享采集和规则分发，保证联系人数据只读一次。
   const needsSnapshot = dueTasks.transferDue || (dueTasks.missedReplyDue && replyConfig.missedReplyMonitorEnabled);
   const snapshot = needsSnapshot
@@ -116,12 +122,13 @@ async function runDueChatMonitorTasks(page, runtimeState, replyConfig, dueTasks)
   }
 
   await runTransferTaskIfDue(page, runtimeState, dueTasks, snapshot);
-  await runMissedReplyTaskIfDue(page, runtimeState, dueTasks, snapshot);
+  await runMissedReplyTaskIfDue(page, runtimeState, dueTasks, snapshot, options.scheduleService);
 }
 
 async function monitorSharedChatWorkflow(createChatPage, stopState) {
   // 这里运行聊天监控主循环，用一个页面同时服务转接和未实质回复。
   const runtimeState = createChatMonitorRuntimeState(Date.now());
+  const scheduleService = createDailyScheduleService({ logModuleName: "超时转接排班" });
   let chatPage = null;
 
   try {
@@ -138,7 +145,7 @@ async function monitorSharedChatWorkflow(createChatPage, stopState) {
       }
 
       try {
-        await runDueChatMonitorTasks(chatPage, runtimeState, replyConfig, dueTasks);
+        await runDueChatMonitorTasks(chatPage, runtimeState, replyConfig, dueTasks, { scheduleService });
       } catch (error) {
         if (isLoginRequiredError(error)) throw error;
         logError("主线:失败", CHAT_MONITOR_LOG_MODULE_NAME, "共享快照读取失败", error);

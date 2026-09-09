@@ -156,6 +156,41 @@ async function fetchJsonInPage(page, requestPath, requestLabel, accessToken) {
   return payload;
 }
 
+async function postJsonInPage(page, requestPath, requestLabel, accessToken, body) {
+  // 这里沿用页面登录态发受控写请求；调用方必须先完成业务规则裁决，接口层不自行选目标。
+  const responsePayload = await page.evaluate(async (input) => {
+    const response = await fetch(input.requestPath, {
+      method: "POST",
+      credentials: "same-origin",
+      headers: {
+        accept: "application/json, text/plain, */*",
+        authorization: `Bearer ${input.accessToken}`,
+        "content-type": "application/json"
+      },
+      body: JSON.stringify(input.body)
+    });
+    return {
+      ok: response.ok,
+      status: response.status,
+      text: await response.text()
+    };
+  }, { requestPath, accessToken, body });
+
+  if (!responsePayload.ok) {
+    if (responsePayload.status === 401) throw createLoginRequiredError("api_auth", `${requestLabel} 返回 HTTP 401。`);
+    throw new Error(`${requestLabel} 请求失败：HTTP ${responsePayload.status}，路径=${requestPath}`);
+  }
+
+  let payload;
+  try {
+    payload = JSON.parse(responsePayload.text);
+  } catch (error) {
+    throw new Error(`${requestLabel} 返回的不是合法 JSON：${error.message}`);
+  }
+  assertTransferMonitorApiSuccess(payload, requestPath, requestLabel);
+  return payload;
+}
+
 function extractContacts(payload) {
   // 这里统一兼容 contacts 接口常见返回结构，避免页面字段包一层就把监控链路打断。
   if (Array.isArray(payload?.data?.items)) {
@@ -281,6 +316,48 @@ async function fetchTransferMessages(page, chatId, options = {}) {
   }
 
   return messages;
+}
+
+async function assignChatToMember(page, chatId, assigneeId, options = {}) {
+  // 这里仅封装平台“分配会话”接口；目标姓名、值班顺序和触发类型全部由上层策略决定。
+  const normalizedChatId = String(chatId || "").trim();
+  const normalizedAssigneeId = String(assigneeId || "").trim();
+  if (!normalizedChatId) {
+    throw new Error("自动转接失败：chatId 为空。");
+  }
+  if (!normalizedAssigneeId) {
+    throw new Error("自动转接失败：目标售前 userId 为空。");
+  }
+
+  const routeMeta = resolveTargetRouteMeta();
+  const accessToken = await readTransferMonitorAccessToken(page);
+  const assignPath = `${routeMeta.origin}/api/chat/assign`;
+  const payload = await postJsonInPage(
+    page,
+    assignPath,
+    "超时自动转接接口",
+    accessToken,
+    {
+      token: accessToken,
+      chatId: normalizedChatId,
+      assigneeId: normalizedAssigneeId
+    }
+  );
+
+  if (options.logResult !== false) {
+    log(
+      "主线:执行",
+      normalizeApiLogModule(options),
+      "调用自动转接",
+      `会话=${normalizedChatId}，目标userId=${normalizedAssigneeId}`
+    );
+  }
+
+  return {
+    chatId: normalizedChatId,
+    assigneeId: normalizedAssigneeId,
+    payload
+  };
 }
 
 function loadGroupChatFilterConfigSafely() {
@@ -425,6 +502,7 @@ module.exports = {
   extractContacts,
   extractMessages,
   extractMembers,
+  assignChatToMember,
   fetchTransferMessages,
   fetchTransferMonitorSnapshot,
   logSnapshotSummaryIfChanged,

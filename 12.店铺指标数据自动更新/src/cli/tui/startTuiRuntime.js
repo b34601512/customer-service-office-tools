@@ -1,6 +1,6 @@
 // TUI 入口：初始化运行目录与配置，把六个页面、状态总线和服务接在一起。
 // 页面只消费 services 的快照数据；重量级依赖按需加载，保证首屏秒开。
-// 退出只关托管 Chrome（closeManagedChrome），不引入 #9 专有的 shutdown 流程。
+// 退出只关托管 Edge（closeManagedChrome），不引入 #9 专有的 shutdown 流程。
 const ansi = require("./ansi");
 const { fit } = require("./width");
 const { TuiApp } = require("./tuiApp");

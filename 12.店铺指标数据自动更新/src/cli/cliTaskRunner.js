@@ -12,8 +12,9 @@ function formatClockTime(isoTime) {
 
 function formatStoreResultLine(terminal, storeResult) {
   if (storeResult.status === "success") {
+    const zeroDataText = storeResult.zeroDataCount > 0 ? ` · 无数据${storeResult.zeroDataCount}项记0` : "";
     const skippedText = storeResult.skippedCount > 0 ? ` · 跳过${storeResult.skippedCount}项` : "";
-    return `${terminal.theme.success("[完成]")} ${storeResult.storeName} · ${storeResult.metricCount} 项${skippedText}`;
+    return `${terminal.theme.success("[完成]")} ${storeResult.storeName} · ${storeResult.metricCount} 项${zeroDataText}${skippedText}`;
   }
   if (storeResult.status === "skipped") {
     return `${terminal.theme.muted("[跳过]")} ${storeResult.storeName} · 今日已有 ${storeResult.previousMetricCount || 0} 项`;

@@ -1,6 +1,8 @@
 const fs = require("fs");
 const appConfig = require("../../../config/appConfig");
 const { runManagedOpenWindowEngine } = require("../../../shared/managedOpenWindowEngine");
+const { resolveBrowserMode } = require("../../../engine/browserAutomationScope");
+const { runHybridStoreCollection } = require("../../../shared/hybridStoreCollectionRunner");
 const {
   createStoreMetricEvidenceDirectory,
   buildEvidenceFilePath,
@@ -55,7 +57,7 @@ async function captureDouyinPageEvidence(page, evidenceDirectory, evidenceFiles)
 
 function shouldKeepDouyinBrowserOpen(error) {
   return error instanceof DouyinLoginRequiredError ||
-    /登录|人工切店|切换抖音店铺|验证码|滑块|安全验证|等待抖音/.test(String(error?.message || error));
+    /登录|人工切店|切换抖音店铺|验证码|滑块|安全验证|等待抖音|等待人工验证/.test(String(error?.message || error));
 }
 
 async function collectAndWriteDouyinStoreMetrics({ config, store, dateSelection, onProgress }) {
@@ -67,53 +69,90 @@ async function collectAndWriteDouyinStoreMetrics({ config, store, dateSelection,
   const evidenceFiles = [];
   let browser = null;
   let keepBrowserOpen = false;
+  const browserMode = resolveBrowserMode();
+  const sourceUrl = store.sources.experienceScore || appConfig.douyin.siteUrl;
+  const openStoreBrowser = (nextMode, preserveCache = false) => runManagedOpenWindowEngine({
+    platformKey: "douyin",
+    storeConfig: { ...store, siteUrl: sourceUrl },
+    actionName: "打开抖音服务体验页面",
+    moduleName: "抖音店铺指标",
+    missingOpenUrlMessage: `${store.displayName}缺少抖音服务体验页面地址。`,
+    browserMode: nextMode,
+    preserveCache
+  });
   try {
-    const sourceUrl = store.sources.experienceScore || appConfig.douyin.siteUrl;
     notifyProgress(onProgress, `打开${store.displayName}`, "正在启动独立浏览器并进入抖音服务体验页面");
-    await runManagedOpenWindowEngine({
+    await openStoreBrowser(browserMode);
+    return await runHybridStoreCollection({
       platformKey: "douyin",
-      storeConfig: { ...store, siteUrl: sourceUrl },
-      actionName: "打开抖音服务体验页面",
-      moduleName: "抖音店铺指标",
-      missingOpenUrlMessage: `${store.displayName}缺少抖音服务体验页面地址。`
+      mode: browserMode,
+      onProgress: (stage, detail) => notifyProgress(onProgress, stage, detail),
+      openHeaded: () => openStoreBrowser("headed", true)
+    }, async (scope) => {
+      browser = await connectToChrome({ timeoutMs: appConfig.douyin.connectTimeoutMs });
+      try {
+        let page = pickDouyinPage(browser);
+        if (!page) throw new Error("未找到抖音业务浏览器页面。");
+        await page.bringToFront().catch(() => {});
+        page = await ensureDouyinMerchantSession(
+          browser,
+          page,
+          (stage, detail) => notifyProgress(onProgress, stage, detail),
+          { headless: scope.headless }
+        );
+        const storeStatus = await ensureDouyinActiveStore(
+          page,
+          store,
+          (stage, detail) => notifyProgress(onProgress, stage, detail),
+          { headless: scope.headless }
+        );
+        page = storeStatus.page;
+        notifyProgress(onProgress, "确认抖音店铺", `当前=${storeStatus.identity.storeName}(${storeStatus.identity.storeId})`);
+        await navigateDouyinExperienceScorePage(page, sourceUrl);
+        notifyProgress(onProgress, "读取页面指标", "读取服务体验得分、服务考核指标和差行为数据");
+        const pageText = await waitForDouyinExperienceScoreReady(page, appConfig.douyin.connectTimeoutMs);
+        const { records, skipped, zeroDataMetrics } = buildDouyinStoreMetricRecords({
+          store,
+          pageText,
+          sourceUrl,
+          fallbackDate: resolveSnapshotDateFallback(dateSelection)
+        });
+        await captureDouyinPageEvidence(page, evidenceDirectory, evidenceFiles);
+        await disconnectFromChrome(browser, "抖音店铺指标读取完成，断开自动化连接");
+        browser = null;
+        notifyProgress(
+          onProgress,
+          "写入统一数据源",
+          `本次共 ${records.length} 条抖音店铺指标${zeroDataMetrics.length ? `，${zeroDataMetrics.length} 项无数据记0` : ""}`
+        );
+        const writeResult = await writeStoreMetricRecords({
+          workbookPath: config.workbook.path,
+          records,
+          retiredSourcePages: retiredDataSourcePages
+        });
+        notifyProgress(
+          onProgress,
+          "完成",
+          `写入 ${writeResult.writtenCount} 条，替换 ${writeResult.replacedCount} 条${zeroDataMetrics.length ? `，${zeroDataMetrics.length} 项无数据记0` : ""}`
+        );
+        return {
+          workbookPath: config.workbook.path,
+          evidenceDirectory,
+          evidenceFiles: listExistingEvidenceFiles(evidenceFiles),
+          metricCount: records.length,
+          skippedMetrics: skipped,
+          zeroDataMetrics,
+          recordKeys: records.map((record) => record.recordKey).filter(Boolean),
+          records,
+          writeResult
+        };
+      } finally {
+        if (browser) {
+          await disconnectFromChrome(browser, "抖音店铺指标本轮采集结束，断开自动化连接").catch(() => {});
+          browser = null;
+        }
+      }
     });
-    browser = await connectToChrome({ timeoutMs: appConfig.douyin.connectTimeoutMs });
-    let page = pickDouyinPage(browser);
-    if (!page) throw new Error("未找到抖音业务浏览器页面。");
-    await page.bringToFront().catch(() => {});
-    page = await ensureDouyinMerchantSession(browser, page, (stage, detail) => notifyProgress(onProgress, stage, detail));
-    const storeStatus = await ensureDouyinActiveStore(page, store, (stage, detail) => notifyProgress(onProgress, stage, detail));
-    page = storeStatus.page;
-    notifyProgress(onProgress, "确认抖音店铺", `当前=${storeStatus.identity.storeName}(${storeStatus.identity.storeId})`);
-    await navigateDouyinExperienceScorePage(page, sourceUrl);
-    notifyProgress(onProgress, "读取页面指标", "读取服务体验得分、服务考核指标和差行为数据");
-    const pageText = await waitForDouyinExperienceScoreReady(page, appConfig.douyin.connectTimeoutMs);
-    const { records, skipped } = buildDouyinStoreMetricRecords({
-      store,
-      pageText,
-      sourceUrl,
-      fallbackDate: resolveSnapshotDateFallback(dateSelection)
-    });
-    await captureDouyinPageEvidence(page, evidenceDirectory, evidenceFiles);
-    await disconnectFromChrome(browser, "抖音店铺指标读取完成，断开自动化连接");
-    browser = null;
-    notifyProgress(onProgress, "写入统一数据源", `本次共 ${records.length} 条抖音店铺指标`);
-    const writeResult = await writeStoreMetricRecords({
-      workbookPath: config.workbook.path,
-      records,
-      retiredSourcePages: retiredDataSourcePages
-    });
-    notifyProgress(onProgress, "完成", `写入 ${writeResult.writtenCount} 条，替换 ${writeResult.replacedCount} 条`);
-    return {
-      workbookPath: config.workbook.path,
-      evidenceDirectory,
-      evidenceFiles: listExistingEvidenceFiles(evidenceFiles),
-      metricCount: records.length,
-      skippedMetrics: skipped,
-      recordKeys: records.map((record) => record.recordKey).filter(Boolean),
-      records,
-      writeResult
-    };
   } catch (error) {
     if (browser) {
       await disconnectFromChrome(browser, "抖音店铺指标失败，断开自动化连接").catch(() => {});

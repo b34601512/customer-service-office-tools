@@ -3,6 +3,7 @@ const { tryAutofillPddLoginFrame } = require("./pddLoginLocators");
 const { isPddPageLoadingText, readPddPageBodyText } = require("./pddPageText");
 const { isPddStoreIdentityMatched } = require("./pddStoreIdentity");
 const { detectManualVerificationReason } = require("../manualVerificationShared");
+const { requireHeadedBrowser } = require("../../engine/browserAutomationScope");
 
 function normalizeText(value) {
   return String(value || "").replace(/\s+/g, " ").trim();
@@ -76,6 +77,9 @@ async function waitForPddLoginReady(browser, storeConfig = {}, options = {}) {
       const verificationReason = detectPddManualVerificationReason(bodyText, pageUrl);
       if (verificationReason && verificationReason !== reportedVerificationReason) {
         reportedVerificationReason = verificationReason;
+        if (options.headless) {
+          requireHeadedBrowser(`拼多多需要${verificationReason}`);
+        }
         if (typeof options.onManualVerification === "function") options.onManualVerification(verificationReason);
       }
 
@@ -90,6 +94,10 @@ async function waitForPddLoginReady(browser, storeConfig = {}, options = {}) {
           submitted = true;
           if (typeof options.onLoginSubmitted === "function") options.onLoginSubmitted();
         }
+      }
+      const loginFormStillVisible = hasPddLoginFormText(bodyText) || !isPddBusinessUrl(pageUrl);
+      if (loginFormStillVisible && !verificationReason && !submitted && options.headless) {
+        requireHeadedBrowser("拼多多需要人工登录");
       }
     }
     await new Promise((resolve) => setTimeout(resolve, Math.min(pollIntervalMs, Math.max(1, deadline - Date.now()))));

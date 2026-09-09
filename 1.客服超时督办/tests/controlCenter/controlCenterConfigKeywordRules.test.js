@@ -29,6 +29,7 @@ function buildReplyConfigContent() {
   missedReplyInvalidAgentReplyKeywords: ["."],
   missedReplyPlatformNoticeKeywords: ["我已经添加了你"],
   timeoutReminderThresholdSeconds: 150,
+  timeoutAutoTransferEnabled: true,
   offDutyAutomationEnabled: true,
   offDutyScanIntervalMs: 30000,
   offDutyPreSalesEarlyStartTime: "08:00",
@@ -67,6 +68,7 @@ function buildPayload(overrides = {}) {
   return {
     targetUrl: "https://example.com/main/org/group/chat",
     timeoutReminderThresholdSeconds: "150",
+    timeoutAutoTransferEnabled: true,
     missedReplyMonitorEnabled: true,
     onlinePresenceMonitorEnabled: true,
     onlinePresenceScanIntervalMs: "5000",
@@ -124,9 +126,11 @@ test("配置中心保存关键词规则时应该保留每个关键词的匹配�
   ]);
   assert.equal(result.onlinePresenceScanIntervalMs, 5000);
   assert.equal(result.onlinePresenceWorkStartTime, "08:00");
+  assert.equal(result.timeoutAutoTransferEnabled, true);
   assert.doesNotMatch(content, /missedReplyRecentContactLimit/);
   assert.match(content, /onlinePresenceScanIntervalMs: 5000/);
   assert.match(content, /onlinePresenceWorkStartTime: "08:00"/);
+  assert.match(content, /timeoutAutoTransferEnabled: true/);
   assert.match(content, /\{ text: "查一下", matchMode: "includes" \}/);
   assert.match(content, /\{ text: "找到问题了", matchMode: "includes" \}/);
   assert.match(content, /\{ text: ",", matchMode: "exact" \}/);

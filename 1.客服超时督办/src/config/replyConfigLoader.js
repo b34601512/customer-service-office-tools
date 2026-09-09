@@ -127,6 +127,7 @@ function loadReplyConfig() {
       ),
       groupChatFilterEnabled: normalizeBoolean(config.groupChatFilterEnabled, true),
       timeoutReminderThresholdSeconds: reminderThresholdSeconds,
+      timeoutAutoTransferEnabled: normalizeBoolean(config.timeoutAutoTransferEnabled, true),
       ...buildOffDutyConfig(config)
     };
   } catch (error) {

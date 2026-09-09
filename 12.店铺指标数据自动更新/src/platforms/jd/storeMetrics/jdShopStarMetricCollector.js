@@ -21,6 +21,7 @@ const shopStarIndicatorScoreDefinitions = [
     statisticsWindow: "近30天"
   }
 ];
+const shopStarPageReadyLabels = ["店铺星级", "当前星级", "数据日期", "星级动态"];
 
 function parseDateText(dateText) {
   const [year, month, day] = String(dateText).split("-").map(Number);
@@ -79,6 +80,28 @@ function waitForShopStarResponse(page, apiToken, timeoutMilliseconds = 60000) {
   );
 }
 
+function createOptionalMetricDefinition({
+  metricName,
+  rawValue,
+  unit,
+  statisticsWindow,
+  multiplier = 1,
+  sourceOriginalMetricName = metricName
+}) {
+  const numericValue = Number(rawValue);
+  const hasValue = rawValue !== null && rawValue !== undefined &&
+    !(typeof rawValue === "string" && !rawValue.trim()) &&
+    Number.isFinite(numericValue);
+  return {
+    metricName,
+    metricValue: hasValue ? numericValue * multiplier : 0,
+    unit,
+    statisticsWindow,
+    sourceOriginalMetricName,
+    zeroData: !hasValue
+  };
+}
+
 async function applyManualShopStarDate(page, snapshotDate) {
   const dateInput = page.locator('input[placeholder="选择日期"]').first();
   await dateInput.waitFor({ state: "visible", timeout: 15000 });
@@ -108,18 +131,16 @@ function listBasicIndicatorMetrics(basicData) {
     ["Vane_GoodRateOrigin", "店铺评价得分", "分", "近30天", 1],
     ["Vane_GoodReturn", "商品品质退货率", "%", "近30天", 0.01]
   ];
-  const skipped = [];
-  const result = definitions.flatMap(([indicatorKey, metricName, unit, window, multiplier]) => {
-    const rawValue = Number(indicators[indicatorKey]?.pfen);
-    if (!Number.isFinite(rawValue)) { skipped.push(metricName); return []; }
-    return [{
+  const result = definitions.map(([indicatorKey, metricName, unit, window, multiplier]) =>
+    createOptionalMetricDefinition({
       metricName,
-      metricValue: rawValue * multiplier,
+      rawValue: indicators[indicatorKey]?.pfen,
       unit,
       statisticsWindow: window,
+      multiplier,
       sourceOriginalMetricName: metricName
-    }];
-  });
+    }));
+  const skipped = result.filter((metric) => metric.zeroData).map((metric) => metric.metricName);
   return { definitions: result, skipped };
 }
 
@@ -136,41 +157,38 @@ async function readShopStarIndicatorScores(page, pageText) {
 }
 
 function listShopStarIndicatorScoreMetrics(indicatorScoreValues = {}) {
-  return shopStarIndicatorScoreDefinitions.flatMap((definition) => {
-    const metricValue = Number(indicatorScoreValues[definition.sourceMetricName]);
-    if (!Number.isFinite(metricValue)) return [];
-    return [{
+  return shopStarIndicatorScoreDefinitions.map((definition) =>
+    createOptionalMetricDefinition({
       metricName: definition.metricName,
-      metricValue,
+      rawValue: indicatorScoreValues[definition.sourceMetricName],
       unit: definition.unit,
       statisticsWindow: definition.statisticsWindow,
       sourceOriginalMetricName: definition.sourceMetricName
-    }];
-  });
+    }));
 }
 
 function listSummaryMetrics(basicData, starsData) {
   const starIndicator = basicData.zbs?.Vane_ScoreRankRate || {};
   const definitions = [
-    ["店铺星级", Number(starIndicator.pji), "星", "数据日期快照"],
-    ["店铺星级排名", Number(starIndicator.rank), "%", "数据日期快照", 0.01],
-    ["店铺体验得分", Number(basicData.finalScore), "分", "数据日期快照"],
-    ["近30天有效订单", Number(basicData.validOrderNum), "单", "近30天"],
-    ["客服咨询得分", Number(starsData.customServiceConsultScore), "分", "数据日期快照"],
-    ["物流履约得分", Number(starsData.logisticsLvyueScore), "分", "数据日期快照"],
-    ["售后服务得分", Number(starsData.afterServiceScore), "分", "数据日期快照"],
-    ["商品体验得分", Number(starsData.userEvaluateScore), "分", "数据日期快照"],
-    ["附加项得分", Number(basicData.serviceBonus), "分", "数据日期快照"]
+    ["店铺星级", starIndicator.pji, "星", "数据日期快照"],
+    ["店铺星级排名", starIndicator.rank, "%", "数据日期快照", 0.01],
+    ["店铺体验得分", basicData.finalScore, "分", "数据日期快照"],
+    ["近30天有效订单", basicData.validOrderNum, "单", "近30天"],
+    ["客服咨询得分", starsData.customServiceConsultScore, "分", "数据日期快照"],
+    ["物流履约得分", starsData.logisticsLvyueScore, "分", "数据日期快照"],
+    ["售后服务得分", starsData.afterServiceScore, "分", "数据日期快照"],
+    ["商品体验得分", starsData.userEvaluateScore, "分", "数据日期快照"],
+    ["附加项得分", basicData.serviceBonus, "分", "数据日期快照"]
   ];
-  return definitions.flatMap(([metricName, rawValue, unit, window, multiplier = 1]) =>
-    Number.isFinite(rawValue) ? [{
+  return definitions.map(([metricName, rawValue, unit, window, multiplier = 1]) =>
+    createOptionalMetricDefinition({
       metricName,
-      metricValue: rawValue * multiplier,
+      rawValue,
       unit,
       statisticsWindow: window,
+      multiplier,
       sourceOriginalMetricName: metricName
-    }] : []
-  );
+    }));
 }
 
 function listServiceProductMetrics(basicData) {
@@ -201,10 +219,9 @@ async function collectJdShopStarMetrics(page, store, dateSelection) {
   const initialBasicResponsePromise = waitForShopStarResponse(page, basicApiToken);
   const starsResponsePromise = waitForShopStarResponse(page, starsApiToken);
   await page.goto(store.sources.shopStar, { waitUntil: "domcontentloaded", timeout: 45000 });
-  await waitForJdMetricPageText(page, ["咚咚平均响应时长", "售后评价得分"]);
-  await waitForJdMetricPageText(page, ["售后服务时长"]);
-  const shopStarPageText = await waitForJdMetricPageText(page, ["平台介入率"]);
-  const shopStarIndicatorScores = await readShopStarIndicatorScores(page, shopStarPageText);
+  // 页面本身正常但某些店铺没有星级数据时，目标指标标签不会出现；这里只等待页面壳就绪，
+  // 固定指标是否缺失交给后续解析并写入 0，不能再作为整店失败条件。
+  await waitForJdMetricPageText(page, shopStarPageReadyLabels);
   const starsResult = await readJsonResponse(starsResponsePromise, "星级汇总");
   const initialBasicResponse = await initialBasicResponsePromise;
   const selectedBasicResponse = dateSelection.snapshotDate
@@ -216,6 +233,8 @@ async function collectJdShopStarMetrics(page, store, dateSelection) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dataDate)) {
     throw new Error("京东店铺星级没有返回真实数据日期。");
   }
+  const shopStarPageText = await waitForJdMetricPageText(page, shopStarPageReadyLabels);
+  const shopStarIndicatorScores = await readShopStarIndicatorScores(page, shopStarPageText);
   const collectedAt = new Date().toISOString();
   const basicIndicatorResult = listBasicIndicatorMetrics(basicResult.data);
   const metricDefinitions = [
@@ -224,13 +243,17 @@ async function collectJdShopStarMetrics(page, store, dateSelection) {
     ...listShopStarIndicatorScoreMetrics(shopStarIndicatorScores.scores),
     ...listServiceProductMetrics(basicResult.data)
   ];
+  const zeroDataMetrics = metricDefinitions
+    .filter((metricDefinition) => metricDefinition.zeroData)
+    .map((metricDefinition) => metricDefinition.metricName);
   return {
     records: metricDefinitions.map((metricDefinition) => createShopStarRecord(store, {
       ...metricDefinition,
       dataDate,
       collectedAt
     })),
-    skipped: [...shopStarIndicatorScores.skipped, ...basicIndicatorResult.skipped]
+    skipped: [],
+    zeroDataMetrics
   };
 }
 

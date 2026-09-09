@@ -111,6 +111,9 @@ module.exports = {
   // 这里控制客户等待多久后触发首次超时提醒；漏回复提醒固定为这个阈值的 10 倍，避免两套阈值配置打架。
   timeoutReminderThresholdSeconds: 150,
 
+  // 这里控制运营账号首次超时或 10 倍漏回复时，是否按排班背景色自动转给值班售前。
+  timeoutAutoTransferEnabled: true,
+
   // 这里控制下班监控是否启用；启用后会按排班动态收尾，不会对接班人做固定毫秒等待。
   offDutyAutomationEnabled: true,
 

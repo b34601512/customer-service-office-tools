@@ -149,6 +149,7 @@ function bindConfigActions() {
         scheduleUrl: document.getElementById("scheduleUrl").value.trim(),
         managerStaffName: document.getElementById("managerStaffName").value.trim(),
         timeoutReminderThresholdSeconds: document.getElementById("timeoutReminderThresholdSeconds").value.trim(),
+        timeoutAutoTransferEnabled: document.getElementById("timeoutAutoTransferEnabled").checked,
         missedReplyMonitorEnabled: document.getElementById("missedReplyMonitorEnabled").checked,
         onlinePresenceMonitorEnabled: document.getElementById("onlinePresenceMonitorEnabled").checked,
         transferAutoOpenEnabled: document.getElementById("transferAutoOpenEnabled").checked,

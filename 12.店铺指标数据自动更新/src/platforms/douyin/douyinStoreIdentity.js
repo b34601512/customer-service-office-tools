@@ -1,5 +1,6 @@
 const appConfig = require("../../config/appConfig");
 const { runAfterDismissingBlockingPopups } = require("../../shared/blockingPopupEngine");
+const { requireHeadedBrowser } = require("../../engine/browserAutomationScope");
 
 const DOUYIN_POLL_INTERVAL_MS = appConfig.douyin.pageReadyPollIntervalMs;
 const DOUYIN_STORE_SWITCH_TIMEOUT_MS = appConfig.douyin.storeSwitchTimeoutMs;
@@ -200,13 +201,23 @@ async function ensureDouyinActiveStore(page, storeConfig, reportProgress, option
     // 固定用原首页做弹窗治理，再点击已确认的跨页店铺选项。
     await clickDouyinStorePickerOption(exactStoreOption.option, page);
   } else {
+    if (options.headless) {
+      requireHeadedBrowser("抖音需要人工确认目标店铺");
+    }
     if (typeof reportProgress === "function") {
       reportProgress("等待人工切店", "未找到目标完整店名的唯一可点项，请在当前页面手动切换，程序会自动续跑");
     }
     await page.bringToFront().catch(() => {});
   }
   const timeoutMs = Number(options.storeSwitchTimeoutMs) || DOUYIN_STORE_SWITCH_TIMEOUT_MS;
-  return waitForExpectedDouyinStore(page, expectedIdentity, timeoutMs);
+  try {
+    return await waitForExpectedDouyinStore(page, expectedIdentity, timeoutMs);
+  } catch (error) {
+    if (options.headless) {
+      requireHeadedBrowser("抖音需要人工确认目标店铺");
+    }
+    throw error;
+  }
 }
 
 module.exports = {

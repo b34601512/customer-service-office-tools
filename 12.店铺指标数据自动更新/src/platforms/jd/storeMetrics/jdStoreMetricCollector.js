@@ -1,5 +1,7 @@
 const fs = require("fs");
 const { runManagedOpenWindowEngine } = require("../../../shared/managedOpenWindowEngine");
+const { resolveBrowserMode } = require("../../../engine/browserAutomationScope");
+const { runHybridStoreCollection } = require("../../../shared/hybridStoreCollectionRunner");
 const {
   createStoreMetricEvidenceDirectory,
   buildEvidenceFilePath,
@@ -91,6 +93,11 @@ async function collectPageMetricsFromLoggedBrowser(store, dateSelection, evidenc
         ...(shopStarResult.skipped || []),
         ...(negativeServiceResult.skipped || []),
         ...(complianceResult.skipped || [])
+      ],
+      zeroDataMetrics: [
+        ...(shopStarResult.zeroDataMetrics || []),
+        ...(negativeServiceResult.zeroDataMetrics || []),
+        ...(complianceResult.zeroDataMetrics || [])
       ]
     };
   } finally {
@@ -99,7 +106,7 @@ async function collectPageMetricsFromLoggedBrowser(store, dateSelection, evidenc
 }
 
 function shouldKeepBrowserForManualLogin(error) {
-  return /验证码|滑块|安全验证|等待京东登录成功超时|登录辅助超时|关闭京东遮挡弹窗失败/.test(String(error?.message || error));
+  return /验证码|滑块|安全验证|等待京东登录成功超时|登录辅助超时|等待人工验证|关闭京东遮挡弹窗失败/.test(String(error?.message || error));
 }
 
 async function collectAndWriteJdStoreMetrics({ config, store, dateSelection, onProgress }) {
@@ -111,61 +118,79 @@ async function collectAndWriteJdStoreMetrics({ config, store, dateSelection, onP
   });
   const evidenceFiles = [];
   let keepBrowserOpen = false;
+  const browserMode = resolveBrowserMode();
+  const openStoreBrowser = (nextMode, preserveCache = false) => runManagedOpenWindowEngine({
+    platformKey: "jd",
+    storeConfig: resolvedConfig.activeStore,
+    actionName: "店铺指标打开后台页面",
+    moduleName: "店铺指标",
+    missingOpenUrlMessage: `${store.displayName}缺少店铺考核页面地址。`,
+    browserMode: nextMode,
+    preserveCache
+  });
   try {
     notifyProgress(onProgress, `打开${store.displayName}`, "正在启动独立浏览器并自动登录");
-    await runManagedOpenWindowEngine({
+    await openStoreBrowser(browserMode);
+    return await runHybridStoreCollection({
       platformKey: "jd",
-      storeConfig: resolvedConfig.activeStore,
-      actionName: "店铺指标打开后台页面",
-      moduleName: "店铺指标",
-      missingOpenUrlMessage: `${store.displayName}缺少店铺考核页面地址。`
-    });
-    await startJdLoginAssist({
-      forceRestart: true,
-      reportKey: "store_metrics",
-      resolvedConfig,
-      onLoginReady(loginState) {
-        notifyProgress(onProgress, "京东登录成功", `店铺=${loginState.displayName}`);
-      },
-      onManualVerification(verificationState) {
-        notifyProgress(
-          onProgress,
-          "等待人工验证",
-          `${verificationState.displayName}需要${verificationState.reason}，请在打开的京东窗口完成后等待程序继续。`
-        );
-      }
-    });
+      mode: browserMode,
+      onProgress: (stage, detail) => notifyProgress(onProgress, stage, detail),
+      openHeaded: () => openStoreBrowser("headed", true)
+    }, async (scope) => {
+      await startJdLoginAssist({
+        forceRestart: true,
+        reportKey: "store_metrics",
+        resolvedConfig,
+        headless: scope.headless,
+        onLoginReady(loginState) {
+          notifyProgress(onProgress, "京东登录成功", `店铺=${loginState.displayName}`);
+        },
+        onManualVerification(verificationState) {
+          notifyProgress(
+            onProgress,
+            "等待人工验证",
+            `${verificationState.displayName}需要${verificationState.reason}，请在打开的 Edge 窗口完成后等待程序继续。`
+          );
+        }
+      });
 
-    const pageResult = await collectPageMetricsFromLoggedBrowser(
-      store,
-      dateSelection,
-      evidenceDirectory,
-      evidenceFiles,
-      onProgress
-    );
-    const pageRecords = pageResult.records;
-    const skippedMetrics = pageResult.skipped || [];
-    notifyProgress(onProgress, "写入统一数据源", `本次共 ${pageRecords.length} 条店铺考核指标${skippedMetrics.length ? `，${skippedMetrics.length} 项未读取已跳过` : ""}`);
-    const writeResult = await writeStoreMetricRecords({
-      workbookPath: config.workbook.path,
-      records: pageRecords,
-      retiredSourcePages: retiredDataSourcePages
+      const pageResult = await collectPageMetricsFromLoggedBrowser(
+        store,
+        dateSelection,
+        evidenceDirectory,
+        evidenceFiles,
+        onProgress
+      );
+      const pageRecords = pageResult.records;
+      const skippedMetrics = pageResult.skipped || [];
+      const zeroDataMetrics = pageResult.zeroDataMetrics || [];
+      notifyProgress(
+        onProgress,
+        "写入统一数据源",
+        `本次共 ${pageRecords.length} 条店铺考核指标${zeroDataMetrics.length ? `，${zeroDataMetrics.length} 项无数据记为0` : ""}${skippedMetrics.length ? `，${skippedMetrics.length} 项未读取已跳过` : ""}`
+      );
+      const writeResult = await writeStoreMetricRecords({
+        workbookPath: config.workbook.path,
+        records: pageRecords,
+        retiredSourcePages: retiredDataSourcePages
+      });
+      notifyProgress(
+        onProgress,
+        "完成",
+        `写入 ${writeResult.writtenCount} 条，替换 ${writeResult.replacedCount} 条，清理 ${writeResult.removedCount} 条旧客服数据${zeroDataMetrics.length ? `，${zeroDataMetrics.length} 项无数据记为0` : ""}${skippedMetrics.length ? `，跳过 ${skippedMetrics.length} 项未读取指标` : ""}`
+      );
+      return {
+        workbookPath: config.workbook.path,
+        evidenceDirectory,
+        evidenceFiles: listExistingEvidenceFiles(evidenceFiles),
+        metricCount: pageRecords.length,
+        skippedMetrics,
+        zeroDataMetrics,
+        recordKeys: pageRecords.map((record) => record.recordKey).filter(Boolean),
+        records: pageRecords,
+        writeResult
+      };
     });
-    notifyProgress(
-      onProgress,
-      "完成",
-      `写入 ${writeResult.writtenCount} 条，替换 ${writeResult.replacedCount} 条，清理 ${writeResult.removedCount} 条旧客服数据${skippedMetrics.length ? `，跳过 ${skippedMetrics.length} 项未读取指标` : ""}`
-    );
-    return {
-      workbookPath: config.workbook.path,
-      evidenceDirectory,
-      evidenceFiles: listExistingEvidenceFiles(evidenceFiles),
-      metricCount: pageRecords.length,
-      skippedMetrics,
-      recordKeys: pageRecords.map((record) => record.recordKey).filter(Boolean),
-      records: pageRecords,
-      writeResult
-    };
   } catch (error) {
     const browserEvidenceFiles = await captureFailurePageEvidence(evidenceDirectory, "京东").catch(() => []);
     error.evidenceDirectory = evidenceDirectory;

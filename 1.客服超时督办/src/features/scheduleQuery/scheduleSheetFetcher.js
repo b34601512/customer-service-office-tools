@@ -91,6 +91,9 @@ async function readScheduleSheetMatrix(targetDate, scheduleUrl = scheduleQueryCo
         throw new Error(`没有找到工作表「${targetSheetName}」。`);
       }
 
+      if (typeof sheet.activate === "function") {
+        await sheet.activate();
+      }
       await sheet.loadSheetData();
       const usedRange = sheet.getUsedRange();
       if (!usedRange || typeof usedRange.getRangeContents !== "function") {
@@ -103,13 +106,75 @@ async function readScheduleSheetMatrix(targetDate, scheduleUrl = scheduleQueryCo
         throw new Error(`工作表「${targetSheetName}」没有返回有效内容。`);
       }
 
+      // KDocs 的 getXfByCell 只返回基础样式；值班标记可能来自条件格式，必须读取有效样式。
+      // 颜色读取失败不影响班次值读取，由上层据此保留原有提醒而不自动转接。
+      let backgroundMatrix = null;
+      let backgroundColorAvailable = false;
+      let backgroundColorError = "";
+      try {
+        if (typeof sheet.getAppliedXf !== "function") {
+          throw new Error("工作表运行时不支持 getAppliedXf，有效背景色不可读取。");
+        }
+
+        const usedRangeEntry = Array.isArray(usedRange._ranges) ? usedRange._ranges[0] : null;
+        const rowOffset = Number(usedRangeEntry?.rowFrom || 0);
+        const columnOffset = Number(usedRangeEntry?.colFrom || 0);
+        const toHexColor = (value) => {
+          if (typeof value === "number" && Number.isFinite(value)) {
+            return `#${(value >>> 0 & 0xffffff).toString(16).padStart(6, "0").toUpperCase()}`;
+          }
+          const text = String(value || "").trim().toUpperCase();
+          return /^#?[0-9A-F]{6}$/.test(text) ? `#${text.replace(/^#/, "")}` : "";
+        };
+        backgroundMatrix = matrix.map((row, rowIndex) =>
+          (Array.isArray(row) ? row : []).map((_cell, columnIndex) => {
+            const appliedXf = sheet.getAppliedXf(rowOffset + rowIndex, columnOffset + columnIndex);
+            const fill = appliedXf && typeof appliedXf.getFill === "function"
+              ? appliedXf.getFill()
+              : null;
+            if (!fill || typeof fill.getBack !== "function") {
+              return "";
+            }
+            const fillType = typeof fill.getType === "function"
+              ? String(fill.getType() || "").toLowerCase()
+              : "";
+            if (fillType.includes("none")) {
+              return "";
+            }
+            const back = fill.getBack();
+            const rgb = back && typeof back.getRGB === "function" ? back.getRGB() : "";
+            return toHexColor(rgb);
+          })
+        );
+        backgroundColorAvailable = true;
+      } catch (error) {
+        backgroundMatrix = null;
+        backgroundColorError = error instanceof Error ? error.message : String(error);
+      }
+
       return {
         sheetName: typeof sheet.getName === "function" ? sheet.getName() : targetSheetName,
-        matrix
+        matrix,
+        backgroundMatrix,
+        backgroundColorAvailable,
+        backgroundColorError
       };
     }, { targetSheetName: monthSheetName });
 
-    log("主线:完成", "排班读取", "读取成功", `已读取「${result.sheetName}」，共 ${result.matrix.length} 行`);
+    log(
+      "主线:完成",
+      "排班读取",
+      "读取成功",
+      `已读取「${result.sheetName}」，共 ${result.matrix.length} 行，有效背景色=${result.backgroundColorAvailable ? "可用" : "不可用"}`
+    );
+    if (!result.backgroundColorAvailable && result.backgroundColorError) {
+      log(
+        "主线:等待",
+        "排班读取",
+        "背景色不可用",
+        `本轮自动转接将保留原有提醒：${result.backgroundColorError}`
+      );
+    }
     return result;
   } finally {
     await browser.close();

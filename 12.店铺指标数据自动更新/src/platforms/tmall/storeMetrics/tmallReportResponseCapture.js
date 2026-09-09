@@ -1,5 +1,6 @@
 const appConfig = require("../../../config/appConfig");
 const { normalizeCompactDate } = require("./tmallReportPayloadParser");
+const { checkBrowserHumanRequirement } = require("../../../engine/browserHumanGuard");
 
 const queryDateApiToken = "mtop.alibaba.tmall.query.date";
 const storeIndexApiToken = "mtop.alibaba.tmall.front.store.index";
@@ -99,6 +100,7 @@ async function captureTmallReportPayloads(page, dateSelection, options = {}) {
     const deadline = Date.now() + timeoutMs;
     let captureResult = null;
     while (Date.now() <= deadline) {
+      await checkBrowserHumanRequirement({ includeLogin: true });
       await Promise.allSettled([...responseTasks]);
       const latestDateSource = dateCandidates.at(-1)?.payload?.data?.dataSource || {};
       const targetDataDate = dateSelection?.mode === "manual"

@@ -10,3 +10,6 @@ output/
 build/
 dist/
 release/
+
+# PyInstaller 生成的构建描述：可由 build_release.py 重新生成。
+packaging/*.spec

@@ -1,4 +1,4 @@
-// 该文件用于解决 Chrome 浏览器资料目录里可再生成缓存的自动迁移问题。
+// 该文件用于解决 Edge 浏览器资料目录里可再生成缓存的自动迁移问题。
 const fs = require("fs");
 const path = require("path");
 const appConfig = require("../appConfig");
@@ -21,7 +21,7 @@ const CLEANABLE_BROWSER_CACHE_DIR_NAMES = new Set([
 ]);
 
 function isBrowserCacheDirName(dirName) {
-  // 这个函数只判断目录名是不是 Chrome 可再生成缓存目录。
+  // 这个函数只判断目录名是不是 Edge 可再生成缓存目录。
   return CLEANABLE_BROWSER_CACHE_DIR_NAMES.has(String(dirName || "").trim().toLowerCase());
 }
 
@@ -85,12 +85,12 @@ function moveBrowserCacheDirToBackup(cacheDir, backupRootDir, date) {
 }
 
 function isTransientBrowserCacheLockError(error) {
-  // Windows 关闭 Chrome 后句柄可能短暂滞留，只把明确的占用错误视为可恢复。
+  // Windows 关闭 Edge 后句柄可能短暂滞留，只把明确的占用错误视为可恢复。
   return ["EPERM", "EBUSY", "EACCES"].includes(String(error?.code || "").toUpperCase());
 }
 
 function waitForBrowserCacheMoveRetry(milliseconds) {
-  // 同步清理接口保持兼容，用很短的阻塞等待给 Chrome 子进程释放句柄。
+  // 同步清理接口保持兼容，用很短的阻塞等待给 Edge 子进程释放句柄。
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, milliseconds);
 }
 
@@ -158,7 +158,7 @@ function cleanRuntimeBrowserCachesWithDependencies(options = {}, dependencies = 
       continue;
     }
     skippedLockedPaths.push(moveResult.skippedLockedPath);
-    logFn("主线:跳过", "运行目录", triggerName, `缓存仍被 Chrome 占用，已保留原目录并继续：${cacheDir}`);
+    logFn("主线:跳过", "运行目录", triggerName, `缓存仍被 Edge 占用，已保留原目录并继续：${cacheDir}`);
   }
 
   logFn("主线:完成", "运行目录", triggerName, `本轮浏览器缓存清理完成，迁移目录数=${backupPaths.length}`);

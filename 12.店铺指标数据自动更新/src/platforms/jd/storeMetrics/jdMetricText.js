@@ -1,5 +1,6 @@
 const { runAfterDismissingJdPopups } = require("../jdPopupAndSurfaceState");
 const { escapeRegExp } = require("../../../shared/escapeRegExp");
+const { checkBrowserHumanRequirement } = require("../../../engine/browserHumanGuard");
 
 function normalizeWhitespace(value) {
   return String(value || "").replace(/\s+/g, " ").trim();
@@ -27,6 +28,7 @@ async function waitForJdMetricPageText(page, requiredTextList, timeoutMillisecon
   const deadline = Date.now() + timeoutMilliseconds;
   let latestPageText = "";
   while (Date.now() <= deadline) {
+    await checkBrowserHumanRequirement({ includeLogin: true });
     latestPageText = await readJdMetricPageText(page);
     if (requiredTextList.some((requiredText) => latestPageText.includes(requiredText))) {
       return latestPageText;
@@ -39,6 +41,7 @@ async function waitForJdMetricPageText(page, requiredTextList, timeoutMillisecon
 async function waitForVisibleJdMetricCardText(page, requiredTextList, timeoutMilliseconds = 60000) {
   const deadline = Date.now() + timeoutMilliseconds;
   while (Date.now() <= deadline) {
+    await checkBrowserHumanRequirement({ includeLogin: true });
     for (const requiredText of requiredTextList) {
       const matchingElements = page.getByText(requiredText, { exact: false });
       const matchingCount = await matchingElements.count().catch(() => 0);

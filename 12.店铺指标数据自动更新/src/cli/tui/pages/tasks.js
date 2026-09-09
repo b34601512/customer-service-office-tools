@@ -10,7 +10,7 @@ function formatStoreResultLine(storeResult, columns, isSelected) {
   const statusInfo = formatSummaryTaskStatus(storeResult.status);
   let text = `[${statusInfo.label}] ${storeResult.storeName}`;
   if (storeResult.status === "success") {
-    text += ` · ${storeResult.metricCount} 项${storeResult.skippedCount ? ` · 跳过${storeResult.skippedCount}项` : ""}`;
+    text += ` · ${storeResult.metricCount} 项${storeResult.zeroDataCount ? ` · 无数据${storeResult.zeroDataCount}项记0` : ""}${storeResult.skippedCount ? ` · 跳过${storeResult.skippedCount}项` : ""}`;
   } else if (storeResult.status === "skipped") {
     text += ` · 今日已有 ${storeResult.previousMetricCount || 0} 项`;
   } else if (storeResult.status === "error" || storeResult.status === "running") {
@@ -121,7 +121,14 @@ function createTasksPage() {
       const runningCount = storeResults.filter((result) => result.status === "running").length;
       if (total) {
         const done = successCount + errorCount + skippedCount;
-        lines.push(` 进度  ${progressBar(done, total, columns - 8, running ? "brightYellow" : "brightGreen")}`);
+        const progressColor = running
+          ? "brightYellow"
+          : state.status === "success"
+            ? "brightGreen"
+            : state.status === "partial_error" || state.status === "error"
+              ? "brightRed"
+              : "gray";
+        lines.push(` 进度  ${progressBar(done, total, columns - 8, progressColor)}`);
       }
       lines.push(` 完成 ${successCount}  跳过 ${skippedCount}  失败 ${errorCount}${runningCount ? `  运行中 ${runningCount}` : ""}`);
 

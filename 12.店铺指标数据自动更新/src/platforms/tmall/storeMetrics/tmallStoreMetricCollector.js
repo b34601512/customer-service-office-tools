@@ -1,5 +1,7 @@
 const fs = require("fs");
 const { runManagedOpenWindowEngine } = require("../../../shared/managedOpenWindowEngine");
+const { resolveBrowserMode } = require("../../../engine/browserAutomationScope");
+const { runHybridStoreCollection } = require("../../../shared/hybridStoreCollectionRunner");
 const {
   createStoreMetricEvidenceDirectory,
   buildEvidenceFilePath,
@@ -72,7 +74,7 @@ async function saveTmallSuccessEvidence(page, evidenceDirectory, evidenceFiles) 
 }
 
 function shouldKeepTmallBrowserOpen(error) {
-  return /滑块|安全验证|扫码确认|等待天猫登录成功超时/.test(String(error?.message || error));
+  return /滑块|安全验证|扫码确认|等待天猫登录成功超时|等待人工验证/.test(String(error?.message || error));
 }
 
 async function collectAndWriteTmallStoreMetrics({ config, store, dateSelection, onProgress }) {
@@ -84,50 +86,69 @@ async function collectAndWriteTmallStoreMetrics({ config, store, dateSelection, 
   const evidenceFiles = [];
   let keepBrowserOpen = false;
   let browser = null;
+  const browserMode = resolveBrowserMode();
+  const openStoreBrowser = (nextMode, preserveCache = false) => runManagedOpenWindowEngine({
+    platformKey: "tmall",
+    storeConfig: {
+      ...store,
+      siteUrl: store.sources.serverReport
+    },
+    actionName: "打开真实体验分页",
+    moduleName: "天猫店铺指标",
+    missingOpenUrlMessage: `${store.displayName}缺少真实体验分页地址。`,
+    browserMode: nextMode,
+    preserveCache
+  });
   try {
     notifyProgress(onProgress, `打开${store.displayName}`, "正在启动独立浏览器并进入真实体验分页");
-    await runManagedOpenWindowEngine({
+    await openStoreBrowser(browserMode);
+    return await runHybridStoreCollection({
       platformKey: "tmall",
-      storeConfig: {
-        ...store,
-        siteUrl: store.sources.serverReport
-      },
-      actionName: "打开真实体验分页",
-      moduleName: "天猫店铺指标",
-      missingOpenUrlMessage: `${store.displayName}缺少真实体验分页地址。`
-    });
-    browser = await connectToChrome();
-    const page = await waitForTmallLoginReady(browser, store, {
-      onLoginSubmitted() {
-        notifyProgress(onProgress, "等待天猫登录", "账号密码已提交；如出现验证，请在浏览器中完成。");
-      },
-      onManualVerification(reason) {
-        notifyProgress(onProgress, "等待人工验证", `${store.displayName}需要${reason}，程序停在原地等待。`);
+      mode: browserMode,
+      onProgress: (stage, detail) => notifyProgress(onProgress, stage, detail),
+      openHeaded: () => openStoreBrowser("headed", true)
+    }, async (scope) => {
+      browser = await connectToChrome();
+      try {
+        const page = await waitForTmallLoginReady(browser, store, {
+          headless: scope.headless,
+          onLoginSubmitted() {
+            notifyProgress(onProgress, "等待天猫登录", "账号密码已提交；如出现验证，请在 Edge 中完成。");
+          },
+          onManualVerification(reason) {
+            notifyProgress(onProgress, "等待人工验证", `${store.displayName}需要${reason}，程序停在原地等待。`);
+          }
+        });
+        notifyProgress(onProgress, "天猫登录成功", `已进入${store.displayName}真实体验分页`);
+        notifyProgress(onProgress, "读取页面指标", "读取总分、维度分和店铺考核最终数值");
+        const { records, skipped } = await collectTmallReportRecords(page, store, dateSelection);
+        await saveTmallSuccessEvidence(page, evidenceDirectory, evidenceFiles);
+        await disconnectFromChrome(browser, "天猫店铺指标读取完成，断开自动化连接");
+        browser = null;
+        notifyProgress(onProgress, "写入统一数据源", `本次共 ${records.length} 条天猫店铺指标`);
+        const writeResult = await writeStoreMetricRecords({
+          workbookPath: config.workbook.path,
+          records,
+          retiredSourcePages: retiredDataSourcePages
+        });
+        notifyProgress(onProgress, "完成", `写入 ${writeResult.writtenCount} 条，替换 ${writeResult.replacedCount} 条`);
+        return {
+          workbookPath: config.workbook.path,
+          evidenceDirectory,
+          evidenceFiles: listExistingEvidenceFiles(evidenceFiles),
+          metricCount: records.length,
+          skippedMetrics: skipped,
+          recordKeys: records.map((record) => record.recordKey).filter(Boolean),
+          records,
+          writeResult
+        };
+      } finally {
+        if (browser) {
+          await disconnectFromChrome(browser, "天猫店铺指标本轮采集结束，断开自动化连接").catch(() => {});
+          browser = null;
+        }
       }
     });
-    notifyProgress(onProgress, "天猫登录成功", `已进入${store.displayName}真实体验分页`);
-    notifyProgress(onProgress, "读取页面指标", "读取总分、维度分和店铺考核最终数值");
-    const { records, skipped } = await collectTmallReportRecords(page, store, dateSelection);
-    await saveTmallSuccessEvidence(page, evidenceDirectory, evidenceFiles);
-    await disconnectFromChrome(browser, "天猫店铺指标读取完成，断开自动化连接");
-    browser = null;
-    notifyProgress(onProgress, "写入统一数据源", `本次共 ${records.length} 条天猫店铺指标`);
-    const writeResult = await writeStoreMetricRecords({
-      workbookPath: config.workbook.path,
-      records,
-      retiredSourcePages: retiredDataSourcePages
-    });
-    notifyProgress(onProgress, "完成", `写入 ${writeResult.writtenCount} 条，替换 ${writeResult.replacedCount} 条`);
-    return {
-      workbookPath: config.workbook.path,
-      evidenceDirectory,
-      evidenceFiles: listExistingEvidenceFiles(evidenceFiles),
-      metricCount: records.length,
-      skippedMetrics: skipped,
-      recordKeys: records.map((record) => record.recordKey).filter(Boolean),
-      records,
-      writeResult
-    };
   } catch (error) {
     if (browser) {
       await disconnectFromChrome(browser, "天猫店铺指标失败，断开自动化连接").catch(() => {});

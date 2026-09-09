@@ -83,6 +83,7 @@ function readControlCenterConfig() {
       ? "超时提醒 + 上班监控 + 下班监控"
       : "超时提醒 + 上班监控",
     timeoutReminderThresholdSeconds: reminderThresholdSeconds,
+    timeoutAutoTransferEnabled: replyRuntimeConfig.timeoutAutoTransferEnabled,
     missedReplyMonitorEnabled: replyRuntimeConfig.missedReplyMonitorEnabled,
     onlinePresenceMonitorEnabled: replyRuntimeConfig.onlinePresenceMonitorEnabled,
     onlinePresenceScanIntervalMs: replyRuntimeConfig.onlinePresenceScanIntervalMs,

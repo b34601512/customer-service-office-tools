@@ -1,4 +1,5 @@
 const appConfig = require("../config/appConfig");
+const { resolveBrowserMode } = require("../engine/browserAutomationScope");
 const { cleanActiveStoreBrowserCachesWhenSafe } = require("../config/runtimeLayoutService");
 const { launchChromeForManualLogin, closeManagedChrome } = require("../engine/chromeSession");
 const { log, logError } = require("../engine/logger");
@@ -90,6 +91,8 @@ function buildDefaultCompleteLogMessage(result) {
 async function runManagedOpenWindowEngine(options = {}, dependencies = {}) {
   // 这里把“关闭当前浏览器 -> 拉起新浏览器 -> 重启辅助流程”收口成统一引擎，保证重复点击永远重走完整链路。
   const plan = buildManagedOpenWindowPlan(options);
+  const browserMode = resolveBrowserMode(options.browserMode);
+  const headless = browserMode !== "headed";
   const logFn = dependencies.logFn || log;
   const logErrorFn = dependencies.logErrorFn || logError;
   const closeManagedChromeFn = dependencies.closeManagedChrome || closeManagedChrome;
@@ -106,18 +109,22 @@ async function runManagedOpenWindowEngine(options = {}, dependencies = {}) {
 
   logFn("主线:执行", moduleName, normalizedActionName, startLogMessage);
   await closeManagedChromeFn();
-  cleanStoreBrowserCachesFn(plan.userDataDir, "打开后台页面前自动清理");
+  if (!options.preserveCache) {
+    cleanStoreBrowserCachesFn(plan.userDataDir, "打开后台页面前自动清理");
+  }
   await launchChromeForManualLoginFn(plan.openMeta.openUrl, {
     userDataDir: plan.userDataDir,
     accountProfileKey: plan.accountProfileKey,
     platformKey: plan.platformKey,
     storeKey: plan.storeKey,
     storeDisplayName: plan.storeDisplayName,
-    downloadDir: plan.storeConfig.downloadDir
+    downloadDir: plan.storeConfig.downloadDir,
+    headless,
+    browserMode
   });
 
   let assistStarted = false;
-  if (typeof options.startAssist === "function") {
+  if (!headless && typeof options.startAssist === "function") {
     const shouldStartAssist =
       typeof options.shouldStartAssist === "function"
         ? Boolean(options.shouldStartAssist(plan))
@@ -146,6 +153,8 @@ async function runManagedOpenWindowEngine(options = {}, dependencies = {}) {
 
   const result = {
     ...plan,
+    browserMode,
+    headless,
     assistStarted
   };
 

@@ -1,7 +1,11 @@
 // 该文件用于解决京东登录辅助主流程调度的问题。
 const { connectToChrome, disconnectFromChrome } = require("../../../engine/chromeSession");
 const { log } = require("../../../engine/logger");
-const { hasJdSessionExpiredText, isJdPassportLoginUrl } = require("../jdLoginPageClassifier");
+const {
+  hasJdLoginFormText,
+  hasJdSessionExpiredText,
+  isJdPassportLoginUrl
+} = require("../jdLoginPageClassifier");
 const { findReadyJdPage } = require("../loginReadyParts/jdReadyPageSearch");
 const {
   waitForDynamicLoginSurface,
@@ -17,6 +21,7 @@ const { tryAutofillJdSurfaceOnce } = require("./jdAutofillMarks");
 const { runJdLoginStateStep } = require("./jdLoginNavigationTransition");
 const { redirectJdNoAccessToLogin } = require("../jdNoAccessLoginRedirect");
 const { readJdPageBodyText } = require("../jdPageText");
+const { requireHeadedBrowser } = require("../../../engine/browserAutomationScope");
 
 function buildJdLoginAssistRunnerOptions(options = {}) {
   // 这里保留调用方传入的登录成功回调，避免自动检测成功后控制台仍停在未登录。
@@ -164,13 +169,24 @@ async function processJdAssistPage(page, resolvedConfig, credentials, autofilled
   }
 
   await clickJdLoginEntryIfNeeded(page, url, displayName);
-  await tryAutofillJdLoginPage(page, credentials, autofilledSurfaceMarks, displayName);
+  const loginSubmitted = await tryAutofillJdLoginPage(
+    page,
+    credentials,
+    autofilledSurfaceMarks,
+    displayName
+  );
   const manualVerificationReason = await detectJdManualVerification(page);
   if (manualVerificationReason) {
+    if (options.headless) {
+      requireHeadedBrowser(`京东需要${manualVerificationReason}`);
+    }
     if (typeof options.onManualVerification === "function") {
       options.onManualVerification({ displayName, reason: manualVerificationReason, currentUrl: page.url() });
     }
     return { waitingForManualVerification: true, reason: manualVerificationReason };
+  }
+  if (options.headless && isJdPassportLoginUrl(page.url()) && !loginSubmitted && hasJdLoginFormText(pageBodyText)) {
+    requireHeadedBrowser("京东需要人工登录");
   }
   return { waitingForManualVerification: false };
 }
@@ -219,6 +235,7 @@ async function runJdLoginAssist(assistTask, options = {}) {
             { username, password },
             autofilledSurfaceMarks,
             {
+              headless: options.headless === true,
               onManualVerification(verificationState) {
                 if (verificationState.reason !== lastManualVerificationReason) {
                   lastManualVerificationReason = verificationState.reason;

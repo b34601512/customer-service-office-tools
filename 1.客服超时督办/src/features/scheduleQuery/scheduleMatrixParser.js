@@ -1,3 +1,5 @@
+const { isMarkedBackgroundColor, normalizeBackgroundColor } = require("./scheduleStyleParser");
+
 function resolveMonthSheetName(targetDate) {
   // 这里统一把日期转换成工作表名称，避免上层各处重复拼接月份字符串。
   return `${targetDate.getFullYear()}年${targetDate.getMonth() + 1}月`;
@@ -77,7 +79,7 @@ function isScheduleStructureLabel(name) {
   return SCHEDULE_STRUCTURE_LABELS.has(String(name || "").trim());
 }
 
-function buildDailyShiftMap(matrix, targetDate) {
+function buildDailyShiftMap(matrix, targetDate, backgroundMatrix = null) {
   // 这里把整张月排班表压成“姓名 -> 当天班次”映射，方便上层一次性判断整批值班客服。
   if (!Array.isArray(matrix) || matrix.length === 0) {
     throw new Error("排班表数据为空，无法构建当日班次映射。");
@@ -92,7 +94,9 @@ function buildDailyShiftMap(matrix, targetDate) {
   const dateColumnIndex = findDateColumnIndex(headerRow, targetDate);
   const shiftMap = {};
 
-  for (const row of matrix) {
+  const hasBackgroundMatrix = Array.isArray(backgroundMatrix);
+
+  for (const [rowIndex, row] of matrix.entries()) {
     if (!Array.isArray(row) || row.length <= employeeNameColumnIndex) {
       continue;
     }
@@ -103,11 +107,17 @@ function buildDailyShiftMap(matrix, targetDate) {
     }
 
     const rawShift = String(row[dateColumnIndex] || "").trim();
-    shiftMap[employeeName] = {
+    const shiftInfo = {
       employeeName,
       rawShift,
       normalizedShift: normalizeShiftCode(rawShift)
     };
+    if (hasBackgroundMatrix) {
+      const backgroundColor = normalizeBackgroundColor(backgroundMatrix[rowIndex]?.[dateColumnIndex]);
+      shiftInfo.backgroundColor = backgroundColor;
+      shiftInfo.hasBackgroundColor = isMarkedBackgroundColor(backgroundColor);
+    }
+    shiftMap[employeeName] = shiftInfo;
   }
 
   return shiftMap;

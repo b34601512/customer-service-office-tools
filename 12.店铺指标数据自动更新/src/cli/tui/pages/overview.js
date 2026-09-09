@@ -123,7 +123,14 @@ function createOverviewPage() {
       const completionSummary = getStoreCompletionSummary(config, taskHistory);
       const enabledCount = completionSummary.enabledStores.length;
       const completedCount = completionSummary.completedStores.length;
-      lines.push(` 今日完成  ${progressBar(completedCount, enabledCount, columns - 10)}`);
+      const progressColor = state.status === "running"
+        ? "brightYellow"
+        : enabledCount > 0 && completedCount >= enabledCount
+          ? "brightGreen"
+          : state.status === "partial_error" || state.status === "error"
+            ? "brightRed"
+            : "gray";
+      lines.push(` 今日完成  ${progressBar(completedCount, enabledCount, columns - 10, progressColor)}`);
 
       // 已完成/未完成列表
       const completedNames = completionSummary.completedStores.map((store) => store.displayName || store.key || "未命名店铺");

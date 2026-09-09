@@ -25,6 +25,26 @@ const {
   formatStoreCollectionScope
 } = require("../shared/storeCollectionScope");
 
+const STORE_ACTIVITY_HEARTBEAT_INTERVAL_MS = 800;
+const STORE_ACTIVITY_HEARTBEAT_ACTIONS = [
+  "检查页面响应",
+  "校验页面结构",
+  "等待业务数据返回",
+  "整理采集结果"
+];
+
+function formatStoreActivityElapsed(elapsedMs) {
+  const totalSeconds = Math.max(0, Math.floor(Number(elapsedMs || 0) / 1000));
+  if (totalSeconds < 60) return `${totalSeconds}秒`;
+  return `${Math.floor(totalSeconds / 60)}分${String(totalSeconds % 60).padStart(2, "0")}秒`;
+}
+
+function resolveStoreActivityHeartbeatInterval(dependencies) {
+  const requestedInterval = Number(dependencies.activityHeartbeatIntervalMs);
+  if (!Number.isFinite(requestedInterval)) return STORE_ACTIVITY_HEARTBEAT_INTERVAL_MS;
+  return Math.max(100, requestedInterval);
+}
+
 function serializeTaskError(error) {
   const evidenceFiles = listExistingEvidenceFiles(error?.evidenceFiles);
   return {
@@ -110,6 +130,7 @@ async function runConfiguredStoresTask(stateStore, dependencies = {}) {
   const ensureStoreFailureEvidence = dependencies.ensureStoreFailureEvidence || ensureStoreMetricFailureEvidence;
   const ensureGlobalFailureEvidence = dependencies.ensureBatchFailureEvidence || ensureBatchFailureEvidence;
   const nowFn = dependencies.nowFn || (() => new Date());
+  const activityHeartbeatIntervalMs = resolveStoreActivityHeartbeatInterval(dependencies);
   const forceRecollect = dependencies.forceRecollect === true;
   const collectionScope = dependencies.collectionScope;
   const taskStartedAt = nowFn();
@@ -197,29 +218,54 @@ async function runConfiguredStoresTask(stateStore, dependencies = {}) {
         detail: `进度 ${storeIndex + 1}/${enabledStores.length}，${collectionReason}`,
         storeResults
       });
+      let heartbeatTimer = null;
       try {
+        let latestProgress = {
+          stage: "准备登录",
+          detail: `进度 ${storeIndex + 1}/${enabledStores.length}，${collectionReason}`
+        };
+        let heartbeatIndex = 0;
+        const storeStartedAt = Date.now();
+        const updateRunningProgress = (progress = {}, isHeartbeat = false) => {
+          if (!isHeartbeat) {
+            latestProgress = {
+              stage: String(progress.stage || latestProgress.stage),
+              detail: String(progress.detail || latestProgress.detail)
+            };
+          }
+          const currentStoreResult = storeResults.find((storeResult) =>
+            storeResult.platformKey === (store.platformKey || "jd") &&
+            storeResult.storeKey === store.key);
+          if (!currentStoreResult) return;
+          const detail = isHeartbeat
+            ? `↻ ${STORE_ACTIVITY_HEARTBEAT_ACTIONS[heartbeatIndex % STORE_ACTIVITY_HEARTBEAT_ACTIONS.length]} · ${latestProgress.detail} · 已运行 ${formatStoreActivityElapsed(Date.now() - storeStartedAt)}`
+            : latestProgress.detail;
+          const runningResult = {
+            ...currentStoreResult,
+            status: "running",
+            action: latestProgress.stage,
+            detail,
+            updatedAt: isHeartbeat
+              ? nowFn().toISOString()
+              : progress.at || nowFn().toISOString()
+          };
+          storeResults = replaceStoreResult(storeResults, runningResult);
+          stateStore.update({
+            stage: `${store.displayName}：${latestProgress.stage}`,
+            detail,
+            storeResults
+          });
+        };
+        heartbeatTimer = setInterval(() => {
+          updateRunningProgress({}, true);
+          heartbeatIndex += 1;
+        }, activityHeartbeatIntervalMs);
         const storeTaskResult = await runSingleConfiguredStore({
           config,
           store,
           dateSelection,
           collectStoreMetrics: resolveStoreMetricCollector(store, dependencies),
-          onProgress(progress) {
-            const runningResult = {
-              ...storeResults.find((storeResult) =>
-                storeResult.platformKey === (store.platformKey || "jd") &&
-                storeResult.storeKey === store.key),
-              status: "running",
-              action: progress.stage,
-              detail: progress.detail,
-              updatedAt: progress.at || nowFn().toISOString()
-            };
-            storeResults = replaceStoreResult(storeResults, runningResult);
-            stateStore.update({
-              stage: `${store.displayName}：${progress.stage}`,
-              detail: progress.detail,
-              storeResults
-            });
-          }
+          onProgress: updateRunningProgress
         });
         appendSuccessfulRun({
           store,
@@ -233,6 +279,7 @@ async function runConfiguredStoresTask(stateStore, dependencies = {}) {
           createdAt: nowFn().toISOString()
         });
         const skippedCount = (storeTaskResult.skippedMetrics || []).length;
+        const zeroDataCount = (storeTaskResult.zeroDataMetrics || []).length;
         const successResult = {
           platformKey: store.platformKey || "jd",
           storeKey: store.key,
@@ -240,8 +287,9 @@ async function runConfiguredStoresTask(stateStore, dependencies = {}) {
           status: "success",
           metricCount: storeTaskResult.metricCount,
           skippedCount,
+          zeroDataCount,
           action: "汇总完成",
-          detail: `已写入 ${storeTaskResult.metricCount} 条店铺指标${skippedCount ? `，跳过 ${skippedCount} 项未读取` : ""}。`,
+          detail: `已写入 ${storeTaskResult.metricCount} 条店铺指标${zeroDataCount ? `，${zeroDataCount} 项无数据记0` : ""}${skippedCount ? `，跳过 ${skippedCount} 项未读取` : ""}。`,
           evidencePath: "",
           evidenceFiles: listExistingEvidenceFiles(storeTaskResult.evidenceFiles),
           skipped: false,
@@ -269,6 +317,11 @@ async function runConfiguredStoresTask(stateStore, dependencies = {}) {
           updatedAt: nowFn().toISOString()
         };
         storeResults = replaceStoreResult(storeResults, failedResult);
+      } finally {
+        if (heartbeatTimer) {
+          clearInterval(heartbeatTimer);
+          heartbeatTimer = null;
+        }
       }
       stateStore.update({ storeResults });
     }

@@ -4,13 +4,14 @@ const { log } = require("../logger");
 const { loadPlaywrightCore } = require("../playwrightProvider");
 const { wait } = require("./chromeSessionPaths");
 const { waitForChromeDebugPortReady, isRetryableChromeConnectError } = require("./chromePortWaiters");
+const { registerAutomationBrowser, assertAutomationActive } = require("../browserAutomationScope");
 
-// 让本机 CDP 请求始终绕过系统代理，保证 BAT、CLI 以及直接任务链路都能接管 Chrome。
+// 让本机 CDP 请求始终绕过系统代理，保证 BAT、CLI 以及直接任务链路都能接管 Edge。
 process.env.NO_PROXY = [process.env.NO_PROXY, "127.0.0.1", "localhost"].filter(Boolean).join(",");
 process.env.no_proxy = process.env.NO_PROXY;
 
 async function connectToChrome(options = {}) {
-  // 这里通过 CDP 接管已打开的 Chrome，保证用户登录后无需重新开浏览器。
+  // 这里通过 CDP 接管已打开的 Edge，保证用户登录后无需重新开浏览器。
   const { chromium } = loadPlaywrightCore();
   const timeoutMs = Number(options.timeoutMs ?? appConfig.tmall.connectTimeoutMs);
   const shouldLog = options.shouldLog !== false;
@@ -21,7 +22,7 @@ async function connectToChrome(options = {}) {
   );
 
   if (shouldLog) {
-    log("主线:连接", "浏览器引擎", "接管会话", `准备连接 Chrome：${appConfig.tmall.cdpEndpoint}`);
+    log("主线:连接", "浏览器引擎", "接管会话", `准备连接 Edge：${appConfig.tmall.cdpEndpoint}`);
   }
 
   const debugPortReady = await waitForChromeDebugPortReady({
@@ -43,9 +44,12 @@ async function connectToChrome(options = {}) {
   while (Date.now() <= deadline) {
     const remainingMs = deadline - Date.now();
     try {
-      return await chromium.connectOverCDP(appConfig.tmall.cdpEndpoint, {
+      assertAutomationActive();
+      const browser = await chromium.connectOverCDP(appConfig.tmall.cdpEndpoint, {
         timeout: Math.max(1000, Math.min(timeoutMs, remainingMs || timeoutMs, 5000))
       });
+      registerAutomationBrowser(browser);
+      return browser;
     } catch (error) {
       if (!isRetryableChromeConnectError(error)) {
         throw error;
@@ -112,7 +116,7 @@ async function waitForPage(browser, predicate, timeoutMs) {
 }
 
 async function disconnectFromChrome(browser, reason = "") {
-  // 这里显式只断开 Playwright 连接，不关闭用户当前可见的 Chrome 窗口。
+  // 这里显式只断开 Playwright 连接，不关闭用户当前可见的 Edge 窗口。
   if (!browser) {
     return;
   }

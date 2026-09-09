@@ -51,4 +51,5 @@ test("无人在线提醒缺少配置时应该默认启用并 5 秒扫描", () =>
   assert.equal(config.onlinePresenceWorkStartTime, "08:00");
   assert.equal(config.transferAutoOpenEnabled, true);
   assert.equal(config.transferAutoCloseEnabled, true);
+  assert.equal(config.timeoutAutoTransferEnabled, true);
 });

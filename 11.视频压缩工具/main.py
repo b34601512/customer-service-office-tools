@@ -7,17 +7,18 @@ from video_compressor.app_metadata import APP_NAME, APP_VERSION
 from video_compressor.compression.compression_engine import compress_videos
 from video_compressor.config.config_manager import AppConfig, load_config, save_config
 from video_compressor.media.ffmpeg_provider import get_ffmpeg_executable
-from video_compressor.ui.gui_app import launch_gui
 from video_compressor.utils.action_logger import log_action
 
 
 def build_parser() -> argparse.ArgumentParser:
-    """构建命令行参数，让 GUI 和 CLI 共用同一套配置入口。"""
+    """构建命令行参数，让 TUI、GUI 和 CLI 共用同一套配置入口。"""
     parser = argparse.ArgumentParser(description=f"{APP_NAME} v{APP_VERSION}，把视频压缩到指定大小以下，默认目标为 25MB。")
     parser.add_argument("inputs", nargs="*", help="要压缩的视频路径，可一次传多个。")
     parser.add_argument("--target-size-mb", type=float, help="目标大小，单位 MB。")
     parser.add_argument("--output-dir", help="输出目录。")
-    parser.add_argument("--gui", action="store_true", help="强制启动图形界面。")
+    ui_group = parser.add_mutually_exclusive_group()
+    ui_group.add_argument("--gui", action="store_true", help="启动 Tk 图形界面兼容入口。")
+    ui_group.add_argument("--tui", action="store_true", help="启动终端界面。")
     return parser
 
 
@@ -46,14 +47,28 @@ def run_cli(args: argparse.Namespace, config: AppConfig) -> None:
 
 
 def main() -> None:
-    """根据输入参数决定启动 GUI 还是直接走命令行压缩。"""
+    """根据输入参数决定启动 TUI、GUI 还是直接走命令行压缩。"""
     parser = build_parser()
     args = parser.parse_args()
     config = load_config()
 
-    if args.gui or not args.inputs:
+    if args.gui:
+        from video_compressor.ui.gui_app import launch_gui
+
         log_action("启动主线:开始", "程序入口", "图形界面", "准备启动桌面程序")
         launch_gui(config)
+        return
+
+    if args.tui or not args.inputs:
+        from video_compressor.ui.tui_app import launch_tui
+
+        log_action("启动主线:开始", "程序入口", "终端界面", "准备启动 TUI 程序")
+        launch_tui(
+            config,
+            initial_inputs=args.inputs,
+            initial_target_size_mb=args.target_size_mb,
+            initial_output_dir=args.output_dir,
+        )
         return
 
     run_cli(args, config)

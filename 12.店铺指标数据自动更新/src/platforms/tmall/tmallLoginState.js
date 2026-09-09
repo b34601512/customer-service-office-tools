@@ -1,6 +1,7 @@
 const appConfig = require("../../config/appConfig");
 const { tryAutofillTmallLoginPage } = require("./tmallLoginAutofill");
 const { detectManualVerificationReason } = require("../manualVerificationShared");
+const { requireHeadedBrowser } = require("../../engine/browserAutomationScope");
 
 function isTmallBusinessPage(url) {
   return /qn\.taobao\.com\/home\.html\/voc-tmall\/serverReport/i.test(String(url || ""));
@@ -43,9 +44,15 @@ async function waitForTmallLoginReady(browser, storeConfig, options = {}) {
         const verificationReason = loginSubmitted ? "" : await detectTmallManualVerificationReason(page);
         if (verificationReason && verificationReason !== reportedVerificationReason) {
           reportedVerificationReason = verificationReason;
+          if (options.headless) {
+            requireHeadedBrowser(`天猫需要${verificationReason}`);
+          }
           if (typeof options.onManualVerification === "function") {
             options.onManualVerification(verificationReason);
           }
+        }
+        if (isTmallLoginPage(page.url()) && !loginSubmitted && !verificationReason && options.headless) {
+          requireHeadedBrowser("天猫需要人工登录");
         }
         if (isTmallLoginPage(page.url()) && !loginSubmitted && !verificationReason) {
           const firstSeenAt = loginPageFirstSeenAt.get(page) || Date.now();

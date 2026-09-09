@@ -51,6 +51,8 @@ function createDailyScheduleService(options = {}) {
     const value = {
       sheetName: result.sheetName,
       matrix: result.matrix,
+      backgroundMatrix: result.backgroundMatrix,
+      backgroundColorAvailable: result.backgroundColorAvailable === true,
       snapshotPath
     };
     monthCache.set(monthKey, value);
@@ -75,7 +77,8 @@ function createDailyScheduleService(options = {}) {
       dateKey,
       sheetName: monthData.sheetName,
       snapshotPath: monthData.snapshotPath,
-      shiftMap: buildDailyShiftMap(monthData.matrix, targetDate)
+      backgroundColorAvailable: monthData.backgroundColorAvailable === true,
+      shiftMap: buildDailyShiftMap(monthData.matrix, targetDate, monthData.backgroundMatrix)
     };
     dayCache.set(dateKey, value);
     return value;
