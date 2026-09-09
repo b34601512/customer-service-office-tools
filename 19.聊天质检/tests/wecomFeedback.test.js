@@ -4,8 +4,10 @@ const {
   buildFeedbackPreview,
   extractWaiterLabel,
   joinFeedbackLines,
+  normalizeRoleFilter,
   normalizeWecomFeedbackConfig,
   resolveFeedbackTarget,
+  resolveWaiterTarget,
   sendWecomTextMessage
 } = require('../src/services/wecomFeedback');
 
@@ -14,11 +16,13 @@ function testConfig() {
     webhookUrl: 'https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=test',
     memberDirectory: [
       { name: '韩欢欢', mobile: '10001', userId: '', inlineMentionEnabled: true },
-      { name: '有userid客服', mobile: '10002', userId: 'userid-1', inlineMentionEnabled: true }
+      { name: '有userid客服', mobile: '10002', userId: 'userid-1', inlineMentionEnabled: true },
+      { name: '售后客服', mobile: '10003', userId: '', inlineMentionEnabled: true }
     ],
     nicknameMappings: [
       { nickname: '璇璇', staffName: '韩欢欢', role: '售前' },
-      { nickname: '行内昵称', staffName: '有userid客服', role: '售前' }
+      { nickname: '行内昵称', staffName: '有userid客服', role: '售前' },
+      { nickname: '小洛', staffName: '售后客服', role: '售后' }
     ]
   });
 }
@@ -26,6 +30,15 @@ function testConfig() {
 test('从京东 sourceNote 提取客服昵称', () => {
   assert.equal(extractWaiterLabel('京东会话 sid=x（waiter=德达官方旗舰店--璇璇）'), '璇璇');
   assert.equal(extractWaiterLabel('waiter=璇璇'), '璇璇');
+});
+
+test('客服昵称同时保留售前售后岗位，默认岗位筛选为售前', () => {
+  const config = testConfig();
+  const target = resolveWaiterTarget('德达官方旗舰店--小洛', config);
+  assert.equal(target.staffName, '售后客服');
+  assert.equal(target.role, '售后');
+  assert.equal(normalizeRoleFilter(), '售前');
+  assert.equal(normalizeRoleFilter('all'), '');
 });
 
 test('客服昵称映射到 canonical staff，并用手机号底部@', () => {
@@ -63,6 +76,19 @@ test('分行文案使用真实换行，不生成字面量\\n', () => {
   assert.equal(preview.payload.text.content, '第一行\n客户ID：脱敏值\n第三行');
   assert.equal(preview.payload.text.content.includes('\\n'), false);
   assert.equal(joinFeedbackLines([' A ', 'B ']), 'A\nB');
+});
+
+test('底部手机号@时拒绝正文重复写客服@', () => {
+  const config = testConfig();
+  const target = resolveFeedbackTarget({ nickname: '璇璇' }, config);
+  assert.throws(
+    () => buildFeedbackPreview({
+      content: '@韩欢欢（璇璇）\n反馈正文',
+      target,
+      config
+    }),
+    /正文不要再写客服@/
+  );
 });
 
 test('发送没有确认口令时不会触发网络请求', async () => {

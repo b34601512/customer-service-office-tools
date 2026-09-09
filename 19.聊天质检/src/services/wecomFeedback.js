@@ -99,14 +99,37 @@ function normalizeNicknameMappings(input) {
   return result;
 }
 
+function normalizeStaffRole(value) {
+  const role = normalizeText(value);
+  if (role.includes('售前')) return '售前';
+  if (role.includes('售后')) return '售后';
+  if (role.includes('运营')) return '运营';
+  if (role.includes('管理') || role.includes('经理')) return '管理';
+  return role;
+}
+
 function normalizeWecomFeedbackConfig(raw) {
   const source = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
-  const memberDirectory = normalizeMemberDirectory(
+  const rawMemberDirectory = normalizeMemberDirectory(
     source.memberDirectory || source.member_directory || source.staffDirectory || source.staff_directory
   );
   const nicknameMappings = normalizeNicknameMappings(
     source.nicknameMappings || source.nickname_mappings || source.personMappings || source.person_mappings
   );
+  const roleByStaffName = new Map();
+  for (const mapping of nicknameMappings) {
+    const role = normalizeStaffRole(mapping.role);
+    if (!role) continue;
+    const existingRole = roleByStaffName.get(mapping.staffName);
+    if (existingRole && existingRole !== role) {
+      throw new Error(`客服「${mapping.staffName}」同时存在岗位「${existingRole}」和「${role}」，拒绝猜测。`);
+    }
+    roleByStaffName.set(mapping.staffName, role);
+  }
+  const memberDirectory = rawMemberDirectory.map((member) => ({
+    ...member,
+    role: normalizeStaffRole(member.role) || roleByStaffName.get(member.name) || ''
+  }));
   return {
     webhookUrl: normalizeText(source.webhookUrl || source.webhook_url),
     memberDirectory,
@@ -129,6 +152,24 @@ function extractWaiterLabel(sourceNote) {
   const rawWaiter = normalizeText(waiterMatch ? waiterMatch[1] : text);
   const parts = rawWaiter.split(/--+|——+|—+|–+|-/).map(normalizeText).filter(Boolean);
   return parts.length > 0 ? parts[parts.length - 1] : rawWaiter;
+}
+
+function normalizeRoleFilter(value, fallback = '售前') {
+  const role = normalizeText(value) || fallback;
+  if (['all', '全部', '*'].includes(role.toLowerCase())) {
+    return '';
+  }
+  const aliases = {
+    pre_sales: '售前',
+    'pre-sales': '售前',
+    after_sales: '售后',
+    'after-sales': '售后'
+  };
+  const normalizedRole = aliases[role.toLowerCase()] || role;
+  if (!['售前', '售后', '运营', '管理'].includes(normalizedRole)) {
+    throw new Error(`岗位筛选只支持：售前、售后、运营、管理或 all；当前为「${role}」。`);
+  }
+  return normalizedRole;
 }
 
 function findMember(memberDirectory, staffName) {
@@ -158,6 +199,11 @@ function resolveFeedbackTarget(input = {}, config) {
     member,
     reason: member ? '' : `未找到客服「${staffName || sourceNickname || '（空）'}」的企微成员映射。`
   };
+}
+
+function resolveWaiterTarget(waiter, config) {
+  const nickname = extractWaiterLabel(waiter);
+  return resolveFeedbackTarget({ nickname }, config);
 }
 
 function buildMentionPlan(target) {
@@ -215,6 +261,16 @@ function buildTextPayload({ content, target, mentionPlan }) {
   }
   if (!mentionPlan || mentionPlan.mode === 'none') {
     throw new Error(`客服「${target.staffName}」缺少企微 userid 或手机号，拒绝发送未精确@的反馈。`);
+  }
+
+  if (
+    mentionPlan.mode === 'bottom-mobile' &&
+    [target.staffName, target.nickname]
+      .map(normalizeText)
+      .filter(Boolean)
+      .some((name) => normalizedContent.includes(`@${name}`))
+  ) {
+    throw new Error('当前使用底部手机号@，正文不要再写客服@，否则群里会出现重复艾特。');
   }
 
   const payloadContent = mentionPlan.inlineToken
@@ -326,7 +382,9 @@ module.exports = {
   extractWaiterLabel,
   joinFeedbackLines,
   loadWecomFeedbackConfig,
+  normalizeRoleFilter,
   normalizeWecomFeedbackConfig,
   resolveFeedbackTarget,
+  resolveWaiterTarget,
   sendWecomTextMessage
 };

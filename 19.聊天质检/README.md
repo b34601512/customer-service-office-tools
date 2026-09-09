@@ -7,7 +7,7 @@
 ```powershell
 cd "D:\桌面\办公软件\19.聊天质检"
 node src/cli.js browser:start
-node src/cli.js fetch:list --start YYYY-MM-DD
+node src/cli.js fetch:list --start YYYY-MM-DD --role 售前
 node src/cli.js fetch:save <sid> --start YYYY-MM-DD
 ```
 
@@ -18,6 +18,7 @@ node src/cli.js wecom:preview <聊天文件名> --content-file <文案文件>
 ```
 
 预览命令不访问 webhook；当前没有自动质检和自动发送命令。
+`fetch:list` 默认也是售前筛选；售后必须显式指定 `--role 售后` 或 `--role all`。
 
 ## 唯一经验文档
 

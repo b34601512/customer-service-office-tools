@@ -9,7 +9,9 @@ const { launchVisibleBrowser, waitForDebugPort } = require('./services/browserSe
 const {
   buildFeedbackPreview,
   loadWecomFeedbackConfig,
-  resolveFeedbackTarget
+  normalizeRoleFilter,
+  resolveFeedbackTarget,
+  resolveWaiterTarget
 } = require('./services/wecomFeedback');
 
 function today() {
@@ -39,9 +41,9 @@ function usage() {
 
   browser:start [--browser edge|chrome|auto] [--port 9333]
               拉起独立浏览器登录京东客服后台
-  fetch:list  [--start YYYY-MM-DD] [--end YYYY-MM-DD] [--customer 值] [--port 9333]
-              从后台列出会话
-  fetch:save  <sid> [同上参数]    保存指定会话到 runtime/chat
+  fetch:list  [--start YYYY-MM-DD] [--end YYYY-MM-DD] [--customer 值] [--role 售前|售后|all] [--port 9333]
+              从后台列出会话（默认只列售前）
+  fetch:save  <sid> [同上参数]    保存指定岗位会话到 runtime/chat
   import      <文件路径>          导入 txt/json 聊天记录
   wecom:preview [聊天文件] (--content "待沟通文案" | --content-file 文案文件)
               解析昵称、客服和@方式，只输出预览，绝不访问 webhook
@@ -71,6 +73,8 @@ async function cmdBrowserStart(ws, cfg, opts) {
 
 async function cmdFetchList(ws, cfg, opts) {
   const port = Number(opts.port) || cfg.cdp.port;
+  const wecomConfig = loadWecomFeedbackConfig(ws);
+  const roleFilter = normalizeRoleFilter(opts.role, '售前');
   const pages = await listPages({ port });
   const candidates = pickCandidates(pages, cfg.cdp.pageTitleMatch);
   if (candidates.length === 0) {
@@ -90,19 +94,25 @@ async function cmdFetchList(ws, cfg, opts) {
     query,
     pageSize: cfg.cdp.pageSize
   });
-  if (fetched.summary.length === 0) {
+  const roleSummary = roleFilter
+    ? fetched.summary.filter((item) => resolveWaiterTarget(item.waiter, wecomConfig).role === roleFilter)
+    : fetched.summary;
+  if (roleSummary.length === 0) {
     console.log('✗ 未查到会话（检查日期区间、登录店铺或页面筛选条件）。');
     return;
   }
-  fetched.summary.forEach((item) => {
-    console.log(`[${item.sid}] ${item.firstTime || '?'} | ${item.customer || '?'} | ${item.messageCount}条 | ${(item.headline || '').slice(0, 40)}`);
+  roleSummary.forEach((item) => {
+    const target = resolveWaiterTarget(item.waiter, wecomConfig);
+    console.log(`[${item.sid}] ${item.firstTime || '?'} | ${item.customer || '?'} | ${target.nickname || item.waiter || '?'}→${target.staffName || '?'}（${target.role || '岗位未映射'}） | ${item.messageCount}条 | ${(item.headline || '').slice(0, 40)}`);
   });
-  console.log(`\n共 ${fetched.summary.length} 个会话。下一步：node src/cli.js fetch:save <sid> --start ${query.startTime}`);
+  console.log(`\n共 ${roleSummary.length} 个${roleFilter || '全部'}会话。下一步：node src/cli.js fetch:save <sid> --start ${query.startTime}`);
 }
 
 async function cmdFetchSave(ws, cfg, opts, sid) {
   if (!sid) throw new Error('缺少 <sid>（先运行 fetch:list 查看）');
   const port = Number(opts.port) || cfg.cdp.port;
+  const wecomConfig = loadWecomFeedbackConfig(ws);
+  const roleFilter = normalizeRoleFilter(opts.role, '售前');
   const pages = await listPages({ port });
   const candidates = pickCandidates(pages, cfg.cdp.pageTitleMatch);
   if (candidates.length === 0) throw new Error(`没有匹配「${cfg.cdp.pageTitleMatch}」的页面。`);
@@ -117,6 +127,12 @@ async function cmdFetchSave(ws, cfg, opts, sid) {
     query,
     pageSize: cfg.cdp.pageSize
   });
+  const summaryItem = fetched.summary.find((item) => String(item.sid) === String(sid));
+  if (!summaryItem) throw new Error(`会话 ${sid} 不在当前查询结果中。`);
+  const target = resolveWaiterTarget(summaryItem.waiter, wecomConfig);
+  if (roleFilter && target.role !== roleFilter) {
+    throw new Error(`会话 ${sid} 的客服「${target.nickname || summaryItem.waiter || '未知'}」岗位为「${target.role || '未映射'}」，当前只允许保存「${roleFilter}」；如确需读取请加 --role all。`);
+  }
   const chat = fetched.toChat(sid);
   if (!chat || !chat.messages.length) throw new Error(`会话 ${sid} 未取到消息。`);
   const saved = writeChat(ws, chat);
