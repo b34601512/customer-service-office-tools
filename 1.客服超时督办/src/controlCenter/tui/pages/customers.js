@@ -2,6 +2,7 @@
 const ansi = require("../ansi");
 const { fit, padEnd, normalizeCellText } = require("../width");
 const { formatRemainingSeconds, formatDateTimeText } = require("../format");
+const { DATA_FRESHNESS_STALE_THRESHOLD_SECONDS } = require("../../controlCenterDashboardService");
 
 function resolveRemainingText(item) {
   const timeoutRemaining = Number(item.timeoutReminderRemainingSeconds || 0);
@@ -55,14 +56,35 @@ function resolveFreshnessAgeColor(ageSeconds, stale) {
   return "brightYellow";
 }
 
+function buildFreshnessBar(ageSeconds, stale, width = 20) {
+  const barWidth = Math.max(1, Number(width) || 1);
+  const numericAgeSeconds = Number(ageSeconds);
+  if (!Number.isFinite(numericAgeSeconds) || numericAgeSeconds < 0) {
+    return ansi.colorize("░".repeat(barWidth), "gray") + " 暂无";
+  }
+
+  const ratio = Math.max(
+    0,
+    Math.min(1, 1 - numericAgeSeconds / DATA_FRESHNESS_STALE_THRESHOLD_SECONDS)
+  );
+  const filled = Math.round(ratio * barWidth);
+  const color = stale || ratio < 0.2 ? "brightRed" : ratio < 0.5 ? "brightYellow" : "brightGreen";
+  const bar = "█".repeat(filled) + "░".repeat(barWidth - filled);
+  return `${ansi.colorize(bar, color)} ${Math.round(ratio * 100)}%`;
+}
+
 function buildDataFreshnessLines(dataFreshness, columns) {
   const freshness = dataFreshness || {};
-  const ageSeconds = Number(freshness.ageSeconds);
+  // 未完成首次扫描时保持“暂无”，不能把 null 隐式转成 0 秒而显示满血。
+  const ageSeconds = freshness.ageSeconds == null ? Number.NaN : Number(freshness.ageSeconds);
   // 时间与“X秒/分钟前”分段上色：fit 会先剥离 ANSI 码再算宽度，不会破坏对齐。
   const clockText = ansi.colorize(formatFreshnessClock(freshness.lastScannedAtMs), "brightBlue");
   const ageText = ansi.colorize(formatFreshnessAge(ageSeconds), resolveFreshnessAgeColor(ageSeconds, freshness.stale));
   const freshnessText = `数据最后扫描 ${clockText}（${ageText}）`;
-  const lines = [fit(freshnessText, columns)];
+  const lines = [
+    fit(freshnessText, columns),
+    fit(`新鲜度 ${buildFreshnessBar(ageSeconds, freshness.stale)}`, columns)
+  ];
   if (freshness.stale) {
     const staleMinutes = Math.max(1, Math.floor((Number.isFinite(ageSeconds) ? ageSeconds : 0) / 60));
     lines.push(ansi.colorize(
@@ -436,6 +458,7 @@ module.exports = {
   buildCustomerHeader,
   renderCustomerDetail,
   resolveRemainingText,
+  buildFreshnessBar,
   singleLineText,
   splitStatusTags,
   filterCustomerItems,

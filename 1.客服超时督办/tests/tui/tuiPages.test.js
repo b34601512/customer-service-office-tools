@@ -3,8 +3,19 @@ const assert = require("node:assert/strict");
 const { createConfigPage, serializeKeywords, formatFieldValue, FIELDS } = require("../../src/controlCenter/tui/pages/config");
 const { createWecomPage, normalizeSectionItems } = require("../../src/controlCenter/tui/pages/wecom");
 const { createOverviewPage, buildActions } = require("../../src/controlCenter/tui/pages/overview");
-const { createCustomersPage } = require("../../src/controlCenter/tui/pages/customers");
+const { createCustomersPage, buildFreshnessBar } = require("../../src/controlCenter/tui/pages/customers");
 const { createReportsPage } = require("../../src/controlCenter/tui/pages/reports");
+
+test("客户页：新鲜度血条应随扫描年龄从满格衰减到空格", () => {
+  assert.match(buildFreshnessBar(0, false), /100%/);
+  assert.match(buildFreshnessBar(60, false), /50%/);
+  assert.match(buildFreshnessBar(120, true), /0%/);
+});
+
+test("客户页：未扫描时新鲜度血条不能显示满格", () => {
+  assert.match(buildFreshnessBar(Number.NaN, false), /暂无/);
+  assert.doesNotMatch(buildFreshnessBar(Number.NaN, false), /100%/);
+});
 
 test("配置页：关键词数组应该序列化成一行一条的编辑文本", () => {
   const rules = [
