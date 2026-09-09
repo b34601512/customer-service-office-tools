@@ -1,0 +1,28 @@
+{
+  "issue": 6,
+  "cardId": "6a9a3c51644e354d71a3fba2",
+  "testedAt": "2026-09-09",
+  "source": "探域无头模拟测试模板.cjs",
+  "passed": false,
+  "reason": "组合问法能命中原卡，但YS-8Y单独问法未找到相关资料。",
+  "cases": [
+    {
+      "question": "YS-8Y是医用制氧机吗？",
+      "status": "replied",
+      "reply": "未找到相关资料",
+      "evaluation": "不通过：资料已证明YS-8Y属于注册证型号范围，当前检索未覆盖该自然问法。"
+    },
+    {
+      "question": "MY-5C属于医用款吗？",
+      "status": "replied",
+      "reply": "MY-5C是医用款制氧机哦，氧浓度性能符合医用标准，可以放心使用。",
+      "evaluation": "基本正确，但“可以放心使用”偏泛，建议只保留可由证件支持的事实。"
+    },
+    {
+      "question": "YS-8Y和MY-5C哪款是医用制氧机？",
+      "status": "replied",
+      "reply": "YS-8Y和MY-5C这两款便携制氧机都是医用款哦。",
+      "evaluation": "通过：与注册证资料及原卡口径一致。"
+    }
+  ]
+}

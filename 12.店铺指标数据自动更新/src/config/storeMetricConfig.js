@@ -5,7 +5,7 @@ const { readJsonFile, writeJsonFileAtomic } = require("../shared/fileStore");
 
 const neighborProjectConfigPath =
   "D:\\桌面\\办公软件\\9.客服数据自动更新\\project-config\\platform-config.json";
-const jdShopStarUrl = "https://jdsz.jd.com/szweb/view/service/shop-experience-score.html";
+const jdShopStarUrl = "https://shop.jd.com/jdm/shopstar/vane/VaneContainer";
 const jdNegativeServiceUrl = "https://jdsz.jd.com/szweb/view/service/negative-service-temp.html";
 const jdComplianceUrl = "https://illegal-jdm.shop.jd.com/legal";
 const tmallServerReportUrl = "https://qn.taobao.com/home.html/voc-tmall/serverReport";

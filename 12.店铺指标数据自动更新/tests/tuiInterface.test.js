@@ -148,6 +148,18 @@ async function main() {
   assert.ok(statusLines[0].includes("状态"));
   assert.ok(statusLines[0].includes("启用店铺 2"));
 
+  const overviewText = pages[0].render(app).map(stripAnsi).join("\n");
+  assert.match(overviewText, /── 操作 ──/);
+  assert.doesNotMatch(overviewText, /今日完成|已完成|未完成|平台分布|最近结果/);
+
+  const runningStatusLines = buildStatusLines({
+    services: {
+      ...services,
+      getState: () => ({ status: "running", stage: "京东3店：读取页面指标", detail: "↻ 检查页面响应" })
+    }
+  }, { columns: 100 });
+  assert.strictEqual(stripAnsi(runningStatusLines[1]), "");
+
   // 模态输入框：输入字符、退格、回车确认。
   const inputPromise = app.requestInput({ title: "测试输入", defaultValue: "" });
   app.dispatchKey("a");

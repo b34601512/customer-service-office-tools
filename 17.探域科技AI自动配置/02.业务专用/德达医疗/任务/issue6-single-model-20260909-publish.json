@@ -1,0 +1,17 @@
+{
+  "uploads": [
+    {
+      "model": "YS-8Y",
+      "file": "D:/桌面/办公软件/17.探域科技AI自动配置/02.业务专用/德达医疗/output/issue6-证件图片-20260909/YS-8Y注册证-第5页.png",
+      "sha256": "5e00b22e616bde1e8f1bea6eddce3435dc4ed931be253b5fb00f83ff8a80592d",
+      "url": "http://copilot-knowledge-base.oss-cn-hangzhou.aliyuncs.com/2094743970688012288/e82acb58-f1f3-4afd-86cb-994ec58b9598/issue6-1788937275738-7cdf93a5-1086-411b-bca9-9ca00416b719.png"
+    },
+    {
+      "model": "MY-5C",
+      "file": "D:/桌面/办公软件/17.探域科技AI自动配置/02.业务专用/德达医疗/output/issue6-证件图片-20260909/MY-5C注册证-第1页.png",
+      "sha256": "b21bd6f57850de69d2a008b9af887188ae4c80c12bcbac350e22c866c80ffd98",
+      "url": "http://copilot-knowledge-base.oss-cn-hangzhou.aliyuncs.com/2094743970688012288/f540ea27-6570-45dc-9a9d-baf726e30d31/issue6-1788937273012-491485ee-2d32-46d1-82df-7a3f24712535.png"
+    }
+  ],
+  "entries": []
+}

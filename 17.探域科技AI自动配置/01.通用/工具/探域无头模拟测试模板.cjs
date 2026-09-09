@@ -24,6 +24,8 @@ const repeated = name => {
   const inputPlaceholder = required('input-placeholder');
   const replyMarker = arg('reply-marker');
   const resetEndpoint = arg('reset-endpoint');
+  const botId = arg('bot-id');
+  const thirdShopId = arg('third-shop-id');
   const timeout = Number(arg('timeout-ms') || 45000);
   const launchOptions = { headless: true };
   const browserChannel = arg('browser-channel');
@@ -33,6 +35,21 @@ const repeated = name => {
   try {
     page = ctx.pages()[0] || await ctx.newPage();
     await page.goto(baseUrl + pagePath, { waitUntil: 'domcontentloaded', timeout });
+    // 某些版本的测试页不会把页面状态中的 botId 传给发送接口。
+    // 传入 --bot-id 时，仅在无头测试请求层补齐/覆盖它，不改生产配置。
+    if (botId || thirdShopId) {
+      await page.route('**/api/im/agent/debug/send-buyer-message', async route => {
+        const postData = route.request().postData();
+        try {
+          const payload = JSON.parse(postData || '{}');
+          if (botId) payload.botId = botId;
+          if (thirdShopId) payload.thirdShopId = thirdShopId;
+          await route.continue({ postData: JSON.stringify(payload) });
+        } catch {
+          await route.continue();
+        }
+      });
+    }
     const reset = async () => {
       if (!resetEndpoint) return;
       const result = await page.evaluate(async endpoint => {

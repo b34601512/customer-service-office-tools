@@ -43,8 +43,12 @@ function buildStatusLines(ctx, app) {
   lines.push(fit(line1, app.columns));
 
   const stageText = state.stage ? `[${state.stage}]` : "";
-  const outcomeText = state.detail || state.error || "选择总览页的“开始汇总”即可运行。";
-  lines.push(ansi.colorize(fit(` ${stageText} ${outcomeText}`.trim(), app.columns), "gray"));
+  const outcomeText = state.status === "running"
+    ? ""
+    : state.detail || state.error || "选择总览页的“开始汇总”即可运行。";
+  lines.push(outcomeText
+    ? ansi.colorize(fit(` ${stageText} ${outcomeText}`.trim(), app.columns), "gray")
+    : "");
   return lines;
 }
 

@@ -1,0 +1,23 @@
+{
+  "company": "德达医疗",
+  "scope": "仅核验诊断优化调优工坊中的待审核卡片196",
+  "items": [
+    {
+      "id": "6a9a3c51644e354d71a3fba2",
+      "before": [
+        "Q:哪款便携制氧机是医用款？\nA:目前YS-8Y和MY-5C两款便携制氧机都是医用款。"
+      ],
+      "after": [
+        "Q:哪款便携制氧机是医用款？\nA:目前YS-8Y和MY-5C两款便携制氧机都是医用款。"
+      ],
+      "expected": {
+        "title": "便携制氧/是什么？/哪款便携制氧机是医用款？",
+        "ifOpen": true,
+        "ifBelievable": true,
+        "type": "SHOP",
+        "orderStatus": ["PRE_SALE"]
+      },
+      "note": "下载资料已核实YS-8Y与MY-5C均在有效医疗器械注册证型号范围内；当前后台内容已是目标口径，无需重复写入。"
+    }
+  ]
+}

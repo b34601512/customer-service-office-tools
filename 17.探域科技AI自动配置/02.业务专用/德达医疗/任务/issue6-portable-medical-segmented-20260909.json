@@ -1,0 +1,25 @@
+{
+  "company": "德达医疗",
+  "scope": "仅优化诊断优化调优工坊待审核卡片196的分段召回口径",
+  "items": [
+    {
+      "id": "6a9a3c51644e354d71a3fba2",
+      "before": [
+        "Q:哪款便携制氧机是医用款？\nA:目前YS-8Y和MY-5C两款便携制氧机都是医用款。\n\n![MY-5C注册证-第1页](http://copilot-knowledge-base.oss-cn-hangzhou.aliyuncs.com/2094743970688012288/f540ea27-6570-45dc-9a9d-baf726e30d31/issue6-1788937273012-491485ee-2d32-46d1-82df-7a3f24712535.png)\n\n![MY-5C注册证-第2页](http://copilot-knowledge-base.oss-cn-hangzhou.aliyuncs.com/2094743970688012288/b1811471-992b-4b0a-9b11-fee20c1eb575/issue6-1788937274172-51f916b4-90ff-4756-a5b7-5751a9501530.png)\n\n![MY-5C技术要求-第1页](http://copilot-knowledge-base.oss-cn-hangzhou.aliyuncs.com/2094743970688012288/355e6cb6-b153-4c40-b882-3be0d12f5795/issue6-1788937274496-7ba98040-7c41-454a-8198-0fd21b271f8e.png)\n\n![MY-5C技术要求-第5页](http://copilot-knowledge-base.oss-cn-hangzhou.aliyuncs.com/2094743970688012288/db58d7f2-c12b-4493-a81f-921b04d66414/issue6-1788937274807-7aef7109-e7a6-444a-ae9c-8bd14982ac91.png)\n\n![YS-8Y注册证-第1页](http://copilot-knowledge-base.oss-cn-hangzhou.aliyuncs.com/2094743970688012288/2b2ead6d-8ce2-40b1-8887-595f16f8cf74/issue6-1788937275140-eed82509-b4e3-4144-9657-0d7922044044.png)\n\n![YS-8Y注册证-第2页](http://copilot-knowledge-base.oss-cn-hangzhou.aliyuncs.com/2094743970688012288/93c61f70-3846-4ece-bd1b-7217fbd77bdb/issue6-1788937275463-ffdf9f61-b885-47ac-9013-a222b0d6fa9f.png)\n\n![YS-8Y注册证-第5页](http://copilot-knowledge-base.oss-cn-hangzhou.aliyuncs.com/2094743970688012288/e82acb58-f1f3-4afd-86cb-994ec58b9598/issue6-1788937275738-7cdf93a5-1086-411b-bca9-9ca00416b719.png)\n\n![YS-8Y注册证-第6页](http://copilot-knowledge-base.oss-cn-hangzhou.aliyuncs.com/2094743970688012288/9f3a9dbc-c6b2-4ac8-9ee0-77be045b99e9/issue6-1788937276068-92fe96a1-56cb-454d-8a2a-a9e53909927e.png)\n\n![YS-8Y技术要求-第2页](http://copilot-knowledge-base.oss-cn-hangzhou.aliyuncs.com/2094743970688012288/45558d76-ab38-42b2-93cb-426f7a805c02/issue6-1788937276411-e8d2188a-39b5-4b68-b458-2d61354c5a95.png)\n\n![YS-8Y技术要求-第4页](http://copilot-knowledge-base.oss-cn-hangzhou.aliyuncs.com/2094743970688012288/cec1c666-af28-471d-9a86-96b48448ca98/issue6-1788937276710-2455389b-aadf-400b-b134-18a3b58ad26d.png)\n\n![YS-8Y技术要求-第6页](http://copilot-knowledge-base.oss-cn-hangzhou.aliyuncs.com/2094743970688012288/9f95938e-23f8-46f8-b9cd-cba34beb05cf/issue6-1788937277020-5a2ab3e5-0b0b-4e8f-801a-db9631222bfa.png)"
+      ],
+      "after": [
+        "Q:哪款便携制氧机是医用款？\nA:目前YS-8Y和MY-5C两款便携制氧机都是医用款。",
+        "Q:YS-8Y是医用制氧机吗？\nA:是的，YS-8Y属于医用款便携制氧机，型号在对应医疗器械注册证范围内。具体请以机器铭牌型号为准。\n\n![YS-8Y注册证-第1页](http://copilot-knowledge-base.oss-cn-hangzhou.aliyuncs.com/2094743970688012288/2b2ead6d-8ce2-40b1-8887-595f16f8cf74/issue6-1788937275140-eed82509-b4e3-4144-9657-0d7922044044.png)\n\n![YS-8Y注册证-第2页](http://copilot-knowledge-base.oss-cn-hangzhou.aliyuncs.com/2094743970688012288/93c61f70-3846-4ece-bd1b-7217fbd77bdb/issue6-1788937275463-ffdf9f61-b885-47ac-9013-a222b0d6fa9f.png)\n\n![YS-8Y注册证-第5页](http://copilot-knowledge-base.oss-cn-hangzhou.aliyuncs.com/2094743970688012288/e82acb58-f1f3-4afd-86cb-994ec58b9598/issue6-1788937275738-7cdf93a5-1086-411b-bca9-9ca00416b719.png)\n\n![YS-8Y注册证-第6页](http://copilot-knowledge-base.oss-cn-hangzhou.aliyuncs.com/2094743970688012288/9f3a9dbc-c6b2-4ac8-9ee0-77be045b99e9/issue6-1788937276068-92fe96a1-56cb-454d-8a2a-a9e53909927e.png)\n\n![YS-8Y技术要求-第2页](http://copilot-knowledge-base.oss-cn-hangzhou.aliyuncs.com/2094743970688012288/45558d76-ab38-42b2-93cb-426f7a805c02/issue6-1788937276411-e8d2188a-39b5-4b68-b458-2d61354c5a95.png)\n\n![YS-8Y技术要求-第4页](http://copilot-knowledge-base.oss-cn-hangzhou.aliyuncs.com/2094743970688012288/cec1c666-af28-471d-9a86-96b48448ca98/issue6-1788937276710-2455389b-aadf-400b-b134-18a3b58ad26d.png)\n\n![YS-8Y技术要求-第6页](http://copilot-knowledge-base.oss-cn-hangzhou.aliyuncs.com/2094743970688012288/9f95938e-23f8-46f8-b9cd-cba34beb05cf/issue6-1788937277020-5a2ab3e5-0b0b-4e8f-801a-db9631222bfa.png)",
+        "Q:MY-5C属于医用款吗？\nA:是的，MY-5C属于医用款便携制氧机，型号在对应医疗器械注册证范围内。具体请以机器铭牌型号为准。\n\n![MY-5C注册证-第1页](http://copilot-knowledge-base.oss-cn-hangzhou.aliyuncs.com/2094743970688012288/f540ea27-6570-45dc-9a9d-baf726e30d31/issue6-1788937273012-491485ee-2d32-46d1-82df-7a3f24712535.png)\n\n![MY-5C注册证-第2页](http://copilot-knowledge-base.oss-cn-hangzhou.aliyuncs.com/2094743970688012288/b1811471-992b-4b0a-9b11-fee20c1eb575/issue6-1788937274172-51f916b4-90ff-4756-a5b7-5751a9501530.png)\n\n![MY-5C技术要求-第1页](http://copilot-knowledge-base.oss-cn-hangzhou.aliyuncs.com/2094743970688012288/355e6cb6-b153-4c40-b882-3be0d12f5795/issue6-1788937274496-7ba98040-7c41-454a-8198-0fd21b271f8e.png)\n\n![MY-5C技术要求-第5页](http://copilot-knowledge-base.oss-cn-hangzhou.aliyuncs.com/2094743970688012288/db58d7f2-c12b-4493-a81f-921b04d66414/issue6-1788937274807-7aef7109-e7a6-444a-ae9c-8bd14982ac91.png)"
+      ],
+      "expected": {
+        "title": "便携制氧/是什么？/哪款便携制氧机是医用款？",
+        "ifOpen": true,
+        "ifBelievable": true,
+        "type": "SHOP",
+        "orderStatus": ["PRE_SALE"]
+      },
+      "note": "已获确认：将组合问法、YS-8Y单型号、MY-5C单型号拆为独立内容段；证据图按型号分配，避免长卡截断召回。"
+    }
+  ]
+}

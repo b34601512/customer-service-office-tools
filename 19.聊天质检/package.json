@@ -1,0 +1,17 @@
+{
+  "name": "chat-quality-inspector",
+  "version": "0.1.0",
+  "description": "售前客服聊天质检：独立浏览器取数、人工阅读、企微反馈预览",
+  "main": "src/cli.js",
+  "type": "commonjs",
+  "private": true,
+  "scripts": {
+    "browser:start": "node src/cli.js browser:start",
+    "fetch:list": "node src/cli.js fetch:list",
+    "fetch:save": "node src/cli.js fetch:save",
+    "import": "node src/cli.js import",
+    "wecom:preview": "node src/cli.js wecom:preview",
+    "test": "node --test \"tests/*.test.js\""
+  },
+  "license": "UNLICENSED"
+}

@@ -1,0 +1,10 @@
+{
+  "cdp": {
+    "port": 9333,
+    "browser": "edge",
+    "loginUrl": "https://shop.jd.com/jdm/kefu/kf-manage-lite/#/UtilsSetting/ChatLog",
+    "pageTitleMatch": "京东客服管家",
+    "apiBase": "https://kf.jd.com/chatLog/queryList.action",
+    "pageSize": 50
+  }
+}

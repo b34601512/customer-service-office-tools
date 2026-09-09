@@ -1,0 +1,18 @@
+{
+  "prefix": "issue6-single-model-20260909",
+  "manifest": "D:/桌面/办公软件/17.探域科技AI自动配置/02.业务专用/德达医疗/任务/issue6-single-model-manifest-20260909.json",
+  "targets": {
+    "YS-8Y": {
+      "title": "便携制氧/医用型号/YS-8Y是医用制氧机吗？",
+      "text": "Q:YS-8Y是医用制氧机吗？\nA:是的，YS-8Y属于医用款便携制氧机，型号在对应医疗器械注册证范围内。具体请以机器铭牌型号为准。",
+      "alt": "YS-8Y注册证型号证据",
+      "orderStatus": ["PRE_SALE"]
+    },
+    "MY-5C": {
+      "title": "便携制氧/医用型号/MY-5C属于医用款吗？",
+      "text": "Q:MY-5C属于医用款吗？\nA:是的，MY-5C属于医用款便携制氧机，型号在对应医疗器械注册证范围内。具体请以机器铭牌型号为准。",
+      "alt": "MY-5C注册证型号证据",
+      "orderStatus": ["PRE_SALE"]
+    }
+  }
+}

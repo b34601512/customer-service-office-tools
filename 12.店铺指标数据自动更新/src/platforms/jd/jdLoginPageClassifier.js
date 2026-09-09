@@ -65,7 +65,7 @@ function hasJdSystemReadyText(text) {
 
 function hasJdStoreMetricReadyText(text) {
   const normalizedText = normalizeText(text);
-  return ["店铺星级", "店铺体验", "咚咚平均响应时长", "物流履约得分"]
+  return ["店铺星级", "店铺体验", "咚咚平均响应时长", "物流履约得分", "星级概览", "体验得分", "客服咨询"]
     .some((keyword) => normalizedText.includes(keyword));
 }
 

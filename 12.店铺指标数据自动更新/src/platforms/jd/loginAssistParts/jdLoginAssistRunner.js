@@ -6,6 +6,7 @@ const {
   hasJdSessionExpiredText,
   isJdPassportLoginUrl
 } = require("../jdLoginPageClassifier");
+const { isJdStoreBackendUrl } = require("../jdUrlRules");
 const { findReadyJdPage } = require("../loginReadyParts/jdReadyPageSearch");
 const {
   waitForDynamicLoginSurface,
@@ -22,6 +23,10 @@ const { runJdLoginStateStep } = require("./jdLoginNavigationTransition");
 const { redirectJdNoAccessToLogin } = require("../jdNoAccessLoginRedirect");
 const { readJdPageBodyText } = require("../jdPageText");
 const { requireHeadedBrowser } = require("../../../engine/browserAutomationScope");
+
+const JD_LOGIN_ASSIST_TIMEOUT_MS = 5 * 60 * 1000;
+const JD_LOGIN_ASSIST_POLL_INTERVAL_MS = 250;
+const JD_EMPTY_PAGE_GRACE_MS = 10000;
 
 function buildJdLoginAssistRunnerOptions(options = {}) {
   // 这里保留调用方传入的登录成功回调，避免自动检测成功后控制台仍停在未登录。
@@ -163,6 +168,20 @@ async function processJdAssistPage(page, resolvedConfig, credentials, autofilled
   }
 
   const pageBodyText = await readJdPageBodyText(page);
+  if (isJdStoreBackendUrl(url) && !String(pageBodyText || "").trim()) {
+    const blankPageSince = options.blankPageSince || new WeakMap();
+    const firstBlankAt = blankPageSince.get(page) || Date.now();
+    blankPageSince.set(page, firstBlankAt);
+    if (Date.now() - firstBlankAt >= JD_EMPTY_PAGE_GRACE_MS) {
+      const blankPageReason = "京东业务页面持续空白，无法读取页面内容";
+      if (options.headless) {
+        requireHeadedBrowser(blankPageReason);
+      }
+      throw new Error(`${blankPageReason}：${page.url()}。`);
+    }
+    return { waitingForPageRender: true };
+  }
+  options.blankPageSince?.delete(page);
   const expiredHandled = await handleJdExpiredSession(page, pageBodyText, resolvedConfig);
   if (expiredHandled) {
     return { waitingForManualVerification: false };
@@ -213,8 +232,9 @@ async function runJdLoginAssist(assistTask, options = {}) {
 
   const browser = await connectToChrome();
   try {
-    let deadline = Date.now() + 5 * 60 * 1000;
+    let deadline = Date.now() + JD_LOGIN_ASSIST_TIMEOUT_MS;
     let lastManualVerificationReason = "";
+    const blankPageSince = new WeakMap();
     while (Date.now() <= deadline) {
       if (shouldStopJdLoginAssist(assistTask, displayName)) {
         return;
@@ -236,6 +256,7 @@ async function runJdLoginAssist(assistTask, options = {}) {
             autofilledSurfaceMarks,
             {
               headless: options.headless === true,
+              blankPageSince,
               onManualVerification(verificationState) {
                 if (verificationState.reason !== lastManualVerificationReason) {
                   lastManualVerificationReason = verificationState.reason;
@@ -264,13 +285,14 @@ async function runJdLoginAssist(assistTask, options = {}) {
 
       if (!stateStep.completed) {
         log("主线:等待", "京东登录", "页面跳转", `店铺「${displayName}」登录页面正在重定向，重新读取最新页面状态`);
+        await new Promise((resolve) => setTimeout(resolve, JD_LOGIN_ASSIST_POLL_INTERVAL_MS));
         continue;
       }
 
       if (stateStep.value?.ready || stateStep.value?.stopped) {
         return;
       }
-      await new Promise((resolve) => setImmediate(resolve));
+      await new Promise((resolve) => setTimeout(resolve, JD_LOGIN_ASSIST_POLL_INTERVAL_MS));
     }
 
     throw new Error("京东登录辅助超时，5 分钟内未检测到可填充的登录页或登录成功状态。");

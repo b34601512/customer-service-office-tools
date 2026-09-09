@@ -1,0 +1,6 @@
+runtime/chat/
+runtime/browser-profile/
+runtime/logs/
+runtime/outputs/
+runtime/config/config.json
+runtime/config/wecom.json

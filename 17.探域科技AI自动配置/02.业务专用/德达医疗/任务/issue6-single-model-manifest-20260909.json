@@ -1,0 +1,18 @@
+[
+  {
+    "model": "YS-8Y",
+    "source": "D:/桌面/办公软件/17.探域科技AI自动配置/02.业务专用/德达医疗/output/issue6-证件图片-20260909/YS-8Y注册证-第5页.png",
+    "file": "D:/桌面/办公软件/17.探域科技AI自动配置/02.业务专用/德达医疗/output/issue6-证件图片-20260909/YS-8Y注册证-第5页.png",
+    "sourceSha256": "5e00b22e616bde1e8f1bea6eddce3435dc4ed931be253b5fb00f83ff8a80592d",
+    "sha256": "5e00b22e616bde1e8f1bea6eddce3435dc4ed931be253b5fb00f83ff8a80592d",
+    "outsidePixelsUnchanged": true
+  },
+  {
+    "model": "MY-5C",
+    "source": "D:/桌面/办公软件/17.探域科技AI自动配置/02.业务专用/德达医疗/output/issue6-证件图片-20260909/MY-5C注册证-第1页.png",
+    "file": "D:/桌面/办公软件/17.探域科技AI自动配置/02.业务专用/德达医疗/output/issue6-证件图片-20260909/MY-5C注册证-第1页.png",
+    "sourceSha256": "b21bd6f57850de69d2a008b9af887188ae4c80c12bcbac350e22c866c80ffd98",
+    "sha256": "b21bd6f57850de69d2a008b9af887188ae4c80c12bcbac350e22c866c80ffd98",
+    "outsidePixelsUnchanged": true
+  }
+]

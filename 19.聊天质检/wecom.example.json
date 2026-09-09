@@ -1,0 +1,18 @@
+{
+  "webhookUrl": "在 runtime/config/wecom.json 填写企业微信机器人 webhook",
+  "memberDirectory": [
+    {
+      "name": "客服姓名",
+      "mobile": "",
+      "userId": "",
+      "inlineMentionEnabled": true
+    }
+  ],
+  "nicknameMappings": [
+    {
+      "nickname": "后台昵称",
+      "staffName": "客服姓名",
+      "role": "售前"
+    }
+  ]
+}

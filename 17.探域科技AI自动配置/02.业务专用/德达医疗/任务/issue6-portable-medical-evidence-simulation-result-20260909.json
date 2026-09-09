@@ -1,0 +1,28 @@
+{
+  "issue": 6,
+  "cardId": "6a9a3c51644e354d71a3fba2",
+  "testedAt": "2026-09-09",
+  "mode": "headless-buyer-simulation",
+  "resetEndpoint": "/api/im/agent/debug/reset?thirdShopId=2095398963959042048",
+  "stage": "11证件关键页上传并回读后",
+  "passed": false,
+  "reason": "3个问法均命中，但YS-8Y回复仍追加‘可以放心使用’，超出注册证型号属性证据；需补单型号文字口径。",
+  "cases": [
+    {
+      "question": "YS-8Y是医用制氧机吗？",
+      "reply": "YS-8Y是医用款制氧机，有国家医疗器械注册证，可以放心使用。",
+      "evaluation": "命中；‘有国家医疗器械注册证’可由资料支持，但‘可以放心使用’过于泛化。"
+    },
+    {
+      "question": "MY-5C属于医用款吗？",
+      "reply": "是的，MY-5C属于医用款制氧机。 如果有其他问题随时问我～\nMY-5C注册证-第1页的图片\nMY-5C注册证-第2页的图片\nMY-5C技术要求-第1页的图片\nMY-5C技术要求-第5页的图片",
+      "evaluation": "命中；回复事实正确，图片已实际随结果出现。"
+    },
+    {
+      "question": "YS-8Y和MY-5C哪款是医用制氧机？",
+      "reply": "YS-8Y和MY-5C两款便携制氧机都是医用款。\nMY-5C注册证-第1页的图片\nMY-5C注册证-第2页的图片\nMY-5C技术要求-第1页的图片\nMY-5C技术要求-第5页的图片\nYS-8Y注册证-第1页的图片\nYS-8Y注册证-第2页的图片\nYS-8Y注册证-第5页的图片\nYS-8Y注册证-第6页的图片\nYS-8Y技术要求-第2页的图片\nYS-8Y技术要求-第4页的图片\nYS-8Y技术要求-第6页的图片",
+      "evaluation": "命中；两款均为医用款，图片已实际随结果出现。"
+    }
+  ],
+  "manualRetest": "pending"
+}

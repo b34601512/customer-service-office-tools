@@ -6,6 +6,9 @@ const { formatDurationMs, formatSummaryTaskStatus } = require("../format");
 const { spinner, titleBanner, progressBar } = require("../gameUi");
 const { PLATFORM_SCOPE_DEFINITIONS } = require("../../../shared/storeCollectionScope");
 
+const TASKS_BANNER_WIDTH = 32;
+const TASKS_PROGRESS_WIDTH = 40;
+
 function formatStoreResultLine(storeResult, columns, isSelected) {
   const statusInfo = formatSummaryTaskStatus(storeResult.status);
   let text = `[${statusInfo.label}] ${storeResult.storeName}`;
@@ -60,22 +63,23 @@ function createTasksPage() {
     renderScopeSubmenu(app) {
       const state = this.state;
       const lines = [];
+      const bannerWidth = Math.min(app.columns - 2, TASKS_BANNER_WIDTH);
       if (state.scopeMode === "choose") {
         const options = ["全部店铺", "某个平台", "某一家店"];
-        lines.push(...titleBanner("◆ 强制重新采集范围 ◆", app.columns - 2));
+        lines.push(...titleBanner("◆ 强制重新采集范围 ◆", bannerWidth));
         options.forEach((label, index) => {
           const row = ` ${index === state.scopeSelection ? "▶" : " "} ${label}`;
           lines.push(index === state.scopeSelection ? ansi.colorize(fit(row, app.columns), "reverse") : row);
         });
       } else if (state.scopeMode === "platform") {
-        lines.push(...titleBanner("◆ 选择平台 ◆", app.columns - 2));
+        lines.push(...titleBanner("◆ 选择平台 ◆", bannerWidth));
         PLATFORM_SCOPE_DEFINITIONS.forEach((definition, index) => {
           const row = ` ${index === state.scopeSelection ? "▶" : " "} ${definition.platformName}`;
           lines.push(index === state.scopeSelection ? ansi.colorize(fit(row, app.columns), "reverse") : row);
         });
       } else if (state.scopeMode === "store") {
         const stores = app.ctx.services.listEnabledStores();
-        lines.push(...titleBanner("◆ 选择店铺 ◆", app.columns - 2));
+        lines.push(...titleBanner("◆ 选择店铺 ◆", bannerWidth));
         stores.forEach((store, index) => {
           const row = ` ${index === state.scopeSelection ? "▶" : " "} ${store.displayName}  编号=${store.key}`;
           lines.push(index === state.scopeSelection ? ansi.colorize(fit(row, app.columns), "reverse") : row);
@@ -98,7 +102,7 @@ function createTasksPage() {
         return this.renderScopeSubmenu(app);
       }
 
-      lines.push(...titleBanner("◆ 店铺指标批量汇总 ◆", columns - 2));
+      lines.push(...titleBanner("◆ 店铺指标批量汇总 ◆", Math.min(columns - 2, TASKS_BANNER_WIDTH)));
 
       const running = state.status === "running";
       const hasRun = state.status !== "idle";
@@ -128,7 +132,7 @@ function createTasksPage() {
             : state.status === "partial_error" || state.status === "error"
               ? "brightRed"
               : "gray";
-        lines.push(` 进度  ${progressBar(done, total, columns - 8, progressColor)}`);
+        lines.push(` 进度  ${progressBar(done, total, Math.min(columns - 8, TASKS_PROGRESS_WIDTH), progressColor)}`);
       }
       lines.push(` 完成 ${successCount}  跳过 ${skippedCount}  失败 ${errorCount}${runningCount ? `  运行中 ${runningCount}` : ""}`);
 
@@ -153,7 +157,7 @@ function createTasksPage() {
         lines.push(ansi.colorize(" 尚无运行记录，按 S 开始汇总。", "gray"));
       }
 
-      if (hasRun && state.detail) {
+      if (hasRun && state.detail && !running) {
         const finished = state.status === "success";
         const hasFailures = state.status === "error" || state.status === "partial_error";
         const detailColor = finished ? "brightGreen" : hasFailures ? "brightRed" : "gray";
