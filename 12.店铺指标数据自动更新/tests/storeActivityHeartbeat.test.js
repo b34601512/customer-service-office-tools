@@ -44,6 +44,7 @@ test("店铺采集等待期间持续发布动作心跳", async () => {
 
   const heartbeatSnapshots = snapshots.filter((state) => /已运行/.test(state.detail));
   assert.ok(heartbeatSnapshots.length >= 2);
-  assert.ok(heartbeatSnapshots.some((state) => /检查页面响应|校验页面结构|等待业务数据返回/.test(state.detail)));
+  assert.ok(heartbeatSnapshots.every((state) => state.stage.endsWith("读取页面指标")));
+  assert.ok(heartbeatSnapshots.every((state) => !/^↻/.test(state.detail)));
   assert.equal(stateStore.read().status, "success");
 });

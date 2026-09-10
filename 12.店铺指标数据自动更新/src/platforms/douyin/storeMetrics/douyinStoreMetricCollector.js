@@ -60,7 +60,13 @@ function shouldKeepDouyinBrowserOpen(error) {
     /登录|人工切店|切换抖音店铺|验证码|滑块|安全验证|等待抖音|等待人工验证/.test(String(error?.message || error));
 }
 
-async function collectAndWriteDouyinStoreMetrics({ config, store, dateSelection, onProgress }) {
+async function collectAndWriteDouyinStoreMetrics({
+  config,
+  store,
+  dateSelection,
+  onProgress,
+  collectionContext
+}) {
   const evidenceDirectory = createStoreMetricEvidenceDirectory({
     platformKey: store.platformKey || "douyin",
     storeDisplayName: store.displayName,
@@ -69,25 +75,37 @@ async function collectAndWriteDouyinStoreMetrics({ config, store, dateSelection,
   const evidenceFiles = [];
   let browser = null;
   let keepBrowserOpen = false;
-  const browserMode = resolveBrowserMode();
+  const douyinSession = collectionContext?.douyinSession || null;
+  const browserMode = douyinSession?.browserMode || resolveBrowserMode();
   const sourceUrl = store.sources.experienceScore || appConfig.douyin.siteUrl;
-  const openStoreBrowser = (nextMode, preserveCache = false) => runManagedOpenWindowEngine({
+  const openStoreBrowser = (nextMode) => runManagedOpenWindowEngine({
     platformKey: "douyin",
     storeConfig: { ...store, siteUrl: sourceUrl },
     actionName: "打开抖音服务体验页面",
     moduleName: "抖音店铺指标",
     missingOpenUrlMessage: `${store.displayName}缺少抖音服务体验页面地址。`,
-    browserMode: nextMode,
-    preserveCache
+    browserMode: nextMode
   });
   try {
-    notifyProgress(onProgress, `打开${store.displayName}`, "正在启动独立浏览器并进入抖音服务体验页面");
-    await openStoreBrowser(browserMode);
+    notifyProgress(
+      onProgress,
+      douyinSession?.isStarted ? `切换到${store.displayName}` : "打开抖音会话",
+      douyinSession?.isStarted
+        ? "沿用本轮登录会话，校验当前店铺后直接切换"
+        : "正在启动共享浏览器并进入服务体验页面"
+    );
+    if (douyinSession) {
+      await douyinSession.ensureStarted(openStoreBrowser);
+    } else {
+      await openStoreBrowser(browserMode);
+    }
     return await runHybridStoreCollection({
       platformKey: "douyin",
-      mode: browserMode,
+      mode: douyinSession?.browserMode || browserMode,
       onProgress: (stage, detail) => notifyProgress(onProgress, stage, detail),
-      openHeaded: () => openStoreBrowser("headed", true)
+      openHeaded: () => douyinSession
+        ? douyinSession.rebuildHeaded(openStoreBrowser)
+        : openStoreBrowser("headed")
     }, async (scope) => {
       browser = await connectToChrome({ timeoutMs: appConfig.douyin.connectTimeoutMs });
       try {
@@ -164,11 +182,11 @@ async function collectAndWriteDouyinStoreMetrics({ config, store, dateSelection,
       mergeEvidenceFiles(evidenceFiles, error.evidenceFiles, failureEvidenceFiles)
     );
     if (!error.evidencePath && error.evidenceFiles.length) error.evidencePath = error.evidenceFiles[0].filePath;
-    keepBrowserOpen = shouldKeepDouyinBrowserOpen(error);
+    keepBrowserOpen = Boolean(douyinSession) || shouldKeepDouyinBrowserOpen(error);
     throw error;
   } finally {
     if (browser) await disconnectFromChrome(browser, "抖音店铺指标任务结束，断开自动化连接").catch(() => {});
-    if (!keepBrowserOpen) await closeManagedChrome().catch(() => {});
+    if (!douyinSession && !keepBrowserOpen) await closeManagedChrome().catch(() => {});
   }
 }
 

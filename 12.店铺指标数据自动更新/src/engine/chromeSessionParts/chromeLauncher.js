@@ -1,4 +1,4 @@
-// 该文件用于解决受控 Edge 拉起、默认下载目录设置和会话状态写入问题。
+// 该文件用于解决受控 Google Chrome 拉起、默认下载目录设置和会话状态写入问题。
 const { spawn } = require("child_process");
 const appConfig = require("../../config/appConfig");
 const { buildManagedChromeLaunchArgs } = require("../chromeLaunchArgs");
@@ -9,7 +9,7 @@ const { migrateLegacyStoreChromeProfileToAccountDir } = require("../chromeProfil
 const { writeManagedPid } = require("../managedProcessParts/managedPidStore");
 const { releaseDebugPort } = require("./chromePortGuard");
 const {
-  resolveEdgePath,
+  resolveChromePath,
   prepareRuntimeDirs,
   resolveManagedChromeUserDataDir,
   buildManagedChromeSessionMeta,
@@ -17,7 +17,7 @@ const {
 } = require("./chromeSessionPaths");
 
 async function launchChromeForManualLogin(targetUrl, options = {}) {
-  // 这里统一拉起 Edge 并开启远程调试；无头模式供采集，有头模式供人工接管。
+  // 这里统一拉起 Chrome 并开启远程调试；无头模式供采集，有头模式供人工接管。
   prepareRuntimeDirs();
   const userDataDir = resolveManagedChromeUserDataDir(options);
   migrateLegacyStoreChromeProfileToAccountDir({
@@ -29,7 +29,7 @@ async function launchChromeForManualLogin(targetUrl, options = {}) {
   if (downloadDir) {
     applyChromeDownloadPreferences(userDataDir, downloadDir);
   }
-  const executablePath = resolveEdgePath();
+  const executablePath = resolveChromePath();
   const args = buildManagedChromeLaunchArgs({
     remoteDebuggingPort: appConfig.tmall.remoteDebuggingPort,
     userDataDir,
@@ -60,14 +60,14 @@ async function launchChromeForManualLogin(targetUrl, options = {}) {
     "主线:启动",
     "浏览器引擎",
     "人工登录",
-    `已拉起 Edge，模式=${options.headless === true ? "无头采集" : "有头人工"}，PID=${child.pid}，调试端口=${appConfig.tmall.remoteDebuggingPort}，资料目录=${userDataDir}，目标页=${targetUrl}，默认下载目录=${downloadDir || "沿用 Edge 当前设置"}`
+    `已拉起 Chrome，模式=${options.headless === true ? "无头采集" : "有头人工"}，PID=${child.pid}，调试端口=${appConfig.tmall.remoteDebuggingPort}，资料目录=${userDataDir}，目标页=${targetUrl}，默认下载目录=${downloadDir || "沿用 Chrome 当前设置"}`
   );
 }
 
 function spawnManagedChrome(executablePath, args, spawnImplementation = spawn) {
   return new Promise((resolve, reject) => {
     const child = spawnImplementation(executablePath, args, { detached: true, stdio: "ignore" });
-    child.once("error", (error) => reject(new Error(`Edge 启动失败：${error.message}`)));
+    child.once("error", (error) => reject(new Error(`Chrome 启动失败：${error.message}`)));
     child.once("spawn", () => resolve(child));
   });
 }

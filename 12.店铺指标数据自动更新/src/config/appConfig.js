@@ -31,12 +31,12 @@ module.exports = {
   getStoreDownloadRunDir(platformKey, storeKey) {
     return runtime.cache.getStoreDownloadRunDir(platformKey, storeKey);
   },
-  edgePaths: [
-    "C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe",
-    "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
-    path.join(process.env.LOCALAPPDATA || "", "Microsoft", "Edge", "Application", "msedge.exe")
+  chromePaths: [
+    "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+    "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
+    path.join(process.env.LOCALAPPDATA || "", "Google", "Chrome", "Application", "chrome.exe")
   ],
-  // Edge 调试端口统一用 9334：不用 9222（本机其他自动化工具可能占用），
+  // Chrome 调试端口统一用 9334：不用 9222（本机其他自动化工具可能占用），
   // 且与「9.客服数据自动更新」的 9333 保持独立，两个项目可同时运行互不冲突。
   tmall: {
     siteUrl: "https://qn.taobao.com/home.html/voc-tmall/serverReport",

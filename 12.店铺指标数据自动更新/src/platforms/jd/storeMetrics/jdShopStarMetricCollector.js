@@ -222,7 +222,7 @@ function handleShopStarRateLimit(rateLimitMonitor, results = null) {
     .find((code) => Number(code) === 601);
   if (!rateLimitState && resultCode === undefined) return false;
   const reason = rateLimitState?.message || "京东店铺星级接口返回请求繁忙（code=601）";
-  requireHeadedBrowser(`${reason}，正在切换可见 Edge 重试`);
+  requireHeadedBrowser(`${reason}，正在切换可见 Chrome 重试`);
   return true;
 }
 

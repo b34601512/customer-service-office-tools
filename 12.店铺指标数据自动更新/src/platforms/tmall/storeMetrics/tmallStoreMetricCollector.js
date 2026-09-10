@@ -87,7 +87,7 @@ async function collectAndWriteTmallStoreMetrics({ config, store, dateSelection, 
   let keepBrowserOpen = false;
   let browser = null;
   const browserMode = resolveBrowserMode();
-  const openStoreBrowser = (nextMode, preserveCache = false) => runManagedOpenWindowEngine({
+  const openStoreBrowser = (nextMode) => runManagedOpenWindowEngine({
     platformKey: "tmall",
     storeConfig: {
       ...store,
@@ -96,8 +96,7 @@ async function collectAndWriteTmallStoreMetrics({ config, store, dateSelection, 
     actionName: "打开真实体验分页",
     moduleName: "天猫店铺指标",
     missingOpenUrlMessage: `${store.displayName}缺少真实体验分页地址。`,
-    browserMode: nextMode,
-    preserveCache
+    browserMode: nextMode
   });
   try {
     notifyProgress(onProgress, `打开${store.displayName}`, "正在启动独立浏览器并进入真实体验分页");
@@ -106,14 +105,14 @@ async function collectAndWriteTmallStoreMetrics({ config, store, dateSelection, 
       platformKey: "tmall",
       mode: browserMode,
       onProgress: (stage, detail) => notifyProgress(onProgress, stage, detail),
-      openHeaded: () => openStoreBrowser("headed", true)
+      openHeaded: () => openStoreBrowser("headed")
     }, async (scope) => {
       browser = await connectToChrome();
       try {
         const page = await waitForTmallLoginReady(browser, store, {
           headless: scope.headless,
           onLoginSubmitted() {
-            notifyProgress(onProgress, "等待天猫登录", "账号密码已提交；如出现验证，请在 Edge 中完成。");
+            notifyProgress(onProgress, "等待天猫登录", "账号密码已提交；如出现验证，请在 Chrome 中完成。");
           },
           onManualVerification(reason) {
             notifyProgress(onProgress, "等待人工验证", `${store.displayName}需要${reason}，程序停在原地等待。`);

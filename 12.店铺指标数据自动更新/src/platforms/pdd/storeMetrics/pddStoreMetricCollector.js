@@ -71,14 +71,13 @@ async function collectAndWritePddStoreMetrics({ config, store, dateSelection, on
   let browser = null;
   let keepBrowserOpen = false;
   const browserMode = resolveBrowserMode();
-  const openStoreBrowser = (nextMode, preserveCache = false) => runManagedOpenWindowEngine({
+  const openStoreBrowser = (nextMode) => runManagedOpenWindowEngine({
     platformKey: "pdd",
     storeConfig: { ...store, siteUrl: store.sources.customer || appConfig.pdd.siteUrl },
     actionName: "打开拼多多店铺指标页面",
     moduleName: "拼多多店铺指标",
     missingOpenUrlMessage: `${store.displayName}缺少拼多多店铺指标页面地址。`,
-    browserMode: nextMode,
-    preserveCache
+    browserMode: nextMode
   });
   try {
     notifyProgress(onProgress, `打开${store.displayName}`, "正在启动独立浏览器并使用脚本登录拼多多");
@@ -87,7 +86,7 @@ async function collectAndWritePddStoreMetrics({ config, store, dateSelection, on
       platformKey: "pdd",
       mode: browserMode,
       onProgress: (stage, detail) => notifyProgress(onProgress, stage, detail),
-      openHeaded: () => openStoreBrowser("headed", true)
+      openHeaded: () => openStoreBrowser("headed")
     }, async (scope) => {
       browser = await connectToChrome({ timeoutMs: appConfig.pdd.connectTimeoutMs });
       try {

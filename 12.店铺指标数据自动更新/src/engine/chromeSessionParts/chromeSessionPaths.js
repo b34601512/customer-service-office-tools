@@ -1,19 +1,19 @@
-// 该文件用于解决受控 Edge 路径、资料目录和会话元信息管理问题；保留历史文件名以兼容既有运行目录。
+// 该文件用于解决受控 Google Chrome 路径、资料目录和会话元信息管理问题。
 const fs = require("fs");
 const appConfig = require("../../config/appConfig");
 const { initializeRuntimeLayout } = require("../../config/runtimeLayoutService");
 const { ensureDir, movePathToBackup } = require("../fileSystem");
 const { writeJsonFileAtomic, readJsonFile } = require("../../shared/fileStore");
 
-function resolveEdgePath() {
-  // 这里显式检查 Edge 路径，找不到就立刻报错，避免黑箱失败。
-  for (const edgePath of appConfig.edgePaths) {
-    if (edgePath && fs.existsSync(edgePath)) {
-      return edgePath;
+function resolveChromePath() {
+  // 这里显式检查 Google Chrome 路径，找不到就立刻报错，避免黑箱失败。
+  for (const chromePath of appConfig.chromePaths) {
+    if (chromePath && fs.existsSync(chromePath)) {
+      return chromePath;
     }
   }
 
-  throw new Error("未找到可用的 Microsoft Edge，请先安装或启用 Edge。");
+  throw new Error("未找到可用的 Google Chrome，请先安装Chrome。");
 }
 
 function prepareRuntimeDirs() {
@@ -24,7 +24,7 @@ function prepareRuntimeDirs() {
 }
 
 function resolveManagedChromeUserDataDir(options = {}) {
-  // 这里统一解析受控 Edge 要使用的资料目录，默认仍走共享目录，支持按店铺独立隔离。
+  // 这里统一解析受控 Chrome 要使用的资料目录，默认仍走共享目录，支持按店铺独立隔离。
   const userDataDir = String(options.userDataDir || "").trim();
   return userDataDir || appConfig.chromeUserDataDir;
 }
@@ -38,7 +38,7 @@ function buildManagedChromeMatchTokens() {
 }
 
 function buildManagedChromeSessionMeta(options = {}) {
-  // 这里把受控 Edge 当前绑定的平台、店铺、模式和目录固化下来，供状态轮询和切店重建复用。
+  // 这里把受控 Chrome 当前绑定的平台、店铺、模式和目录固化下来，供状态轮询和切店重建复用。
   return {
     platformKey: String(options.platformKey || "").trim(),
     storeKey: String(options.storeKey || "").trim(),
@@ -76,7 +76,7 @@ function wait(ms) {
 }
 
 module.exports = {
-  resolveEdgePath,
+  resolveChromePath,
   prepareRuntimeDirs,
   resolveManagedChromeUserDataDir,
   buildManagedChromeMatchTokens,

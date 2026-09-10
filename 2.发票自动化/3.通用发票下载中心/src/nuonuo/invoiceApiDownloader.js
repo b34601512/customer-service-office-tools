@@ -16,6 +16,56 @@ const 下载文件类型配置 = {
   ofd: { field: 'ofdDownloadUrl', extension: '.ofd' },
   xml: { field: 'xmlUrl', extension: '.xml' },
 };
+const 默认诺诺接口重试次数 = 1;
+const 默认诺诺接口重试间隔Ms = 1_000;
+
+function 页面已关闭(page) {
+  // 解决：页面已经关闭时不重复提交请求，避免把生命周期错误伪装成网络重试。
+  return typeof page?.isClosed === 'function' && page.isClosed();
+}
+
+function 是可重试诺诺接口错误(error, page) {
+  // 解决：只重试浏览器 fetch 的瞬时网络失败，不重试 HTTP、响应结构和页面关闭错误。
+  return !页面已关闭(page) && /Failed to fetch/i.test(String(error?.message || error || ''));
+}
+
+function 等待诺诺接口重试(ms) {
+  // 解决：重试前让出短暂时间，给诺诺网络连接恢复机会。
+  return new Promise((resolve) => setTimeout(resolve, Math.max(0, Number(ms) || 0)));
+}
+
+async function 带重试执行诺诺接口(请求函数, 选项 = {}) {
+  // 解决：诺诺页面接口偶发 Failed to fetch 时只补一次请求，避免临时网络抖动直接使订单失败。
+  if (typeof 请求函数 !== 'function') {
+    throw new Error('诺诺接口请求失败：缺少请求函数。');
+  }
+  const {
+    page = null,
+    接口描述 = '诺诺接口',
+    重试次数 = 默认诺诺接口重试次数,
+    重试间隔Ms = 默认诺诺接口重试间隔Ms,
+  } = 选项;
+  const 最大尝试次数 = 1 + Math.max(0, Number.parseInt(重试次数, 10) || 0);
+  let 最后错误 = null;
+
+  for (let 尝试次数 = 1; 尝试次数 <= 最大尝试次数; 尝试次数 += 1) {
+    try {
+      return await 请求函数();
+    } catch (error) {
+      最后错误 = error;
+      const 还可重试 = 尝试次数 < 最大尝试次数 && 是可重试诺诺接口错误(error, page);
+      if (!还可重试) throw error;
+      打印日志(
+        '诺诺下载',
+        '接口重试',
+        `${接口描述}第 ${尝试次数} 次失败，${Math.max(0, Number(重试间隔Ms) || 0)}ms 后重试：${error.message}`,
+      );
+      await 等待诺诺接口重试(重试间隔Ms);
+    }
+  }
+
+  throw 最后错误;
+}
 
 function 格式化日期(date) {
   // 这个函数解决诺诺兜底查询接口只接受 yyyy-MM-dd 日期格式的问题。
@@ -102,22 +152,25 @@ function 选择可下载发票记录(records, fileType = 'pdf') {
 
 async function 提交诺诺页面接口(page, apiPath, formBody) {
   // 这个函数解决诺诺接口必须使用页面自己的登录上下文，不能脱离页面硬调。
-  const result = await page.evaluate(async ({ apiPath: innerApiPath, formBody: innerFormBody }) => {
-    const response = await fetch(`${innerApiPath}?_=${Date.now()}`, {
-      method: 'POST',
-      headers: {
-        accept: 'application/json, text/plain, */*',
-        'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
-      },
-      body: innerFormBody,
-      credentials: 'include',
-    });
-    return {
-      ok: response.ok,
-      status: response.status,
-      text: await response.text(),
-    };
-  }, { apiPath, formBody });
+  const result = await 带重试执行诺诺接口(
+    () => page.evaluate(async ({ apiPath: innerApiPath, formBody: innerFormBody }) => {
+      const response = await fetch(`${innerApiPath}?_=${Date.now()}`, {
+        method: 'POST',
+        headers: {
+          accept: 'application/json, text/plain, */*',
+          'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        },
+        body: innerFormBody,
+        credentials: 'include',
+      });
+      return {
+        ok: response.ok,
+        status: response.status,
+        text: await response.text(),
+      };
+    }, { apiPath, formBody }),
+    { page, 接口描述: `诺诺接口 ${apiPath}` },
+  );
   if (!result.ok) {
     throw new Error(`诺诺接口异常：HTTP ${result.status}`);
   }
@@ -126,22 +179,25 @@ async function 提交诺诺页面接口(page, apiPath, formBody) {
 
 async function 提交诺诺JSON接口(page, apiPath, payload = {}) {
   // 这个函数解决诺诺主体切换这类 JSON 接口也必须走页面登录上下文。
-  const result = await page.evaluate(async ({ apiPath: innerApiPath, payload: innerPayload }) => {
-    const response = await fetch(innerApiPath, {
-      method: 'POST',
-      headers: {
-        accept: 'application/json, text/plain, */*',
-        'content-type': 'application/json;charset=UTF-8',
-      },
-      body: JSON.stringify(innerPayload),
-      credentials: 'include',
-    });
-    return {
-      ok: response.ok,
-      status: response.status,
-      text: await response.text(),
-    };
-  }, { apiPath, payload });
+  const result = await 带重试执行诺诺接口(
+    () => page.evaluate(async ({ apiPath: innerApiPath, payload: innerPayload }) => {
+      const response = await fetch(innerApiPath, {
+        method: 'POST',
+        headers: {
+          accept: 'application/json, text/plain, */*',
+          'content-type': 'application/json;charset=UTF-8',
+        },
+        body: JSON.stringify(innerPayload),
+        credentials: 'include',
+      });
+      return {
+        ok: response.ok,
+        status: response.status,
+        text: await response.text(),
+      };
+    }, { apiPath, payload }),
+    { page, 接口描述: `诺诺接口 ${apiPath}` },
+  );
   if (!result.ok) throw new Error(`诺诺接口异常：HTTP ${result.status}`);
   return JSON.parse(result.text);
 }
@@ -373,6 +429,9 @@ module.exports = {
   是否开票完成,
   获取发票下载地址,
   选择可下载发票记录,
+  页面已关闭,
+  是可重试诺诺接口错误,
+  带重试执行诺诺接口,
   提交诺诺页面接口,
   提交诺诺JSON接口,
   查询诺诺主体列表,

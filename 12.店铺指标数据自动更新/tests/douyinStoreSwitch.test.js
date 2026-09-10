@@ -6,7 +6,8 @@ const {
 const {
   runDouyinMerchantStoreAction,
   findExactDouyinStoreOptionAcrossPages,
-  clickDouyinStorePickerOption
+  clickDouyinStorePickerOption,
+  ensureDouyinStoreMenuOpenWithoutPopupHandling
 } = require("../src/platforms/douyin/douyinStoreIdentity");
 
 class FakePopupElementHandle {
@@ -177,6 +178,63 @@ test("抖音正常切店窗口直接点击店铺项，不经过弹窗关闭流�
     }
   });
   assert.deepEqual(clickCalls, [{ timeout: 10000 }]);
+});
+
+test("抖音切店入口延迟挂载时等待并重用同一店铺头部", async () => {
+  let menuReady = false;
+  let waitCount = 0;
+  let headerClickCount = 0;
+  const switchEntry = {
+    async isVisible() {
+      return menuReady;
+    }
+  };
+  const page = {
+    locator(selector) {
+      if (selector === ".headerShopName") {
+        return {
+          first() {
+            return {
+              async waitFor() {},
+              async click() {
+                headerClickCount += 1;
+              }
+            };
+          }
+        };
+      }
+      if (selector === "body") {
+        return {
+          async innerText() {
+            return menuReady ? "店铺 ID：123456" : "抖店首页";
+          }
+        };
+      }
+      throw new Error(`unexpected locator: ${selector}`);
+    },
+    getByText(text, options) {
+      assert.equal(text, "切换组织/店铺");
+      assert.deepEqual(options, { exact: true });
+      return {
+        async count() {
+          return menuReady ? 1 : 0;
+        },
+        nth() {
+          return switchEntry;
+        }
+      };
+    },
+    async waitForTimeout() {
+      waitCount += 1;
+      if (waitCount >= 3) menuReady = true;
+    }
+  };
+
+  const result = await ensureDouyinStoreMenuOpenWithoutPopupHandling(page);
+
+  assert.equal(result, switchEntry);
+  assert.equal(headerClickCount, 1);
+  assert.ok(waitCount >= 3);
 });
 
 function createStoreOptionPage(hasTarget, storeName) {

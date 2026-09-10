@@ -9,7 +9,7 @@
 
 ## 数据边界
 
-- 聊天记录、浏览器资料和企微真值配置只放 `runtime/`，不进入仓库。
+- 聊天记录、工作报告、浏览器资料和企微真值配置只放 `runtime/`，不进入仓库。
 - `runtime/config/wecom.json` 保存 webhook、企微成员及“昵称 → 客服”映射；示例文件只放占位符。
 - 客户 ID、Cookie、密码和完整个人信息不得写入源码或经验文档。
 - 单条聊天只能作为案例，不能外推成某客服或全体客服结论。
@@ -19,6 +19,7 @@
 - 业务逻辑放在 `src/services/`，`src/cli.js` 只编排参数和输出。
 - `browserSession.js` 负责独立浏览器；`jdFetch.js`/`jdConvert.js` 负责京东取数和转换；`wecomFeedback.js` 负责映射、@和预览。
 - 昵称映射复用9号项目，企微成员目录复用1号项目；两者不得各自再维护一套。
+- 成功发送的反馈必须带工作区和报告上下文，由 `reportStore.js` 写入 `runtime/reports/YYYY-MM-DD.md`；发送失败不得记为已完成。
 
 ## 文档真源
 

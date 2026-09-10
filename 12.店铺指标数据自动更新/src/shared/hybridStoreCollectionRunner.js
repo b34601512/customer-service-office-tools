@@ -43,7 +43,7 @@ async function runHybridStoreCollection(options = {}, action) {
       throw handoffError;
     }
 
-    options.onProgress?.("切换可见浏览器", `${initialScope.intervention}；正在保留账号资料并重建 Edge。`);
+    options.onProgress?.("切换可见浏览器", `${initialScope.intervention}；正在保留账号资料并重建 Chrome。`);
     await options.openHeaded();
     const headedScope = {
       ...initialScope,

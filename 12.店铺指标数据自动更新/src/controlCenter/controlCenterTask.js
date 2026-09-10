@@ -8,6 +8,7 @@ const { collectAndWriteJdStoreMetrics } = require("../platforms/jd/storeMetrics/
 const { collectAndWriteTmallStoreMetrics } = require("../platforms/tmall/storeMetrics/tmallStoreMetricCollector");
 const { collectAndWritePddStoreMetrics } = require("../platforms/pdd/storeMetrics/pddStoreMetricCollector");
 const { collectAndWriteDouyinStoreMetrics } = require("../platforms/douyin/storeMetrics/douyinStoreMetricCollector");
+const { createDouyinSharedBrowserSession } = require("../platforms/douyin/douyinCollectionSession");
 const { assertWorkbookAvailableForUpdate } = require("../summaryData/workbookUpdateGuard");
 const {
   normalizeEvidenceFiles,
@@ -26,12 +27,6 @@ const {
 } = require("../shared/storeCollectionScope");
 
 const STORE_ACTIVITY_HEARTBEAT_INTERVAL_MS = 800;
-const STORE_ACTIVITY_HEARTBEAT_ACTIONS = [
-  "检查页面响应",
-  "校验页面结构",
-  "等待业务数据返回",
-  "整理采集结果"
-];
 
 function formatStoreActivityElapsed(elapsedMs) {
   const totalSeconds = Math.max(0, Math.floor(Number(elapsedMs || 0) / 1000));
@@ -76,11 +71,18 @@ function replaceStoreResult(storeResults, nextStoreResult) {
     storeResult.storeKey === nextStoreResult.storeKey ? nextStoreResult : storeResult);
 }
 
-async function runSingleConfiguredStore({ config, store, dateSelection, collectStoreMetrics, onProgress }) {
+async function runSingleConfiguredStore({
+  config,
+  store,
+  dateSelection,
+  collectStoreMetrics,
+  onProgress,
+  collectionContext
+}) {
   if (store.platformKey !== "douyin" && (!store.username || !store.password)) {
     throw new Error(`${store.displayName}账号或密码未配置。`);
   }
-  return collectStoreMetrics({ config, store, dateSelection, onProgress });
+  return collectStoreMetrics({ config, store, dateSelection, onProgress, collectionContext });
 }
 
 function resolveStoreMetricCollector(store, dependencies) {
@@ -134,6 +136,15 @@ async function runConfiguredStoresTask(stateStore, dependencies = {}) {
   const forceRecollect = dependencies.forceRecollect === true;
   const collectionScope = dependencies.collectionScope;
   const taskStartedAt = nowFn();
+  let douyinSession = null;
+  const resolveStoreCollectionContext = (store) => {
+    if (store.platformKey !== "douyin") return undefined;
+    if (!douyinSession) {
+      const createSession = dependencies.createDouyinSharedBrowserSession || createDouyinSharedBrowserSession;
+      douyinSession = createSession();
+    }
+    return { douyinSession };
+  };
   stateStore.update({
     status: "running",
     stage: "准备批量汇总",
@@ -224,7 +235,6 @@ async function runConfiguredStoresTask(stateStore, dependencies = {}) {
           stage: "准备登录",
           detail: `进度 ${storeIndex + 1}/${enabledStores.length}，${collectionReason}`
         };
-        let heartbeatIndex = 0;
         const storeStartedAt = Date.now();
         const updateRunningProgress = (progress = {}, isHeartbeat = false) => {
           if (!isHeartbeat) {
@@ -238,7 +248,7 @@ async function runConfiguredStoresTask(stateStore, dependencies = {}) {
             storeResult.storeKey === store.key);
           if (!currentStoreResult) return;
           const detail = isHeartbeat
-            ? `↻ ${STORE_ACTIVITY_HEARTBEAT_ACTIONS[heartbeatIndex % STORE_ACTIVITY_HEARTBEAT_ACTIONS.length]} · ${latestProgress.detail} · 已运行 ${formatStoreActivityElapsed(Date.now() - storeStartedAt)}`
+            ? `${latestProgress.detail} · 已运行 ${formatStoreActivityElapsed(Date.now() - storeStartedAt)}`
             : latestProgress.detail;
           const runningResult = {
             ...currentStoreResult,
@@ -258,14 +268,14 @@ async function runConfiguredStoresTask(stateStore, dependencies = {}) {
         };
         heartbeatTimer = setInterval(() => {
           updateRunningProgress({}, true);
-          heartbeatIndex += 1;
         }, activityHeartbeatIntervalMs);
         const storeTaskResult = await runSingleConfiguredStore({
           config,
           store,
           dateSelection,
           collectStoreMetrics: resolveStoreMetricCollector(store, dependencies),
-          onProgress: updateRunningProgress
+          onProgress: updateRunningProgress,
+          collectionContext: resolveStoreCollectionContext(store)
         });
         appendSuccessfulRun({
           store,
@@ -355,6 +365,8 @@ async function runConfiguredStoresTask(stateStore, dependencies = {}) {
       error: serializeTaskError(error)
     });
     throw error;
+  } finally {
+    if (douyinSession) await douyinSession.close().catch(() => {});
   }
 }
 

@@ -1,4 +1,4 @@
-// 无头 Edge 没有主窗口；通过 CDP Browser.close 正常落盘资料后再释放进程。
+// 无头 Chrome 没有主窗口；通过 CDP Browser.close 正常落盘资料后再释放进程。
 const { loadPlaywrightCore } = require("../playwrightProvider");
 
 async function requestChromeCloseOverCDP(endpoint, dependencies = {}) {

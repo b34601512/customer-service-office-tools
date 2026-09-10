@@ -39,38 +39,50 @@ async function fillJdLoginCredentials(usernameLocator, passwordLocator, credenti
   }
 }
 
+async function findJdLoginCredentialInputs(surface) {
+  // 这里统一读取当前密码登录面上的账号和密码输入框。
+  return {
+    usernameLocator: await findFirstVisibleJdLoginLocator(surface, [
+      "input[type='text']",
+      "input[type='tel']",
+      "input[name*='user']",
+      "input[name*='login']",
+      "input[placeholder*='账号名/邮箱']",
+      "input[placeholder*='账号名']",
+      "input[placeholder*='邮箱']",
+      "input[placeholder*='账号']",
+      "input[placeholder*='手机号']",
+      "input[placeholder*='用户名']"
+    ]),
+    passwordLocator: await findFirstVisibleJdLoginLocator(surface, [
+      "input[type='password']",
+      "input[name*='password']",
+      "input[placeholder*='密码']",
+      "input[placeholder*='登录密码']"
+    ])
+  };
+}
+
 async function tryAutofillLoginFrame(surface, credentials) {
-  // 这个函数只填入账号密码并点击唯一京东密码提交按钮。
-  const switched = await trySwitchToPasswordLogin(surface);
+  // 这个函数只在需要时切换密码登录，再填入账号密码并点击唯一提交按钮。
+  let { usernameLocator, passwordLocator } = await findJdLoginCredentialInputs(surface);
+  const switched = !usernameLocator || !passwordLocator
+    ? await trySwitchToPasswordLogin(surface)
+    : false;
   const page = resolveJdLoginSurfacePage(surface);
-  if (switched && page) {
+  if (switched && page && typeof page.waitForFunction === "function") {
     await waitForJdLoginInputsAfterSwitch(page);
   }
-  const usernameLocator = await findFirstVisibleJdLoginLocator(surface, [
-    "input[type='text']",
-    "input[type='tel']",
-    "input[name*='user']",
-    "input[name*='login']",
-    "input[placeholder*='账号名/邮箱']",
-    "input[placeholder*='账号名']",
-    "input[placeholder*='邮箱']",
-    "input[placeholder*='账号']",
-    "input[placeholder*='手机号']",
-    "input[placeholder*='用户名']"
-  ]);
-  const passwordLocator = await findFirstVisibleJdLoginLocator(surface, [
-    "input[type='password']",
-    "input[name*='password']",
-    "input[placeholder*='密码']",
-    "input[placeholder*='登录密码']"
-  ]);
+  if (switched) {
+    ({ usernameLocator, passwordLocator } = await findJdLoginCredentialInputs(surface));
+  }
   if (!usernameLocator || !passwordLocator) {
     return false;
   }
   await fillJdLoginCredentials(usernameLocator, passwordLocator, credentials);
   const submitLocator = await findJdPasswordLoginSubmitButton(surface);
   if (!submitLocator) {
-    throw new Error("京东登录按钮定位失败：账号密码已填写，但未找到唯一密码提交按钮 #loginsubmit。");
+    throw new Error("京东登录按钮定位失败：账号密码已填写，但未找到唯一可见的密码提交按钮（#loginsubmit 或“立即登录”）。");
   }
   await clickLocatorWhenReady(submitLocator, "京东登录按钮", { timeoutMs: 5000 });
   return true;

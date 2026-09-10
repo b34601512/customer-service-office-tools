@@ -1,6 +1,5 @@
 const appConfig = require("../config/appConfig");
 const { resolveBrowserMode } = require("../engine/browserAutomationScope");
-const { cleanActiveStoreBrowserCachesWhenSafe } = require("../config/runtimeLayoutService");
 const { launchChromeForManualLogin, closeManagedChrome } = require("../engine/chromeSession");
 const { log, logError } = require("../engine/logger");
 
@@ -96,8 +95,6 @@ async function runManagedOpenWindowEngine(options = {}, dependencies = {}) {
   const logFn = dependencies.logFn || log;
   const logErrorFn = dependencies.logErrorFn || logError;
   const closeManagedChromeFn = dependencies.closeManagedChrome || closeManagedChrome;
-  const cleanStoreBrowserCachesFn =
-    dependencies.cleanStoreBrowserCaches || cleanActiveStoreBrowserCachesWhenSafe;
   const launchChromeForManualLoginFn =
     dependencies.launchChromeForManualLogin || launchChromeForManualLogin;
   const normalizedActionName = normalizeText(options.actionName || "打开后台页面请求") || "打开后台页面请求";
@@ -109,9 +106,6 @@ async function runManagedOpenWindowEngine(options = {}, dependencies = {}) {
 
   logFn("主线:执行", moduleName, normalizedActionName, startLogMessage);
   await closeManagedChromeFn();
-  if (!options.preserveCache) {
-    cleanStoreBrowserCachesFn(plan.userDataDir, "打开后台页面前自动清理");
-  }
   await launchChromeForManualLoginFn(plan.openMeta.openUrl, {
     userDataDir: plan.userDataDir,
     accountProfileKey: plan.accountProfileKey,

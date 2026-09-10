@@ -24,6 +24,7 @@ function createWorkspace(base = DEFAULT_ROOT) {
     root: base,
     chat: path.join(base, 'runtime', 'chat'),     // 标准聊天记录 JSON
     review: path.join(base, 'runtime', 'review'), // AI 解析数据 JSON
+    reports: path.join(base, 'runtime', 'reports'), // 已确认并发送的工作报告
     browserProfile: path.join(base, 'runtime', 'browser-profile'), // 独立浏览器资料目录
     outputs: path.join(base, 'runtime', 'outputs'), // 成品 HTML
     config: path.join(base, 'runtime', 'config'), // 真值配置（不入库）

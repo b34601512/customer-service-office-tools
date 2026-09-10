@@ -119,14 +119,13 @@ async function collectAndWriteJdStoreMetrics({ config, store, dateSelection, onP
   const evidenceFiles = [];
   let keepBrowserOpen = false;
   const browserMode = resolveBrowserMode();
-  const openStoreBrowser = (nextMode, preserveCache = false) => runManagedOpenWindowEngine({
+  const openStoreBrowser = (nextMode) => runManagedOpenWindowEngine({
     platformKey: "jd",
     storeConfig: resolvedConfig.activeStore,
     actionName: "店铺指标打开后台页面",
     moduleName: "店铺指标",
     missingOpenUrlMessage: `${store.displayName}缺少店铺考核页面地址。`,
-    browserMode: nextMode,
-    preserveCache
+    browserMode: nextMode
   });
   try {
     notifyProgress(onProgress, `打开${store.displayName}`, "正在启动独立浏览器并自动登录");
@@ -135,7 +134,7 @@ async function collectAndWriteJdStoreMetrics({ config, store, dateSelection, onP
       platformKey: "jd",
       mode: browserMode,
       onProgress: (stage, detail) => notifyProgress(onProgress, stage, detail),
-      openHeaded: () => openStoreBrowser("headed", true)
+      openHeaded: () => openStoreBrowser("headed")
     }, async (scope) => {
       await startJdLoginAssist({
         forceRestart: true,
@@ -149,7 +148,7 @@ async function collectAndWriteJdStoreMetrics({ config, store, dateSelection, onP
           notifyProgress(
             onProgress,
             "等待人工验证",
-            `${verificationState.displayName}需要${verificationState.reason}，请在打开的 Edge 窗口完成后等待程序继续。`
+            `${verificationState.displayName}需要${verificationState.reason}，请在打开的 Chrome 窗口完成后等待程序继续。`
           );
         }
       });

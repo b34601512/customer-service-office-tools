@@ -34,8 +34,9 @@ function createRuntimeLayout(projectRoot) {
     state: {
       browserProfilesRoot,
       browserProfiles: {
-        chromeUserDataDir: path.join(browserProfilesRoot, "chrome-user-data"),
-        storeChromeProfilesRoot: path.join(browserProfilesRoot, "store-chrome-profiles")
+        // 浏览器资料与旧版本不混用；切换浏览器后从新目录建立长期 Chrome 会话。
+        chromeUserDataDir: path.join(browserProfilesRoot, "google-chrome-user-data"),
+        storeChromeProfilesRoot: path.join(browserProfilesRoot, "google-chrome-profiles")
       },
       buildStoreAccountChromeProfileKey,
       buildStoreScopedChromeProfileKey,
@@ -44,7 +45,7 @@ function createRuntimeLayout(projectRoot) {
       },
       getStoreAccountChromeUserDataDir(platformKey, storeKey, username) {
         return joinStoreAccountChromeUserDataDir(
-          path.join(browserProfilesRoot, "store-chrome-profiles"),
+          path.join(browserProfilesRoot, "google-chrome-profiles"),
           platformKey,
           storeKey,
           username

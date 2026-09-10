@@ -13,6 +13,7 @@ const {
   resolveFeedbackTarget,
   resolveWaiterTarget
 } = require('./services/wecomFeedback');
+const { readFeedbackReport } = require('./services/reportStore');
 
 function today() {
   const d = new Date();
@@ -47,6 +48,8 @@ function usage() {
   import      <文件路径>          导入 txt/json 聊天记录
   wecom:preview [聊天文件] (--content "待沟通文案" | --content-file 文案文件)
               解析昵称、客服和@方式，只输出预览，绝不访问 webhook
+  report:show [--date YYYY-MM-DD]
+              查看当天已成功发送的工作报告
 
 建议流程:
   node src/cli.js browser:start
@@ -194,6 +197,15 @@ async function cmdWecomPreview(ws, opts) {
   console.log('\n未发送：wecom:preview 不会访问企业微信 webhook。');
 }
 
+async function cmdReportShow(ws, opts) {
+  const report = readFeedbackReport(ws, opts.date || today());
+  if (!report) {
+    console.log(`暂无 ${opts.date || today()} 的已发送工作报告。`);
+    return;
+  }
+  console.log(report);
+}
+
 async function main() {
   const args = process.argv.slice(2);
   if (!args.length || args[0] === 'help' || args[0] === '--help' || args[0] === '-h') {
@@ -211,6 +223,7 @@ async function main() {
     else if (command === 'fetch:save') await cmdFetchSave(ws, cfg, opts, opts._[0]);
     else if (command === 'import') await cmdImport(ws, opts);
     else if (command === 'wecom:preview') await cmdWecomPreview(ws, opts);
+    else if (command === 'report:show') await cmdReportShow(ws, opts);
     else {
       console.error(`未知子命令：${command}`);
       usage();

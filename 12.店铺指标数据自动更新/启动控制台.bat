@@ -1,6 +1,6 @@
 @echo off
 setlocal EnableExtensions DisableDelayedExpansion
-rem Start one independent maximized CLI window; store collection defaults to hybrid Edge mode.
+rem Start one independent maximized CLI window; store collection defaults to hybrid Chrome mode.
 chcp 65001 >nul
 title Store Metric CLI v0.01
 pushd "%~dp0"

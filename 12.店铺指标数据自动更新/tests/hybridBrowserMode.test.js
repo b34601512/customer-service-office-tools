@@ -18,7 +18,7 @@ const { waitForPddLoginReady } = require("../src/platforms/pdd/pddLoginState");
 
 const launchOptions = {
   remoteDebuggingPort: 9334,
-  userDataDir: "C:\\fixture-edge-profile",
+  userDataDir: "C:\\fixture-chrome-profile",
   targetUrl: "https://kf.jd.com/fixture"
 };
 
@@ -43,13 +43,13 @@ test("浏览器模式和人工等待时间拒绝静默纠错", () => {
   assert.throws(() => resolveHumanTimeoutMs("900001"), /整数毫秒/);
 });
 
-test("Edge-only 配置不包含 Chrome 路径", () => {
-  assert.ok(Array.isArray(appConfig.edgePaths) && appConfig.edgePaths.length > 0);
-  assert.equal(Object.prototype.hasOwnProperty.call(appConfig, "chromePaths"), false);
-  assert.ok(appConfig.edgePaths.every((filePath) => /Microsoft[\\/]Edge[\\/]Application[\\/]msedge\.exe$/i.test(filePath)));
+test("Chrome-only 配置不包含 Edge 路径", () => {
+  assert.ok(Array.isArray(appConfig.chromePaths) && appConfig.chromePaths.length > 0);
+  assert.equal(Object.prototype.hasOwnProperty.call(appConfig, "edgePaths"), false);
+  assert.ok(appConfig.chromePaths.every((filePath) => /Google[\\/]Chrome[\\/]Application[\\/]chrome\.exe$/i.test(filePath)));
 });
 
-test("有头和无头 Edge 启动参数明确分流", () => {
+test("有头和无头 Chrome 启动参数明确分流", () => {
   const headedArgs = buildManagedChromeLaunchArgs(launchOptions);
   assert.ok(headedArgs.includes("--start-maximized"));
   assert.ok(headedArgs.includes("--new-window"));
@@ -66,7 +66,7 @@ test("会话元信息记录浏览器模式", () => {
     platformKey: "tmall",
     storeKey: "store-1",
     storeDisplayName: "测试店铺",
-    userDataDir: "C:\\fixture-edge-profile",
+    userDataDir: "C:\\fixture-chrome-profile",
     headless: true,
     browserMode: "hybrid"
   });
@@ -74,9 +74,8 @@ test("会话元信息记录浏览器模式", () => {
   assert.equal(meta.browserMode, "hybrid");
 });
 
-test("打开窗口引擎把无头模式传给 Edge，并保留统一店铺资料目录", async () => {
+test("打开窗口引擎把无头模式传给 Chrome，并保留长期店铺资料目录", async () => {
   let launchOptions = null;
-  let cleanedCacheCount = 0;
   const result = await runManagedOpenWindowEngine({
     platformKey: "tmall",
     browserMode: "headless",
@@ -89,7 +88,6 @@ test("打开窗口引擎把无头模式传给 Edge，并保留统一店铺资料
     }
   }, {
     closeManagedChrome: async () => {},
-    cleanStoreBrowserCaches: () => { cleanedCacheCount += 1; },
     launchChromeForManualLogin: async (_targetUrl, options) => { launchOptions = options; },
     logFn: () => {}
   });
@@ -97,8 +95,7 @@ test("打开窗口引擎把无头模式传给 Edge，并保留统一店铺资料
   assert.equal(result.headless, true);
   assert.equal(launchOptions.headless, true);
   assert.equal(launchOptions.browserMode, "headless");
-  assert.equal(cleanedCacheCount, 1);
-  assert.match(launchOptions.userDataDir, /store-chrome-profiles/);
+  assert.match(launchOptions.userDataDir, /google-chrome-profiles/);
 });
 
 test("混合模式只在人工介入时切换一次并重试同一业务动作", async () => {
@@ -195,7 +192,7 @@ test("人工标记不会泄漏到下一次独立作用域", async () => {
   });
 });
 
-test("无头 Edge 关闭通过 Browser.close，而不是只断开客户端", async () => {
+test("无头 Chrome 关闭通过 Browser.close，而不是只断开客户端", async () => {
   const calls = [];
   const connect = async () => ({
     newBrowserCDPSession: async () => ({ send: async (command) => calls.push(command) }),

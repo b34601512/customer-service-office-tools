@@ -321,6 +321,69 @@ test("抖音店铺可以沿用共享登录会话并进入统一批量流程", as
   assert.equal(result.metricCount, 14);
 });
 
+test("抖音同批次多店复用同一个登录会话并在批次结束后统一关闭", async () => {
+  const workbookPath = path.join(__dirname, "..", "outputs", "019fbb96-c39c-7ec1-899b-038594c1381a", "店铺指标数据源.xlsx");
+  const stores = [
+    {
+      platformKey: "douyin",
+      key: "douyin3",
+      displayName: "抖音03店",
+      enabled: true,
+      platformStoreId: "162329841",
+      platformStoreName: "德达医疗康养器械旗舰店",
+      sources: { experienceScore: "https://fxg.jinritemai.com/ffa/eco/experience-score" }
+    },
+    {
+      platformKey: "douyin",
+      key: "douyin5",
+      displayName: "抖音05店",
+      enabled: true,
+      platformStoreId: "29502951",
+      platformStoreName: "DEDAKJ医疗器械旗舰店",
+      sources: { experienceScore: "https://fxg.jinritemai.com/ffa/eco/experience-score" }
+    }
+  ];
+  const receivedContexts = [];
+  let createCount = 0;
+  let closeCount = 0;
+  const sharedSession = {
+    async close() {
+      closeCount += 1;
+    }
+  };
+  const stateStore = createControlCenterStateStore();
+  const result = await runConfiguredStoresTask(stateStore, {
+    readConfig() {
+      return {
+        workbook: { path: workbookPath },
+        dateSelection: { mode: "automatic", manual: { snapshotDate: "2026-08-01" } },
+        jd: { stores: [] },
+        tmall: { stores: [] },
+        pdd: { stores: [] },
+        douyin: { stores }
+      };
+    },
+    createDouyinSharedBrowserSession() {
+      createCount += 1;
+      return sharedSession;
+    },
+    findSuccessfulRun() { return null; },
+    appendSuccessfulRun() {},
+    assertWorkbookWritable() {},
+    async collectDouyinStoreMetrics({ collectionContext }) {
+      receivedContexts.push(collectionContext);
+      return { metricCount: 14 };
+    }
+  });
+
+  assert.equal(result.successCount, 2);
+  assert.equal(createCount, 1);
+  assert.equal(closeCount, 1);
+  assert.equal(receivedContexts.length, 2);
+  assert.equal(receivedContexts[0].douyinSession, sharedSession);
+  assert.equal(receivedContexts[1].douyinSession, sharedSession);
+});
+
 test("强制采集范围只执行指定平台或指定店铺", async () => {
   const workbookPath = path.join(__dirname, "..", "outputs", "019fbb96-c39c-7ec1-899b-038594c1381a", "店铺指标数据源.xlsx");
   const stores = {

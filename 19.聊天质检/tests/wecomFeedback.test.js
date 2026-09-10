@@ -1,5 +1,9 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
+const { createWorkspace } = require('../src/services/paths');
 const {
   buildFeedbackPreview,
   extractWaiterLabel,
@@ -106,4 +110,66 @@ test('发送没有确认口令时不会触发网络请求', async () => {
     /明确确认口令/
   );
   assert.equal(called, false);
+});
+
+test('发送没有工作区时不会触发网络请求，避免缺少工作量证明', async () => {
+  let called = false;
+  await assert.rejects(
+    sendWecomTextMessage({
+      config: { webhookUrl: 'https://example.test/webhook' },
+      payload: { msgtype: 'text', text: { content: 'x', mentioned_mobile_list: [] } },
+      confirmationCode: '161323',
+      fetchImpl: async () => {
+        called = true;
+        return { ok: true, status: 200, json: async () => ({ errcode: 0 }) };
+      }
+    }),
+    /工作区.*工作量报告记录/
+  );
+  assert.equal(called, false);
+});
+
+test('企微发送成功后写入每日工作报告原文', async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'chat-quality-report-'));
+  try {
+    const workspace = createWorkspace(root);
+    workspace.ensure();
+    const approvedContent = '【京东1店】\n客户ID：jd_test\n【售前跟进建议】建议继续追问需求并推动下单。';
+    const result = await sendWecomTextMessage({
+      config: { webhookUrl: 'https://example.test/webhook' },
+      payload: {
+        msgtype: 'text',
+        text: { content: approvedContent, mentioned_mobile_list: ['10001'] }
+      },
+      confirmationCode: '161323',
+      reportWorkspace: workspace,
+      report: {
+        workDate: '2026-09-09',
+        store: '京东1店',
+        customerId: 'jd_test',
+        sourceChatFile: '2026-09-09_jd_test.chat.json',
+        nickname: '后台昵称',
+        staffName: '客服姓名',
+        role: '售前',
+        mentionMode: 'bottom-mobile',
+        approvedContent
+      },
+      fetchImpl: async () => ({
+        ok: true,
+        status: 200,
+        json: async () => ({ errcode: 0, errmsg: 'ok' })
+      })
+    });
+
+    const reportPath = path.join(root, 'runtime', 'reports', '2026-09-09.md');
+    assert.equal(result.errcode, 0);
+    assert.equal(result.reportFile, reportPath);
+    const report = fs.readFileSync(reportPath, 'utf8');
+    assert.match(report, /客服聊天质检工作报告/);
+    assert.match(report, /状态：已发送/);
+    assert.match(report, /用户确认并实际发送的反馈正文/);
+    assert.match(report, /建议继续追问需求并推动下单/);
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
 });

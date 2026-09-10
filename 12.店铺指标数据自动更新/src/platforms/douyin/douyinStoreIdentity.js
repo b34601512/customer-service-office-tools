@@ -25,6 +25,10 @@ async function runDouyinMerchantStoreAction(page, action) {
   return runAfterDismissingBlockingPopups(page, action, DOUYIN_BLOCKING_POPUP_OPTIONS);
 }
 
+function reportDouyinProgress(reportProgress, stage, detail) {
+  if (typeof reportProgress === "function") reportProgress(stage, detail);
+}
+
 function normalizeDouyinStoreName(value) {
   return String(value || "").replace(/\s+/g, "").trim().toLowerCase();
 }
@@ -70,6 +74,11 @@ async function findVisibleDouyinSwitchStoreEntries(page) {
   return visibleSwitchEntries;
 }
 
+async function isDouyinStoreMenuIdentityVisible(page) {
+  const pageText = await page.locator("body").innerText({ timeout: 3000 }).catch(() => "");
+  return /店铺\s*ID\s*[:：]?\s*\d+/i.test(String(pageText || ""));
+}
+
 async function waitForOnlyVisibleDouyinSwitchStoreEntry(page, timeoutMs = 10000) {
   const deadline = Date.now() + timeoutMs;
   let visibleSwitchEntries = [];
@@ -83,15 +92,53 @@ async function waitForOnlyVisibleDouyinSwitchStoreEntry(page, timeoutMs = 10000)
 }
 
 async function ensureDouyinStoreMenuOpenWithoutPopupHandling(page, existingShopHeader = null) {
-  const visibleSwitchEntries = await findVisibleDouyinSwitchStoreEntries(page);
+  // 人工登录后的 SPA 可能先显示店铺标题、稍后才挂载菜单点击逻辑；有限重试同一安全入口，避免把加载竞态误判成未登录。
+  let visibleSwitchEntries = await findVisibleDouyinSwitchStoreEntries(page);
   if (visibleSwitchEntries.length === 1) return visibleSwitchEntries[0];
   if (visibleSwitchEntries.length > 1) {
     throw new Error(`抖音切店入口不唯一：识别到 ${visibleSwitchEntries.length} 个可见“切换组织/店铺”。`);
   }
+
   const shopHeader = existingShopHeader || page.locator(".headerShopName").first();
   await shopHeader.waitFor({ state: "visible", timeout: 15000 });
-  await shopHeader.click({ timeout: 5000 });
-  return waitForOnlyVisibleDouyinSwitchStoreEntry(page);
+
+  const deadline = Date.now() + 12000;
+  let clickAttempts = 0;
+  let menuIdentitySeen = false;
+  while (Date.now() <= deadline) {
+    visibleSwitchEntries = await findVisibleDouyinSwitchStoreEntries(page);
+    if (visibleSwitchEntries.length === 1) return visibleSwitchEntries[0];
+    if (visibleSwitchEntries.length > 1) {
+      throw new Error(`抖音切店入口不唯一：识别到 ${visibleSwitchEntries.length} 个可见“切换组织/店铺”。`);
+    }
+
+    menuIdentitySeen = menuIdentitySeen || await isDouyinStoreMenuIdentityVisible(page);
+    if (!menuIdentitySeen) {
+      await shopHeader.click({ timeout: 5000, noWaitAfter: true });
+      clickAttempts += 1;
+    }
+
+    const settleDeadline = Math.min(
+      deadline,
+      Date.now() + Math.max(2000, DOUYIN_POLL_INTERVAL_MS * 2)
+    );
+    while (Date.now() <= settleDeadline) {
+      visibleSwitchEntries = await findVisibleDouyinSwitchStoreEntries(page);
+      if (visibleSwitchEntries.length === 1) return visibleSwitchEntries[0];
+      if (visibleSwitchEntries.length > 1) {
+        throw new Error(`抖音切店入口不唯一：识别到 ${visibleSwitchEntries.length} 个可见“切换组织/店铺”。`);
+      }
+      menuIdentitySeen = menuIdentitySeen || await isDouyinStoreMenuIdentityVisible(page);
+      await page.waitForTimeout(DOUYIN_POLL_INTERVAL_MS);
+    }
+
+    if (menuIdentitySeen) await page.waitForTimeout(DOUYIN_POLL_INTERVAL_MS);
+  }
+
+  const detail = menuIdentitySeen
+    ? "店铺菜单已展开并读取到店铺ID，但未出现唯一的“切换组织/店铺”入口，可能是入口文案或DOM结构发生变化。"
+    : `店铺头部已可见，但连续 ${clickAttempts} 次尝试后菜单仍未展开，可能仍处于登录后页面初始化状态。`;
+  throw new Error(`抖音切店入口不唯一：识别到 0 个可见“切换组织/店铺”。${detail}`);
 }
 
 async function ensureDouyinStoreMenuOpen(page, existingShopHeader = null) {
@@ -116,13 +163,37 @@ async function readCurrentDouyinStoreIdentity(page) {
   await shopHeader.waitFor({ state: "visible", timeout: 15000 });
   const storeName = await readDouyinStoreName(shopHeader);
   await ensureDouyinStoreMenuOpen(page, shopHeader);
+  const storeId = await waitForDouyinStoreIdInOpenMenu(page);
+  return { storeId, storeName };
+}
+
+function extractDouyinStoreIdsFromText(pageText) {
+  const normalizedPageText = String(pageText || "").replace(/[\u200B-\u200D\uFEFF]/g, "");
+  return [...normalizedPageText.matchAll(/店铺\s*ID\s*[:：]?\s*(\d+)/gi)].map((match) => match[1]);
+}
+
+async function readDouyinStoreIdFromOpenMenu(page) {
   const pageText = await page.locator("body").innerText({ timeout: 5000 });
-  const storeIdMatches = [...pageText.matchAll(/店铺ID\s*(\d+)/g)].map((match) => match[1]);
-  const uniqueStoreIds = [...new Set(storeIdMatches)];
+  const uniqueStoreIds = [...new Set(extractDouyinStoreIdsFromText(pageText))];
   if (uniqueStoreIds.length !== 1) {
     throw new Error(`读取抖音当前店铺 ID 失败：店铺菜单内识别到 ${uniqueStoreIds.length} 个店铺 ID。`);
   }
-  return { storeId: uniqueStoreIds[0], storeName };
+  return uniqueStoreIds[0];
+}
+
+async function waitForDouyinStoreIdInOpenMenu(page, timeoutMs = 10000) {
+  const deadline = Date.now() + timeoutMs;
+  let lastError = null;
+  while (Date.now() <= deadline) {
+    try {
+      return await readDouyinStoreIdFromOpenMenu(page);
+    } catch (error) {
+      lastError = error;
+      if (!String(error?.message || "").includes("识别到 0 个店铺 ID")) throw error;
+    }
+    await page.waitForTimeout(DOUYIN_POLL_INTERVAL_MS);
+  }
+  throw lastError || new Error("读取抖音当前店铺 ID 失败：等待店铺菜单身份文本超时。");
 }
 
 async function findExactDouyinStoreOption(page, expectedIdentity) {
@@ -148,26 +219,28 @@ async function findExactDouyinStoreOptionAcrossPages(originPage, expectedIdentit
   return null;
 }
 
-async function clickDouyinStorePickerOption(storeOption, surface = null) {
-  // “请选择店铺”是正常切店业务窗口，不是遮挡弹窗；这里只点击已按完整店名唯一确认的店铺项。
-  // 点击前仍治理首页可能晚到的活动弹窗，避免弹窗覆盖唯一店铺选项。
-  const clickAction = () => storeOption.click({ timeout: 10000 });
-  if (surface) {
-    await runDouyinMerchantStoreAction(surface, clickAction);
-    return;
-  }
-  await clickAction();
+async function clickDouyinStorePickerOption(storeOption) {
+  // “请选择店铺”是正常业务窗口，已按完整店名唯一定位后直接点击。
+  await storeOption.click({ timeout: 10000 });
 }
 
 async function waitForExpectedDouyinStore(originPage, expectedIdentity, timeoutMs) {
   const deadline = Date.now() + timeoutMs;
   let lastIdentity = null;
+  let lastStoreName = "";
   while (Date.now() <= deadline) {
     for (const candidatePage of originPage.context().pages()) {
       const header = candidatePage.locator(".headerShopName").first();
       if ((await header.count()) === 0 || !await header.isVisible().catch(() => false)) continue;
       try {
-        lastIdentity = await readCurrentDouyinStoreIdentity(candidatePage);
+        const storeName = await readDouyinStoreName(header);
+        lastStoreName = storeName;
+        if (normalizeDouyinStoreName(storeName) !== normalizeDouyinStoreName(expectedIdentity.storeName)) {
+          continue;
+        }
+        await ensureDouyinStoreMenuOpen(candidatePage, header);
+        const storeId = await waitForDouyinStoreIdInOpenMenu(candidatePage);
+        lastIdentity = { storeName, storeId };
         if (isDouyinStoreIdentityMatched(lastIdentity, expectedIdentity)) {
           return { page: candidatePage, identity: lastIdentity };
         }
@@ -177,7 +250,9 @@ async function waitForExpectedDouyinStore(originPage, expectedIdentity, timeoutM
     }
     await originPage.waitForTimeout(DOUYIN_POLL_INTERVAL_MS);
   }
-  const actualText = lastIdentity ? `${lastIdentity.storeName}(${lastIdentity.storeId})` : "未读取到";
+  const actualText = lastIdentity
+    ? `${lastIdentity.storeName}(${lastIdentity.storeId})`
+    : lastStoreName || "未读取到";
   throw new Error(`等待抖音目标店铺超时：目标=${expectedIdentity.storeName}(${expectedIdentity.storeId})，当前=${actualText}。`);
 }
 
@@ -187,31 +262,34 @@ async function ensureDouyinActiveStore(page, storeConfig, reportProgress, option
   if (isDouyinStoreIdentityMatched(currentIdentity, expectedIdentity)) {
     return { page, identity: currentIdentity };
   }
-  if (typeof reportProgress === "function") {
-    reportProgress(
-      "切换抖音店铺",
-      `当前=${currentIdentity.storeName}(${currentIdentity.storeId})，目标=${expectedIdentity.storeName}(${expectedIdentity.storeId})`
-    );
-  }
+  reportDouyinProgress(
+    reportProgress,
+    "切换抖音店铺",
+    `当前=${currentIdentity.storeName}(${currentIdentity.storeId})，目标=${expectedIdentity.storeName}(${expectedIdentity.storeId})`
+  );
   await clickDouyinSwitchStoreEntry(page);
-  await page.waitForTimeout(DOUYIN_POLL_INTERVAL_MS);
+  reportDouyinProgress(reportProgress, "定位目标店铺", `正在查找${expectedIdentity.storeName}`);
   const exactStoreOption = await findExactDouyinStoreOptionAcrossPages(page, expectedIdentity);
   if (exactStoreOption) {
-    // 店铺选择器可能在新页面，但活动弹窗仍挂在原商家首页；
-    // 固定用原首页做弹窗治理，再点击已确认的跨页店铺选项。
-    await clickDouyinStorePickerOption(exactStoreOption.option, page);
+    reportDouyinProgress(reportProgress, "点击目标店铺", `已定位${expectedIdentity.storeName}`);
+    await clickDouyinStorePickerOption(exactStoreOption.option);
+    reportDouyinProgress(reportProgress, "确认店铺切换", `等待${expectedIdentity.storeName}生效`);
   } else {
     if (options.headless) {
       requireHeadedBrowser("抖音需要人工确认目标店铺");
     }
-    if (typeof reportProgress === "function") {
-      reportProgress("等待人工切店", "未找到目标完整店名的唯一可点项，请在当前页面手动切换，程序会自动续跑");
-    }
+    reportDouyinProgress(reportProgress, "等待人工切店", "未找到目标店铺，请在当前页面手动切换");
     await page.bringToFront().catch(() => {});
   }
   const timeoutMs = Number(options.storeSwitchTimeoutMs) || DOUYIN_STORE_SWITCH_TIMEOUT_MS;
   try {
-    return await waitForExpectedDouyinStore(page, expectedIdentity, timeoutMs);
+    const result = await waitForExpectedDouyinStore(page, expectedIdentity, timeoutMs);
+    reportDouyinProgress(
+      reportProgress,
+      "切店完成",
+      `当前=${result.identity.storeName}(${result.identity.storeId})`
+    );
+    return result;
   } catch (error) {
     if (options.headless) {
       requireHeadedBrowser("抖音需要人工确认目标店铺");
@@ -227,8 +305,12 @@ module.exports = {
   resolveExpectedDouyinStoreIdentity,
   isDouyinStoreIdentityMatched,
   readDouyinStoreName,
+  extractDouyinStoreIdsFromText,
+  readDouyinStoreIdFromOpenMenu,
+  waitForDouyinStoreIdInOpenMenu,
   readCurrentDouyinStoreIdentity,
   findVisibleDouyinSwitchStoreEntries,
+  isDouyinStoreMenuIdentityVisible,
   waitForOnlyVisibleDouyinSwitchStoreEntry,
   ensureDouyinStoreMenuOpenWithoutPopupHandling,
   ensureDouyinStoreMenuOpen,

@@ -1,6 +1,6 @@
-// 该文件用于解决 Edge 会话引擎子模块加载和对外接口注册问题；保留历史模块名以兼容现有调用方。
+// 该文件用于解决 Google Chrome 会话引擎子模块加载和对外接口注册问题。
 const {
-  resolveEdgePath,
+  resolveChromePath,
   readManagedChromeSession
 } = require("./chromeSessionParts/chromeSessionPaths");
 const {
@@ -12,12 +12,12 @@ const { connectToChrome, waitForPage, disconnectFromChrome } = require("./chrome
 const { closeManagedChromeWithDependencies } = require("./chromeSessionParts/chromeCloser");
 
 async function closeManagedChrome() {
-  // 这里统一关闭本项目拉起的调试 Edge，避免退出后台后残留浏览器窗口。
+  // 这里统一关闭本项目拉起的调试 Chrome，避免退出后台后残留浏览器窗口。
   return closeManagedChromeWithDependencies();
 }
 
 module.exports = {
-  resolveEdgePath,
+  resolveChromePath,
   launchChromeForManualLogin,
   disconnectFromChrome,
   isLocalPortOpen,

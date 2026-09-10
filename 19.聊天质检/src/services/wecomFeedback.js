@@ -1,6 +1,10 @@
 // 企业微信反馈工具：只负责配置、客服映射、@计划、预览和受保护的发送能力。
 // 聊天内容的分析、评价和反馈文案必须由 AI/人工决定，本模块不读取消息做判断。
 const fs = require('fs');
+const {
+  appendFeedbackReport,
+  normalizeFeedbackReportInput
+} = require('./reportStore');
 
 const SEND_CONFIRMATION_CODE = '161323';
 const REQUEST_TIMEOUT_MS = 10000;
@@ -354,24 +358,50 @@ async function postWecomTextPayload({ webhookUrl, payload, attempt, fetchImpl = 
   return result;
 }
 
-async function sendWecomTextMessage({ config, payload, confirmationCode, fetchImpl = globalThis.fetch }) {
+async function sendWecomTextMessage({
+  config,
+  payload,
+  confirmationCode,
+  reportWorkspace,
+  report,
+  fetchImpl = globalThis.fetch
+}) {
   if (String(confirmationCode || '') !== SEND_CONFIRMATION_CODE) {
     throw new Error('发送企业微信反馈前必须先完成内容沟通，并提供本次明确确认口令。');
   }
+  if (!reportWorkspace) {
+    throw new Error('发送企业微信反馈前必须提供工作区，用于形成工作量报告记录。');
+  }
+  const reportInput = normalizeFeedbackReportInput({
+    ...report,
+    sentPayloadContent: report?.sentPayloadContent || payload?.text?.content
+  });
   const webhookUrl = normalizeText(config?.webhookUrl);
   if (!webhookUrl) {
     throw new Error('企业微信反馈配置缺少 webhook 地址。');
   }
 
   let lastError = null;
+  let result = null;
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
     try {
-      return await postWecomTextPayload({ webhookUrl, payload, attempt, fetchImpl });
+      result = await postWecomTextPayload({ webhookUrl, payload, attempt, fetchImpl });
+      break;
     } catch (error) {
       lastError = error;
     }
   }
-  throw lastError || new Error('企业微信机器人发送失败：未知原因。');
+  if (!result) {
+    throw lastError || new Error('企业微信机器人发送失败：未知原因。');
+  }
+
+  let reportResult;
+  try {
+    reportResult = appendFeedbackReport(reportWorkspace, reportInput, result);
+  } catch (error) {
+    throw new Error(`企业微信消息已成功发送，但工作报告记录失败，请勿重发：${error.message}`);
+  }
+  return { ...result, reportFile: reportResult.file, reportId: reportResult.recordId };
 }
 
 module.exports = {
