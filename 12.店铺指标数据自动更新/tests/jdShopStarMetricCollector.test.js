@@ -16,7 +16,12 @@ const {
   isShopStarApiResponse,
   resolveShopStarPageDataDate,
   isShopStarDataUnavailableText,
-  hasShopStarPageDataState
+  hasShopStarPageDataState,
+  jdShopStarApiNames,
+  isModernShopStarData,
+  getShopStarProtocol,
+  normalizeShopStarApiData,
+  isRequiredShopStarApi
 } = require("../src/platforms/jd/storeMetrics/jdShopStarMetricCollector");
 
 test("近30天窗口包含数据日期当天", () => {
@@ -194,6 +199,48 @@ test("京东新版接口按api参数精确匹配，避免把流量接口当成�
     url: () => mainUrl,
     request: () => ({ resourceType: () => "fetch" })
   }, starsApi), true);
+});
+
+test("新版VaneStarsFacade单接口可直接映射真实星级和相关指标", () => {
+  const modernData = {
+    venderId: "715027",
+    shopName: "德迩杰官方旗舰店",
+    scoreRankRateGrade: "5.0",
+    scoreRankRate: 98.01,
+    validOrderNum: "1434",
+    customServiceConsultScore: "10.0",
+    logisticsLvyueScore: "9.9",
+    afterServiceScore: "8.5",
+    userEvaluateScore: "9.8"
+  };
+  const results = {
+    starsResult: { empty: false, code: 200, data: modernData }
+  };
+  assert.equal(isModernShopStarData(modernData), true);
+  assert.equal(getShopStarProtocol(results), "modern");
+  assert.equal(hasCompleteShopStarApiData(results), true);
+  const normalized = normalizeShopStarApiData(results, "2026-09-10");
+  const metricMap = Object.fromEntries(
+    listSummaryMetrics(normalized.basicData, normalized.starsData)
+      .map((metric) => [metric.metricName, metric.metricValue])
+  );
+  assert.equal(normalized.protocol, "modern");
+  assert.equal(metricMap["店铺星级"], 5);
+  assert.ok(Math.abs(metricMap["店铺星级排名"] - 0.9801) < 1e-12);
+  assert.equal(metricMap["近30天有效订单"], 1434);
+  assert.equal(metricMap["客服咨询得分"], 10);
+  assert.equal(metricMap["物流履约得分"], 9.9);
+  assert.equal(metricMap["售后服务得分"], 8.5);
+  assert.equal(metricMap["商品体验得分"], 9.8);
+  assert.equal(metricMap["店铺体验得分"], 0);
+  assert.equal(normalized.basicData.finalScore, undefined);
+});
+
+test("京东星级辅助接口601不触发主流程风控接管", () => {
+  assert.equal(isRequiredShopStarApi(jdShopStarApiNames.stars), true);
+  assert.equal(isRequiredShopStarApi(jdShopStarApiNames.basic), true);
+  assert.equal(isRequiredShopStarApi(jdShopStarApiNames.degradation), false);
+  assert.equal(isRequiredShopStarApi(jdShopStarApiNames.prejudgment), false);
 });
 
 test("页面完整等待后仍显示暂无时生成可写入的无数据结果", () => {

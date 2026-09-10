@@ -6,16 +6,23 @@ const {
 const { checkBrowserHumanRequirement } = require("../../../engine/browserHumanGuard");
 const { requireHeadedBrowser } = require("../../../engine/browserAutomationScope");
 const { formatDate, shiftDateText } = require("../../../shared/exportDateRange");
+const shopStarProtocol = require("./jdShopStarProtocol");
+const {
+  jdShopStarApiNames,
+  hasJsonResponseData,
+  hasMeaningfulValue,
+  isModernShopStarData,
+  getShopStarProtocol,
+  hasCompleteShopStarApiData,
+  normalizeShopStarApiData,
+  resolveJdApiName,
+  isShopStarApiResponse,
+  isRequiredShopStarApi,
+  shopStarEmptyResponseCodes
+} = shopStarProtocol;
 
-const jdShopStarApiNames = {
-  basic: "dsm.shop.vane.view.core.export.ohs.stars.service.VaneBasicFacade.queryVaneBasic",
-  stars: "dsm.shop.vane.view.core.export.ohs.stars.service.VaneStarsFacade",
-  degradation: "dsm.shop.vane.view.core.export.ohs.stars.service.VaneDegradationFacade.queryDegradationInfo",
-  prejudgment: "dsm.shop.vane.view.core.export.ohs.stars.service.VanePrejudgmentFacade.queryVanePrejudgment"
-};
 const basicApiToken = jdShopStarApiNames.basic;
 const starsApiToken = jdShopStarApiNames.stars;
-const jdShopStarRateLimitApiNames = new Set(Object.values(jdShopStarApiNames));
 const shopStarIndicatorScoreDefinitions = [
   {
     sourceMetricName: "售后服务时长",
@@ -30,10 +37,8 @@ const shopStarIndicatorScoreDefinitions = [
     statisticsWindow: "近30天"
   }
 ];
-const shopStarEmptyResponseCodes = [601];
 const shopStarLoadTimeoutMilliseconds = 60000;
-const shopStarLateResponseWaitMilliseconds = 20000;
-const shopStarEmptyConfirmationMilliseconds = 20000;
+const shopStarResponseTimeoutMilliseconds = 30000;
 const shopStarRateLimitWaitMilliseconds = 15000;
 
 function parseDateText(dateText) {
@@ -104,128 +109,6 @@ async function readJsonResponse(
   };
 }
 
-function hasJsonResponseData(data) {
-  if (data === null || data === undefined) return false;
-  if (Array.isArray(data)) return data.length > 0;
-  if (typeof data === "object") return Object.keys(data).length > 0;
-  return true;
-}
-
-function hasMeaningfulValue(value) {
-  return value !== null && value !== undefined &&
-    !(typeof value === "string" && !value.trim());
-}
-
-function isJsonObject(value) {
-  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
-}
-
-function hasShopStarBasicData(data) {
-  return isJsonObject(data) &&
-    /^\d{4}-\d{2}-\d{2}$/.test(String(data.opTime || "")) &&
-    isJsonObject(data.zbs) && Object.keys(data.zbs).length > 0 &&
-    (hasMeaningfulValue(data.finalScore) || hasMeaningfulValue(data.validOrderNum));
-}
-
-function hasShopStarStarsData(data) {
-  return isJsonObject(data) &&
-    (hasMeaningfulValue(data.venderId) || hasMeaningfulValue(data.shopName));
-}
-
-function hasCompleteShopStarApiData(results) {
-  return Boolean(results) &&
-    !results.basicResult?.empty &&
-    !results.starsResult?.empty &&
-    hasShopStarBasicData(results.basicResult?.data) &&
-    hasShopStarStarsData(results.starsResult?.data);
-}
-
-function resolveJdApiName(rawUrl) {
-  try {
-    return new URL(String(rawUrl || "")).searchParams.get("api") || "";
-  } catch {
-    return "";
-  }
-}
-
-function isShopStarApiResponse(response, apiName) {
-  if (!response || typeof response.url !== "function") return false;
-  const request = typeof response.request === "function" ? response.request() : null;
-  const resourceType = typeof request?.resourceType === "function" ? request.resourceType() : "";
-  return ["xhr", "fetch"].includes(resourceType) && resolveJdApiName(response.url()) === apiName;
-}
-
-function createShopStarRateLimitMonitor(page) {
-  let disposed = false;
-  let state = null;
-  let resolveDetection;
-  let detectionPromise = new Promise((resolve) => {
-    resolveDetection = resolve;
-  });
-
-  const detect = (details = {}) => {
-    if (disposed || state) return;
-    state = {
-      apiName: String(details.apiName || ""),
-      message: String(details.message || "京东接口请求繁忙（code=601）")
-    };
-    resolveDetection(state);
-  };
-
-  const onResponse = (response) => {
-    const apiName = resolveJdApiName(response.url());
-    if (!jdShopStarRateLimitApiNames.has(apiName)) return;
-    Promise.resolve(response.json())
-      .then((payload) => {
-        if (Number(payload?.code) === 601) {
-          detect({
-            apiName,
-            message: String(payload?.msg || payload?.message || "京东接口请求繁忙（code=601）")
-          });
-        }
-      })
-      .catch(() => {});
-  };
-  const onPageError = (error) => {
-    const message = String(error?.message || error || "");
-    if (/(?:\b601\b|请求繁忙|操作频繁)/.test(message)) {
-      detect({ message });
-    }
-  };
-
-  page.on("response", onResponse);
-  page.on("pageerror", onPageError);
-
-  return {
-    getState: () => state,
-    waitForDetection: () => (state ? Promise.resolve(state) : detectionPromise),
-    reset() {
-      if (disposed) return;
-      state = null;
-      detectionPromise = new Promise((resolve) => {
-        resolveDetection = resolve;
-      });
-    },
-    dispose() {
-      if (disposed) return;
-      disposed = true;
-      page.off?.("response", onResponse);
-      page.off?.("pageerror", onPageError);
-      resolveDetection(null);
-    }
-  };
-}
-
-function handleShopStarRateLimit(rateLimitMonitor, results = null) {
-  const rateLimitState = rateLimitMonitor?.getState?.();
-  const resultCode = [results?.basicResult?.code, results?.starsResult?.code]
-    .find((code) => Number(code) === 601);
-  if (!rateLimitState && resultCode === undefined) return false;
-  const reason = rateLimitState?.message || "京东店铺星级接口返回请求繁忙（code=601）";
-  requireHeadedBrowser(`${reason}，正在切换可见 Chrome 重试`);
-  return true;
-}
-
 function createEmptyShopStarApiData(pageText, partialResults = null) {
   const createEmptyResult = (label) => ({
     response: {
@@ -241,23 +124,6 @@ function createEmptyShopStarApiData(pageText, partialResults = null) {
     starsResult: partialResults?.starsResult || createEmptyResult("星级汇总"),
     pageText
   };
-}
-
-async function waitForShopStarRateLimitRetry(page, rateLimitMonitor, deadline) {
-  const remainingMilliseconds = Math.max(0, deadline - Date.now());
-  if (remainingMilliseconds > 0) {
-    await page.waitForTimeout(Math.min(shopStarRateLimitWaitMilliseconds, remainingMilliseconds));
-  }
-  rateLimitMonitor.reset();
-}
-
-async function readShopStarResponsePairOrRateLimit(page, timeoutMilliseconds, rateLimitMonitor) {
-  const responsePairPromise = readShopStarResponsePair(page, timeoutMilliseconds);
-  const outcome = await Promise.race([
-    responsePairPromise.then((results) => ({ type: "responses", results })),
-    rateLimitMonitor.waitForDetection().then((rateLimit) => ({ type: "rate-limit", rateLimit }))
-  ]);
-  return outcome;
 }
 
 function resolveShopStarPageDataDate(pageText) {
@@ -281,7 +147,7 @@ function hasShopStarPageDataState(pageText) {
   return (hasDataDate && hasCurrentStarState) || hasNewShopStarStructure;
 }
 
-async function waitForShopStarPageDataState(page, timeoutMilliseconds = 60000) {
+async function waitForShopStarPageDataState(page, timeoutMilliseconds = shopStarLoadTimeoutMilliseconds) {
   const deadline = Date.now() + timeoutMilliseconds;
   let latestPageText = "";
   while (Date.now() <= deadline) {
@@ -293,183 +159,167 @@ async function waitForShopStarPageDataState(page, timeoutMilliseconds = 60000) {
   throw new Error(`京东店铺星级页面未出现完整数据状态。当前页面=${page.url()}`);
 }
 
-function waitForShopStarResponse(page, apiToken, timeoutMilliseconds = 60000) {
+function waitForShopStarResponse(page, apiToken, timeoutMilliseconds = shopStarLoadTimeoutMilliseconds) {
   return page.waitForResponse(
     (response) => isShopStarApiResponse(response, apiToken),
     { timeout: timeoutMilliseconds }
   );
 }
 
-async function readShopStarResponsePair(page, timeoutMilliseconds) {
-  const basicResponsePromise = waitForShopStarResponse(page, basicApiToken, timeoutMilliseconds);
-  const starsResponsePromise = waitForShopStarResponse(page, starsApiToken, timeoutMilliseconds);
-  const [basicResult, starsResult] = await Promise.all([
-    readJsonResponse(basicResponsePromise, "星级指标", {
-      allowEmptyData: true,
-      allowEmptyResponseCodes: shopStarEmptyResponseCodes
-    }),
-    readJsonResponse(starsResponsePromise, "星级汇总", {
-      allowEmptyData: true,
-      allowEmptyResponseCodes: shopStarEmptyResponseCodes
-    })
-  ]);
-  return { basicResult, starsResult };
+function getShopStarApiResponseLabel(apiName) {
+  return apiName === basicApiToken ? "星级指标" : "星级汇总";
 }
 
-async function waitForShopStarApiData(page, shopStarUrl, timeoutMilliseconds = shopStarLoadTimeoutMilliseconds) {
-  const rateLimitMonitor = createShopStarRateLimitMonitor(page);
-  try {
-    return await waitForShopStarApiDataWithMonitor(
-      page,
-      shopStarUrl,
-      timeoutMilliseconds,
-      rateLimitMonitor
-    );
-  } finally {
-    rateLimitMonitor.dispose();
+// 只监听两个主接口。新版页面的 VaneStarsFacade 单独即可完成采集，
+// degradation/prejudgment 的 601 仅表示辅助卡片繁忙，不能把主流程拖入重试。
+function waitForShopStarApiResponses(page, timeoutMilliseconds) {
+  return new Promise((resolve, reject) => {
+    const results = {};
+    let settled = false;
+    let timer = null;
+
+    const cleanup = () => {
+      if (timer) clearTimeout(timer);
+      page.off?.("response", onResponse);
+    };
+    const settle = (error, outcome) => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      if (error) reject(error);
+      else resolve(outcome);
+    };
+    const onResponse = (response) => {
+      const apiName = resolveJdApiName(response.url());
+      if (!isRequiredShopStarApi(apiName)) return;
+      const responseLabel = getShopStarApiResponseLabel(apiName);
+      readJsonResponse(Promise.resolve(response), responseLabel, {
+        allowEmptyData: true,
+        allowEmptyResponseCodes: shopStarEmptyResponseCodes
+      }).then((result) => {
+        if (settled) return;
+        if (apiName === basicApiToken) results.basicResult = result;
+        if (apiName === starsApiToken) results.starsResult = result;
+        if (result.code === 601) {
+          settle(null, {
+            type: "rate-limit",
+            rateLimit: {
+              apiName,
+              message: result.message || "京东店铺星级主接口请求繁忙（code=601）"
+            },
+            results
+          });
+          return;
+        }
+        if (apiName === starsApiToken && isModernShopStarData(result.data)) {
+          settle(null, { type: "responses", results });
+          return;
+        }
+        if (hasCompleteShopStarApiData(results)) {
+          settle(null, { type: "responses", results });
+        }
+      }).catch((error) => settle(error));
+    };
+
+    page.on("response", onResponse);
+    timer = setTimeout(() => {
+      settle(new Error(`京东店铺星级主接口在${timeoutMilliseconds}毫秒内没有返回有效数据。`));
+    }, timeoutMilliseconds);
+  });
+}
+
+function handleShopStarRateLimit(rateLimit) {
+  if (!rateLimit) return false;
+  requireHeadedBrowser(
+    `${rateLimit.message || "京东店铺星级主接口请求繁忙（code=601）"}，正在切换可见 Chrome 重试`
+  );
+  return true;
+}
+
+async function waitForShopStarRateLimitRetry(page, deadline) {
+  const remainingMilliseconds = Math.max(0, deadline - Date.now());
+  if (remainingMilliseconds > 0) {
+    await page.waitForTimeout(Math.min(shopStarRateLimitWaitMilliseconds, remainingMilliseconds));
   }
 }
 
-async function waitForShopStarApiDataWithMonitor(
-  page,
-  shopStarUrl,
-  timeoutMilliseconds,
-  rateLimitMonitor
-) {
+function readResponseRequestBody(response) {
+  try {
+    return JSON.parse(response?.request?.().postData?.() || "{}");
+  } catch {
+    return {};
+  }
+}
+
+async function waitForShopStarApiData(page, shopStarUrl, timeoutMilliseconds = shopStarLoadTimeoutMilliseconds) {
   const deadline = Date.now() + timeoutMilliseconds;
   let attempt = 0;
-  let navigate = true;
   let latestResults = null;
   let latestPageText = "";
-  let emptyStartedAt = 0;
   let lastError = null;
 
   while (Date.now() <= deadline) {
     await checkBrowserHumanRequirement({ includeLogin: true });
     const remainingMilliseconds = deadline - Date.now();
     if (remainingMilliseconds <= 0) break;
+    const responsePromise = waitForShopStarApiResponses(
+      page,
+      Math.min(shopStarResponseTimeoutMilliseconds, remainingMilliseconds)
+    );
+    // 导航异常时仍需消费掉响应等待 Promise，避免下一轮产生未处理拒绝。
+    responsePromise.catch(() => {});
     try {
-      if (navigate) {
-        const responsePairOutcome = readShopStarResponsePairOrRateLimit(
-          page,
-          Math.min(45000, remainingMilliseconds),
-          rateLimitMonitor
-        );
-        responsePairOutcome.catch(() => {});
-        if (attempt === 0) {
-          await page.goto(shopStarUrl, {
-            waitUntil: "domcontentloaded",
-            timeout: Math.min(45000, remainingMilliseconds)
-          });
-        } else {
-          await page.reload({
-            waitUntil: "domcontentloaded",
-            timeout: Math.min(45000, remainingMilliseconds)
-          });
-        }
-        const outcome = await responsePairOutcome;
-        if (outcome.type === "rate-limit") {
-          handleShopStarRateLimit(rateLimitMonitor);
-          await waitForShopStarRateLimitRetry(page, rateLimitMonitor, deadline);
-          latestResults = null;
-          latestPageText = "";
-          navigate = true;
-          attempt += 1;
-          continue;
-        }
-        latestResults = outcome.results;
+      if (attempt === 0) {
+        await page.goto(shopStarUrl, {
+          waitUntil: "domcontentloaded",
+          timeout: Math.min(45000, remainingMilliseconds)
+        });
       } else {
-        // 首次响应可能只是页面初始化占位结果；不立刻判空，先接住页面后续补发的真实响应。
-        const outcome = await readShopStarResponsePairOrRateLimit(
-          page,
-          Math.min(shopStarLateResponseWaitMilliseconds, remainingMilliseconds),
-          rateLimitMonitor
-        );
-        if (outcome.type === "rate-limit") {
-          handleShopStarRateLimit(rateLimitMonitor);
-          await waitForShopStarRateLimitRetry(page, rateLimitMonitor, deadline);
-          latestResults = null;
-          latestPageText = "";
-          navigate = true;
-          attempt += 1;
-          continue;
-        }
-        latestResults = outcome.results;
+        await page.reload({
+          waitUntil: "domcontentloaded",
+          timeout: Math.min(45000, remainingMilliseconds)
+        });
       }
-      if (handleShopStarRateLimit(rateLimitMonitor, latestResults)) {
-        await waitForShopStarRateLimitRetry(page, rateLimitMonitor, deadline);
-        latestResults = null;
-        latestPageText = "";
-        navigate = true;
+      const outcome = await responsePromise;
+      if (outcome.type === "rate-limit") {
+        handleShopStarRateLimit(outcome.rateLimit);
+        await waitForShopStarRateLimitRetry(page, deadline);
         attempt += 1;
         continue;
       }
-    } catch (error) {
-      lastError = error;
-      if (handleShopStarRateLimit(rateLimitMonitor, latestResults)) {
-        await waitForShopStarRateLimitRetry(page, rateLimitMonitor, deadline);
-        latestResults = null;
-        latestPageText = "";
-        navigate = true;
-        attempt += 1;
-        continue;
+      latestResults = outcome.results;
+      if (hasCompleteShopStarApiData(latestResults)) {
+        return {
+          ...latestResults,
+          pageText: await readJdMetricPageText(page).catch(() => "")
+        };
       }
       latestPageText = await readJdMetricPageText(page).catch(() => latestPageText);
-      if (
-        latestResults &&
-        isShopStarDataUnavailableText(latestPageText) &&
-        emptyStartedAt &&
-        Date.now() - emptyStartedAt >= shopStarEmptyConfirmationMilliseconds
-      ) {
-        return { ...latestResults, pageText: latestPageText };
+      if (isShopStarDataUnavailableText(latestPageText)) {
+        return createEmptyShopStarApiData(latestPageText, latestResults);
+      }
+      lastError = new Error("京东店铺星级接口返回了占位数据，但页面没有确认无数据。");
+    } catch (error) {
+      if (["BROWSER_NEEDS_HUMAN", "BROWSER_RUN_CANCELLED"].includes(error?.code)) {
+        throw error;
+      }
+      lastError = error;
+      latestPageText = await readJdMetricPageText(page).catch(() => latestPageText);
+      if (isShopStarDataUnavailableText(latestPageText)) {
+        return latestResults
+          ? { ...latestResults, pageText: latestPageText }
+          : createEmptyShopStarApiData(latestPageText);
       }
       if (Date.now() >= deadline) break;
-      navigate = true;
-      attempt += 1;
-      continue;
     }
-
-    const hasCompleteApiData = hasCompleteShopStarApiData(latestResults);
-    if (hasCompleteApiData) {
-      // API 已返回完整业务对象时，以接口为准；页面文字只等待短时间用于凭证和人工可读指标。
-      latestPageText = await waitForShopStarPageDataState(
-        page,
-        Math.min(5000, Math.max(1000, deadline - Date.now()))
-      ).catch(() => readJdMetricPageText(page).catch(() => latestPageText));
-      return { ...latestResults, pageText: latestPageText };
-    }
-
-    try {
-      latestPageText = await waitForShopStarPageDataState(
-        page,
-        Math.min(15000, Math.max(1000, deadline - Date.now()))
-      );
-    } catch (error) {
-      lastError = error;
-      navigate = false;
-      continue;
-    }
-
-    if (!emptyStartedAt) emptyStartedAt = Date.now();
-    if (
-      isShopStarDataUnavailableText(latestPageText) &&
-      Date.now() - emptyStartedAt >= shopStarEmptyConfirmationMilliseconds
-    ) {
-      return { ...latestResults, pageText: latestPageText };
-    }
-    if (Date.now() >= deadline) break;
-
-    // 先等待页面自身的异步补发；若仍无真实数据，再完整刷新一次触发接口重试。
-    navigate = false;
+    attempt += 1;
   }
 
   latestPageText = await readJdMetricPageText(page).catch(() => latestPageText);
-  if (latestResults && isShopStarDataUnavailableText(latestPageText)) {
-    return { ...latestResults, pageText: latestPageText };
-  }
   if (isShopStarDataUnavailableText(latestPageText)) {
-    // 只有完整等待窗口结束且页面仍明确显示“当前星级暂无”时，才按无数据继续，避免覆盖延迟返回的真实数据。
-    return createEmptyShopStarApiData(latestPageText, latestResults);
+    return latestResults
+      ? { ...latestResults, pageText: latestPageText }
+      : createEmptyShopStarApiData(latestPageText);
   }
   if (lastError) throw lastError;
   throw new Error(`京东店铺星级接口在${timeoutMilliseconds}毫秒内没有返回有效数据。`);
@@ -484,9 +334,7 @@ function createOptionalMetricDefinition({
   sourceOriginalMetricName = metricName
 }) {
   const numericValue = Number(rawValue);
-  const hasValue = rawValue !== null && rawValue !== undefined &&
-    !(typeof rawValue === "string" && !rawValue.trim()) &&
-    Number.isFinite(numericValue);
+  const hasValue = hasMeaningfulValue(rawValue) && Number.isFinite(numericValue);
   return {
     metricName,
     metricValue: hasValue ? numericValue * multiplier : 0,
@@ -514,14 +362,14 @@ async function applyManualShopStarDate(page, snapshotDate) {
       allowEmptyData: true,
       allowEmptyResponseCodes: shopStarEmptyResponseCodes
     });
-    const requestBody = JSON.parse(result.response.request().postData() || "{}");
+    const requestBody = readResponseRequestBody(result.response);
     if (String(requestBody?.vaneBasicParam?.date || "") !== snapshotDate) {
       throw new Error(`店铺星级手动日期未生效：期望 ${snapshotDate}。`);
     }
     latestResult = result;
     if (!result.empty) return result;
     if (Date.now() >= deadline) break;
-    await page.waitForTimeout(Math.min(shopStarLateResponseWaitMilliseconds, deadline - Date.now()));
+    await page.waitForTimeout(Math.min(shopStarResponseTimeoutMilliseconds, deadline - Date.now()));
   }
   return latestResult;
 }
@@ -635,15 +483,28 @@ function listServiceProductMetrics(basicData) {
   });
 }
 
+function createEmptyShopStarResult() {
+  return {
+    response: { request: () => ({ postData: () => "" }) },
+    data: {},
+    empty: true,
+    code: 200,
+    message: ""
+  };
+}
+
 async function collectJdShopStarMetrics(page, store, dateSelection) {
   const initialShopStarData = await waitForShopStarApiData(page, store.sources.shopStar);
-  const initialShopStarPageText = initialShopStarData.pageText;
-  const starsResult = initialShopStarData.starsResult;
-  const basicResult = dateSelection.snapshotDate
+  const initialShopStarPageText = initialShopStarData.pageText || "";
+  const starsResult = initialShopStarData.starsResult || createEmptyShopStarResult();
+  const initialProtocol = getShopStarProtocol(initialShopStarData);
+  if (dateSelection?.snapshotDate && initialProtocol === "modern") {
+    throw new Error("京东新版店铺星级接口当前只返回实时数据，暂不支持手动历史日期，未写入。请切换为自动日期。");
+  }
+  const basicResult = dateSelection?.snapshotDate
     ? await applyManualShopStarDate(page, dateSelection.snapshotDate)
-    : initialShopStarData.basicResult;
-  const requestBody = JSON.parse(basicResult.response.request().postData() || "{}");
-  const shopStarPageText = dateSelection.snapshotDate
+    : initialShopStarData.basicResult || createEmptyShopStarResult();
+  const shopStarPageText = dateSelection?.snapshotDate
     ? await waitForShopStarPageDataState(page)
     : initialShopStarPageText;
   const shopStarDataUnavailable = isShopStarDataUnavailableText(shopStarPageText);
@@ -651,12 +512,14 @@ async function collectJdShopStarMetrics(page, store, dateSelection) {
     starsResult.empty ? "星级汇总" : "",
     basicResult.empty ? "星级指标" : ""
   ].filter(Boolean);
-  if (emptyResponseLabels.length && !shopStarDataUnavailable) {
+  if (emptyResponseLabels.length && !shopStarDataUnavailable && !getShopStarProtocol({ basicResult, starsResult })) {
     throw new Error(
       `京东店铺星级接口返回空数据：${emptyResponseLabels.join("、")}，但页面未确认当前星级无数据。`
     );
   }
+
   const pageDataDate = resolveShopStarPageDataDate(shopStarPageText || initialShopStarPageText);
+  const requestBody = readResponseRequestBody(basicResult.response);
   const dataDate = String(
     basicResult.data.opTime ||
     (basicResult.empty ? "" : requestBody?.vaneBasicParam?.date) ||
@@ -666,14 +529,21 @@ async function collectJdShopStarMetrics(page, store, dateSelection) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dataDate)) {
     throw new Error("京东店铺星级没有返回真实数据日期。");
   }
-  const shopStarIndicatorScores = await readShopStarIndicatorScores(page, shopStarPageText, basicResult.data);
+
+  const normalizedShopStarData = normalizeShopStarApiData({ basicResult, starsResult }, dataDate);
+  if (!normalizedShopStarData && !shopStarDataUnavailable) {
+    throw new Error("京东店铺星级接口返回的数据协议无法识别，未写入。");
+  }
+  const basicData = normalizedShopStarData?.basicData || {};
+  const starsData = normalizedShopStarData?.starsData || {};
+  const shopStarIndicatorScores = await readShopStarIndicatorScores(page, shopStarPageText, basicData);
   const collectedAt = new Date().toISOString();
-  const basicIndicatorResult = listBasicIndicatorMetrics(basicResult.data);
+  const basicIndicatorResult = listBasicIndicatorMetrics(basicData);
   const metricDefinitions = [
-    ...listSummaryMetrics(basicResult.data, starsResult.data),
+    ...listSummaryMetrics(basicData, starsData),
     ...basicIndicatorResult.definitions,
     ...listShopStarIndicatorScoreMetrics(shopStarIndicatorScores.scores),
-    ...listServiceProductMetrics(basicResult.data)
+    ...listServiceProductMetrics(basicData)
   ];
   const zeroDataMetrics = metricDefinitions
     .filter((metricDefinition) => metricDefinition.zeroData)
@@ -685,7 +555,8 @@ async function collectJdShopStarMetrics(page, store, dateSelection) {
       collectedAt
     })),
     skipped: [],
-    zeroDataMetrics
+    zeroDataMetrics,
+    protocol: normalizedShopStarData?.protocol || "empty"
   };
 }
 
@@ -696,15 +567,13 @@ module.exports = {
   listSummaryMetrics,
   listServiceProductMetrics,
   readJsonResponse,
-  hasJsonResponseData,
-  hasShopStarBasicData,
-  hasShopStarStarsData,
-  hasCompleteShopStarApiData,
   createEmptyShopStarApiData,
-  resolveJdApiName,
-  isShopStarApiResponse,
   resolveShopStarPageDataDate,
   isShopStarDataUnavailableText,
   hasShopStarPageDataState,
-  collectJdShopStarMetrics
+  collectJdShopStarMetrics,
+  ...shopStarProtocol,
+  // 保留旧名称导出，便于现有测试和其他诊断脚本继续复用。
+  basicApiToken,
+  starsApiToken
 };

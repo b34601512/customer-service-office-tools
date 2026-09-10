@@ -71,6 +71,10 @@ test("同店同日成功记录直接跳过，不启动该店采集", async () =>
     findSuccessfulRun({ store }) {
       return store.key === "jd1" ? { metricCount: 38 } : null;
     },
+    hasReusableStoreMetricData() {
+      // 跳过分支只验证调度，不依赖本地真实工作簿当前有多少行。
+      return true;
+    },
     assertWorkbookWritable() {},
     appendSuccessfulRun() {},
     async collectStoreMetrics({ store }) {
