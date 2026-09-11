@@ -3,7 +3,7 @@ const appConfig = require("../../config/appConfig");
 const { assertFullTargetUrl } = require("../../config/appRuntimeConfig");
 const { log } = require("../../engine/logger");
 const { createLoginRequiredError } = require("../loginFlow");
-const { parseStaffDisplayName, parseStaffRoleGroup } = require("../shared/staffIdentity");
+const { parseStaffDisplayName, resolveStaffRoleGroup } = require("../shared/staffIdentity");
 const { filterGroupChatContacts, isOfficialGroupChatContact, normalizeGroupChatFilterConfig } = require("./groupChatFilter");
 
 const TRANSFER_MONITOR_CONTACTS_PAGE_SIZE = 100;
@@ -279,7 +279,10 @@ function normalizeMember(item) {
     displayName,
     staffName: parsedDisplayName.memberName,
     roleLabel: parsedDisplayName.roleLabel,
-    staffGroup: parseStaffRoleGroup(parsedDisplayName.roleLabel)
+    staffGroup: resolveStaffRoleGroup({
+      staffName: parsedDisplayName.memberName,
+      roleLabel: parsedDisplayName.roleLabel
+    })
   };
 }
 

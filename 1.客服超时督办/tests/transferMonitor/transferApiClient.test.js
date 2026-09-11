@@ -177,6 +177,43 @@ test("拉取转接监控快照时应该把 accessToken 带进每个接口请求"
   assert.equal(snapshot.memberMapByUserId.user_1.staffName, "顾远");
 });
 
+test("成员名称本身是运营且没有角色后缀时仍应识别为运营", async () => {
+  const page = {
+    async evaluate(pageFunction, input) {
+      if (input === undefined) {
+        return JSON.stringify({ token: "token_operation" });
+      }
+
+      if (String(input.requestPath || "").includes("/api/chat/contacts")) {
+        return {
+          ok: true,
+          status: 200,
+          text: JSON.stringify({
+            code: 0,
+            data: [{ id: "chat_operation", name: "客户甲", assignedTo: "operation_1" }]
+          })
+        };
+      }
+
+      return {
+        ok: true,
+        status: 200,
+        text: JSON.stringify({
+          code: 0,
+          data: [{ userId: "operation_1", name: "运营" }]
+        })
+      };
+    }
+  };
+
+  const snapshot = await fetchTransferMonitorSnapshot(page);
+  const operation = snapshot.memberMapByUserId.operation_1;
+
+  assert.equal(operation.staffName, "运营");
+  assert.equal(operation.roleLabel, "");
+  assert.equal(operation.staffGroup, "operation");
+});
+
 test("拉取联系人快照时应该允许调用方指定最近客户范围", async () => {
   const seenInputs = [];
   const page = {

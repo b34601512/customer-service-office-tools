@@ -57,18 +57,19 @@ function isModernShopStarData(data) {
 
 function getShopStarProtocol(results) {
   if (!results) return "";
-  if (!results.starsResult?.empty && isModernShopStarData(results.starsResult.data)) return "modern";
+  // 新页面仍调用同一个明细接口。汇总增加字段不代表明细被替代，完整明细始终优先。
   if (
     !results.basicResult?.empty &&
     !results.starsResult?.empty &&
-    hasShopStarBasicData(results.basicResult.data) &&
-    hasShopStarStarsData(results.starsResult.data)
+    hasShopStarBasicData(results.basicResult?.data) &&
+    hasShopStarStarsData(results.starsResult?.data)
   ) return "legacy";
+  if (!results.starsResult?.empty && isModernShopStarData(results.starsResult?.data)) return "modern";
   return "";
 }
 
 function hasCompleteShopStarApiData(results) {
-  return Boolean(getShopStarProtocol(results));
+  return getShopStarProtocol(results) === "legacy";
 }
 
 function normalizeShopStarApiData(results, dataDate = "") {
@@ -77,7 +78,7 @@ function normalizeShopStarApiData(results, dataDate = "") {
 
   if (protocol === "modern") {
     const modernData = results.starsResult.data;
-    // 统一快照只保留星级指标映射所需字段，不伪造新版没有返回的明细指标。
+    // 仅在明细失败或等待结束后使用已取得的汇总；缺失明细继续按业务规则填0。
     return {
       protocol,
       dataDate: String(dataDate || ""),

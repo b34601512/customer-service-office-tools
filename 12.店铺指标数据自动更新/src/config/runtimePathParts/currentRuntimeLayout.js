@@ -20,6 +20,8 @@ function createRuntimeLayout(projectRoot) {
   const outputRoot = path.join(runtimeRoot, "output");
   const cacheRoot = path.join(runtimeRoot, "cache");
   const browserProfilesRoot = path.join(stateRoot, "browser-profiles");
+  const storeChromeProfilesRoot = path.join(browserProfilesRoot, "google-chrome-profiles");
+  const jdChromeProfilesRoot = path.join(browserProfilesRoot, "store-chrome-profiles");
   const processRoot = path.join(stateRoot, "process");
   const historyRoot = path.join(stateRoot, "history");
   const downloadsRoot = path.join(outputRoot, "downloads");
@@ -34,9 +36,9 @@ function createRuntimeLayout(projectRoot) {
     state: {
       browserProfilesRoot,
       browserProfiles: {
-        // 浏览器资料与旧版本不混用；切换浏览器后从新目录建立长期 Chrome 会话。
+        // 其他平台保留现有 Chrome 资料；京东由下方唯一账号路径入口使用原长期目录。
         chromeUserDataDir: path.join(browserProfilesRoot, "google-chrome-user-data"),
-        storeChromeProfilesRoot: path.join(browserProfilesRoot, "google-chrome-profiles")
+        storeChromeProfilesRoot
       },
       buildStoreAccountChromeProfileKey,
       buildStoreScopedChromeProfileKey,
@@ -45,7 +47,7 @@ function createRuntimeLayout(projectRoot) {
       },
       getStoreAccountChromeUserDataDir(platformKey, storeKey, username) {
         return joinStoreAccountChromeUserDataDir(
-          path.join(browserProfilesRoot, "google-chrome-profiles"),
+          String(platformKey || "").trim() === "jd" ? jdChromeProfilesRoot : storeChromeProfilesRoot,
           platformKey,
           storeKey,
           username

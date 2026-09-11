@@ -1,7 +1,6 @@
 const fs = require("fs");
 const { runManagedOpenWindowEngine } = require("../../../shared/managedOpenWindowEngine");
-const { resolveBrowserMode } = require("../../../engine/browserAutomationScope");
-const { runHybridStoreCollection } = require("../../../shared/hybridStoreCollectionRunner");
+const { runInAutomationScope, resolveHumanTimeoutMs } = require("../../../engine/browserAutomationScope");
 const {
   createStoreMetricEvidenceDirectory,
   buildEvidenceFilePath,
@@ -83,6 +82,9 @@ async function collectPageMetricsFromLoggedBrowser(store, dateSelection, evidenc
       collectPageWithEvidence(browserContext, evidenceDirectory, "店铺合规", evidenceFiles, (page) =>
         collectJdComplianceMetrics(page, store))
     ]);
+    for (const warning of shopStarResult.sourceWarnings || []) {
+      notifyProgress(onProgress, "店铺星级采集说明", warning);
+    }
     return {
       records: [
         ...shopStarResult.records,
@@ -118,29 +120,28 @@ async function collectAndWriteJdStoreMetrics({ config, store, dateSelection, onP
   });
   const evidenceFiles = [];
   let keepBrowserOpen = false;
-  const browserMode = resolveBrowserMode();
-  const openStoreBrowser = (nextMode) => runManagedOpenWindowEngine({
-    platformKey: "jd",
-    storeConfig: resolvedConfig.activeStore,
-    actionName: "店铺指标打开后台页面",
-    moduleName: "店铺指标",
-    missingOpenUrlMessage: `${store.displayName}缺少店铺考核页面地址。`,
-    browserMode: nextMode
-  });
   try {
-    notifyProgress(onProgress, `打开${store.displayName}`, "正在启动独立浏览器并自动登录");
-    await openStoreBrowser(browserMode);
-    return await runHybridStoreCollection({
+    // 京东恢复直接可见 Chrome：不读取全局无头模式，也不重建浏览器重跑整店。
+    notifyProgress(onProgress, `打开${store.displayName}`, "正在打开可见 Chrome 并复用店铺登录");
+    await runManagedOpenWindowEngine({
       platformKey: "jd",
-      mode: browserMode,
-      onProgress: (stage, detail) => notifyProgress(onProgress, stage, detail),
-      openHeaded: () => openStoreBrowser("headed")
-    }, async (scope) => {
+      storeConfig: resolvedConfig.activeStore,
+      actionName: "店铺指标打开后台页面",
+      moduleName: "店铺指标",
+      missingOpenUrlMessage: `${store.displayName}缺少店铺考核页面地址。`,
+      browserMode: "headed"
+    });
+    return await runInAutomationScope({
+      platformKey: "jd",
+      headless: false,
+      humanTimeoutMs: resolveHumanTimeoutMs(),
+      onProgress: (stage, detail) => notifyProgress(onProgress, stage, detail)
+    }, async () => {
       await startJdLoginAssist({
         forceRestart: true,
         reportKey: "store_metrics",
         resolvedConfig,
-        headless: scope.headless,
+        headless: false,
         onLoginReady(loginState) {
           notifyProgress(onProgress, "京东登录成功", `店铺=${loginState.displayName}`);
         },

@@ -50,8 +50,14 @@ function parseStaffRoleGroup(rawRole) {
   return "";
 }
 
+function resolveStaffRoleGroup({ staffName, roleLabel } = {}) {
+  // 平台的“运营”账号可能没有角色后缀；角色为空时，再用规范化成员名识别分组。
+  return parseStaffRoleGroup(roleLabel) || parseStaffRoleGroup(staffName);
+}
+
 module.exports = {
   normalizeStaffIdentityText,
   parseStaffDisplayName,
-  parseStaffRoleGroup
+  parseStaffRoleGroup,
+  resolveStaffRoleGroup
 };
