@@ -32,8 +32,10 @@ const {
 } = require('../order/douyinOrderRecordStore');
 const { 获取账号浏览器资料目录 } = require('../browser/accountProfilePaths');
 const { 打开凭证目录 } = require('./evidenceViewer');
+const { 工作流状态, 工作流状态中文 } = require('../../../共享订单状态/orderWorkflow');
 
 const 菜单标题 = '抖音发票回传';
+const 客服跟进阶段文案 = 工作流状态中文[工作流状态.处理中];
 const 菜单副标题 = 'CLI 管理入口｜配置、登录、页面采集与发票回传';
 const 应用展示信息 = 读取应用展示信息({
   项目根目录: path.resolve(__dirname, '../..'),
@@ -53,7 +55,7 @@ async function 查看当前状态({ 输出, 终端 }) {
   const 配置 = 读取店铺配置();
   输出(`[状态] CLI 管理入口运行中｜已配置 ${配置.stores.length} 个店铺`);
   const stats = 获取订单统计(读取订单列表());
-  输出(`[订单状态] 待处理 ${stats.pending}｜处理中 ${stats.processing}｜已登记 ${stats.invoiceRegistered}｜已处理 ${stats.handled}`);
+  输出(`[订单状态] 待处理 ${stats.pending}｜${客服跟进阶段文案} ${stats.processing}｜已登记 ${stats.invoiceRegistered}｜已处理 ${stats.handled}`);
   输出店铺列表({
     店铺列表: 配置.stores,
     输出,

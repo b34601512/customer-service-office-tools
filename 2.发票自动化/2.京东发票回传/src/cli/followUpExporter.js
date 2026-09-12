@@ -3,11 +3,15 @@ const path = require('path');
 const { spawnSync } = require('child_process');
 const { 报告目录 } = require('../common/paths');
 const { 写入文本文件 } = require('../common/fs');
+const { 工作流状态, 工作流状态中文 } = require('../../../共享订单状态/orderWorkflow');
 const {
   是否已处理,
   是否已登记,
   是否处理中,
+  读取本地处理阶段,
 } = require('../order/jdOrderRecordStore');
+
+const 客服跟进阶段文案 = 工作流状态中文[工作流状态.处理中];
 
 function 规范化单元格(字段值) {
   return String(字段值 ?? '').replace(/\r?\n/g, ' ').replace(/\t/g, ' ').trim();
@@ -19,7 +23,7 @@ function 是否可导出跟进订单(订单) {
 
 function 构建跟进表行(订单) {
   return [
-    是否已登记(订单) ? '发票已登记' : '处理中',
+    读取本地处理阶段(订单),
     订单.storeName || '',
     订单.orderNumber || '',
     订单.assigneeName || '',
@@ -36,7 +40,7 @@ function 构建跟进表文本(订单列表 = []) {
   const 表头 = ['处理阶段', '店铺', '订单号', '跟进客服', '备注', '后台发票状态', '开票倒计时', '发票金额', '发票抬头', '是否已回传'];
   const 可导出订单列表 = (Array.isArray(订单列表) ? 订单列表 : []).filter(是否可导出跟进订单);
   if (!可导出订单列表.length) {
-    throw new Error('没有可导出的处理中或发票已登记订单。');
+    throw new Error(`没有可导出的${客服跟进阶段文案}或发票已登记订单。`);
   }
   return {
     count: 可导出订单列表.length,

@@ -12,7 +12,7 @@ test('客服跟进表只导出处理中和发票已登记订单', () => {
 
   assert.equal(结果.count, 2);
   assert.match(结果.text, /处理阶段\t店铺\t订单号/);
-  assert.match(结果.text, /处理中\t京东A店\t处理中\t小王\t已联系/);
+  assert.match(结果.text, /已安排客服跟进\t京东A店\t处理中\t小王\t已联系/);
   assert.match(结果.text, /发票已登记\t京东B店\t已登记/);
   assert.match(结果.text, /已登记.*开票成功.*已回传/);
   assert.doesNotMatch(结果.text, /待处理/);

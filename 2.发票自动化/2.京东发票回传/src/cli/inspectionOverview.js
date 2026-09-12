@@ -1,6 +1,9 @@
 const { 格式化时间 } = require('../common/time');
 const { 获取订单统计 } = require('../order/jdOrderRecordStore');
 const { 构建批量摘要 } = require('../controlCenter/taskService/batchSummary');
+const { 工作流状态, 工作流状态中文 } = require('../../../共享订单状态/orderWorkflow');
+
+const 客服跟进阶段文案 = 工作流状态中文[工作流状态.处理中];
 
 function 规范化摘要(摘要) {
   if (!摘要 || typeof 摘要 !== 'object') return null;
@@ -56,7 +59,7 @@ function 输出订单总览({ 输出, 终端, 订单列表 }) {
   const 主题 = 终端?.主题;
   const 成功数量 = Number(后台状态统计.success || 0);
   const 待开票数量 = Number(后台状态统计.pending || 0);
-  输出(`  ${主题?.正文?.('订单状态') || '订单状态'}：待处理 ${订单统计.pending}｜处理中 ${订单统计.processing}｜发票已登记 ${订单统计.invoiceRegistered}｜已处理 ${订单统计.handled}`);
+  输出(`  ${主题?.正文?.('订单状态') || '订单状态'}：待处理 ${订单统计.pending}｜${客服跟进阶段文案} ${订单统计.processing}｜发票已登记 ${订单统计.invoiceRegistered}｜已处理 ${订单统计.handled}`);
   输出(`  ${主题?.正文?.('京东开票') || '京东开票'}：开票成功 ${成功数量}｜待开票 ${待开票数量}｜其他 ${Math.max(0, (订单列表 || []).length - 成功数量 - 待开票数量)}`);
 }
 

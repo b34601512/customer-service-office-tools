@@ -18,6 +18,7 @@ const 订单状态菜单模块路径 = [
 ].find((模块路径) => fs.existsSync(模块路径));
 if (!订单状态菜单模块路径) throw new Error('找不到共享订单状态菜单模块。');
 const { 打开订单状态管理 } = require(订单状态菜单模块路径);
+const { 工作流状态, 工作流状态中文 } = require('../../../共享订单状态/orderWorkflow');
 const {
   启动命令行菜单,
   编辑店铺配置,
@@ -59,6 +60,7 @@ const {
 } = require('../order/jdInspectionOrderStore');
 
 const 菜单标题 = '京东开票巡检';
+const 客服跟进阶段文案 = 工作流状态中文[工作流状态.处理中];
 const 菜单副标题 = 'CLI 管理入口｜配置、登录、单店巡检与批量检查';
 const 应用展示信息 = 读取应用展示信息({
   项目根目录: path.resolve(__dirname, '../..'),
@@ -85,7 +87,7 @@ function 确保最近巡检订单已同步() {
 function 输出订单状态摘要(输出) {
   // 解决：首页明确展示四个人工队列，平台巡检指标保持独立。
   const stats = 获取订单统计(确保最近巡检订单已同步());
-  输出(`[订单状态] 待处理 ${stats.pending}｜处理中 ${stats.processing}｜发票已登记 ${stats.invoiceRegistered}｜已处理 ${stats.handled}`);
+  输出(`[订单状态] 待处理 ${stats.pending}｜${客服跟进阶段文案} ${stats.processing}｜发票已登记 ${stats.invoiceRegistered}｜已处理 ${stats.handled}`);
 }
 
 async function 查看当前状态({ 输出, 终端 }) {

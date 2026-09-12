@@ -18,6 +18,9 @@ const { 发送桌面通知 } = require('../notify/sendDesktopNotification');
 const { 规范化店铺配置 } = require('../store/storeConfigService');
 const { 记住扫描到的催票订单, 同步扫描到的发票订单信息, 统计订单记录 } = require('../order/jdOrderRecordStore');
 const { 验证凭证文件 } = require('../common/evidenceService');
+const { 工作流状态, 工作流状态中文 } = require('../../../共享订单状态/orderWorkflow');
+
+const 客服跟进阶段文案 = 工作流状态中文[工作流状态.处理中];
 
 async function 捕获失败页面诊断(page, 截图文件名, 指定失败截图路径 = '') {
   // 解决：失败时保留当场页面证据，避免只能凭一句超时错误猜原因。
@@ -169,7 +172,7 @@ async function 执行巡检(选项 = {}) {
     打印日志(
       '催票巡检',
       '主流程',
-      `店铺=${当前店铺.name} 扫描页数=${页面结果.metrics.scannedPageCount ?? 1}，后台发票订单=${页面结果.metrics.invoiceOrderCount || 0}，已更新本地订单=${发票信息同步结果.updatedCount}，催票=${页面结果.records.length}，新增=${新增催票记录.length}，已归档忽略=${(持久化结果.skippedArchivedRecords || []).length}，本地待处理=${本地统计.pending}，处理中=${本地统计.processing}，发票已登记=${本地统计.invoiceRegistered}，已处理=${本地统计.handled}`,
+      `店铺=${当前店铺.name} 扫描页数=${页面结果.metrics.scannedPageCount ?? 1}，后台发票订单=${页面结果.metrics.invoiceOrderCount || 0}，已更新本地订单=${发票信息同步结果.updatedCount}，催票=${页面结果.records.length}，新增=${新增催票记录.length}，已归档忽略=${(持久化结果.skippedArchivedRecords || []).length}，本地待处理=${本地统计.pending}，${客服跟进阶段文案}=${本地统计.processing}，发票已登记=${本地统计.invoiceRegistered}，已处理=${本地统计.handled}`,
     );
 
     if (新增催票记录.length > 0) {

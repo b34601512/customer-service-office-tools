@@ -23,9 +23,9 @@ function 创建提问器(answers) {
 }
 
 test('每个阶段只显示当前有意义的状态动作', () => {
-  assert.deepEqual(构建状态动作(工作流状态.待处理).map((item) => item.label), ['标记处理中']);
+  assert.deepEqual(构建状态动作(工作流状态.待处理).map((item) => item.label), ['标记已安排客服跟进']);
   assert.deepEqual(构建状态动作(工作流状态.处理中).map((item) => item.label), ['标记发票已登记', '标记已处理', '恢复待处理']);
-  assert.deepEqual(构建状态动作(工作流状态.发票已登记).map((item) => item.label), ['标记已处理', '恢复处理中']);
+  assert.deepEqual(构建状态动作(工作流状态.发票已登记).map((item) => item.label), ['标记已处理', '恢复已安排客服跟进']);
   assert.deepEqual(构建状态动作(工作流状态.已处理).map((item) => item.label), ['恢复到发票已登记']);
 });
 

@@ -23,7 +23,8 @@ module.exports = {
   userDataDir,
   controlCenterUserDataDir,
   runtimeProfileName: "Default",
-  runHeadless: true,
+  // 日常督办使用可见浏览器，便于主管实时核验页面与运行状态。
+  runHeadless: false,
   replyConfigPath: path.join(projectConfigDir, "reply-config.js"),
   wecomRobotConfigPath: path.join(projectConfigDir, "wecom-robot.json"),
   supervisionProcessStatePath: path.join(runtimeDir, "supervision", "process-records.json"),

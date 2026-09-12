@@ -1,3 +1,7 @@
+const { 工作流状态, 工作流状态中文 } = require('../../../../共享订单状态/orderWorkflow');
+
+const 客服跟进阶段文案 = 工作流状态中文[工作流状态.处理中];
+
 function 构建失败店铺结果(店铺, 错误) {
   // 解决：失败结果结构集中生成，避免重试和最终失败写出不同字段。
   const 页面诊断 = 错误?.pageDiagnostic || {};
@@ -90,7 +94,7 @@ function 构建成功店铺结果(店铺, 巡检结果) {
     storeName: 店铺.name,
     status: 'success',
     statusLabel: '识别完成',
-    lastMessage: `识别完成：扫描${巡检结果.metrics?.scannedPageCount ?? 1}页，后台发票订单=${巡检结果.metrics?.backendInvoiceOrderCount ?? 0}，已更新=${巡检结果.metrics?.backendInvoiceInfoUpdatedCount ?? 0}，催票=${巡检结果.records.length}，新增=${巡检结果.newRecords.length}，本地待处理=${巡检结果.metrics?.pendingOrderCount ?? 0}，处理中=${巡检结果.metrics?.processingOrderCount ?? 0}，发票已登记=${巡检结果.metrics?.invoiceRegisteredOrderCount ?? 0}，已处理=${巡检结果.metrics?.handledOrderCount ?? 0}`,
+    lastMessage: `识别完成：扫描${巡检结果.metrics?.scannedPageCount ?? 1}页，后台发票订单=${巡检结果.metrics?.backendInvoiceOrderCount ?? 0}，已更新=${巡检结果.metrics?.backendInvoiceInfoUpdatedCount ?? 0}，催票=${巡检结果.records.length}，新增=${巡检结果.newRecords.length}，本地待处理=${巡检结果.metrics?.pendingOrderCount ?? 0}，${客服跟进阶段文案}=${巡检结果.metrics?.processingOrderCount ?? 0}，发票已登记=${巡检结果.metrics?.invoiceRegisteredOrderCount ?? 0}，已处理=${巡检结果.metrics?.handledOrderCount ?? 0}`,
     lastCheckedAt: 巡检结果.checkedAt,
     metrics: 巡检结果.metrics,
     records: 巡检结果.records,

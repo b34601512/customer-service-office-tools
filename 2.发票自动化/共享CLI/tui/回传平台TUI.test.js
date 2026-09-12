@@ -257,7 +257,7 @@ test("店铺页：读取店铺订单时渲染镜像表格，并可回车查看�
 
   app.切换页面(2);
   帧 = app.构建帧();
-  assert.ok(帧.some((行) => 行.includes("待处理") && 行.includes("处理中")));
+  assert.ok(帧.some((行) => 行.includes("待处理") && 行.includes("已安排客服跟进")));
   assert.ok(帧.some((行) => 行.includes("A店")));
 
   app.分发按键("enter");
@@ -284,7 +284,7 @@ test("订单页：a 可以把选中待处理订单一键标记为已安排", () 
   app.切换页面(1);
   app.分发按键("a");
   assert.equal(当前订单.workflowStatus, "processing");
-  assert.ok(app.page.state.message.includes("已标记为已安排"));
+  assert.ok(app.page.state.message.includes("已标记为已安排客服跟进"));
   dispose();
 });
 
@@ -312,7 +312,7 @@ test("店铺订单明细：a 也可以把选中订单一键标记为已安排", 
   app.分发按键("enter");
   app.分发按键("a");
   assert.equal(标记次数, 1);
-  assert.match(app.page.state.detailMessage, /已标记为已安排/);
+  assert.match(app.page.state.detailMessage, /已标记为已安排客服跟进/);
   dispose();
 });
 

@@ -19,6 +19,7 @@ const 队列选择映射 = Object.freeze({
   4: 工作流状态.已处理,
 });
 const 默认订单每页条数 = 10;
+const 客服跟进阶段文案 = 工作流状态中文[工作流状态.处理中];
 
 function 显示订单页面({ 终端, 输出, 标题, 副标题 = '' }) {
   if (typeof 终端?.显示页面 === 'function') {
@@ -59,7 +60,7 @@ function 构建状态动作(workflowStatus) {
   const status = String(workflowStatus || '').trim();
   const actions = {
     [工作流状态.待处理]: [
-      { label: '标记处理中', targetStatus: 工作流状态.处理中 },
+      { label: `标记${客服跟进阶段文案}`, targetStatus: 工作流状态.处理中 },
     ],
     [工作流状态.处理中]: [
       { label: '标记发票已登记', targetStatus: 工作流状态.发票已登记 },
@@ -68,7 +69,7 @@ function 构建状态动作(workflowStatus) {
     ],
     [工作流状态.发票已登记]: [
       { label: '标记已处理', targetStatus: 工作流状态.已处理 },
-      { label: '恢复处理中', targetStatus: 工作流状态.处理中 },
+      { label: `恢复${客服跟进阶段文案}`, targetStatus: 工作流状态.处理中 },
     ],
     [工作流状态.已处理]: [
       { label: '恢复到发票已登记', targetStatus: 工作流状态.发票已登记 },
@@ -79,7 +80,7 @@ function 构建状态动作(workflowStatus) {
 
 function 构建四队列统计文字(orderList = []) {
   const stats = 获取订单统计(orderList);
-  return `待处理 ${stats.pending}｜处理中 ${stats.processing}｜发票已登记 ${stats.invoiceRegistered}｜已处理 ${stats.handled}`;
+  return `待处理 ${stats.pending}｜${客服跟进阶段文案} ${stats.processing}｜发票已登记 ${stats.invoiceRegistered}｜已处理 ${stats.handled}`;
 }
 
 function 格式化订单行(order, index, options = {}) {
@@ -283,7 +284,7 @@ async function 打开订单状态管理(options = {}) {
     }
     输出(`[订单状态] ${构建四队列统计文字(orders)}`);
     输出(`  [1] 待处理（${stats.pending}）`);
-    输出(`  [2] 处理中（${stats.processing}）`);
+    输出(`  [2] ${客服跟进阶段文案}（${stats.processing}）`);
     输出(`  [3] 发票已登记（${stats.invoiceRegistered}）`);
     输出(`  [4] 已处理（${stats.handled}）`);
     输出('  [0] 返回');

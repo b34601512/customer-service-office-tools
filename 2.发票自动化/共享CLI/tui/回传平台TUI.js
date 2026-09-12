@@ -6,6 +6,7 @@ const { 适配宽度 } = require("./width");
 const { 格式化时长毫秒, 格式化任务状态, 格式化时间文本 } = require("./format");
 const { 开始捕获控制台输出 } = require("./控制台捕获");
 const { 判断诺诺登录就绪 } = require("../启动下载中心");
+const { 工作流状态, 工作流状态中文 } = require("../../共享订单状态/orderWorkflow");
 const {
   构建表头,
   构建表格行,
@@ -21,11 +22,12 @@ const {
 } = require("./镜像表格");
 
 const 日志行数上限 = 3000;
+const 客服跟进阶段文案 = 工作流状态中文[工作流状态.处理中];
 
 const 总览店铺表格列定义 = [
   { 标题: "店铺", 宽度: 14 },
   { 标题: "待处理", 宽度: 6 },
-  { 标题: "处理中", 宽度: 6 },
+  { 标题: 客服跟进阶段文案, 宽度: 14, 最小宽度: 12, 最大宽度: 16 },
   { 标题: "已登记", 宽度: 6 },
   { 标题: "已处理", 宽度: 6 },
   { 标题: "最近结果", 宽度: "flex" },
@@ -542,7 +544,7 @@ function 创建店铺页(模板选项) {
     { 标题: "店铺", 宽度: 14, 最小宽度: 8, 最大宽度: 24 },
     { 标题: "登录", 宽度: 10, 最小宽度: 8, 最大宽度: 16 },
     { 标题: "待处理", 宽度: 6, 最小宽度: 4, 最大宽度: 8 },
-    { 标题: "处理中", 宽度: 6, 最小宽度: 4, 最大宽度: 8 },
+    { 标题: 客服跟进阶段文案, 宽度: 14, 最小宽度: 12, 最大宽度: 16 },
     { 标题: "已登记", 宽度: 6, 最小宽度: 4, 最大宽度: 8 },
     { 标题: "已处理", 宽度: 6, 最小宽度: 4, 最大宽度: 8 },
     { 标题: "最近结果", 宽度: "flex", 最小宽度: 12 },
@@ -782,12 +784,12 @@ function 创建店铺页(模板选项) {
     },
     footer() {
       if (this.state.detailStore) {
-        const 标记提示 = typeof 模板选项.订单页标记已安排 === "function" ? " a标记已安排" : "";
+        const 标记提示 = typeof 模板选项.订单页标记已安排 === "function" ? ` a标记${客服跟进阶段文案}` : "";
         return `f切换过滤 r刷新 Home/End首尾 ↑↓滚动${标记提示} 回车/Esc返回店铺列表 q返回总览`;
       }
       if (typeof 模板选项.读取店铺订单 === "function") {
         const 附加 = 模板选项.店铺页操作提示 || "";
-        const 标记提示 = typeof 模板选项.订单页标记已安排 === "function" ? " a明细标记已安排" : "";
+        const 标记提示 = typeof 模板选项.订单页标记已安排 === "function" ? ` a明细标记${客服跟进阶段文案}` : "";
         return `↑↓选择 回车订单明细${附加}${标记提示} ←→切页 q返回总览`;
       }
       const 附加 = 模板选项.店铺页操作提示 || "";
@@ -849,7 +851,7 @@ function 创建店铺页(模板选项) {
             const 更新后订单 = 模板选项.订单页标记已安排(订单);
             全部订单缓存 = { 时间: 0, 列表: null };
             this.state.detailMessage = 更新后订单
-              ? `已标记为已安排：${订单.orderNumber}`
+              ? `已标记为${客服跟进阶段文案}：${订单.orderNumber}`
               : `订单无需标记：${订单.orderNumber}`;
           } catch (错误) {
             this.state.detailMessage = 错误 instanceof Error ? 错误.message : String(错误);
@@ -1113,7 +1115,7 @@ function 创建订单页(模板选项) {
         return "Home/End首尾 ↑↓滚动 回车/Esc返回订单列表 q返回总览";
       }
       const 过滤模式 = 订单过滤模式[this.state.filterMode] || 订单过滤模式[0];
-      const 操作提示 = typeof 模板选项.订单页标记已安排 === "function" ? " a标记已安排" : "";
+      const 操作提示 = typeof 模板选项.订单页标记已安排 === "function" ? ` a标记${客服跟进阶段文案}` : "";
       return `f切换过滤[${过滤模式.label}] r刷新 Home/End首尾 ↑↓选择 回车查看详情${操作提示} ←→切页 q返回总览`;
     },
     handleKey(按键, app) {
@@ -1228,7 +1230,7 @@ function 创建订单页(模板选项) {
           const 更新后订单 = 模板选项.订单页标记已安排(订单);
           订单缓存 = { 时间: 0, 列表: null };
           this.state.message = 更新后订单
-            ? `已标记为已安排：${订单.orderNumber}`
+            ? `已标记为${客服跟进阶段文案}：${订单.orderNumber}`
             : `订单无需标记：${订单.orderNumber}`;
         } catch (错误) {
           this.state.message = 错误 instanceof Error ? 错误.message : String(错误);

@@ -21,8 +21,10 @@ const { ControlCenterState } = require("../controlCenter/controlCenterState");
 const { ControlCenterTaskService } = require("../controlCenter/taskService");
 const { 启动下载中心窗口, 读取下载中心外部服务状态 } = require("../../../共享CLI/启动下载中心");
 const { 最大化当前控制台窗口 } = require("../../../../共享CLI/最大化控制台窗口");
+const { 工作流状态, 工作流状态中文 } = require("../../../共享订单状态/orderWorkflow");
 
 const 标题 = "京东发票回传控制台";
+const 客服跟进阶段文案 = 工作流状态中文[工作流状态.处理中];
 
 function 读取本地登录状态(店铺) {
   return fs.existsSync(获取店铺登录态文件路径(店铺.id))
@@ -96,7 +98,7 @@ function 创建TUI(选项 = {}) {
       try {
         const 订单数据 = 读取订单记录();
         const 统计 = 统计订单记录(订单数据);
-        return [`订单：共 ${统计.total} 条（待处理 ${统计.pending ?? 0}｜处理中 ${统计.processing ?? 0}｜已登记 ${统计.invoiceRegistered ?? 0}｜已处理 ${统计.handled ?? 0}）`];
+        return [`订单：共 ${统计.total} 条（待处理 ${统计.pending ?? 0}｜${客服跟进阶段文案} ${统计.processing ?? 0}｜已登记 ${统计.invoiceRegistered ?? 0}｜已处理 ${统计.handled ?? 0}）`];
       } catch (错误) {
         return [];
       }
