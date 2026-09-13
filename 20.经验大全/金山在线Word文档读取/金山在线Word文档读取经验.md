@@ -136,6 +136,19 @@ node "金山在线Word文档读取.cjs" --share-id 分享ID --profile C:/Users/b
 
 ## 第四步：提取嵌入图片
 
+上一步已经落地成配套脚本 `下载文档图片.cjs`（与本笔记同目录）：它读 `online-pics.json` 里的 `sourceKey`，
+在已打开文档的页面里换签名地址并逐张下载，不用再手写这一段。
+
+```powershell
+set NODE_PATH=D:\桌面\办公软件\1.客服超时督办\node_modules
+node "下载文档图片.cjs" --share-id 分享ID --pics online-pics.json --out "输出目录" [--limit 3]
+```
+
+同样只读：不写在线文档，不保存/不打印 Cookie；`pic-urls.json` 里是**临时签名地址**，用完就丢、不入库。
+2026-09-13 实测：与手工下载的图片逐字节一致（`pic-01`、`pic-02` 对比通过）。
+
+下面是这一步的原理（想知道接口细节时看；改脚本时对着看）：
+
 图片节点示例：
 
 ```json
