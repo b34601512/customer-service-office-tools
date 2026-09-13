@@ -319,6 +319,7 @@ def check_cross(cur, prev, report, max_streak):
 
 
 def check_coverage(cur, report, lead):
+    total_over = []
     for group, members in groups_of(cur["employees"]).items():
         for d in cur["days"]:
             cnt = {code: sum(1 for e in members if e["shifts"][d] == code) for code in ("早", "晚")}
@@ -338,6 +339,17 @@ def check_coverage(cur, report, lead):
                     if idle:
                         report.add("一 在岗覆盖", "error",
                                    f"售后 d{d} {lead}休，但 {('、'.join(idle))} 也休（应 4 人全上）")
+            if cnt["早"] > 2 or cnt["晚"] > 2:
+                total_over.append(d)
+    # 不扎堆：已经有 2 早 2 晚 就该安排休息（除了大活动），上班人数保持正常
+    for d in cur["days"]:
+        head = as_int(cur["head_count"].get(d)) if cur["head_count"] else None
+        if head is not None and head > 8:
+            report.add("一 在岗覆盖", "warn",
+                       f"d{d} 上班人数 {head}（>8 = 扎堆上班；常规接待量平均，有 2 早 2 晚就该安排休息，除非大活动）")
+    if total_over:
+        report.add("一 在岗覆盖", "warn",
+                   f"有 {len(total_over)} 天某个组超过 2 早/2 晚（d{total_over[0]}…）：多了就安排休息，别扎堆")
     if lead:
         work = [e for e in cur["employees"] if e["name"] == lead]
         if work and any(e["shifts"][d] == "晚" for e in work for d in cur["days"]):
@@ -404,7 +416,13 @@ def check_duty(cur, report, green):
 def check_marks(cur, report):
     for e in cur["employees"]:
         if any(e["shifts"][d] == "年" for d in cur["days"]):
-            report.add("五 特殊标记与休假", "error", f"{e['name']} 出现「年」（年假不主动排）")
+            report.add("五 特殊标记与休假", "warn",
+                       f"{e['name']} 出现「年」（年假不主动排；只有客服自己申请了才写，确认一下）")
+        xing = [d for d in cur["days"] if e["shifts"][d] == "行"]
+        if xing:
+            report.add("五 特殊标记与休假", "warn",
+                       f"{e['name']} d{'、'.join(map(str, xing))} 排了「行」：日常排班不要排行（一般只在新员工入职时人工安排），"
+                       f"多一个人上班就是扎堆")
         for d in cur["days"]:
             if e["shifts"][d] in ("行", "年") and e["colors"][d] == GREEN:
                 report.add("五 特殊标记与休假", "error", f"{e['name']} d{d} 休息却带值班绿")
@@ -737,7 +755,7 @@ def check_stats(cur, report):
 def check_carry(cur, prev, report):
     """结转列校验（公司口径）：
     剩余 = 上月结转 + (本月应休 − 实际排休) × 8 小时；年假 = 上月结转的年假余额。
-    同时提醒超休：可休假期 = 本月应休 + 上月结转（超了就安排上班或备注「下个月」）。
+    同时提醒超休：可休假期 = 本月应休 + 上月结转（超休也没事：记作休下个月的假，剩余记负数，下月扣）。
     """
     if not prev:
         report.add("六 数据统计", "info", "未给上月表，剩余假/年假结转无法自动核对（人工看清单）")
@@ -769,7 +787,9 @@ def check_carry(cur, prev, report):
     for x in errors:
         report.add("六 数据统计", "error", x)
     for x in overs:
-        report.add("六 数据统计", "warn", f"超休：{x}——尽量不超休，超了就安排上班；确实要休就写备注（如「下个月」）")
+        report.add("六 数据统计", "warn",
+                   f"超休：{x}——尽量不超休；实在超了也没事，**记作休下个月的假**（剩余记负数，下月扣），"
+                   f"备注写「下个月」，不要为了不超休硬安排上班（那就扎堆了）")
 
     # 年假：结转余额（本月真休了年假要人工扣减）
     alines = []

@@ -343,8 +343,9 @@ def main() -> None:
         rng = f"$C{r}:$AG{r}"          # 整月范围：1号到31号（30 天的月份 31 号列是空的，不参与计数）
         if p in carry:
             # 剩余 = 上月结转 + (本月应休 − 实际排休) × 8 小时（公司口径，step_28_update_remaining）
+            # 超休（负数）就记作休下个月的假，备注「（下个月）」（跟真表一样）
             left = parse_leave(carry[p]) + (policy_rest - rest) * HOURS_PER_DAY
-            text = format_leave(left)
+            text = format_leave(left) + ("（下个月）" if left < 0 else "")
             ws.cell(r, stat["剩余"]).value = text
             values[(r, stat["剩余"])] = text
         if p in annual:
