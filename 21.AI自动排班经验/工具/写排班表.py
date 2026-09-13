@@ -48,8 +48,9 @@ import zipfile
 from pathlib import Path
 
 from openpyxl import load_workbook
-from openpyxl.styles import PatternFill
+from openpyxl.styles import Alignment, Color, Font, PatternFill
 from openpyxl.utils import get_column_letter
+from copy import copy as _copy
 
 STAT_KEYS = ("剩余", "年假", "休息", "早班", "晚班", "实到", "应到")
 KINDS = ("早班", "晚班", "休息")
@@ -120,6 +121,61 @@ def split_keys(items) -> set[tuple[str, int]]:
         if day.isdigit():
             out.add((name.strip(), int(day)))
     return out
+
+
+RED_FONT, BLACK_FONT = "FFFF0000", "FF000000"     # 大小周：红 = 休息日（字体颜色，不是底色）
+F_BANNER = PatternFill("solid", fgColor="FF0000")  # 月份横幅（红底白字）
+
+
+def month_label(ws, meta) -> str | None:
+    """月份横幅文字：优先 meta.month，其次从标题（如 "2026年10月客服排班表"）里取。"""
+    if meta.get("month"):
+        return str(meta["month"])
+    for r in range(1, 4):
+        for c in range(1, 6):
+            mo = re.search(r"(\d{1,2})月", text(ws.cell(r, c).value))
+            if mo:
+                return f"{int(mo.group(1))}月"
+    return None
+
+
+def find_weekday_row(ws, L) -> int | None:
+    """星期行：日期行上/下一行，日列上写的是 一~日。"""
+    cols = [L["day_col"][d] for d in L["day_col"]]
+    for r in (L["header"] - 1, L["header"] + 1):
+        if r < 1:
+            continue
+        vals = {text(ws.cell(r, c).value) for c in cols} - {""}
+        if vals and vals <= set("一二三四五六日"):
+            return r
+    return None
+
+
+def write_month_banner(ws, row: int, col0: int, col1: int, label: str) -> None:
+    """把 1 号~当月最后一天 的日列在横幅行上合成 1 格（醒目，避免客服看错月份）。"""
+    for rng in list(ws.merged_cells.ranges):      # 先拆掉与日列相交的旧合并（真表可能是一排散格）
+        if rng.min_row <= row <= rng.max_row and rng.min_col <= col1 and rng.max_col >= col0:
+            ws.unmerge_cells(str(rng))
+    for c in range(col0, col1 + 1):
+        cell = ws.cell(row, c)
+        cell.value = None
+        cell.fill = F_BANNER
+        cell.font = Font(bold=True, color="FFFFFFFF", size=10)
+    ws.merge_cells(start_row=row, start_column=col0, end_row=row, end_column=col1)
+    top = ws.cell(row, col0)
+    top.value = label
+    top.alignment = Alignment(horizontal="center", vertical="center")
+
+
+def mark_weekend_reds(ws, row: int, day_col: dict[int, int], days: list[int], red_days: set[int]) -> None:
+    """星期行按大小周标红（字体颜色）：周日永远红，周六按大周红/小周黑，工作日黑。"""
+    for d in days:
+        c = day_col.get(d)
+        if c:
+            cell = ws.cell(row, c)
+            font = _copy(cell.font)                 # 只改字体颜色，其余（字体/字号/加粗）保持原样
+            font.color = Color(rgb=RED_FONT if d in red_days else BLACK_FONT)
+            cell.font = font
 
 
 def find_layout(ws, plan) -> dict:
@@ -205,6 +261,22 @@ def main() -> None:
     days = [d for d in days_all if d in L["day_col"]]
 
     values: dict[tuple[int, int], object] = {}   # 公式缓存值 / TSV 值
+
+    # ---- 表头：月份横幅（合并）+ 星期行大小周红标 ----
+    banner_row = (min(L["after"].values()) - 1) if L["after"] else None
+    busy = set(L["seller"].values()) | set(L["after"].values()) | {L["header"], L["subtotal_row"], L["head_row"]}
+    if banner_row and banner_row > L["header"] and banner_row not in busy:
+        label = month_label(ws, meta)
+        if label:
+            write_month_banner(ws, banner_row, L["day_col"][days_all[0]], L["day_col"][days[-1]], label)
+            print(f"月份横幅：第 {banner_row} 行 {get_column_letter(L['day_col'][days_all[0]])}~{get_column_letter(L['day_col'][days[-1]])} 合并为「{label}」")
+    wd_row = find_weekday_row(ws, L)
+    red_days = {int(d) for d in (meta.get("weekend_red_days") or [])}
+    if wd_row and red_days:
+        mark_weekend_reds(ws, wd_row, L["day_col"], days, red_days)
+        print(f"星期行（第 {wd_row} 行）按大小周标红 {len(red_days & set(days))} 天")
+    elif wd_row:
+        print("提示：计划里没写 weekend_red_days，星期行大小周红标没动（可用 工具/推应休天数.py 推出）")
 
     def write_value(r, c, v):
         ws.cell(r, c).value = v

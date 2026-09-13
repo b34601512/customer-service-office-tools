@@ -47,6 +47,13 @@ class CachedValueGrid:
     def color(self, r: int, c: int) -> str:
         return self.grid.color(r, c)
 
+    def font_color(self, r: int, c: int) -> str:
+        return self.grid.font_color(r, c)
+
+    @property
+    def merged(self):
+        return getattr(self.grid, "merged", [])
+
 
 def label(color: str) -> str:
     if not color:

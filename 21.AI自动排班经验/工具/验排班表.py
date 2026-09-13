@@ -27,7 +27,7 @@ import sys
 from pathlib import Path
 
 from openpyxl import load_workbook
-from openpyxl.utils import get_column_letter
+from openpyxl.utils import column_index_from_string, get_column_letter
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 _reader = importlib.import_module("读排班表")
@@ -50,6 +50,7 @@ class XlsxGrid:
         wb = load_workbook(path, data_only=False)  # 取公式文本
         self.ws = wb[sheet] if sheet else wb.active
         self.max_row, self.max_col = self.ws.max_row, self.ws.max_column
+        self.merged = [str(m) for m in self.ws.merged_cells.ranges]
 
     def get(self, r: int, c: int):
         return self.ws.cell(r, c).value
@@ -62,6 +63,12 @@ class XlsxGrid:
         text = str(rgb) if rgb else ""
         return text[-6:].upper() if len(text) >= 6 else ""
 
+    def font_color(self, r: int, c: int) -> str:
+        """字体颜色（大小周红标用字体颜色，不是底色）。"""
+        color = self.ws.cell(r, c).font.color if self.ws.cell(r, c).font else None
+        rgb = str(color.rgb) if color and color.rgb else ""
+        return rgb[-6:].upper() if len(rgb) >= 6 else ""
+
 
 class TsvGrid:
     def __init__(self, path: str):
@@ -70,6 +77,7 @@ class TsvGrid:
         self.rows = [[(c or "").strip() for c in row] for row in rows]
         self.max_row = len(self.rows)
         self.max_col = max((len(r) for r in self.rows), default=0)
+        self.merged: list[str] = []
 
     def get(self, r: int, c: int):
         row = self.rows[r - 1] if 0 < r <= self.max_row else []
@@ -77,6 +85,9 @@ class TsvGrid:
         return value if value != "" else None
 
     def color(self, r: int, c: int) -> str:
+        return ""
+
+    def font_color(self, r: int, c: int) -> str:
         return ""
 
 
@@ -160,6 +171,28 @@ def parse(grid) -> dict:
         raise SystemExit("没找到含「日期」的表头行")
     days = sorted(day_col)
 
+    # 星期行（大小周红标：红=字体颜色）+ 标题里的月份
+    weekday_row, weekday, weekday_red = None, {}, {}
+    for r in (header - 1, header + 1):
+        if r < 1:
+            continue
+        vals = {text(grid.get(r, day_col[d])) for d in days} - {""}
+        if vals and vals <= set("一二三四五六日"):
+            weekday_row = r
+            for d in days:
+                weekday[d] = text(grid.get(r, day_col[d]))
+                weekday_red[d] = grid.font_color(r, day_col[d]) in ("FF0000",)
+            break
+    month = None
+    for r in range(1, 4):
+        for c in range(1, 6):
+            mo = re.search(r"(\d{1,2})月", text(grid.get(r, c)))
+            if mo:
+                month = int(mo.group(1))
+                break
+        if month:
+            break
+
     stat_col: dict[str, int] = {}
     policy: dict[str, dict] = {}
     for r in range(1, min(grid.max_row, 8) + 1):
@@ -214,9 +247,16 @@ def parse(grid) -> dict:
 
     formulas = [s for e in employees for s in e["shifts"].values() if is_formula(s)]
 
+    after_rows = [e["row"] for e in employees if e["group"] == "售后"]
+    banner_row = (min(after_rows) - 1) if after_rows else None
+    banner_text = text(grid.get(banner_row, day_col[days[0]])) if banner_row else ""
+
     return {"days": days, "employees": employees, "summary": summary, "head_count": head_count,
             "subtotal": subtotal, "marks": marks, "stat_col": stat_col, "policy": policy,
-            "day_formulas": len(formulas)}
+            "day_formulas": len(formulas), "day_col": day_col, "header": header,
+            "weekday_row": weekday_row, "weekday": weekday, "weekday_red": weekday_red,
+            "month": month, "merged": getattr(grid, "merged", []),
+            "banner_row": banner_row, "banner_text": banner_text}
 
 
 # ---------------------------------------------------------------- 校验
@@ -364,17 +404,91 @@ def check_duty(cur, report, green):
 def check_marks(cur, report):
     for e in cur["employees"]:
         if any(e["shifts"][d] == "年" for d in cur["days"]):
-            report.add("五 特殊标记", "error", f"{e['name']} 出现「年」（年假不主动排）")
+            report.add("五 特殊标记与休假", "error", f"{e['name']} 出现「年」（年假不主动排）")
         for d in cur["days"]:
             if e["shifts"][d] in ("行", "年") and e["colors"][d] == GREEN:
-                report.add("五 特殊标记", "error", f"{e['name']} d{d} 休息却带值班绿")
+                report.add("五 特殊标记与休假", "error", f"{e['name']} d{d} 休息却带值班绿")
     if cur["day_formulas"]:
-        report.add("五 特殊标记", "warn", f"有 {cur['day_formulas']} 个班次格是公式，可能读不出班次")
+        report.add("五 特殊标记与休假", "warn", f"有 {cur['day_formulas']} 个班次格是公式，可能读不出班次")
     if not cur["marks"]:
-        report.add("五 特殊标记", "warn", "没找到「X月」月份标记")
+        report.add("五 特殊标记与休假", "warn", "没找到「X月」月份标记")
     for r, c, color in cur["marks"]:
         if color and color != "FF0000":
-            report.add("五 特殊标记", "warn", f"月份标记（行{r}列{c}）颜色 {color} 不是红")
+            report.add("五 特殊标记与休假", "warn", f"月份标记（行{r}列{c}）颜色 {color} 不是红")
+
+
+def check_month_banner(cur, report):
+    """月份横幅：售后块上面那一行的 1 号~当月最后一天 要合并成 1 格，写「X月」（醒目，避免客服看错月份）。"""
+    row, label = cur.get("banner_row"), cur.get("banner_text")
+    if not row:
+        return
+    days = cur["days"]
+    col0, col1 = cur["day_col"][days[0]], cur["day_col"][days[-1]]
+    spans = []
+    for m in cur["merged"]:
+        mm = re.fullmatch(r"([A-Z]+)(\d+):([A-Z]+)(\d+)", m)
+        if not mm:
+            continue
+        r1, c1 = int(mm.group(2)), column_index_from_string(mm.group(1))
+        r2, c2 = int(mm.group(4)), column_index_from_string(mm.group(3))
+        if r1 <= row <= r2:
+            spans.append((c1, c2))
+    want = f"{cur['month']}月" if cur["month"] else None
+    if not spans:
+        report.add("五 特殊标记与休假", "error",
+                   f"月份横幅（第 {row} 行）没有合并：1 号~当月最后一天应合成 1 格写「{want or 'X月'}」（避免客服看错月份）")
+        return
+    if not any(c1 <= col0 and c2 >= col1 for c1, c2 in spans):
+        report.add("五 特殊标记与休假", "error", f"月份横幅（第 {row} 行）合并范围不对（应盖住整月日列）")
+    if want and label and label != want:
+        report.add("五 特殊标记与休假", "error", f"月份横幅写的是「{label}」，标题是「{want}」")
+
+
+def check_big_week(cur, report):
+    """大小周：星期行红标（字体颜色）——周日永远红；周六红=大周（双休）、黑=小周（单休），必须严格交替。
+    本月应休 = 大小周红标天数 + 法定节假日（政策格的值必须每个月重新确认）。"""
+    days, wd, red = cur["days"], cur.get("weekday") or {}, cur.get("weekday_red") or {}
+    if not wd:
+        report.add("五 特殊标记与休假", "warn", "没找到星期行，大小周红标未校验")
+        return
+    weeks: dict[int, list[int]] = {}
+    for d in days:
+        char = wd.get(d)
+        if char not in "一二三四五六日":
+            continue
+        idx = "一二三四五六日".index(char)
+        weeks.setdefault(d - idx, []).append(d)
+    sat_flags = []
+    for start in sorted(weeks):
+        group = weeks[start]
+        sunday = next((d for d in group if wd.get(d) == "日"), None)
+        saturday = next((d for d in group if wd.get(d) == "六"), None)
+        if sunday and not red.get(sunday):
+            report.add("五 特殊标记与休假", "error", f"d{sunday}（周日）星期行没标红（周日永远红）")
+        if saturday is not None:
+            sat_flags.append((saturday, bool(red.get(saturday))))
+    if not any(f for _d, f in sat_flags):
+        report.add("五 特殊标记与休假", "warn", "星期行没有周六红标（无法核对大小周；可用 工具/推应休天数.py 推）")
+    flags = [f for _d, f in sat_flags]
+    for (d1, f1), (d2, f2) in zip(sat_flags, sat_flags[1:]):
+        if f1 == f2:
+            report.add("五 特殊标记与休假", "error",
+                       f"大小周没交替：d{d1} 与 d{d2} 的周六同为{'红（大周）' if f1 else '黑（小周）'}")
+    n_red = sum(1 for d in days if red.get(d))
+    key = next((k for k in cur["policy"] if k.startswith("本月休息天数")), None)
+    policy = as_int(cur["policy"][key]["cell"]) if key else None
+    msg = f"大小周红标 = {n_red} 天（周日 {sum(1 for d in days if wd.get(d) == '日')} + 大周周六 {sum(1 for _d, f in sat_flags if f)}）"
+    if policy is not None:
+        gap = policy - n_red
+        msg += f"；政策格「本月休息天数」= {policy} 天"
+        if gap < 0:
+            report.add("五 特殊标记与休假", "error", f"{msg} → 政策值比大小周还少，对不上")
+        else:
+            msg += f"（差额 {gap} 天 = 法定节假日）"
+    report.add("五 特殊标记与休假", "info", msg)
+    report.add("五 特殊标记与休假", "warn",
+               f"「本月休息天数」必须**每个月跟用户/人事重新确认**（法定节假日 + 大小周，月月不同）；"
+               f"本月政策格 = {policy if policy is not None else '?'} 天，确认过再定稿")
 
 
 def check_after_duty(cur, report, lead):
@@ -701,6 +815,8 @@ def main() -> None:
     check_duty(cur, report, args.green.upper())
     check_after_duty(cur, report, args.lead)
     check_marks(cur, report)
+    check_month_banner(cur, report)
+    check_big_week(cur, report)
     check_stats(cur, report)
     check_carry(cur, prev, report)
 
