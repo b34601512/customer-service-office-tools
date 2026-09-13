@@ -37,6 +37,7 @@ GREEN = "E2F0D9"
 BLUE_AFTER = "BDD7EE"    # 售后值班（每班 1 人）
 YELLOW_LEAD = "FFFF00"   # 售后组长（李守耀）在岗
 WORK = ("早", "晚", "行")
+HOURS_PER_DAY = 8   # 假期按 8 小时/天折算（跟公司工具一致）
 KINDS = ("早班", "晚班", "休息")
 POLICY_LABELS = ("本月休息天数：", "本月天数：")
 STAT_KEYS = ("剩余", "年假", "休息", "早班", "晚班", "实到", "应到")
@@ -101,6 +102,46 @@ def as_int(value):
         return int(float(str(value).strip()))
     except (TypeError, ValueError):
         return None
+
+
+def parse_leave(v) -> float:
+    """「剩余/年假」列写法 → 小时：数字 = 天数；支持 "3天4小时"、"-3小时"。
+    真表里会写「余额=算式」（如 "-1天=3天3小时-1天-…（下个月）"）——只取等号前的余额。"""
+    if v is None:
+        return 0.0
+    if isinstance(v, (int, float)):
+        return float(v) * HOURS_PER_DAY
+    t = str(v).strip()
+    if not t or t == "0":
+        return 0.0
+    t = t.split("=")[0].strip()
+    if not t:
+        return 0.0
+    neg = t.startswith("-")
+    if neg:
+        t = t[1:]
+    total = 0.0
+    m = re.search(r"(\d+(?:\.\d+)?)\s*天", t)
+    if m:
+        total += float(m.group(1)) * HOURS_PER_DAY
+    m = re.search(r"(\d+(?:\.\d+)?)\s*小时", t)
+    if m:
+        total += float(m.group(1))
+    return -total if neg else total
+
+
+def format_leave(hours: float) -> str:
+    """小时 → "x天x小时" / "0" / "-x小时"。"""
+    if abs(hours) < 1e-9:
+        return "0"
+    neg = hours < 0
+    h = abs(hours)
+    days = int(h // HOURS_PER_DAY)
+    rem = h % HOURS_PER_DAY
+    if rem == int(rem):
+        rem = int(rem)
+    out = f"{rem}小时" if days == 0 else (f"{days}天" if rem == 0 else f"{days}天{rem}小时")
+    return f"-{out}" if neg else out
 
 
 def parse(grid) -> dict:
@@ -428,17 +469,27 @@ def check_stats(cur, report):
     else:
         report.add("六 数据统计", "warn", "没找到「本月天数：」格（统计公式是否按当月天数取范围要人工看）")
 
-    want_keys = ("年假", "休息", "早班", "晚班", "实到", "应到")
+    want_keys = ("休息", "早班", "晚班", "实到", "应到")
     formula_ok = value_ok = 0
     for e in cur["employees"]:
         want = {
-            "年假": sum(1 for d in days if e["shifts"][d] == "年"),
             "休息": sum(1 for d in days if e["shifts"][d] == ""),
             "早班": sum(1 for d in days if e["shifts"][d] == "早"),
             "晚班": sum(1 for d in days if e["shifts"][d] == "晚"),
             "实到": sum(1 for d in days if e["shifts"][d] in WORK),
             "应到": n - (as_int(rest_cell["cell"]) if rest_cell and not is_formula(rest_cell["cell"]) else 0),
         }
+        # 年假是「上月结转的余额」（值/文本），不是本月休了几天
+        annual = e["stats"].get("年假")
+        if is_formula(annual):
+            f = norm(annual)
+            if "COUNTIF(" in f and '"年"' in f:
+                report.add("六 数据统计", "error",
+                           f"{e['name']}「年假」写成了本月计数（{annual}）；年假是上月结转的余额（数值或文本）")
+            else:
+                report.add("六 数据统计", "warn", f"{e['name']}「年假」是公式：{annual}（一般是结转余额，用值/文本）")
+        elif annual is not None:
+            value_ok += 1
         for key in want_keys:
             got = e["stats"].get(key)
             if got is None:
@@ -469,7 +520,7 @@ def check_stats(cur, report):
                             bad.append("休息没引用「本月天数」（30 天的月份会把空白列算成休息）")
                         elif "COUNTBLANK(" not in f and "-" not in f:
                             bad.append("休息要用 COUNTBLANK(按天数取范围) 或 =本月天数−其他")
-                    if key in ("早班", "晚班", "年假"):
+                    if key in ("早班", "晚班"):
                         if "COUNTIF(" not in f or f'"{key[0]}"' not in f:
                             bad.append(f"没数「{key[0]}」")
                     if key == "实到":
@@ -483,9 +534,7 @@ def check_stats(cur, report):
                     formula_ok += 1
             else:
                 got_int = as_int(got)
-                if key == "年假" and got_int is None:
-                    pass  # 真表年假列是余额表达式（"2天5小时=5天-…"），只提醒
-                elif got_int != want[key]:
+                if got_int != want[key]:
                     report.add("六 数据统计", "error",
                                f"{e['name']} 统计「{key}」={got}，矩阵实际 {want[key]}")
                 else:
@@ -554,9 +603,9 @@ def check_stats(cur, report):
         members = [e for e in cur["employees"] if e["group"] == group]
         if not members:
             continue
-        code_of = {"年假": "年", "休息": "", "早班": "早", "晚班": "晚"}
+        code_of = {"休息": "", "早班": "早", "晚班": "晚"}
         first, last = members[0]["row"], members[-1]["row"]
-        for key in ("年假", "休息", "早班", "晚班"):
+        for key in ("休息", "早班", "晚班"):
             got = cells.get(key)
             if got is None:
                 continue
@@ -572,17 +621,58 @@ def check_stats(cur, report):
 
 
 def check_carry(cur, prev, report):
+    """结转列校验（公司口径）：
+    剩余 = 上月结转 + (本月应休 − 实际排休) × 8 小时；年假 = 上月结转的年假余额。
+    同时提醒超休：可休假期 = 本月应休 + 上月结转（超了就安排上班或备注「下个月」）。
+    """
     if not prev:
-        report.add("六 数据统计", "info", "未给上月表，剩余假继承无法自动核对（人工看清单）")
+        report.add("六 数据统计", "info", "未给上月表，剩余假/年假结转无法自动核对（人工看清单）")
         return
     pmap = {e["name"]: e for e in prev["employees"]}
-    lines = []
+    days = cur["days"]
+    policy = as_int((cur["policy"].get("本月休息天数：") or {}).get("cell"))
+    lines, errors, overs = [], [], []
     for e in cur["employees"]:
         pe = pmap.get(e["name"])
-        now = text(e["stats"].get("剩余"))
-        before = text(pe["stats"].get("剩余")) if pe else "?"
-        lines.append(f"{e['name']} {before or '—'} → {now or '—'}")
-    report.add("六 数据统计", "info", "剩余假继承（上月 → 本月，人工核对）：" + "；".join(lines))
+        before = pe["stats"].get("剩余") if pe else None
+        now = e["stats"].get("剩余")
+        used = sum(1 for d in days if e["shifts"][d] == "")      # 实休（「行」不算休）
+        if pe is None or policy is None:
+            lines.append(f"{e['name']} {text(before) or '—'} → {text(now) or '—'}（缺上月数据，人工核对）")
+            continue
+        carry_h = parse_leave(before)
+        want_h = carry_h + (policy - used) * HOURS_PER_DAY
+        got_h = parse_leave(now)
+        lines.append(f"{e['name']} {format_leave(carry_h)} + ({policy}−{used}) = {format_leave(want_h)}"
+                     f"｜表里 {text(now) or '—'}")
+        if abs(got_h - want_h) > 1e-6:
+            errors.append(f"{e['name']} 剩余={text(now) or '—'}，按口径应是 {format_leave(want_h)}"
+                          f"（上月 {format_leave(carry_h)} + 应休 {policy} − 实休 {used}）")
+        avail = (policy * HOURS_PER_DAY + carry_h) / HOURS_PER_DAY
+        if used > avail + 1e-6:
+            overs.append(f"{e['name']} 实休 {used} 天 > 可休 {avail:.2f} 天（超 {used - avail:.2f} 天）")
+    report.add("六 数据统计", "info", "剩余假结转（上月 + 应休 − 实休，天=8小时）：" + "；".join(lines))
+    for x in errors:
+        report.add("六 数据统计", "error", x)
+    for x in overs:
+        report.add("六 数据统计", "warn", f"超休：{x}——尽量不超休，超了就安排上班；确实要休就写备注（如「下个月」）")
+
+    # 年假：结转余额（本月真休了年假要人工扣减）
+    alines = []
+    for e in cur["employees"]:
+        pe = pmap.get(e["name"])
+        used_annual = sum(1 for d in days if e["shifts"][d] == "年")
+        a_now = text(e["stats"].get("年假"))
+        a_before = text(pe["stats"].get("年假")) if pe else None
+        alines.append(f"{e['name']} {a_before or '—'} → {a_now or '—'}" +
+                      (f"（本月休年假 {used_annual} 天，要扣）" if used_annual else ""))
+        if used_annual and pe is not None:
+            drop = parse_leave(a_before) - parse_leave(a_now)
+            if drop < used_annual * HOURS_PER_DAY - 1e-6:
+                report.add("六 数据统计", "warn",
+                           f"{e['name']} 本月休了 {used_annual} 天年假，年假余额只少了 "
+                           f"{format_leave(drop)}，请人工确认")
+    report.add("六 数据统计", "info", "年假余额（上月结转，不是本月计数）：" + "；".join(alines))
 
 
 # ---------------------------------------------------------------- 主流程
@@ -594,7 +684,7 @@ def main() -> None:
     parser.add_argument("--prev", help="上月表（xlsx 或快照 TSV），用于跨月衔接校验")
     parser.add_argument("--lead", default="李守耀", help="售后组长（全早、休日全员上班）")
     parser.add_argument("--green", default=GREEN, help=f"值班绿标颜色，默认 {GREEN}")
-    parser.add_argument("--max-streak", type=int, default=5, help="连续上班上限（默认 5）")
+    parser.add_argument("--max-streak", type=int, default=6, help="连续上班上限（默认 6，验收清单是 ≤6）")
     parser.add_argument("--json", help="把问题清单写到 JSON")
     args = parser.parse_args()
 

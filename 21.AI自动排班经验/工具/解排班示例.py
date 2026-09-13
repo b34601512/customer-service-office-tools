@@ -38,21 +38,28 @@ SEP = {
 PRE_LATE_SELLER = {"叶炳辉", "刘秀文"}
 PRE_LATE_AFTER = {"缪婷婷", "柯紫婷"}
 
-# 售前休息：手工设计（每天 1 人休，跨月 + 相邻休 3~6 天，见 排班经验.md）
+# 售前休息：手工设计（每天 1 人休，跨月 + 相邻休隔 3~6 天，见 排班经验.md）
+# 每人休几天看「可休假期」= 本月应休 6 天 + 上月结转（排班原则.md）；尽量不超休
 SELLER_REST = {
-    "韩欢欢": [4, 10, 13, 19, 24, 29],
-    "麦诺谦": [5, 9, 15, 20, 25, 30],
-    "叶炳辉": [3, 8, 14, 17, 23, 28],
-    "徐佳楠": [1, 7, 12, 18, 21, 26],
-    "刘秀文": [2, 6, 11, 16, 22, 27, 31],
+    "韩欢欢": [3, 8, 14, 18, 24, 29],          # 可休 6.00 天
+    "麦诺谦": [7, 12, 16, 21, 26, 30],         # 可休 7.00 天
+    "叶炳辉": [4, 9, 15, 20, 25],              # 可休 5天5小时（上月 -3小时）
+    "徐佳楠": [1, 5, 10, 13, 19, 23, 28],      # 可休 11.00 天
+    "刘秀文": [2, 6, 11, 17, 22, 27, 31],      # 可休 9天4小时
 }
 
-# 售后：组长「上五休一」顺延；其余 4 人按约束搜索（首次休息期限 + 每天最多 2 人休）
+# 售后：组长「上五休一」顺延；其余 4 人手工设计不在岗日（每天恰好 1 人 → 2早2晚）
 LEAD_REST = [1, 7, 13, 19, 25, 31]
 OTHERS = ["缪婷婷", "柯紫婷", "邓远祥", "陈燕玲"]
-FIRST_DEADLINE = {"柯紫婷": 3, "陈燕玲": 4, "缪婷婷": 5, "邓远祥": 6}
-FIXED_REST = {"缪婷婷": {14}, "柯紫婷": {12}}       # 固定休息日（橙格所在）
-N_REST = 12                                          # 其余 4 人各休 12 天
+FIXED_OFF = {"缪婷婷": {8, 14}, "柯紫婷": {12}, "陈燕玲": {16}}   # 8/16 是「行」日，14/12 是橙格
+# 不在岗日（含「行」日）：间隔 3~6 天，也可以连休 2 天
+# （真表里售后就是这样的：柯 12-13、邓 16-17、陈 5-6 都是连休）
+AFTER_OFF = {
+    "缪婷婷": [6, 8, 9, 15, 22, 29],           # 含 8「行」（行算上班，不断连上）→ 实休 5 天（可休 5.00）
+    "柯紫婷": [4, 11, 18, 20, 27, 28],           # 实休 6 天（可休 11.00）
+    "邓远祥": [2, 3, 10, 17, 24, 26],           # 实休 6 天（可休 6天1小时）
+    "陈燕玲": [5, 12, 14, 16, 21, 23, 30],      # 含 16「行」→ 实休 6 天（可休 7天3小时）
+}
 
 # 表里用到的元信息（写回表时用）
 META = {
@@ -64,13 +71,17 @@ META = {
         "韩欢欢": "0", "麦诺谦": "1天", "叶炳辉": "-3小时", "徐佳楠": "5天", "刘秀文": "3天4小时",
         "李守耀": "1天", "缪婷婷": "-1天", "柯紫婷": "5天", "邓远祥": "1小时", "陈燕玲": "1天3小时",
     },
+    "annual": {  # 年假（上月结转的余额，不是本月计数）——同样从上月表取
+        "韩欢欢": 0, "麦诺谦": "1天3小时", "叶炳辉": "2天5小时", "徐佳楠": 0, "刘秀文": 0,
+        "李守耀": 4, "缪婷婷": 0, "柯紫婷": 0, "邓远祥": 3, "陈燕玲": 3,
+    },
     "codes": {"缪婷婷|8": "行", "陈燕玲|16": "行"},
-    "orange": ["柯紫婷|12", "缪婷婷|14"],
+    "orange": ["柯紫婷|11", "缪婷婷|15"],
     "white": ["麦诺谦|15"],
     # 剩余列宽度：不写 → 写表工具会自动跟“每日排班格宽”（列 C）一致
 }
 
-MAX_STREAK = 5   # 连续上班上限（含跨月）
+MAX_STREAK = 6   # 连续上班上限（含跨月）；验收清单也是 ≤6 天
 
 # ---------------------------------------------------------------- 通用工具
 
@@ -144,7 +155,7 @@ def solve_lates(group, rest, pre_late, target_fn, forbid=(), rounds=60000, seed=
             run = 1
             for a, b in zip(late_days[p], late_days[p][1:]):
                 run = (run + 1) if b == a + 1 else 1
-                score += max(0, run - 3) * 50
+                score += max(0, run - 4) * 300
         if best is None or score < best[0]:
             best = (score, late_days, counts)
     return best
@@ -320,7 +331,7 @@ def main() -> None:
             run = 1
             for a, b in zip(late_days[p], late_days[p][1:]):
                 run = (run + 1) if b == a + 1 else 1
-                score += max(0, run - 3) * 50
+                score += max(0, run - 4) * 300
         if best is None or score < best[0]:
             best = (score, late_days, counts)
         if feasible_cnt >= 2000:
@@ -358,44 +369,29 @@ def main() -> None:
     # ---------- 售后：休息搜索 + 晚班 ----------
     print("\n===== 售后 =====")
     nonwork = [d for d in DAYS if d not in LEAD_REST]
-    rng = random.Random(20261001)
-    best = None
-    for _trial in range(60000):
-        rest = {p: set(FIXED_REST.get(p, set())) for p in OTHERS}
-        for p in OTHERS:
-            cand = [d for d in nonwork if d not in rest[p]]
-            rng.shuffle(cand)
-            for d in cand:
-                if len(rest[p]) >= N_REST:
-                    break
-                if sum(1 for q in OTHERS if d in rest[q]) >= 2:
-                    continue
-                rest[p].add(d)
-        if any(len(rest[p]) != N_REST for p in OTHERS):
-            continue
-        if any(min(rest[p]) > FIRST_DEADLINE[p] for p in OTHERS):
-            continue
-        score = 0
-        for p in OTHERS:
-            ds = sorted(rest[p])
-            if SEP[p][1] + ds[0] - 1 > MAX_STREAK:
-                score += 100
-            for a, b in zip(ds, ds[1:]):
-                gap = b - a
-                score += 20 if gap == 1 else 0
-                score += 10 if gap > 6 else 0
-                score += 3 if gap > 5 else 0
-            if month_days - ds[-1] > MAX_STREAK:
-                score += 50
-        if best is None or score < best[0]:
-            best = (score, {p: sorted(rest[p]) for p in OTHERS})
-    score, after_rest = best
-    print("售后休息:", after_rest)
+    after_rest = AFTER_OFF
+    print("售后不在岗日:", after_rest)
+    bad_rest = []
+    for d in nonwork:
+        who = [p for p in OTHERS if d in after_rest[p]]
+        if len(who) != 1:
+            bad_rest.append(f"d{d} 不在岗 {len(who)} 人（应 1 人）")
+    for p in OTHERS:
+        ds = sorted(after_rest[p])
+        if SEP[p][1] + ds[0] - 1 > MAX_STREAK:
+            bad_rest.append(f"{p} 跨月连上 {SEP[p][1]}+{ds[0] - 1} > {MAX_STREAK}")
+        for a, b in zip(ds, ds[1:]):
+            if b - a - 1 > MAX_STREAK:
+                bad_rest.append(f"{p} 月内连上 {b - a - 1} 天 (> {MAX_STREAK})")
+        if month_days - ds[-1] > MAX_STREAK:
+            bad_rest.append(f"{p} 月末连上 {month_days - ds[-1]} 天 (> {MAX_STREAK})")
+    print("售后不在岗校验:", "全过" if not bad_rest else bad_rest[:6])
+    after_rest_full = dict(after_rest, **{LEAD: LEAD_REST})
     after_rest_full = dict(after_rest, **{LEAD: LEAD_REST})
 
     def target_after(d, ws_):
-        others = [p for p in ws_ if p != LEAD]
-        return min(2, max(1, len(others) - (1 if d not in LEAD_REST else 2)))
+        """售后每天 2 早 2 晚：组长在岗时非组长上 1 早 2 晚，组长休息时非组长上 2 早 2 晚。"""
+        return min(2, max(1, len(ws_)))
 
     score2, late2, counts2 = solve_lates(AFTER, after_rest_full, PRE_LATE_AFTER,
                                          target_after, forbid=(LEAD,), rounds=60000, seed=22)
@@ -419,9 +415,30 @@ def main() -> None:
     for d in DAYS:
         e = sum(1 for p in AFTER if after_shifts[p][d - 1] == "早")
         l = sum(1 for p in AFTER if after_shifts[p][d - 1] == "晚")
-        if e < 2 or l < 1:
-            bad2.append(f"d{d} 售后 {e}早{l}晚")
+        if e != 2 or l != 2:
+            bad2.append(f"d{d} 售后 {e}早{l}晚（应 2早2晚）")
     print("售后自检:", "全过" if not bad2 else bad2[:6])
+
+    # 超休自检：可休假期 = 本月应休 + 上月结转（排班原则.md），实休别超过它
+    for group, restmap, names in (("售前", SELLER_REST, SELLERS), ("售后", after_rest_full, AFTER)):
+        for p in names:
+            carry_h = 0.0
+            v = META["carry"].get(p, 0)
+            if isinstance(v, (int, float)):
+                carry_h = float(v) * 8
+            else:
+                import re as _re
+                t = str(v).replace("-", "")
+                m = _re.search(r"(\d+(?:\.\d+)?)\s*天", t)
+                carry_h += float(m.group(1)) * 8 if m else 0
+                m = _re.search(r"(\d+(?:\.\d+)?)\s*小时", t)
+                carry_h += float(m.group(1)) if m else 0
+                if str(v).startswith("-"):
+                    carry_h = -carry_h
+            avail = META["policy_rest"] + carry_h / 8
+            used = len(set(restmap[p]) - set(FIXED_OFF.get(p, set()))) if group == "售后" else len(restmap[p])
+            flag = "✓" if used <= avail + 1e-6 else "✗超休"
+            print(f"  {group} {p}: 可休 {avail:.2f} 天 / 实休 {used} 天 {flag}")
 
     after_duty = mark_after_duty(after_shifts, LEAD)
     plan = {"meta": META, "seller": seller_shifts, "after": after_shifts,

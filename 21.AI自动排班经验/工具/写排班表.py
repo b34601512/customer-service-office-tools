@@ -17,7 +17,8 @@
     "policy_rest": 6,            # 本月休息天数（政策值，写进 18 行右侧的「本月休息天数：」）
     "policy_note": "大小周",
     "lead": "李守耀",             # 售后组长：全早 + 黄色
-    "carry": {"韩欢欢": "0", ...},              # 剩余（上月结转，手填文本，可省略）
+    "carry": {"韩欢欢": "0", ...},           # 剩余：**上月结转**（数字=天数，或 "3天4小时"/"-3小时"）
+    "annual": {"韩欢欢": 0, ...},             # 年假：上月结转的年假余额（同样支持 "1天3小时"；可省略）
     "codes": {"缪婷婷|8": "行"},                # 特殊格（只应落在休息格）
     "orange": ["柯紫婷|12", "缪婷婷|14"],        # 公休橙
     "white": ["麦诺谦|15"],                     # 显式白底
@@ -30,9 +31,11 @@
 }
 
 写完后表里：
-    统计列：早班/晚班/年假 = COUNTIF($C4:$AG4,...)，休息 = 「本月天数」−早−晚−年−行，实到 = 早+晚+行，
-    应到 = 「本月天数」−「本月休息天数」；范围直接写 1号到31号（整月），天数靠政策格自动算——
-    30 天的月份不会把 31 号空白算成休息。汇总行/小计/上班人数 也都是公式。
+    公式列：早班/晚班 = COUNTIF($C4:$AG4,...)；休息 = 「本月天数」−早−晚−年−行；
+    实到 = 早+晚+行；应到 = 「本月天数」−「本月休息天数」。范围直接写 1号到31号（整月），
+    天数靠政策格自动算——30 天的月份不会把 31 号空白算成休息。汇总行/小计/上班人数 也都是公式。
+    结转列（值，不是公式）：年假 = 上月年假余额（原样写）；
+    剩余 = 上月结转 + (本月休息天数 − 实休) × 8 小时（写成 "x天x小时"，跟公司工具一致）。
     同时把公式算好的值缓存进 xlsx，不重算的程序（openpyxl 等）也能读到数字。
 """
 from __future__ import annotations
@@ -57,6 +60,53 @@ F_YELLOW = PatternFill("solid", fgColor="FFFF00")  # 售后值班组长（在岗
 F_BLUE = PatternFill("solid", fgColor="BDD7EE")    # 售后当班
 F_ORANGE = PatternFill("solid", fgColor="FBE5D6")  # 公休/调休
 F_WHITE = PatternFill("solid", fgColor="FFFFFF")   # 显式白底
+HOURS_PER_DAY = 8   # 假期按 8 小时/天折算（跟公司工具一致）
+
+
+def parse_leave(v) -> float:
+    """把「剩余/年假」列里的写法解析成小时：数字 = 天数；支持 "3天4小时"、"-3小时"、"0.5天"、"1.5小时"。
+    真表里会写「余额=算式」，只取等号前的余额。"""
+    if v is None:
+        return 0.0
+    if isinstance(v, (int, float)):
+        return float(v) * HOURS_PER_DAY
+    t = str(v).strip()
+    if not t or t == "0":
+        return 0.0
+    # 真表里会写「余额=算式」（如 "-1天=3天3小时-1天-…（下个月）"）——只取等号前的余额
+    t = t.split("=")[0].strip()
+    if not t:
+        return 0.0
+    neg = t.startswith("-")
+    if neg:
+        t = t[1:]
+    total = 0.0
+    m = re.search(r"(\d+(?:\.\d+)?)\s*天", t)
+    if m:
+        total += float(m.group(1)) * HOURS_PER_DAY
+    m = re.search(r"(\d+(?:\.\d+)?)\s*小时", t)
+    if m:
+        total += float(m.group(1))
+    return -total if neg else total
+
+
+def format_leave(hours: float) -> str:
+    """小时 → "x天x小时" / "0" / "-x小时"（与公司工具的 格式化假期小时数 一致）。"""
+    if abs(hours) < 1e-9:
+        return "0"
+    neg = hours < 0
+    h = abs(hours)
+    days = int(h // HOURS_PER_DAY)
+    rem = h % HOURS_PER_DAY
+    if rem == int(rem):
+        rem = int(rem)
+    if days == 0:
+        out = f"{rem}小时"
+    elif rem == 0:
+        out = f"{days}天"
+    else:
+        out = f"{days}天{rem}小时"
+    return f"-{out}" if neg else out
 
 
 def text(v) -> str:
@@ -211,38 +261,45 @@ def main() -> None:
                 matrix[(p, d)] = val
             per_person[p] = (nian, rest, early, late, early + late + xing)
 
-    # ---- 统计列：公式 ----
+    # ---- 统计列：公式（早/晚/休息/实到/应到）+ 结转列（年假/剩余，值）----
+    annual = meta.get("annual") or {}
+    policy_rest = int(meta.get("policy_rest") or 0)
     for p, (nian, rest, early, late, arrived) in per_person.items():
         r = L["seller"].get(p) or L["after"][p]
         stat = L["stat_col"]
-        col = {k: get_column_letter(stat[k]) for k in ("年假", "休息", "早班", "晚班")}
+        col = {k: get_column_letter(stat[k]) for k in ("休息", "早班", "晚班")}
         rng = f"$C{r}:$AG{r}"          # 整月范围：1号到31号（30 天的月份 31 号列是空的，不参与计数）
         if p in carry:
-            ws.cell(r, stat["剩余"]).value = carry[p]
-            values[(r, stat["剩余"])] = carry[p]
+            # 剩余 = 上月结转 + (本月应休 − 实际排休) × 8 小时（公司口径，step_28_update_remaining）
+            left = parse_leave(carry[p]) + (policy_rest - rest) * HOURS_PER_DAY
+            text = format_leave(left)
+            ws.cell(r, stat["剩余"]).value = text
+            values[(r, stat["剩余"])] = text
+        if p in annual:
+            # 年假 = 上月结转的年假余额（原样写，不是本月计数；本月真休了年假要人工扣减）
+            ws.cell(r, stat["年假"]).value = annual[p]
+            values[(r, stat["年假"])] = annual[p]
         formulas = {
-            "年假": f'=COUNTIF({rng},"年")',
             "早班": f'=COUNTIF({rng},"早")',
             "晚班": f'=COUNTIF({rng},"晚")',
-            "休息": f'={day_cell}-{col["早班"]}{r}-{col["晚班"]}{r}-{col["年假"]}{r}-COUNTIF({rng},"行")',
+            "休息": f'={day_cell}-{col["早班"]}{r}-{col["晚班"]}{r}-COUNTIF({rng},"年")-COUNTIF({rng},"行")',
             "实到": f'={col["早班"]}{r}+{col["晚班"]}{r}+COUNTIF({rng},"行")',
             "应到": f"={day_cell}-{rest_cell}",
         }
         for key, f in formulas.items():
             ws.cell(r, stat[key]).value = f
-            values[(r, stat[key])] = {"年假": nian, "休息": rest, "早班": early,
-                                      "晚班": late, "实到": arrived,
-                                      "应到": n_days - int(meta.get("policy_rest") or 0)}[key]
+            values[(r, stat[key])] = {"休息": rest, "早班": early, "晚班": late, "实到": arrived,
+                                      "应到": n_days - policy_rest}[key]
 
-    # ---- 售前小计：SUM ----
+    # ---- 售前小计：SUM（年假/剩余 是结转余额文本，不做小计）----
     srows = sorted(L["seller"].values())
-    for key in ("年假", "休息", "早班", "晚班"):
+    for key in ("休息", "早班", "晚班"):
         col = L["stat_col"][key]
         letter = get_column_letter(col)
         ws.cell(L["subtotal_row"], col).value = f"=SUM({letter}{srows[0]}:{letter}{srows[-1]})"
         values[(L["subtotal_row"], col)] = sum(
-            per_person[p][{"年假": 0, "休息": 1, "早班": 2, "晚班": 3}[key]] for p in seller)
-    for key in ("剩余", "实到", "应到"):
+            per_person[p][{"休息": 1, "早班": 2, "晚班": 3}[key]] for p in seller)
+    for key in ("剩余", "年假", "实到", "应到"):
         c = L["stat_col"][key]
         cell = ws.cell(L["subtotal_row"], c)
         if key in ("实到", "应到"):
