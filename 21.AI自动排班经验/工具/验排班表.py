@@ -756,6 +756,7 @@ def check_carry(cur, prev, report):
     """结转列校验（公司口径）：
     剩余 = 上月结转 + (本月应休 − 实际排休) × 8 小时；年假 = 上月结转的年假余额。
     同时提醒超休：可休假期 = 本月应休 + 上月结转（超休也没事：记作休下个月的假，剩余记负数，下月扣）。
+    少休也要提醒：实休 < 应休 → 剩余要**加上差额**（不然就欠他的）。
     """
     if not prev:
         report.add("六 数据统计", "info", "未给上月表，剩余假/年假结转无法自动核对（人工看清单）")
@@ -763,7 +764,7 @@ def check_carry(cur, prev, report):
     pmap = {e["name"]: e for e in prev["employees"]}
     days = cur["days"]
     policy = as_int((cur["policy"].get("本月休息天数：") or {}).get("cell"))
-    lines, errors, overs = [], [], []
+    lines, errors, overs, shorts = [], [], [], []
     for e in cur["employees"]:
         pe = pmap.get(e["name"])
         before = pe["stats"].get("剩余") if pe else None
@@ -775,8 +776,14 @@ def check_carry(cur, prev, report):
         carry_h = parse_leave(before)
         want_h = carry_h + (policy - used) * HOURS_PER_DAY
         got_h = parse_leave(now)
+        gap = ""
+        if used < policy:                                        # 少休：要把差的补给他
+            gap = f"（少休 {policy - used} 天 → 剩余补 +{policy - used} 天）"
+            shorts.append(f"{e['name']} 实休 {used} 天 < 应休 {policy} 天（少休 {policy - used} 天）→ 剩余要加回 {policy - used} 天，别欠他的")
+        elif used > policy:
+            gap = f"（超休 {used - policy} 天 → 记作休下个月的假）"
         lines.append(f"{e['name']} {format_leave(carry_h)} + ({policy}−{used}) = {format_leave(want_h)}"
-                     f"｜表里 {text(now) or '—'}")
+                     f"｜表里 {text(now) or '—'}{gap}")
         if abs(got_h - want_h) > 1e-6:
             errors.append(f"{e['name']} 剩余={text(now) or '—'}，按口径应是 {format_leave(want_h)}"
                           f"（上月 {format_leave(carry_h)} + 应休 {policy} − 实休 {used}）")
@@ -786,6 +793,8 @@ def check_carry(cur, prev, report):
     report.add("六 数据统计", "info", "剩余假结转（上月 + 应休 − 实休，天=8小时）：" + "；".join(lines))
     for x in errors:
         report.add("六 数据统计", "error", x)
+    for x in shorts:
+        report.add("六 数据统计", "warn", f"少休要补回来：{x}（少休不是白上，剩余要加上去）")
     for x in overs:
         report.add("六 数据统计", "warn",
                    f"超休：{x}——尽量不超休；实在超了也没事，**记作休下个月的假**（剩余记负数，下月扣），"

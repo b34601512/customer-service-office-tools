@@ -20,7 +20,6 @@
     "carry": {"韩欢欢": "0", ...},           # 剩余：**上月结转**（数字=天数，或 "3天4小时"/"-3小时"）
     "annual": {"韩欢欢": 0, ...},             # 年假：上月结转的年假余额（同样支持 "1天3小时"；可省略）
     "codes": {"缪婷婷|8": "行"},                # 特殊格（只应落在休息格）
-    "orange": ["柯紫婷|12", "缪婷婷|14"],        # 公休橙
     "white": ["麦诺谦|15"],                     # 显式白底
     "carry_width": 4/省略                       # 可选：剩余列宽；默认跟每日排班的格宽（列 C）
   },
@@ -36,7 +35,11 @@
     天数靠政策格自动算——30 天的月份不会把 31 号空白算成休息。汇总行/小计/上班人数 也都是公式。
     结转列（值，不是公式）：年假 = 上月年假余额（原样写）；
     剩余 = 上月结转 + (本月休息天数 − 实休) × 8 小时（写成 "x天x小时"，跟公司工具一致）。
+    **少休要补回来**：实休 5 天、应休 6 天 → 剩余 +1 天（不然就欠他的）；超休则记负数（写「（下个月）」，下月扣）。
+    月份横幅（1 号~当月最后一天合并成 1 格写「N月」）+ 星期行大小周红标（字体颜色）。
     同时把公式算好的值缓存进 xlsx，不重算的程序（openpyxl 等）也能读到数字。
+
+注：橙色（公休/调休）是**人工手标**的，我们排班不产生、也不涂——要标请手动标。
 """
 from __future__ import annotations
 
@@ -58,8 +61,7 @@ KINDS = ("早班", "晚班", "休息")
 F_NONE = PatternFill(fill_type=None)
 F_GREEN = PatternFill("solid", fgColor="E2F0D9")   # 售前值班
 F_YELLOW = PatternFill("solid", fgColor="FFFF00")  # 售后值班组长（在岗）
-F_BLUE = PatternFill("solid", fgColor="BDD7EE")    # 售后当班
-F_ORANGE = PatternFill("solid", fgColor="FBE5D6")  # 公休/调休
+F_BLUE = PatternFill("solid", fgColor="BDD7EE")    # 售后值班（每班只 1 人）
 F_WHITE = PatternFill("solid", fgColor="FFFFFF")   # 显式白底
 HOURS_PER_DAY = 8   # 假期按 8 小时/天折算（跟公司工具一致）
 
@@ -249,7 +251,6 @@ def main() -> None:
     days_all = sorted(plan.get("meta", {}).get("days_list") or range(1, (meta.get("days") or 31) + 1))
     lead = meta.get("lead", "")
     codes = {tuple(k.split("|")[:1]) + (int(k.split("|")[1]),): v for k, v in (meta.get("codes") or {}).items()}
-    orange = split_keys(meta.get("orange"))
     white = split_keys(meta.get("white"))
     duty = {tuple(k.split("|")[:1]) + (int(k.split("|")[1]),) for k in (plan.get("duty") or {})}
     duty_after = {tuple(k.split("|")[:1]) + (int(k.split("|")[1]),) for k in (plan.get("duty_after") or {})}
@@ -310,8 +311,8 @@ def main() -> None:
                 values[(r, c)] = val
                 if group == "seller":
                     cell.fill = F_GREEN if (p, d) in duty else (F_WHITE if (p, d) in white else F_NONE)
-                elif not s:                                # 售后休息：公休/调休才橙色
-                    cell.fill = F_ORANGE if (p, d) in orange else F_NONE
+                elif not s:                                # 售后休息：不涂色（橙色是人工手标的，我们排班不产生）
+                    cell.fill = F_NONE
                 elif p == lead:                            # 组长在岗 = 值班负责人（黄）
                     cell.fill = F_YELLOW
                 elif (p, d) in duty_after:                 # 售后值班：每班只 1 人（浅蓝）
