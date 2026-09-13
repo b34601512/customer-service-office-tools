@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
 """单用途工具：按《验收清单.md》逐项校验一份排班表（只读，不改文件）。
 
-吃两种输入：排班 xlsx（能读底色）和导出/快照 TSV（无底色，跳过值班检查）。
+吃两种输入：排班 xlsx（能读底色和公式）和导出/快照 TSV（只有数值，跳过值班检查）。
 上月用 --prev 传入（xlsx 或快照 TSV 都行），用于跨月衔接校验。
+
+统计列（休息/早班/晚班/实到/应到）如果是公式，按“公式结构”验：
+必须按当月天数动态取范围（引用「本月天数：」那格 + OFFSET），避免 30 天的月份
+把 31 号空白算成休息；如果是数值，则直接和矩阵对账。
 
 用法：
     python 验排班表.py --xlsx "测试数据\\2026年10月客服排班表.xlsx" --lead 李守耀
@@ -22,6 +26,7 @@ import sys
 from pathlib import Path
 
 from openpyxl import load_workbook
+from openpyxl.utils import get_column_letter
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 _reader = importlib.import_module("读排班表")
@@ -30,13 +35,15 @@ SKIP_NAMES = set(_reader.SKIP_NAMES)
 GREEN = "E2F0D9"
 WORK = ("早", "晚", "行")
 KINDS = ("早班", "晚班", "休息")
+POLICY_LABELS = ("本月休息天数：", "本月天数：")
+STAT_KEYS = ("剩余", "年假", "休息", "早班", "晚班", "实到", "应到")
 
 
 # ---------------------------------------------------------------- 读表
 
 class XlsxGrid:
     def __init__(self, path: str, sheet: str | None = None):
-        wb = load_workbook(path, data_only=True)
+        wb = load_workbook(path, data_only=False)  # 取公式文本
         self.ws = wb[sheet] if sheet else wb.active
         self.max_row, self.max_col = self.ws.max_row, self.ws.max_column
 
@@ -77,6 +84,22 @@ def text(value) -> str:
     return str(value).strip() if value is not None else ""
 
 
+def is_formula(value) -> bool:
+    return isinstance(value, str) and value.startswith("=")
+
+
+def norm(formula: str) -> str:
+    """去空格、去 $，方便比对公式里引用的范围。"""
+    return formula.replace(" ", "").replace("$", "").upper()
+
+
+def as_int(value):
+    try:
+        return int(float(str(value).strip()))
+    except (TypeError, ValueError):
+        return None
+
+
 def parse(grid) -> dict:
     header = name_col = None
     day_col: dict[int, int] = {}
@@ -94,11 +117,17 @@ def parse(grid) -> dict:
     days = sorted(day_col)
 
     stat_col: dict[str, int] = {}
+    policy: dict[str, dict] = {}
     for r in range(1, min(grid.max_row, 8) + 1):
         for c in range(name_col + 1, grid.max_col + 1):
             v = text(grid.get(r, c))
-            if v in ("剩余", "年假", "休息", "早班", "晚班", "实到", "应到"):
+            if v in STAT_KEYS:
                 stat_col.setdefault(v, c)
+    for r in range(1, grid.max_row + 1):
+        for c in range(1, grid.max_col + 1):
+            v = text(grid.get(r, c))
+            if v in POLICY_LABELS:
+                policy[v] = {"row": r, "col": c + 1, "cell": grid.get(r, c + 1)}
 
     employees, group = [], ""
     for r in range(header + 1, grid.max_row + 1):
@@ -115,11 +144,11 @@ def parse(grid) -> dict:
             "stats": {k: grid.get(r, c) for k, c in stat_col.items()},
         })
 
-    summary: dict[tuple[str, str], dict[int, int]] = {}
-    head_count: dict[int, int] = {}
+    summary: dict[tuple[str, str], dict[int, object]] = {}
+    head_count: dict[int, object] = {}
     subtotal: dict[str, dict[str, object]] = {}
     marks = []
-    current = ""
+    current = kind = ""
     for r in range(header + 1, grid.max_row + 1):
         g1, g2 = text(grid.get(r, 1)), text(grid.get(r, 2))
         if g1 in ("售前", "售后") and g2 in KINDS:
@@ -135,15 +164,15 @@ def parse(grid) -> dict:
         whole = [text(grid.get(r, c)) for c in range(1, grid.max_col + 1)]
         for c, v in enumerate(whole, start=1):
             if v.endswith("小计"):
-                group_name = v[:-2]
-                subtotal[group_name] = {k: grid.get(r, col) for k, col in stat_col.items()}
-        for c, v in enumerate(whole, start=1):
+                subtotal[v[:-2]] = {k: grid.get(r, col) for k, col in stat_col.items()}
             if re.fullmatch(r"\d{1,2}月", v):
                 marks.append((r, c, grid.color(r, c)))
 
-    return {"days": days, "employees": employees, "summary": summary,
-            "head_count": head_count, "subtotal": subtotal, "marks": marks,
-            "stat_col": stat_col}
+    formulas = [s for e in employees for s in e["shifts"].values() if is_formula(s)]
+
+    return {"days": days, "employees": employees, "summary": summary, "head_count": head_count,
+            "subtotal": subtotal, "marks": marks, "stat_col": stat_col, "policy": policy,
+            "day_formulas": len(formulas)}
 
 
 # ---------------------------------------------------------------- 校验
@@ -192,8 +221,6 @@ def check_cross(cur, prev, report, max_streak):
         first = e["shifts"][days[0]]
         if pv == "晚" and first == "早":
             report.add("〇 跨月衔接", "error", f"{e['name']} 跨月晚转早（上月末晚 → 本月 1 号早）")
-        if pv == "晚" and first not in ("晚", "休", ""):
-            pass
         total = trail + lead
         if lead == 0:
             pass  # 本月一上班就休，上月遗留的连上已截止，不再报
@@ -229,16 +256,14 @@ def check_coverage(cur, report, lead):
                                    f"售后 d{d} {lead}休，但 {('、'.join(idle))} 也休（应 4 人全上）")
     if lead:
         work = [e for e in cur["employees"] if e["name"] == lead]
-        if work:
-            if any(e["shifts"][d] == "晚" for e in work for d in cur["days"]):
-                report.add("一 在岗覆盖", "error", f"{lead} 出现晚班（应全早）")
+        if work and any(e["shifts"][d] == "晚" for e in work for d in cur["days"]):
+            report.add("一 在岗覆盖", "error", f"{lead} 出现晚班（应全早）")
 
 
 def check_shifts(cur, report, max_streak):
     for e in cur["employees"]:
         days = cur["days"]
-        run = 0
-        block = 0
+        run = block = 0
         block_start = days[0]
         for i, d in enumerate(days):
             v = e["shifts"][d]
@@ -268,9 +293,7 @@ def check_duty(cur, report, green):
     sellers = [e for e in cur["employees"] if e["group"] == "售前"]
     if not sellers:
         return
-    duty = {}
-    for d in cur["days"]:
-        duty[d] = [e["name"] for e in sellers if e["colors"][d] == green]
+    duty = {d: [e["name"] for e in sellers if e["colors"][d] == green] for d in cur["days"]}
     bad_days = [d for d in cur["days"] if len(duty[d]) != 2]
     for d in bad_days:
         report.add("四 值班", "error", f"d{d} 绿标 {len(duty[d])} 个（每天早、晚各 1）：{duty[d]}")
@@ -278,38 +301,36 @@ def check_duty(cur, report, green):
         if len(duty[d]) == 2:
             shifts = sorted(e["shifts"][d] for e in sellers if e["name"] in duty[d])
             if shifts != ["早", "晚"]:
-                report.add("四 值班", "error",
-                           f"d{d} 值班班次 {shifts}（应一早在岗、一晚在岗）")
-    if not bad_days:
-        total = len(cur["days"]) * 2
-        n = len(sellers)
-        lo, hi = math.floor(total / n), math.ceil(total / n)
-        for e in sellers:
-            ds = [d for d in cur["days"] if e["name"] in duty[d]]
-            for a, b in zip(ds, ds[1:]):
-                if b == a + 1:
-                    report.add("四 值班", "error", f"{e['name']} d{a}→d{b} 连续两天值班")
-            if not lo - 1 <= len(ds) <= hi + 1:
-                report.add("四 值班", "error", f"{e['name']} 值班 {len(ds)} 次（应 {lo}~{hi}）")
-            elif not lo <= len(ds) <= hi:
-                report.add("四 值班", "warn", f"{e['name']} 值班 {len(ds)} 次（一般 {lo}~{hi}）")
+                report.add("四 值班", "error", f"d{d} 值班班次 {shifts}（应一早在岗、一晚在岗）")
+    if bad_days:
+        return
+    total, n = len(cur["days"]) * 2, len(sellers)
+    lo, hi = math.floor(total / n), math.ceil(total / n)
+    for e in sellers:
+        ds = [d for d in cur["days"] if e["name"] in duty[d]]
+        for a, b in zip(ds, ds[1:]):
+            if b == a + 1:
+                report.add("四 值班", "error", f"{e['name']} d{a}→d{b} 连续两天值班")
+        if not lo - 1 <= len(ds) <= hi + 1:
+            report.add("四 值班", "error", f"{e['name']} 值班 {len(ds)} 次（应 {lo}~{hi}）")
+        elif not lo <= len(ds) <= hi:
+            report.add("四 值班", "warn", f"{e['name']} 值班 {len(ds)} 次（一般 {lo}~{hi}）")
 
 
 def check_marks(cur, report):
     for e in cur["employees"]:
         if any(e["shifts"][d] == "年" for d in cur["days"]):
             report.add("五 特殊标记", "error", f"{e['name']} 出现「年」（年假不主动排）")
-    for e in cur["employees"]:
         for d in cur["days"]:
-            if e["shifts"][d] in ("行", "年") and e["colors"][d] not in ("", None):
-                if e["colors"][d] == GREEN:
-                    report.add("五 特殊标记", "error", f"{e['name']} d{d} 休息却带值班绿")
+            if e["shifts"][d] in ("行", "年") and e["colors"][d] == GREEN:
+                report.add("五 特殊标记", "error", f"{e['name']} d{d} 休息却带值班绿")
+    if cur["day_formulas"]:
+        report.add("五 特殊标记", "warn", f"有 {cur['day_formulas']} 个班次格是公式，可能读不出班次")
     if not cur["marks"]:
         report.add("五 特殊标记", "warn", "没找到「X月」月份标记")
-    else:
-        for r, c, color in cur["marks"]:
-            if color and color not in ("FF0000",):
-                report.add("五 特殊标记", "warn", f"月份标记（行{r}列{c}）颜色 {color} 不是红")
+    for r, c, color in cur["marks"]:
+        if color and color != "FF0000":
+            report.add("五 特殊标记", "warn", f"月份标记（行{r}列{c}）颜色 {color} 不是红")
 
 
 def check_stats(cur, report):
@@ -317,6 +338,32 @@ def check_stats(cur, report):
         report.add("六 数据统计", "warn", "没找到统计列（剩余/年假/休息/早班/晚班/实到/应到）")
         return
     days = cur["days"]
+    n = len(days)
+    policy = cur["policy"]
+    day_cell = policy.get("本月天数：")
+    rest_cell = policy.get("本月休息天数：")
+
+    def ref(cellinfo):
+        return f"{get_column_letter(cellinfo['col'])}{cellinfo['row']}" if cellinfo else None
+
+    day_ref, rest_ref = ref(day_cell), ref(rest_cell)
+    # 「本月天数」必须自动算当月天数，否则 30 天的月份会把 31 号空白算成休息
+    if day_cell:
+        got = day_cell["cell"]
+        if is_formula(got):
+            f = norm(got)
+            if "COUNTA(" not in f and "COUNT(" not in f:
+                report.add("六 数据统计", "error", f"「本月天数」公式没数天数：{got}")
+            if "C2" not in f or "AG2" not in f:
+                report.add("六 数据统计", "warn", f"「本月天数」公式没引用日期行 C2:AG2：{got}")
+        elif as_int(got) != n:
+            report.add("六 数据统计", "warn",
+                       f"「本月天数」写死 {got}，当月实际 {n} 天，统计公式可能把多的那列算成休息")
+    else:
+        report.add("六 数据统计", "warn", "没找到「本月天数：」格（统计公式是否按当月天数取范围要人工看）")
+
+    want_keys = ("年假", "休息", "早班", "晚班", "实到", "应到")
+    formula_ok = value_ok = 0
     for e in cur["employees"]:
         want = {
             "年假": sum(1 for d in days if e["shifts"][d] == "年"),
@@ -324,18 +371,60 @@ def check_stats(cur, report):
             "早班": sum(1 for d in days if e["shifts"][d] == "早"),
             "晚班": sum(1 for d in days if e["shifts"][d] == "晚"),
             "实到": sum(1 for d in days if e["shifts"][d] in WORK),
-            "应到": sum(1 for d in days if e["shifts"][d] not in ("", "年")),
+            "应到": n - (as_int(rest_cell["cell"]) if rest_cell and not is_formula(rest_cell["cell"]) else 0),
         }
-        for key, value in want.items():
+        for key in want_keys:
             got = e["stats"].get(key)
             if got is None:
-                report.add("六 数据统计", "warn", f"{e['name']} 统计「{key}」为空")
-            elif str(got).strip() != str(value):
-                report.add("六 数据统计", "error",
-                           f"{e['name']} 统计「{key}」={got}，矩阵实际 {value}")
+                continue
+            if is_formula(got):
+                f = norm(got)
+                bad = []
+                if key == "应到":
+                    if rest_ref and norm(f"={rest_ref}").strip("=") not in f:
+                        bad.append(f"没引用「本月休息天数」{rest_ref}")
+                    if day_ref and norm(f"={day_ref}").strip("=") not in f:
+                        bad.append(f"没引用「本月天数」{day_ref}")
+                else:
+                    if f"C{e['row']}" not in f:
+                        bad.append(f"没引用本行范围 $C{e['row']}")
+                    if "OFFSET(" not in f:
+                        bad.append("没按当月天数动态取范围（缺 OFFSET）")
+                    elif day_ref and norm(f"={day_ref}").strip("=") not in f:
+                        bad.append(f"没引用「本月天数」{day_ref}")
+                    if key == "休息" and "COUNTBLANK(" not in f:
+                        bad.append("休息没用 COUNTBLANK")
+                    if key in ("早班", "晚班", "年假") and f'"{key[0]}"' not in f:
+                        bad.append(f"没数「{key[0]}」")
+                    if key == "实到" and ('"早"' not in f or '"晚"' not in f):
+                        bad.append("实到没数早+晚")
+                if bad:
+                    report.add("六 数据统计", "error", f"{e['name']}「{key}」公式有问题（{'；'.join(bad)}）：{got}")
+                else:
+                    formula_ok += 1
+            else:
+                got_int = as_int(got)
+                if key == "年假" and got_int is None:
+                    pass  # 真表年假列是余额表达式（"2天5小时=5天-…"），只提醒
+                elif got_int != want[key]:
+                    report.add("六 数据统计", "error",
+                               f"{e['name']} 统计「{key}」={got}，矩阵实际 {want[key]}")
+                else:
+                    value_ok += 1
+    report.add("六 数据统计", "info",
+               f"统计列：公式通过 {formula_ok} 处，数值比对 {value_ok} 处"
+               + ("（公式按结构校验，不重算）" if formula_ok else ""))
+
+    # 应到要全组统一（政策值）
+    arrived = {e["name"]: e["stats"].get("应到") for e in cur["employees"] if e["stats"].get("应到") is not None}
+    vals = {str(v).strip() for v in arrived.values() if not is_formula(v)}
+    if vals and len(vals) > 1:
+        report.add("六 数据统计", "error", f"应到不统一：{arrived}（应是本月天数 − 本月休息天数）")
+
     # 汇总行
     for group, members in groups_of(cur["employees"]).items():
         kinds = {"早班": "早", "晚班": "晚", "休息": ""}
+        first, last = members[0]["row"], members[-1]["row"]
         for kind, code in kinds.items():
             row = cur["summary"].get((group, kind))
             if not row:
@@ -344,8 +433,25 @@ def check_stats(cur, report):
             for d in days:
                 want = sum(1 for e in members if e["shifts"][d] == code)
                 got = row.get(d)
-                if got is None or str(got).strip() != str(want):
+                letter = get_column_letter(2 + d)
+                span = norm(f"{letter}{first}:{letter}{last}")
+                if got is None:
+                    report.add("六 数据统计", "error", f"{group}{kind}汇总 d{d} 为空，实际 {want}")
+                elif is_formula(got):
+                    f = norm(got)
+                    bad = []
+                    if span not in f:
+                        bad.append(f"范围不是 {letter}{first}:{letter}{last}")
+                    if kind == "休息":
+                        if "COUNTBLANK(" not in f:
+                            bad.append("休息没用 COUNTBLANK")
+                    elif "COUNTIF(" not in f or f'"{code}"' not in f:
+                        bad.append(f"没数「{code}」")
+                    if bad:
+                        report.add("六 数据统计", "error", f"{group}{kind}汇总 d{d} 公式有问题（{'；'.join(bad)}）")
+                elif str(got).strip() != str(want):
                     report.add("六 数据统计", "error", f"{group}{kind}汇总 d{d}={got}，实际 {want}")
+
     # 上班人数
     if not cur["head_count"]:
         report.add("六 数据统计", "warn", "没找到「上班人数」行")
@@ -353,21 +459,37 @@ def check_stats(cur, report):
         for d in days:
             want = sum(1 for e in cur["employees"] if e["shifts"][d] in ("早", "晚"))
             got = cur["head_count"].get(d)
-            if got is None or str(got).strip() != str(want):
+            letter = get_column_letter(2 + d)
+            if got is None:
+                report.add("六 数据统计", "error", f"上班人数 d{d} 为空，实际 {want}")
+            elif is_formula(got):
+                f = norm(got)
+                ok = all(f"{letter}{r}" in f for r in (18, 19, 22, 23))
+                if not ok:
+                    report.add("六 数据统计", "error", f"上班人数 d{d} 公式没引用汇总行：{got}")
+            elif str(got).strip() != str(want):
                 report.add("六 数据统计", "error", f"上班人数 d{d}={got}，实际（早+晚）{want}")
+
     # 小计
     for group, cells in cur["subtotal"].items():
         members = [e for e in cur["employees"] if e["group"] == group]
         if not members:
             continue
+        code_of = {"年假": "年", "休息": "", "早班": "早", "晚班": "晚"}
+        first, last = members[0]["row"], members[-1]["row"]
         for key in ("年假", "休息", "早班", "晚班"):
             got = cells.get(key)
             if got is None:
                 continue
-            want = sum(1 for e in members for d in days
-                       if e["shifts"][d] == {"年假": "年", "休息": "", "早班": "早", "晚班": "晚"}[key])
-            if str(got).strip() != str(want):
-                report.add("六 数据统计", "error", f"{group}小计「{key}」={got}，实际 {want}")
+            if is_formula(got):
+                f = norm(got)
+                letter = get_column_letter(35 + STAT_KEYS.index(key))
+                if "SUM(" not in f or norm(f"{letter}{first}:{letter}{last}") not in f:
+                    report.add("六 数据统计", "error", f"{group}小计「{key}」公式有问题：{got}")
+            else:
+                want = sum(1 for e in members for d in days if e["shifts"][d] == code_of[key])
+                if str(got).strip() != str(want):
+                    report.add("六 数据统计", "error", f"{group}小计「{key}」={got}，实际 {want}")
 
 
 def check_carry(cur, prev, report):
