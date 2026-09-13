@@ -6,7 +6,9 @@
     python "测试数据\\反例\\造反例.py"
 
 生成（就地覆盖本目录）：
-    bad.xlsx      统计/汇总/小计/上班人数 全改成写死的数值，且故意写错一处（韩欢欢晚班 99）
+    bad.xlsx      统计/汇总/小计/上班人数 全改成写死的数值 + 5 处错（含韩欢欢晚班 99）
+    bad2.xlsx     6 处公式篡改：去 OFFSET、应到写数值、小计/汇总/天数/上班人数写死
+    bad3.xlsx     售后把当班每个人都涂浅蓝（当班≠值班；每班只能标 1 人）
     bad2.xlsx     6 处公式篡改：去 OFFSET、应到写数值、小计/汇总/天数/上班人数写死
     month30.xlsx  清掉 31 号列 → 模拟 30 天的月份（验公式的范围会不会把 31 号空白算成休息）
 
@@ -18,6 +20,7 @@ import shutil
 from pathlib import Path
 
 from openpyxl import load_workbook
+from openpyxl.styles import PatternFill
 
 HERE = Path(__file__).resolve().parent
 SRC = HERE.parent / "2026年10月客服排班表.xlsx"
@@ -72,6 +75,20 @@ def make_bad2() -> str:
     return path
 
 
+def make_bad3() -> str:
+    """售后把当班的每个人都涂浅蓝（曾经的真实错误：当班 ≠ 值班）。"""
+    path = copy("bad3.xlsx")
+    wb = load_workbook(path)
+    ws = wb.active
+    blue = PatternFill("solid", fgColor="BDD7EE")
+    for r in range(11, 16):
+        for c in range(3, 34):
+            if ws.cell(r, c).value in ("早", "晚"):
+                ws.cell(r, c).fill = blue
+    wb.save(path)
+    return path
+
+
 def make_month30() -> str:
     """清掉 31 号整列：模拟只有 30 天的月份（本月天数公式应自动变 30）。"""
     path = copy("month30.xlsx")
@@ -90,5 +107,5 @@ def make_month30() -> str:
 if __name__ == "__main__":
     if not SRC.exists():
         raise SystemExit(f"找不到主表：{SRC}")
-    for fn in (make_bad, make_bad2, make_month30):
+    for fn in (make_bad, make_bad2, make_bad3, make_month30):
         print("已生成", fn())

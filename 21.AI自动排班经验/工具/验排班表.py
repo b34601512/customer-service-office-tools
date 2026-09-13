@@ -5,8 +5,9 @@
 上月用 --prev 传入（xlsx 或快照 TSV 都行），用于跨月衔接校验。
 
 统计列（休息/早班/晚班/实到/应到）如果是公式，按“公式结构”验：
-必须按当月天数动态取范围（引用「本月天数：」那格 + OFFSET），避免 30 天的月份
-把 31 号空白算成休息；如果是数值，则直接和矩阵对账。
+必须覆盖整月（`$C4:$AG4`）或按当月天数动态取范围（`OFFSET` + 引用「本月天数：」格），
+避免 30 天的月份把 31 号空白算成休息；如果是数值，则直接和矩阵对账。
+售后值班也要验：每班（早/晚）只标 1 人浅蓝 `BDD7EE`，组长李守耀在岗时他本人标黄 `FFFF00`。
 
 用法：
     python 验排班表.py --xlsx "测试数据\\2026年10月客服排班表.xlsx" --lead 李守耀
@@ -33,6 +34,8 @@ _reader = importlib.import_module("读排班表")
 SKIP_NAMES = set(_reader.SKIP_NAMES)
 
 GREEN = "E2F0D9"
+BLUE_AFTER = "BDD7EE"    # 售后值班（每班 1 人）
+YELLOW_LEAD = "FFFF00"   # 售后组长（李守耀）在岗
 WORK = ("早", "晚", "行")
 KINDS = ("早班", "晚班", "休息")
 POLICY_LABELS = ("本月休息天数：", "本月天数：")
@@ -333,6 +336,69 @@ def check_marks(cur, report):
             report.add("五 特殊标记", "warn", f"月份标记（行{r}列{c}）颜色 {color} 不是红")
 
 
+def check_after_duty(cur, report, lead):
+    """售后值班：每班（早/晚）只标 1 人浅蓝；组长在岗时他自己是值班负责人（黄）。"""
+    if all(not c for e in cur["employees"] for c in e["colors"].values()):
+        return   # TSV：check_duty 已提醒
+    after = [e for e in cur["employees"] if e["group"] == "售后"]
+    if not after:
+        return
+    multi_e, multi_l, miss_e, miss_l, off_shift, lead_blue, lead_gray = [], [], [], [], [], [], []
+    for d in cur["days"]:
+        early = [e for e in after if e["shifts"][d] == "早"]
+        late = [e for e in after if e["shifts"][d] == "晚"]
+        blue_e = [e["name"] for e in early if e["colors"][d] == BLUE_AFTER]
+        blue_l = [e["name"] for e in late if e["colors"][d] == BLUE_AFTER]
+        lead_e = next((e for e in after if e["name"] == lead), None)
+        lead_on = bool(lead_e and lead_e["shifts"][d] in ("早", "晚"))
+        if len(blue_e) > 1:
+            multi_e.append(f"d{d} {len(blue_e)}人")
+        if len(blue_l) > 1:
+            multi_l.append(f"d{d} {len(blue_l)}人")
+        if early and not lead_on and not blue_e:
+            miss_e.append(f"d{d}")
+        if late and not blue_l:
+            miss_l.append(f"d{d}")
+        if lead_on and blue_e:
+            lead_blue.append(f"d{d} {blue_e}")
+        for e in after:
+            if e["colors"][d] == BLUE_AFTER and e["shifts"][d] not in ("早", "晚"):
+                off_shift.append(f"{e['name']} d{d}({e['shifts'][d] or '休'})")
+            if lead_e and e["name"] == lead and e["shifts"][d] in ("早", "晚") and e["colors"][d] != YELLOW_LEAD:
+                lead_gray.append(f"d{d}")
+
+    def brief(items, limit=8):
+        return "、".join(items[:limit]) + (f" …共{len(items)}天" if len(items) > limit else "")
+
+    if multi_e:
+        report.add("四 值班", "error", f"售后早班浅蓝超过 1 人（每班只标 1 人）：{brief(multi_e)}")
+    if multi_l:
+        report.add("四 值班", "error", f"售后晚班浅蓝超过 1 人（每班只标 1 人）：{brief(multi_l)}")
+    if miss_e:
+        report.add("四 值班", "error", f"售后早班没标值班（组长不在的日子应从早班选 1 人）：{brief(miss_e)}")
+    if miss_l:
+        report.add("四 值班", "error", f"售后晚班没标值班（应从晚班选 1 人）：{brief(miss_l)}")
+    if off_shift:
+        report.add("四 值班", "error", f"售后值班标在非在岗格上：{brief(off_shift)}")
+    if lead_blue:
+        report.add("四 值班", "warn", f"组长在班、早班又标了浅蓝：{brief(lead_blue)}")
+    if lead_gray:
+        report.add("四 值班", "warn", f"{lead} 在岗但没标组长色 {YELLOW_LEAD}：{brief(lead_gray)}")
+
+    counts = {e["name"]: sum(1 for d in cur["days"] if e["colors"][d] == BLUE_AFTER) for e in after}
+    report.add("四 值班", "info", "售后值班（浅蓝）次数：" + "、".join(f"{k} {v} 次" for k, v in counts.items() if v))
+    for e in after:
+        if multi_e or multi_l:      # 整片涂错时，连值提醒只会刷屏
+            break
+        ds = [d for d in cur["days"] if e["colors"][d] == BLUE_AFTER]
+        for a, b in zip(ds, ds[1:]):
+            if b != a + 1:
+                continue
+            same_shift = [x for x in after if x["shifts"][b] == e["shifts"][b]]
+            if len(same_shift) > 1:      # 那天同班次还有别人可换，才算是“没换人”
+                report.add("四 值班", "warn", f"{e['name']} d{a}→d{b} 连着两天售后值班（能间隔就间隔换人）")
+
+
 def check_stats(cur, report):
     if not cur["stat_col"]:
         report.add("六 数据统计", "warn", "没找到统计列（剩余/年假/休息/早班/晚班/实到/应到）")
@@ -380,24 +446,37 @@ def check_stats(cur, report):
             if is_formula(got):
                 f = norm(got)
                 bad = []
+                row = e["row"]
+                month_range = f"C{row}:AG{row}"          # 明确覆盖整月（1号..31号）
+                day_ref_n = norm(f"={day_ref}").strip("=") if day_ref else ""
+                has_month_range = month_range in f
+                has_dynamic = "OFFSET(" in f and day_ref_n and day_ref_n in f
+                def stat_ref(key):
+                    col = cur["stat_col"].get(key)
+                    return f"{get_column_letter(col)}{row}" if col else ""
                 if key == "应到":
                     if rest_ref and norm(f"={rest_ref}").strip("=") not in f:
                         bad.append(f"没引用「本月休息天数」{rest_ref}")
-                    if day_ref and norm(f"={day_ref}").strip("=") not in f:
+                    if day_ref_n and day_ref_n not in f:
                         bad.append(f"没引用「本月天数」{day_ref}")
                 else:
-                    if f"C{e['row']}" not in f:
-                        bad.append(f"没引用本行范围 $C{e['row']}")
-                    if "OFFSET(" not in f:
-                        bad.append("没按当月天数动态取范围（缺 OFFSET）")
-                    elif day_ref and norm(f"={day_ref}").strip("=") not in f:
-                        bad.append(f"没引用「本月天数」{day_ref}")
-                    if key == "休息" and "COUNTBLANK(" not in f:
-                        bad.append("休息没用 COUNTBLANK")
-                    if key in ("早班", "晚班", "年假") and f'"{key[0]}"' not in f:
-                        bad.append(f"没数「{key[0]}」")
-                    if key == "实到" and ('"早"' not in f or '"晚"' not in f):
-                        bad.append("实到没数早+晚")
+                    if not (has_month_range or has_dynamic):
+                        bad.append(f"没覆盖整月（既不是 $C{row}:$AG{row}，也没按「本月天数」动态取范围）")
+                    if key == "休息":
+                        # 必须引用「本月天数」：无论 COUNTBLANK(OFFSET(...)) 还是 =天数−早−晚−年−行；
+                        # 只写 COUNTBLANK($C4:$AG4) 在 30 天的月份会把 31 号空白算成休息
+                        if not day_ref_n or day_ref_n not in f:
+                            bad.append("休息没引用「本月天数」（30 天的月份会把空白列算成休息）")
+                        elif "COUNTBLANK(" not in f and "-" not in f:
+                            bad.append("休息要用 COUNTBLANK(按天数取范围) 或 =本月天数−其他")
+                    if key in ("早班", "晚班", "年假"):
+                        if "COUNTIF(" not in f or f'"{key[0]}"' not in f:
+                            bad.append(f"没数「{key[0]}」")
+                    if key == "实到":
+                        refs_ok = stat_ref("早班") and stat_ref("早班") in f and stat_ref("晚班") and stat_ref("晚班") in f
+                        quotes_ok = '"早"' in f and '"晚"' in f
+                        if not (refs_ok or quotes_ok):
+                            bad.append("实到没算早+晚")
                 if bad:
                     report.add("六 数据统计", "error", f"{e['name']}「{key}」公式有问题（{'；'.join(bad)}）：{got}")
                 else:
@@ -530,6 +609,7 @@ def main() -> None:
     check_coverage(cur, report, args.lead)
     check_shifts(cur, report, args.max_streak)
     check_duty(cur, report, args.green.upper())
+    check_after_duty(cur, report, args.lead)
     check_marks(cur, report)
     check_stats(cur, report)
     check_carry(cur, prev, report)

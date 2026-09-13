@@ -21,16 +21,18 @@
     "codes": {"缪婷婷|8": "行"},                # 特殊格（只应落在休息格）
     "orange": ["柯紫婷|12", "缪婷婷|14"],        # 公休橙
     "white": ["麦诺谦|15"],                     # 显式白底
-    "carry_width": 24                           # 可选：剩余列宽（默认 24，太窄会看不清结转表达式）
+    "carry_width": 4/省略                       # 可选：剩余列宽；默认跟每日排班的格宽（列 C）
   },
   "seller": {"韩欢欢": ["早","早","晚","",...]},  # 售前：长度 = days，空串 = 休
   "after":  {"李守耀": [...]},
-  "duty":   {"韩欢欢|1": "早", ...}              # 售前值班（绿标），键是「姓名|日」
+  "duty":   {"韩欢欢|1": "早", ...},             # 售前值班（浅绿）：每天 早1 + 晚1
+  "duty_after": {"缪婷婷|1": "晚", ...}          # 售后值班（浅蓝）：每班只 1 人；组长在岗时他自己是负责人（黄）
 }
 
 写完后表里：
-    统计列（年假/休息/早班/晚班/实到/应到）、汇总行、小计、上班人数 全是公式；
-    「本月天数：」是 =COUNTA(日期行) 自动算，30 天的月份不会把 31 号空白算成休息；
+    统计列：早班/晚班/年假 = COUNTIF($C4:$AG4,...)，休息 = 「本月天数」−早−晚−年−行，实到 = 早+晚+行，
+    应到 = 「本月天数」−「本月休息天数」；范围直接写 1号到31号（整月），天数靠政策格自动算——
+    30 天的月份不会把 31 号空白算成休息。汇总行/小计/上班人数 也都是公式。
     同时把公式算好的值缓存进 xlsx，不重算的程序（openpyxl 等）也能读到数字。
 """
 from __future__ import annotations
@@ -144,6 +146,7 @@ def main() -> None:
     orange = split_keys(meta.get("orange"))
     white = split_keys(meta.get("white"))
     duty = {tuple(k.split("|")[:1]) + (int(k.split("|")[1]),) for k in (plan.get("duty") or {})}
+    duty_after = {tuple(k.split("|")[:1]) + (int(k.split("|")[1]),) for k in (plan.get("duty_after") or {})}
     carry = meta.get("carry") or {}
 
     wb = load_workbook(args.xlsx)
@@ -185,10 +188,16 @@ def main() -> None:
                 values[(r, c)] = val
                 if group == "seller":
                     cell.fill = F_GREEN if (p, d) in duty else (F_WHITE if (p, d) in white else F_NONE)
-                elif not s:
+                elif not s:                                # 售后休息：公休/调休才橙色
                     cell.fill = F_ORANGE if (p, d) in orange else F_NONE
+                elif p == lead:                            # 组长在岗 = 值班负责人（黄）
+                    cell.fill = F_YELLOW
+                elif (p, d) in duty_after:                 # 售后值班：每班只 1 人（浅蓝）
+                    cell.fill = F_BLUE
+                elif (p, d) in white:
+                    cell.fill = F_WHITE
                 else:
-                    cell.fill = F_YELLOW if p == lead else F_BLUE
+                    cell.fill = F_NONE
                 if code == "年":
                     nian += 1
                 elif code == "行":
@@ -205,17 +214,18 @@ def main() -> None:
     # ---- 统计列：公式 ----
     for p, (nian, rest, early, late, arrived) in per_person.items():
         r = L["seller"].get(p) or L["after"][p]
-        rng = f"OFFSET($C{r},0,0,1,{day_cell})"      # 按当月天数取范围
         stat = L["stat_col"]
+        col = {k: get_column_letter(stat[k]) for k in ("年假", "休息", "早班", "晚班")}
+        rng = f"$C{r}:$AG{r}"          # 整月范围：1号到31号（30 天的月份 31 号列是空的，不参与计数）
         if p in carry:
             ws.cell(r, stat["剩余"]).value = carry[p]
             values[(r, stat["剩余"])] = carry[p]
         formulas = {
             "年假": f'=COUNTIF({rng},"年")',
-            "休息": f"=COUNTBLANK({rng})",
             "早班": f'=COUNTIF({rng},"早")',
             "晚班": f'=COUNTIF({rng},"晚")',
-            "实到": f'=COUNTIF({rng},"早")+COUNTIF({rng},"晚")+COUNTIF({rng},"行")',
+            "休息": f'={day_cell}-{col["早班"]}{r}-{col["晚班"]}{r}-{col["年假"]}{r}-COUNTIF({rng},"行")',
+            "实到": f'={col["早班"]}{r}+{col["晚班"]}{r}+COUNTIF({rng},"行")',
             "应到": f"={day_cell}-{rest_cell}",
         }
         for key, f in formulas.items():
@@ -287,9 +297,11 @@ def main() -> None:
             ws.cell(r, val_col + 1).value = note
             values[(r, val_col + 1)] = note
 
-    # ---- 列宽（剩余列太窄会看不清结转表达式）----
+    # ---- 列宽（剩余列跟着每日排班的格宽，别自己乱定）----
     carry_col = L["stat_col"]["剩余"]
-    ws.column_dimensions[get_column_letter(carry_col)].width = float(meta.get("carry_width", 24))
+    day_letter = get_column_letter(min(L["day_col"].values()))
+    day_width = ws.column_dimensions[day_letter].width or 4
+    ws.column_dimensions[get_column_letter(carry_col)].width = float(meta.get("carry_width") or day_width)
     for key in ("年假", "休息", "早班", "晚班", "实到", "应到"):
         ws.column_dimensions[get_column_letter(L["stat_col"][key])].width = max(
             9.0, ws.column_dimensions[get_column_letter(L["stat_col"][key])].width or 0)

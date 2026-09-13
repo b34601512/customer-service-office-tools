@@ -67,7 +67,7 @@ META = {
     "codes": {"缪婷婷|8": "行", "陈燕玲|16": "行"},
     "orange": ["柯紫婷|12", "缪婷婷|14"],
     "white": ["麦诺谦|15"],
-    "carry_width": 24,
+    # 剩余列宽度：不写 → 写表工具会自动跟“每日排班格宽”（列 C）一致
 }
 
 MAX_STREAK = 5   # 连续上班上限（含跨月）
@@ -170,6 +170,33 @@ def duty_reachable(shifts) -> bool:
             return False
         reach = nxt
     return True
+
+
+def mark_after_duty(after_shifts, lead: str):
+    """售后值班（浅蓝）：每班只标 1 人。组长在岗 → 他自己（黄）就是值班负责人，早班不再标；
+    他休息的日子，早班选 1 人；晚班每天选 1 人（尽量间隔换人、不连值）。"""
+    rng = random.Random(33)
+    out: dict[tuple[str, int], str] = {}
+    count = {p: 0 for p in AFTER if p != lead}
+    prev_early = prev_late = None
+    for d in DAYS:
+        early = [p for p in AFTER if after_shifts[p][d - 1] == "早" and p != lead]
+        late = [p for p in AFTER if after_shifts[p][d - 1] == "晚"]
+        lead_on = after_shifts[lead][d - 1] != ""
+        if not lead_on and early:
+            cand = [p for p in early if p != prev_early] or early
+            pick = min(cand, key=lambda p: (count[p], rng.random()))
+            out[(pick, d)] = "早"
+            count[pick] += 1
+            prev_early = pick
+        if late:
+            cand = [p for p in late if p != prev_late] or late
+            pick = min(cand, key=lambda p: (count[p], rng.random()))
+            out[(pick, d)] = "晚"
+            count[pick] += 1
+            prev_late = pick
+    print("售后值班(浅蓝)次数:", count)
+    return out
 
 
 def mark_duty(shifts):
@@ -396,8 +423,10 @@ def main() -> None:
             bad2.append(f"d{d} 售后 {e}早{l}晚")
     print("售后自检:", "全过" if not bad2 else bad2[:6])
 
+    after_duty = mark_after_duty(after_shifts, LEAD)
     plan = {"meta": META, "seller": seller_shifts, "after": after_shifts,
-            "duty": {f"{p}|{d}": w for (p, d), w in duty.items()}}
+            "duty": {f"{p}|{d}": w for (p, d), w in duty.items()},
+            "duty_after": {f"{p}|{d}": w for (p, d), w in after_duty.items()}}
     out = Path(args.out)
     out.write_text(json.dumps(plan, ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"\n计划已写出: {out}\n下一步: python \"工具\\写排班表.py\" --xlsx <表.xlsx> --plan \"{out}\"")
