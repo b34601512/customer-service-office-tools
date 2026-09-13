@@ -4,6 +4,8 @@
 
 ## 工作约定（用户要求，2026-09-13）
 
+0. **收工/换班时留断点记录**：把「做到哪、下一步、待用户拍板的事、常用命令」写进仓库根目录 `断点记录.md`（覆盖更新，只留最新一份），下次开工先读它。
+
 1. **每次开始新任务，先拉起一个 loop 托管它**（`LoopCreate`，一般用 `triggerType=idle` + `trigger=idle`，配 `maxFires` 上限与 `expiresIn`），防止会话中断导致任务半途而废。
    - loop 的 prompt 里写清：目标、每轮做什么、自检/验收命令、提交推送方式、**哪些事必须停下来问用户**。
    - 每轮唤醒结束用 `LoopUpdate` 写 state/metrics（`continue`）；待办清空或只剩用户拍板项时 `status=completed`；只有明确取消或满足停止条件才 `LoopDelete`。
