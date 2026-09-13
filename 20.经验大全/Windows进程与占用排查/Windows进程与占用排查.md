@@ -49,3 +49,6 @@ Stop-Process -Id 12345 -Force
 - 结束进程后**等 1~2 秒**再重试搬移/删除：Windows 释放句柄有延迟；仍失败说明还有别的句柄（换个查法找）。
 - 找"是谁写的日志/缓存"：`Get-Item <文件> | Select LastWriteTime` 配合进程命令行里的路径对。
 - 别用 `taskkill /F /IM node.exe`：等价于全杀，会打断别的项目（含 pi 自己）。
+- **.ps1 写中文必须存 UTF-8 **带 BOM****：Windows PowerShell 5.1 没有 BOM 就按 ANSI（GBK）读，中文全变乱码，
+  乱码里的引号还会把字符串截断、报“意外的标记”（2026-09-13 实测：`查进程.ps1` 直接语法错）。
+  修法：用带 BOM 的 UTF-8 存盘（本目录两个 .ps1 已带）；或者干脆写英文提示避开这个坑。
