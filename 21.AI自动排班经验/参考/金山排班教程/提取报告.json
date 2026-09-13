@@ -1,0 +1,18 @@
+{
+  "标题": "排班教程",
+  "最终地址": "https://www.kdocs.cn/l/cv0dFUfGyvHU",
+  "接口": [
+    {
+      "status": 200,
+      "url": "https://www.kdocs.cn/api/v3/office/file/cv0dFUfGyvHU/open/otl"
+    }
+  ],
+  "open/otl字节数": 60040,
+  "JSON可解析": true,
+  "章节数": 13,
+  "段落行数": 52,
+  "文字节点数": 86,
+  "图片节点数": 8,
+  "首章": "# 排班教程",
+  "末章": "# 特殊注意事项"
+}
