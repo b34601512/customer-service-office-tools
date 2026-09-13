@@ -23,8 +23,9 @@ from openpyxl import load_workbook
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 checker = importlib.import_module("验排班表")   # 复用它的读表/parse，别再写一遍
 
-COLORS = {"E2F0D9": "绿(值班)", "FFFF00": "黄(组长)", "BDD7EE": "蓝(售后)",
-          "FBE5D6": "橙(人工标记)", "FFFFFF": "白(显式)"}
+COLORS = {"E2F0D9": "绿(售前值班)", "BDD7EE": "蓝(售后值班)",
+          "FFFF00": "黄(人工标记)", "DEEBF7": "浅蓝(人工标记)", "FBE5D6": "橙(人工标记)",
+          "FFFFFF": "白(无标记)"}
 
 
 class CachedValueGrid:

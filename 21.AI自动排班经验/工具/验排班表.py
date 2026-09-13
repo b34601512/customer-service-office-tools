@@ -35,7 +35,8 @@ SKIP_NAMES = set(_reader.SKIP_NAMES)
 
 GREEN = "E2F0D9"
 BLUE_AFTER = "BDD7EE"    # 售后值班（每班 1 人）
-YELLOW_LEAD = "FFFF00"   # 售后组长（李守耀）在岗
+LEAD_YELLOW = "FFFF00"   # 真表里黄底 = **人工手标的休息**（如临时请假），不是排班标记
+MANUAL_FILLS = {"FFFF00": "黄", "DEEBF7": "浅蓝", "FBE5D6": "橙"}   # 人工标记，工具不判
 WORK = ("早", "晚", "行")
 HOURS_PER_DAY = 8   # 假期按 8 小时/天折算（跟公司工具一致）
 KINDS = ("早班", "晚班", "休息")
@@ -434,6 +435,18 @@ def check_marks(cur, report):
         if color and color != "FF0000":
             report.add("五 特殊标记与休假", "warn", f"月份标记（行{r}列{c}）颜色 {color} 不是红")
 
+    # 人工手标的底色（真表里黄/浅蓝/橙都出现在休息格上，是人工标的，不是排班产物）
+    manual = {}
+    for e in cur["employees"]:
+        for d in cur["days"]:
+            col = e["colors"][d]
+            if col in MANUAL_FILLS and e["shifts"][d] not in ("早", "晚"):
+                manual.setdefault(MANUAL_FILLS[col], []).append(f"{e['name']} d{d}")
+    for name, items in manual.items():
+        report.add("五 特殊标记与休假", "info",
+                   f"{name}底人工标记 {len(items)} 处（真表里这种都是人工手标的，如临时请假；我们排班不产生、也不判）："
+                   + "、".join(items[:8]) + (" …" if len(items) > 8 else ""))
+
 
 def check_month_banner(cur, report):
     """月份横幅：售后块上面那一行的 1 号~当月最后一天 要合并成 1 格，写「X月」（醒目，避免客服看错月份）。"""
@@ -516,7 +529,7 @@ def check_after_duty(cur, report, lead):
     after = [e for e in cur["employees"] if e["group"] == "售后"]
     if not after:
         return
-    multi_e, multi_l, miss_e, miss_l, off_shift, lead_blue, lead_gray = [], [], [], [], [], [], []
+    multi_e, multi_l, miss_e, miss_l, off_shift, lead_blue = [], [], [], [], [], []
     for d in cur["days"]:
         early = [e for e in after if e["shifts"][d] == "早"]
         late = [e for e in after if e["shifts"][d] == "晚"]
@@ -537,8 +550,6 @@ def check_after_duty(cur, report, lead):
         for e in after:
             if e["colors"][d] == BLUE_AFTER and e["shifts"][d] not in ("早", "晚"):
                 off_shift.append(f"{e['name']} d{d}({e['shifts'][d] or '休'})")
-            if lead_e and e["name"] == lead and e["shifts"][d] in ("早", "晚") and e["colors"][d] != YELLOW_LEAD:
-                lead_gray.append(f"d{d}")
 
     def brief(items, limit=8):
         return "、".join(items[:limit]) + (f" …共{len(items)}天" if len(items) > limit else "")
@@ -554,9 +565,8 @@ def check_after_duty(cur, report, lead):
     if off_shift:
         report.add("四 值班", "error", f"售后值班标在非在岗格上：{brief(off_shift)}")
     if lead_blue:
-        report.add("四 值班", "warn", f"组长在班、早班又标了浅蓝：{brief(lead_blue)}")
-    if lead_gray:
-        report.add("四 值班", "warn", f"{lead} 在岗但没标组长色 {YELLOW_LEAD}：{brief(lead_gray)}")
+        report.add("四 值班", "warn", f"组长在班、早班又标了浅蓝：{brief(lead_blue)}（组长上班时早班值班名额是他的，不另标）")
+    report.add("四 值班", "info", f"{lead or '组长'}上班时早班值班名额算他的：**不额外涂色**（真表就是白底）；他休息的日子早班另选 1 人标浅蓝")
 
     counts = {e["name"]: sum(1 for d in cur["days"] if e["colors"][d] == BLUE_AFTER) for e in after}
     report.add("四 值班", "info", "售后值班（浅蓝）次数：" + "、".join(f"{k} {v} 次" for k, v in counts.items() if v))

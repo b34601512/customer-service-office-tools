@@ -16,7 +16,7 @@
     "days": 31,                  # 当月天数
     "policy_rest": 6,            # 本月休息天数（政策值，写进 18 行右侧的「本月休息天数：」）
     "policy_note": "大小周",
-    "lead": "李守耀",             # 售后组长：全早 + 黄色
+    "lead": "李守耀",             # 售后组长：全早；他上班时早班值班名额算他的（**不额外涂色**，真表就是白底）
     "carry": {"韩欢欢": "0", ...},           # 剩余：**上月结转**（数字=天数，或 "3天4小时"/"-3小时"）
     "annual": {"韩欢欢": 0, ...},             # 年假：上月结转的年假余额（同样支持 "1天3小时"；可省略）
     "codes": {"缪婷婷|8": "行"},                # 特殊格（只应落在休息格）
@@ -26,7 +26,7 @@
   "seller": {"韩欢欢": ["早","早","晚","",...]},  # 售前：长度 = days，空串 = 休
   "after":  {"李守耀": [...]},
   "duty":   {"韩欢欢|1": "早", ...},             # 售前值班（浅绿）：每天 早1 + 晚1
-  "duty_after": {"缪婷婷|1": "晚", ...}          # 售后值班（浅蓝）：每班只 1 人；组长在岗时他自己是负责人（黄）
+  "duty_after": {"缪婷婷|1": "晚", ...}          # 售后值班（浅蓝）：每班只 1 人（组长在岗的早班名额是他的，不列进来）
 }
 
 写完后表里：
@@ -60,7 +60,6 @@ KINDS = ("早班", "晚班", "休息")
 
 F_NONE = PatternFill(fill_type=None)
 F_GREEN = PatternFill("solid", fgColor="E2F0D9")   # 售前值班
-F_YELLOW = PatternFill("solid", fgColor="FFFF00")  # 售后值班组长（在岗）
 F_BLUE = PatternFill("solid", fgColor="BDD7EE")    # 售后值班（每班只 1 人）
 F_WHITE = PatternFill("solid", fgColor="FFFFFF")   # 显式白底
 HOURS_PER_DAY = 8   # 假期按 8 小时/天折算（跟公司工具一致）
@@ -313,8 +312,8 @@ def main() -> None:
                     cell.fill = F_GREEN if (p, d) in duty else (F_WHITE if (p, d) in white else F_NONE)
                 elif not s:                                # 售后休息：不涂色（橙色是人工手标的，我们排班不产生）
                     cell.fill = F_NONE
-                elif p == lead:                            # 组长在岗 = 值班负责人（黄）
-                    cell.fill = F_YELLOW
+                elif p == lead and (p, d) in duty_after:     # 组长在岗占早班值班名额：**不额外涂色**（真表就是白底）
+                    cell.fill = F_WHITE
                 elif (p, d) in duty_after:                 # 售后值班：每班只 1 人（浅蓝）
                     cell.fill = F_BLUE
                 elif (p, d) in white:
