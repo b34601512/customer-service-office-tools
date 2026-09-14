@@ -338,3 +338,62 @@ test("订单页：进入订单明细后按 Esc 可以返回列表", () => {
   assert.equal(app.page.state.detail, null);
   dispose();
 });
+
+test("总览页：显示上次同步记录（时间 + 读取单数）", () => {
+  const fs = require("node:fs");
+  const os = require("node:os");
+  const path = require("node:path");
+  const { 写入上次同步记录 } = require("../上次同步记录");
+  const 临时目录 = fs.mkdtempSync(path.join(os.tmpdir(), "上次同步-TUI-"));
+  const 记录文件 = path.join(临时目录, "state", "last-sync.json");
+  try {
+    写入上次同步记录(记录文件, {
+      at: new Date(2026, 8, 14, 11, 30).toISOString(),
+      状态: "done",
+      消息: "抖音「A店」只读同步完成：读取 2 单，新增 0 单。",
+    });
+    const output = 创建模拟输出();
+    const { app, dispose } = 创建回传平台TUI({
+      标题: "模拟回传控制台",
+      output,
+      ...创建模拟服务(),
+      上次同步记录文件: 记录文件,
+    });
+    app.running = true;
+    const 帧 = app.构建帧();
+    assert.ok(帧.some((行) => 行.includes("上次同步：2026-09-14 11:30（读取 2 单）")), "总览页应显示上次同步时间与读取单数");
+    dispose();
+  } finally {
+    fs.rmSync(临时目录, { recursive: true, force: true });
+  }
+});
+
+test("总览页：任务结束后把时间与读取单数写进上次同步记录", async () => {
+  const fs = require("node:fs");
+  const os = require("node:os");
+  const path = require("node:path");
+  const 临时目录 = fs.mkdtempSync(path.join(os.tmpdir(), "上次同步-任务-"));
+  const 记录文件 = path.join(临时目录, "state", "last-sync.json");
+  try {
+    const output = 创建模拟输出();
+    const { app, dispose } = 创建回传平台TUI({
+      标题: "模拟回传控制台",
+      output,
+      ...创建模拟服务(),
+      上次同步记录文件: 记录文件,
+    });
+    app.running = true;
+    await app.ctx.services.启动任务(async (ctx) => {
+      ctx.task.message = "天猫「A店」只读同步完成：读取 3 单，新增 1 单。";
+    });
+    const 记录 = JSON.parse(fs.readFileSync(记录文件, "utf8"));
+    assert.equal(记录.读取单数, 3);
+    assert.equal(记录.状态, "done");
+    assert.ok(记录.at);
+    const 帧 = app.构建帧();
+    assert.ok(帧.some((行) => 行.includes("（读取 3 单）")), "任务结束后总览页应立即显示新记录");
+    dispose();
+  } finally {
+    fs.rmSync(临时目录, { recursive: true, force: true });
+  }
+});

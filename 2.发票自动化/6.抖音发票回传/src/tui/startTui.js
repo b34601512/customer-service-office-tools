@@ -1,6 +1,7 @@
 // 抖音发票回传 TUI 入口：复用共享回传平台模板，绑定抖音专属服务。
 const fs = require("fs");
 const { 加载共享框架 } = require("./共享路径");
+const { 运行目录 } = require("../common/paths");
 const { 创建回传平台TUI } = 加载共享框架("回传平台TUI.js");
 const {
   读取店铺配置,
@@ -30,6 +31,7 @@ function 读取本地登录状态(店铺) {
 function 创建TUI(选项 = {}) {
   const tui = 创建回传平台TUI({
     标题,
+    上次同步记录文件: `${运行目录}/state/last-sync.json`,
     output: 选项.output,
     读取店铺配置,
     保存店铺配置,

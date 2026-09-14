@@ -7,6 +7,7 @@ const { 格式化时长毫秒, 格式化任务状态, 格式化时间文本 } = 
 const { 开始捕获控制台输出 } = require("./控制台捕获");
 const { 判断诺诺登录就绪 } = require("../启动下载中心");
 const { 工作流状态, 工作流状态中文 } = require("../../共享订单状态/orderWorkflow");
+const { 写入上次同步记录, 读取上次同步记录, 构建上次同步文本 } = require("../上次同步记录");
 const {
   构建表头,
   构建表格行,
@@ -368,6 +369,14 @@ function 创建总览页(模板选项) {
       行列表.push(任务行);
 
       行列表.push(`店铺：共 ${店铺列表.length} 家｜启用 ${着色(String(启用店铺.length), 启用店铺.length > 0 ? "brightGreen" : "gray")}`);
+
+      const 上次同步文本 = 构建上次同步文本(
+        模板选项.上次同步记录文件 ? 读取上次同步记录(模板选项.上次同步记录文件) : null,
+        模板选项.上次同步标签 || "同步",
+      );
+      if (上次同步文本) {
+        行列表.push(着色(适配宽度(上次同步文本, app.columns), "gray"));
+      }
 
       const 状态附加行 = 模板选项.总览附加行 ? 模板选项.总览附加行(上下文) : null;
       if (状态附加行) {
@@ -1339,6 +1348,16 @@ function 创建回传平台TUI(选项 = {}) {
         if (ctx.task.status === "running") {
           ctx.task.status = "done";
           ctx.task.message = ctx.task.message || "任务已完成。";
+        }
+        // 解决：总览页要能一眼看出"程序上次跑过没有、读到几单"，每轮任务结束都落一份小记录（写失败不影响业务）。
+        if (选项.上次同步记录文件) {
+          try {
+            写入上次同步记录(选项.上次同步记录文件, {
+              任务: 选项.上次同步标签 || "同步",
+              状态: ctx.task.status,
+              消息: ctx.task.message,
+            });
+          } catch {}
         }
         刷新缓存();
         app.requestRender();
