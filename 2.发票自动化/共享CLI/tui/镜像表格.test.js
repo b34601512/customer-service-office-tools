@@ -181,15 +181,24 @@ test("订单表格：清理后台旧省略号，统一把省略号放在当前�
   assert.match(行, /│/);
 });
 
-test("订单镜像：识别日期优先取 addedAt，缺字段回退更新时间并转成本地日期", () => {
-  const [镜像1, 镜像2] = 构建订单镜像列表([
-    { key: "s1:o1", storeId: "s1", storeName: "A店", orderNumber: "1001", workflowStatus: "pending", addedAt: "2026-08-18T12:00:00.000Z", updatedAt: "2026-08-18T03:00:00.000Z", platformStatus: { text: "可录入", kind: "returnable" } },
+test("订单镜像：识别日期优先取 addedAt/firstSeenAt，缺字段再回退 createdAt/更新时间并按本地时区换算", () => {
+  const 列表 = 构建订单镜像列表([
+    { key: "s1:o1", storeId: "s1", storeName: "A店", orderNumber: "1001", workflowStatus: "pending", addedAt: "2026-08-18T12:00:00.000Z", firstSeenAt: "2026-08-10T12:00:00.000Z", updatedAt: "2026-08-18T03:00:00.000Z", platformStatus: { text: "可录入", kind: "returnable" } },
     { key: "s1:o2", storeId: "s1", storeName: "A店", orderNumber: "1002", workflowStatus: "pending", updatedAt: "2026-08-17T12:00:00.000Z", platformStatus: { text: "可录入", kind: "returnable" } },
+    { key: "s1:o3", storeId: "s1", storeName: "A店", orderNumber: "1003", workflowStatus: "pending", firstSeenAt: "2026-08-16T01:30:00.000Z", updatedAt: "2026-09-09T01:22:29.397Z", platformStatus: { text: "可录入", kind: "returnable" } },
+    { key: "s1:o4", storeId: "s1", storeName: "A店", orderNumber: "1004", workflowStatus: "pending", createdAt: "2026-08-15T01:30:00.000Z", updatedAt: "2026-09-09T01:22:29.397Z", platformStatus: { text: "可录入", kind: "returnable" } },
   ]);
-  assert.equal(镜像1.detectedText, "2026-08-18");
-  assert.equal(镜像2.detectedText, "2026-08-17");
+  const 取镜像 = (单号) => 列表.find((镜像) => 镜像.原订单.orderNumber === 单号);
+  // addedAt 优先（京东自带该字段，行为不变）
+  assert.equal(取镜像("1001").detectedText, "2026-08-18");
+  // 无 addedAt/firstSeenAt 时回退更新时间
+  assert.equal(取镜像("1002").detectedText, "2026-08-17");
+  // 核心修复：有 firstSeenAt 时必须取首次识别时间，而不是最后更新时间（抖音/天猫走共享库只有这两个字段）
+  assert.equal(取镜像("1003").detectedText, "2026-08-16");
+  // 再回退 createdAt
+  assert.equal(取镜像("1004").detectedText, "2026-08-15");
   const 无日期镜像 = 构建订单镜像列表([
-    { key: "s1:o3", storeId: "s1", storeName: "A店", orderNumber: "1003", workflowStatus: "pending", platformStatus: { text: "可录入", kind: "returnable" } },
+    { key: "s1:o5", storeId: "s1", storeName: "A店", orderNumber: "1005", workflowStatus: "pending", platformStatus: { text: "可录入", kind: "returnable" } },
   ])[0];
   assert.equal(无日期镜像.detectedText, "");
   const 行 = 构建订单表格行(0, 无日期镜像, 100);

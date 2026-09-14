@@ -207,7 +207,7 @@ function 构建订单镜像(订单) {
     returnText: 回传定义.文本,
     returnColor: 回传定义.颜色,
     lastMessage: 最近消息,
-    detectedText: 格式化日期文本(订单?.addedAt || 订单?.createdAt || 订单?.updatedAt) || "",
+    detectedText: 格式化日期文本(订单?.addedAt || 订单?.firstSeenAt || 订单?.createdAt || 订单?.updatedAt) || "",
     updatedAt: String(订单?.updatedAt || ""),
     原订单: 订单,
   };
