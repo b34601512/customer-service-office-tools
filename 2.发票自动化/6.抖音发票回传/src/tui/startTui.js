@@ -12,6 +12,7 @@ const { 逐店同步并回传 } = require('../app/processStores');
 const {
   读取订单列表,
   更新订单工作流状态,
+  抖音订单记录文件路径,
 } = require("../order/douyinOrderRecordStore");
 const { 获取账号浏览器资料目录 } = require("../browser/accountProfilePaths");
 const { 关闭所有已打开抖音浏览器上下文 } = require("../browser/douyinBrowserContext");
@@ -32,6 +33,7 @@ function 创建TUI(选项 = {}) {
   const tui = 创建回传平台TUI({
     标题,
     上次同步记录文件: `${运行目录}/state/last-sync.json`,
+    数据更新时间文件: 抖音订单记录文件路径,
     output: 选项.output,
     读取店铺配置,
     保存店铺配置,

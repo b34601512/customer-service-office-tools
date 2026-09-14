@@ -15,7 +15,7 @@ const {
   设置订单处理中状态,
   是平台待开票待回传订单,
 } = require("../order/jdOrderRecordStore");
-const { 获取店铺登录态文件路径, 运行目录 } = require("../common/paths");
+const { 获取店铺登录态文件路径, 运行目录, 催票订单记录文件路径 } = require("../common/paths");
 const { 关闭全部浏览器上下文 } = require("../browser/browserContextHub");
 const { ControlCenterState } = require("../controlCenter/controlCenterState");
 const { ControlCenterTaskService } = require("../controlCenter/taskService");
@@ -79,6 +79,7 @@ function 创建TUI(选项 = {}) {
   const 结果 = 创建回传平台TUI({
     标题,
     上次同步记录文件: `${运行目录}/state/last-sync.json`,
+    数据更新时间文件: 催票订单记录文件路径,
     output: 选项.output,
     读取店铺配置,
     保存店铺配置,

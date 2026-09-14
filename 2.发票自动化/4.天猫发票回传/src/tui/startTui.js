@@ -23,6 +23,7 @@ const {
   更新订单工作流状态,
   设置订单备注,
   设置订单回传尝试,
+  天猫订单记录文件路径,
 } = require("../order/tmallOrderRecordStore");
 const { 获取店铺账号浏览器资料目录 } = require("../browser/storeProfilePaths");
 const { 启动下载中心窗口, 读取下载中心外部服务状态 } = require("../../../共享CLI/启动下载中心");
@@ -70,6 +71,7 @@ function 创建TUI(选项 = {}) {
   return 创建回传平台TUI({
     标题,
     上次同步记录文件: `${运行目录}/state/last-sync.json`,
+    数据更新时间文件: 天猫订单记录文件路径,
     output: 选项.output,
     读取店铺配置,
     保存店铺配置,

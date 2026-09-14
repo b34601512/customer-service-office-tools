@@ -397,3 +397,60 @@ test("总览页：任务结束后把时间与读取单数写进上次同步记�
     fs.rmSync(临时目录, { recursive: true, force: true });
   }
 });
+
+test("总览页：只留状态行与快捷操作，不再渲染店铺订单一览", () => {
+  const output = 创建模拟输出();
+  const { app, dispose } = 创建回传平台TUI({
+    标题: "模拟回传控制台",
+    output,
+    ...创建模拟服务(),
+    读取店铺订单: () => [],
+    快捷操作: [{ id: "demo", 标签: "演示操作", 提示: "测试提示" }],
+  });
+  app.running = true;
+  const 帧 = app.构建帧();
+  assert.equal(帧.some((行) => 行.includes("店铺订单一览")), false, "总览页不应再出现店铺订单一览表");
+  assert.ok(帧.some((行) => 行.includes("快捷操作")));
+  assert.ok(帧.some((行) => 行.includes("演示操作")));
+  dispose();
+});
+
+test("订单页：默认显示全部订单，并给出上次同步与本地数据更新时间", () => {
+  const fs = require("node:fs");
+  const os = require("node:os");
+  const path = require("node:path");
+  const { 写入上次同步记录 } = require("../上次同步记录");
+  const 临时目录 = fs.mkdtempSync(path.join(os.tmpdir(), "订单页信息行-"));
+  const 记录文件 = path.join(临时目录, "last-sync.json");
+  const 数据文件 = path.join(临时目录, "orders.json");
+  try {
+    fs.writeFileSync(数据文件, "{}", "utf8");
+    写入上次同步记录(记录文件, {
+      at: new Date(2026, 8, 14, 9, 0).toISOString(),
+      任务: "同步",
+      状态: "done",
+      消息: "只读同步完成：读取 11 单，新增 0 单。",
+    });
+    const output = 创建模拟输出();
+    const { app, dispose } = 创建回传平台TUI({
+      标题: "模拟回传控制台",
+      output,
+      ...创建模拟服务(),
+      读取全部订单: () => ([
+        { key: "s1:o1", storeId: "s1", storeName: "A店", orderNumber: "1001", workflowStatus: "processing", platformStatus: { text: "开票成功", kind: "success" } },
+        { key: "s1:o2", storeId: "s1", storeName: "A店", orderNumber: "1002", workflowStatus: "handled", platformStatus: { text: "已上传", kind: "success" } },
+      ]),
+      上次同步记录文件: 记录文件,
+      数据更新时间文件: 数据文件,
+    });
+    app.running = true;
+    app.切换页面(1);
+    const 帧 = app.构建帧().map((行) => 行.replace(/\u001b\[[0-9;]*m/g, ""));
+    assert.ok(帧.some((行) => 行.includes("过滤:全部，显示 2/2 单")), "订单页默认应显示全部订单");
+    assert.ok(帧.some((行) => 行.includes("上次同步：2026-09-14 09:00（读取 11 单）")));
+    assert.ok(帧.some((行) => 行.includes("本地数据更新：")));
+    dispose();
+  } finally {
+    fs.rmSync(临时目录, { recursive: true, force: true });
+  }
+});

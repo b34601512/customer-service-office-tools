@@ -7,6 +7,7 @@ const {
   构建表格行,
   构建订单镜像列表,
   过滤订单镜像列表,
+  默认订单过滤模式索引,
   订单过滤模式,
   构建订单表格头,
   构建订单表格行,
@@ -83,6 +84,18 @@ test("订单镜像：工作流状态优先排序，需关注过滤只看待处�
   assert.equal(需关注[0].orderNumber, "1001");
   assert.equal(需关注.some((订单) => 订单.orderNumber === "1004"), false);
   assert.equal(订单过滤模式[0].label, "需关注");
+});
+
+test("订单过滤：默认看「全部」，不传索引时不把已安排/已处理订单藏起来", () => {
+  const 列表 = 构建订单镜像列表([
+    { key: "s1:o1", storeId: "s1", storeName: "A店", orderNumber: "1001", workflowStatus: "pending", platformStatus: { text: "可录入", kind: "returnable" } },
+    { key: "s1:o2", storeId: "s1", storeName: "A店", orderNumber: "1002", workflowStatus: "processing", platformStatus: { text: "开票成功", kind: "success" } },
+    { key: "s1:o3", storeId: "s1", storeName: "A店", orderNumber: "1003", workflowStatus: "handled", platformStatus: { text: "已上传", kind: "success" } },
+  ]);
+  assert.equal(订单过滤模式[默认订单过滤模式索引].label, "全部");
+  const 默认可见 = 过滤订单镜像列表(列表);
+  assert.equal(默认可见.length, 3);
+  assert.equal(过滤订单镜像列表(列表, 0).length, 1);
 });
 
 test("订单表格行：把订单镜像渲染成客户页风格的固定列", () => {

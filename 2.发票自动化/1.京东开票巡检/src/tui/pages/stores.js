@@ -75,6 +75,9 @@ const 记录过滤模式 = [
   { label: "全部", test: () => true },
 ];
 
+// 默认看「全部」：否则记录都处理完时明细页看起来像空的，分不清"还没处理"还是"没有数据"（用户 2026-09-14 要求所有项目统一）。
+const 默认记录过滤模式索引 = Math.max(0, 记录过滤模式.findIndex((模式) => 模式.label === "全部"));
+
 function 构建店铺表格行(索引, 店铺, 结果, 列数) {
   const 指标 = 结果?.metrics || {};
   const 告警 = Number(指标.警告订单数 || 0);
@@ -125,7 +128,7 @@ function 创建店铺页() {
       detailStore: null,
       detailRecords: [],
       detailScroll: 0,
-      detailFilterMode: 0,
+      detailFilterMode: 默认记录过滤模式索引,
       detailRecord: null,
       detailRecordScroll: 0,
     },
@@ -310,7 +313,7 @@ function 创建店铺页() {
         if (店铺) {
           this.state.detailStore = 店铺;
           this.state.detailScroll = 0;
-          this.state.detailFilterMode = 0;
+          this.state.detailFilterMode = 默认记录过滤模式索引;
         }
         return true;
       }

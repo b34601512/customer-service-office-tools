@@ -8,6 +8,7 @@ const {
   提取读取单数,
   写入上次同步记录,
   读取上次同步记录,
+  读取文件更新时间,
   构建上次同步文本,
 } = require("./上次同步记录");
 
@@ -58,6 +59,20 @@ test("上次同步记录：允许调用方直接给条数与自定义计数文�
     const 记录 = 读取上次同步记录(文件路径);
     assert.equal(记录.读取单数, 12);
     assert.equal(构建上次同步文本(记录), "上次巡检：2026-09-14 10:30（识别 12 条｜新增 3 条｜告警 1 条）");
+  } finally {
+    fs.rmSync(临时目录, { recursive: true, force: true });
+  }
+});
+
+test("上次同步记录：读取文件更新时间给出本地时间，文件不存在时为空", () => {
+  const 临时目录 = fs.mkdtempSync(path.join(os.tmpdir(), "上次同步记录-mtime-"));
+  const 文件路径 = path.join(临时目录, "orders.json");
+  try {
+    fs.writeFileSync(文件路径, "{}", "utf8");
+    const 更新时间 = 读取文件更新时间(文件路径);
+    assert.match(更新时间, /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/);
+    assert.equal(读取文件更新时间(path.join(临时目录, "不存在.json")), "");
+    assert.equal(读取文件更新时间(""), "");
   } finally {
     fs.rmSync(临时目录, { recursive: true, force: true });
   }

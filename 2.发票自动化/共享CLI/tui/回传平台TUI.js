@@ -7,7 +7,7 @@ const { 格式化时长毫秒, 格式化任务状态, 格式化时间文本 } = 
 const { 开始捕获控制台输出 } = require("./控制台捕获");
 const { 判断诺诺登录就绪 } = require("../启动下载中心");
 const { 工作流状态, 工作流状态中文 } = require("../../共享订单状态/orderWorkflow");
-const { 写入上次同步记录, 读取上次同步记录, 构建上次同步文本 } = require("../上次同步记录");
+const { 写入上次同步记录, 读取上次同步记录, 读取文件更新时间, 构建上次同步文本 } = require("../上次同步记录");
 const {
   构建表头,
   构建表格行,
@@ -16,6 +16,7 @@ const {
   过滤订单镜像列表,
   切换订单过滤模式,
   订单过滤模式,
+  默认订单过滤模式索引,
   构建订单表格宽度方案,
   构建订单表格头,
   构建订单表格行,
@@ -283,6 +284,16 @@ function 脱敏账号(账号) {
   return `${标准账号.slice(0, 3)}***${标准账号.slice(-2)}`;
 }
 
+// 订单页顶部信息行：既告诉用户"程序上次什么时候跑的、读到几单"，也告诉"本地数据文件最后什么时候更新的"。
+function 构建订单页信息行(模板选项) {
+  const 上次同步文本 = 构建上次同步文本(
+    模板选项.上次同步记录文件 ? 读取上次同步记录(模板选项.上次同步记录文件) : null,
+    模板选项.上次同步标签 || "同步",
+  );
+  const 数据更新时间 = 读取文件更新时间(模板选项.数据更新时间文件);
+  return [上次同步文本, 数据更新时间 ? `本地数据更新：${数据更新时间}` : ""].filter(Boolean).join("｜");
+}
+
 function 创建总览页(模板选项) {
   let 总览订单缓存 = { 时间: 0, 列表: null };
   function 读取总览订单镜像列表() {
@@ -399,42 +410,7 @@ function 创建总览页(模板选项) {
       }
 
         if (typeof 模板选项.读取店铺订单 === "function") {
-          行列表.push("");
-          行列表.push(着色("店铺订单一览", "brightBlue"));
-          行列表.push(构建表头(总览店铺表格列定义, app.columns));
-          const 预览店铺列表 = 店铺列表.slice(0, 5);
-            const 全部订单镜像列表 = 读取总览订单镜像列表();
-          for (let 索引 = 0; 索引 < 预览店铺列表.length; 索引 += 1) {
-            const 店铺 = 预览店铺列表[索引];
-            let 订单镜像列表 = [];
-            try {
-              订单镜像列表 = Array.isArray(全部订单镜像列表)
-                  ? 全部订单镜像列表.filter((镜像) => String(镜像.storeId || "") === String(店铺.id || ""))
-                  : 构建订单镜像列表(模板选项.读取店铺订单(店铺) || []);
-            } catch {
-              订单镜像列表 = [];
-            }
-            const 统计 = { 待处理: 0, 处理中: 0, 已登记: 0, 已处理: 0 };
-            for (const 镜像 of 订单镜像列表) {
-              if (镜像.workflowStatus === "pending") 统计.待处理 += 1;
-              else if (镜像.workflowStatus === "processing") 统计.处理中 += 1;
-              else if (镜像.workflowStatus === "invoice_registered") 统计.已登记 += 1;
-              else if (镜像.workflowStatus === "handled") 统计.已处理 += 1;
-            }
-            const 最近结果 = typeof 模板选项.格式化结果 === "function" ? String(模板选项.格式化结果(店铺) || "暂无结果") : "暂无结果";
-            const 结果颜色 = /失败|失效|错误/.test(最近结果) ? "brightRed" : (最近结果 === "暂无结果" ? "gray" : "brightGreen");
-            行列表.push(构建表格行(总览店铺表格列定义, [
-              { 文本: 店铺.name || "未命名" },
-              { 文本: String(统计.待处理), 颜色: 统计.待处理 > 0 ? "yellow" : "" },
-              { 文本: String(统计.处理中), 颜色: 统计.处理中 > 0 ? "brightYellow" : "" },
-              { 文本: String(统计.已登记), 颜色: 统计.已登记 > 0 ? "brightCyan" : "" },
-              { 文本: String(统计.已处理), 颜色: 统计.已处理 > 0 ? "brightGreen" : "" },
-              { 文本: 最近结果, 颜色: 结果颜色 },
-            ], app.columns));
-          }
-          if (店铺列表.length > 预览店铺列表.length) {
-            行列表.push(着色(适配宽度(`其余 ${店铺列表.length - 预览店铺列表.length} 家请到「2店铺」页查看。`, app.columns), "gray"));
-          }
+          // 2026-09-14 用户要求：总览页只留状态行与快捷操作，店铺订单一览表移到「2订单」页看（那边有完整明细）。
         }
 
       行列表.push("");
@@ -665,7 +641,7 @@ function 创建店铺页(模板选项) {
     const 列数 = app.columns;
     const 内容高度 = app.contentHeight;
     const 镜像列表 = 构建店铺订单镜像(店铺).镜像列表;
-    const 过滤模式 = 订单过滤模式[this.state.detailFilterMode] || 订单过滤模式[0];
+    const 过滤模式 = 订单过滤模式[this.state.detailFilterMode] || 订单过滤模式[默认订单过滤模式索引];
     const 可见列表 = 过滤订单镜像列表(镜像列表, this.state.detailFilterMode);
     const 宽度方案 = 构建订单表格宽度方案(列数, [], 可见列表);
     const 最大偏移 = Math.max(0, 可见列表.length - Math.max(1, 内容高度 - 3));
@@ -702,7 +678,7 @@ function 创建店铺页(模板选项) {
       detailStore: null,
       detailItems: [],
       detailScroll: 0,
-      detailFilterMode: 0,
+      detailFilterMode: 默认订单过滤模式索引,
       detailSelectedIndex: 0,
       detailMessage: "",
     },
@@ -901,7 +877,7 @@ function 创建店铺页(模板选项) {
           if (店铺) {
             this.state.detailStore = 店铺;
             this.state.detailScroll = 0;
-            this.state.detailFilterMode = 0;
+            this.state.detailFilterMode = 默认订单过滤模式索引;
             this.state.detailSelectedIndex = 0;
           }
           return true;
@@ -1066,7 +1042,7 @@ function 创建订单页(模板选项) {
     state: {
       scrollOffset: 0,
       selectedIndex: 0,
-      filterMode: 0,
+      filterMode: 默认订单过滤模式索引,
       detail: null,
       detailScroll: 0,
       message: "",
@@ -1080,7 +1056,7 @@ function 创建订单页(模板选项) {
       const 内容高度 = app.contentHeight;
       const 店铺列表 = Array.isArray(app.ctx.cache.config?.stores) ? app.ctx.cache.config.stores : [];
       const 全部列表 = 读取全部订单镜像列表(店铺列表);
-      const 过滤模式 = 订单过滤模式[this.state.filterMode] || 订单过滤模式[0];
+      const 过滤模式 = 订单过滤模式[this.state.filterMode] || 订单过滤模式[默认订单过滤模式索引];
       const 可见列表 = 过滤订单镜像列表(全部列表, this.state.filterMode);
 
       if (this.state.detail) {
@@ -1093,11 +1069,15 @@ function 创建订单页(模板选项) {
       if (this.state.selectedIndex >= 可见列表.length) {
         this.state.selectedIndex = Math.max(0, 可见列表.length - 1);
       }
-      const 可见行数 = Math.max(1, 内容高度 - 3);
+      const 信息行 = 构建订单页信息行(模板选项);
+      const 可见行数 = Math.max(1, 内容高度 - 3 - (信息行 ? 1 : 0));
       const 最大偏移 = Math.max(0, 可见列表.length - 可见行数);
       if (this.state.scrollOffset > 最大偏移) this.state.scrollOffset = 最大偏移;
 
       const 行列表 = [];
+      if (信息行) {
+        行列表.push(着色(适配宽度(信息行, 列数), "gray"));
+      }
       行列表.push(着色(适配宽度(`订单明细（过滤:${过滤模式.label}，显示 ${可见列表.length}/${全部列表.length} 单，f 切换）`, 列数), "brightCyan"));
       const 宽度方案 = 构建订单表格宽度方案(列数, 模板选项.订单页扩展列, 可见列表);
       行列表.push(构建订单表格头(列数, 模板选项.订单页扩展列, 宽度方案));
@@ -1123,7 +1103,7 @@ function 创建订单页(模板选项) {
       if (this.state.detail) {
         return "Home/End首尾 ↑↓滚动 回车/Esc返回订单列表 q返回总览";
       }
-      const 过滤模式 = 订单过滤模式[this.state.filterMode] || 订单过滤模式[0];
+      const 过滤模式 = 订单过滤模式[this.state.filterMode] || 订单过滤模式[默认订单过滤模式索引];
       const 操作提示 = typeof 模板选项.订单页标记已安排 === "function" ? ` a标记${客服跟进阶段文案}` : "";
       return `f切换过滤[${过滤模式.label}] r刷新 Home/End首尾 ↑↓选择 回车查看详情${操作提示} ←→切页 q返回总览`;
     },
