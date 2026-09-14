@@ -25,6 +25,7 @@ console.log = tee(originalLog);
 console.error = tee(originalError);
 
 const { readProjectConfig } = require('../src/config/projectConfigServiceParts/projectConfigPersistence');
+const { initializeProjectConfigForStartup } = require('../src/config/projectConfigServiceParts/projectConfigInitialization');
 const { runConfiguredSummaryTask } = require('../src/cli/cliSummaryTask');
 const { syncDataDetailToKdocs } = require('../src/kdocsSync/syncDataDetailToKdocs');
 const { updateKdocsPivotEndDateFilter } = require('../src/kdocsSync/updateKdocsPivotEndDateFilter');
@@ -36,6 +37,26 @@ function 输出(标题, 内容) {
 
 async function main() {
   const started = Date.now();
+
+  // 第零步（必需）：等价 TUI/CLI 启动时的配置初始化。
+  // 智能模式（exportDateMode=automatic）下，导出日期范围=「本月1号 至 今天-延迟天数」，
+  // 这个重算只发生在启动路径（startTuiRuntime.js / cliRuntime.js），跳过它就会沿用
+  // 配置里存的旧日期范围，拉到的数据就不是最新的——这里必须显式补上。
+  const beforeConfig = readProjectConfig();
+  输出('步骤0/3 启动初始化（重算智能模式导出日期范围）', {
+    导出日期模式: beforeConfig.globalDefaults?.exportDateMode,
+    刷新前范围:
+      (beforeConfig.globalDefaults?.exportDateRange?.start?.customDate || '?') +
+      ' 至 ' +
+      (beforeConfig.globalDefaults?.exportDateRange?.end?.customDate || '?'),
+  });
+  const initializedConfig = initializeProjectConfigForStartup();
+  输出('步骤0 结束（刷新后范围）', {
+    刷新后范围:
+      (initializedConfig.globalDefaults?.exportDateRange?.start?.customDate || '?') +
+      ' 至 ' +
+      (initializedConfig.globalDefaults?.exportDateRange?.end?.customDate || '?'),
+  });
 
   // 第一步：汇总菜单 → 开始全部汇总（等价 TUI 汇总页 S 键）。
   输出('步骤1/3 开始全部汇总（全部启用店铺）');

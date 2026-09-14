@@ -41,6 +41,7 @@ const { resolveManagedOpenWindowMeta, runManagedOpenWindowEngine } = require('..
 const { isJdLoginReady } = require('../src/platforms/jd/jdLoginPageClassifier');
 const { JD_SYSTEM_RECEPTION_DATA_URL } = require('../src/platforms/jd/jdUrlRules');
 const { readProjectConfig } = require('../src/config/projectConfigServiceParts/projectConfigPersistence');
+const { initializeProjectConfigForStartup } = require('../src/config/projectConfigServiceParts/projectConfigInitialization');
 const { buildConfiguredSummaryTasks } = require('../src/controlCenter/summaryTaskPlanner');
 const { runConfiguredSummaryTask } = require('../src/cli/cliSummaryTask');
 const { syncDataDetailToKdocs } = require('../src/kdocsSync/syncDataDetailToKdocs');
@@ -139,6 +140,15 @@ async function 逐店预登录(stores) {
 
 async function main() {
   const started = Date.now();
+  // 先做启动初始化：等价 TUI 启动，重算智能模式导出日期范围（否则会沿用旧日期，数据不是最新）。
+  const 初始化后配置 = initializeProjectConfigForStartup();
+  输出('启动初始化（智能模式日期范围）', {
+    模式: 初始化后配置.globalDefaults?.exportDateMode,
+    范围:
+      (初始化后配置.globalDefaults?.exportDateRange?.start?.customDate || '?') +
+      ' 至 ' +
+      (初始化后配置.globalDefaults?.exportDateRange?.end?.customDate || '?'),
+  });
   const stores = 取京东店铺配置();
   输出('待预登录的京东店铺', stores.map((s) => `${s.displayName}（${s.key}）`));
   if (!stores.length) throw new Error('没有启用中的京东店铺。');

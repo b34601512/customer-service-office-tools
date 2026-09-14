@@ -1,6 +1,11 @@
 // 该文件只负责读取和改变抖音店铺菜单状态，不负责解析店铺身份。
 const { DOUYIN_POLL_INTERVAL_MS } = require("./douyinDownloadSettings");
 const { runAfterDismissingBlockingPopups } = require("../../../shared/blockingPopupEngine");
+const { log } = require("../../../engine/logger");
+const {
+  dismissDouyinAdPopup,
+  isPointerInterceptedError
+} = require("./douyinAdPopupDismiss");
 
 async function runDouyinMerchantStoreAction(page, action) {
   // 该函数只保证商家首页上的一次菜单动作不会被明确可关闭的营销弹窗阻断。
@@ -103,7 +108,8 @@ async function ensureDouyinStoreMenuOpenWithoutPopupHandling(page, existingShopH
 }
 
 async function ensureDouyinStoreMenuOpen(page, existingShopHeader = null) {
-  // 该函数只把菜单状态转换包在弹窗恢复边界内。
+  // 该函数只把菜单状态转换包在弹窗恢复边界内，并先清掉会拦截头图点击的广告弹窗。
+  await dismissDouyinAdPopup(page);
   return runDouyinMerchantStoreAction(
     page,
     () => ensureDouyinStoreMenuOpenWithoutPopupHandling(page, existingShopHeader)
@@ -152,13 +158,39 @@ async function findExactDouyinStoreOptionAcrossPages(originPage, expectedStoreNa
 
 async function clickDouyinStoreOption(page, storeOption, expectedStoreName = "") {
   // 该函数只重新定位并点击唯一目标店铺选项；店铺选择窗口本身不是遮挡弹窗，不能被通用治理关闭。
-  const currentStoreOption = expectedStoreName
-    ? await findExactDouyinStoreOption(page, expectedStoreName)
-    : storeOption;
-  if (!currentStoreOption) {
-    throw new Error(`抖音目标店铺选项暂不可点击：${expectedStoreName || "未提供店铺名称"}。`);
+  // 但抖音营销广告弹窗（arrival 弹层）会真实拦截本次点击，所以只对“被拦截”这种错误定向关广告后重试。
+  const 最大尝试次数 = 3;
+  let lastError = null;
+  for (let attempt = 1; attempt <= 最大尝试次数; attempt += 1) {
+    const currentStoreOption = expectedStoreName
+      ? await findExactDouyinStoreOption(page, expectedStoreName)
+      : storeOption;
+    if (!currentStoreOption) {
+      throw new Error(`抖音目标店铺选项暂不可点击：${expectedStoreName || "未提供店铺名称"}。`);
+    }
+    try {
+      await currentStoreOption.click({ timeout: 10000 });
+      return;
+    } catch (error) {
+      lastError = error;
+      if (!isPointerInterceptedError(error)) {
+        throw error;
+      }
+      const dismissed = await dismissDouyinAdPopup(page);
+      log(
+        dismissed ? "主线:完成" : "主线:诊断",
+        "抖音下载",
+        "切店点击被遮挡后重试",
+        `店铺=${expectedStoreName || "未提供"}，第${attempt}次点击被弹层拦截，广告弹窗已处理=${dismissed}`
+      );
+      if (!dismissed) {
+        // 广告弹窗无法确认关闭时停下报错，绝不带着遮挡继续点。
+        throw error;
+      }
+      await page.waitForTimeout(DOUYIN_POLL_INTERVAL_MS);
+    }
   }
-  await currentStoreOption.click({ timeout: 10000 });
+  throw lastError;
 }
 
 module.exports = {
