@@ -18,6 +18,36 @@ function 创建模拟输出() {
   };
 }
 
+test("总览页：显示上次巡检记录（时间 + 识别条数）", () => {
+  const fs = require("node:fs");
+  const os = require("node:os");
+  const path = require("node:path");
+  const { 写入上次同步记录 } = require("../../../共享CLI/上次同步记录");
+  const 临时目录 = fs.mkdtempSync(path.join(os.tmpdir(), "京东巡检上次同步-"));
+  const 记录文件 = path.join(临时目录, "last-sync.json");
+  try {
+    写入上次同步记录(记录文件, {
+      at: new Date(2026, 8, 14, 10, 30).toISOString(),
+      任务: "巡检",
+      状态: "done",
+      消息: "已检查 5/5 家店铺。",
+      读取单数: 12,
+      计数标签: "识别 12 条｜新增 3 条｜告警 1 条",
+    });
+    const output = 创建模拟输出();
+    const { app, dispose } = 创建TUI({ output, 上次同步记录文件: 记录文件 });
+    app.running = true;
+    const 帧 = app.构建帧();
+    assert.ok(
+      帧.some((行) => 行.includes("上次巡检：2026-09-14 10:30（识别 12 条｜新增 3 条｜告警 1 条）")),
+      "总览页应显示上次巡检时间与识别条数",
+    );
+    dispose();
+  } finally {
+    fs.rmSync(临时目录, { recursive: true, force: true });
+  }
+});
+
 test("总览快捷操作：批量巡检固定为第一项", () => {
   const 未登录操作 = 构建快捷操作({ task: null, cache: { serviceStatus: {} } });
   assert.deepEqual(未登录操作.map((操作) => 操作.id), ["batch", "download-center", "single", "exit"]);

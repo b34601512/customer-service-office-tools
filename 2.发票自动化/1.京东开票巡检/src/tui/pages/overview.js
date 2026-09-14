@@ -3,6 +3,7 @@ const { 着色 } = require("../共享路径").ansi;
 const { 适配宽度 } = require("../共享路径").width;
 const { 格式化时长毫秒, 格式化时间文本, 格式化任务状态 } = require("../共享路径").format;
 const { 判断诺诺登录就绪 } = require("../../../../共享CLI/启动下载中心");
+const { 读取上次同步记录, 构建上次同步文本 } = require("../../../../共享CLI/上次同步记录");
 
 function 构建快捷操作(上下文) {
   const 任务 = 上下文.task;
@@ -30,7 +31,7 @@ function 格式化巡检摘要行(摘要) {
   return `最近巡检：${着色(`[${结果标签}]`, 状态颜色)} 店铺 ${摘要.storeCount || 0} 家（成功 ${摘要.successStoreCount || 0}、失败 ${摘要.failedStoreCount || 0}、未完成 ${摘要.uncheckedStoreCount || 0}）｜${格式化时间文本(摘要.finishedAt)}`;
 }
 
-function 创建总览页() {
+function 创建总览页(选项 = {}) {
   const 页面 = {
     key: "1",
     title: "总览",
@@ -78,6 +79,15 @@ function 创建总览页() {
       const 摘要行 = 格式化巡检摘要行(结果.lastRunSummary || 结果.lastBatchSummary);
       if (摘要行) {
         行列表.push(摘要行);
+      }
+
+      // 上次巡检：摘要只在有结果时才有，这行直接告诉用户"今天到底跑没跑、识别到多少"。
+      const 上次同步文本 = 构建上次同步文本(
+        选项.上次同步记录文件 ? 读取上次同步记录(选项.上次同步记录文件) : null,
+        选项.上次同步标签 || "巡检",
+      );
+      if (上次同步文本) {
+        行列表.push(着色(适配宽度(上次同步文本, app.columns), "gray"));
       }
 
         行列表.push("");

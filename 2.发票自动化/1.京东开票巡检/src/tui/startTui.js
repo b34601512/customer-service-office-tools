@@ -29,8 +29,29 @@ const { 构建成功店铺结果, 构建失败店铺结果 } = require("../cli/i
 const { 构建命令行巡检摘要 } = require("../cli/inspectionOverview");
 const { 启动下载中心窗口, 读取下载中心外部服务状态 } = require("../../../共享CLI/启动下载中心");
 const { 最大化当前控制台窗口 } = require("../../../../共享CLI/最大化控制台窗口");
+const { 运行目录 } = require("../common/paths");
+const { 写入上次同步记录 } = require("../../../共享CLI/上次同步记录");
 
 const 标题 = "京东开票巡检控制台";
+// 上次巡检记录：总览页用它回答"今天到底跑没跑、识别到多少条"（写在 runtime 下，不入库）。
+const 上次同步记录文件 = `${运行目录}/state/last-sync.json`;
+
+function 记录上次巡检(任务, 摘要 = null) {
+  const 识别条数 = 摘要 && Number.isInteger(摘要.识别记录数) ? 摘要.识别记录数 : undefined;
+  try {
+    写入上次同步记录(上次同步记录文件, {
+      任务: "巡检",
+      状态: 任务?.status || "",
+      消息: 任务?.message || "",
+      读取单数: 识别条数,
+      计数标签: 识别条数 === undefined
+        ? ""
+        : `识别 ${识别条数} 条｜新增 ${摘要.新增记录数 || 0} 条｜告警 ${摘要.告警记录数 || 0} 条`,
+    });
+  } catch {
+    // 记录失败不影响巡检：下次巡检会再写一次。
+  }
+}
 
 function 创建初始任务() {
   return {
@@ -99,6 +120,7 @@ async function 执行单店巡检(ctx, 店铺) {
   任务.startedAt = 开始时间;
   任务.message = "正在打开浏览器…完成后保持打开供你核对。";
   ctx.app.requestRender();
+  let 本次摘要 = null;
   try {
     const 结果 = await 执行巡检({
       店铺配置: 店铺,
@@ -110,30 +132,33 @@ async function 执行单店巡检(ctx, 店铺) {
     const 店铺结果 = 构建成功店铺结果({ 店铺, 巡检结果: 结果 });
     更新店铺结果(店铺结果);
     同步巡检店铺结果(店铺结果);
-    更新最近巡检摘要(构建命令行巡检摘要({
+    本次摘要 = 构建命令行巡检摘要({
       执行类型: "single",
       开始时间,
       完成时间: 店铺结果.lastCheckedAt,
       店铺列表: [店铺],
       店铺结果列表: [店铺结果],
-    }));
+    });
+    更新最近巡检摘要(本次摘要);
     任务.status = "done";
     任务.message = `巡检完成：${店铺结果.lastMessage}。浏览器保持打开，核对后关闭即可。`;
   } catch (错误) {
     const 店铺结果 = 构建失败店铺结果({ 店铺, 错误 });
     更新店铺结果(店铺结果);
-    更新最近巡检摘要(构建命令行巡检摘要({
+    本次摘要 = 构建命令行巡检摘要({
       执行类型: "single",
       开始时间,
       完成时间: 店铺结果.lastCheckedAt,
       店铺列表: [店铺],
       店铺结果列表: [店铺结果],
-    }));
+    });
+    更新最近巡检摘要(本次摘要);
     任务.status = "error";
     任务.message = `巡检失败：${错误.message}`;
   } finally {
     任务.finishedAt = new Date().toISOString();
     任务.currentStore = "";
+    记录上次巡检(任务, 本次摘要);
     刷新缓存(ctx);
     ctx.app.requestRender();
   }
@@ -185,6 +210,7 @@ async function 执行批量巡检(ctx) {
     店铺结果列表: 本次店铺结果列表,
   });
   更新最近巡检摘要(摘要);
+  记录上次巡检(任务, 摘要);
   任务.status = "done";
   任务.message = `已检查 ${本次店铺结果列表.length}/${店铺列表.length} 家店铺。浏览器窗口保持打开，可逐个核对。`;
   任务.finishedAt = new Date().toISOString();
@@ -233,7 +259,10 @@ function 刷新缓存(ctx) {
 
 function 创建TUI(选项 = {}) {
   const 页面列表 = [
-    创建总览页(),
+    创建总览页({
+      上次同步记录文件: 选项.上次同步记录文件 || 上次同步记录文件,
+      上次同步标签: 选项.上次同步标签 || "巡检",
+    }),
     创建店铺页(),
     创建日志页(),
     创建配置页(),

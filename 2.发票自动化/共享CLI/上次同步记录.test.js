@@ -43,6 +43,26 @@ test("上次同步记录：写入后可读回，展示文本带本地时间与�
   }
 });
 
+test("上次同步记录：允许调用方直接给条数与自定义计数文案（如巡检的「识别 N 条」）", () => {
+  const 临时目录 = fs.mkdtempSync(path.join(os.tmpdir(), "上次同步记录-计数-"));
+  const 文件路径 = path.join(临时目录, "last-sync.json");
+  try {
+    写入上次同步记录(文件路径, {
+      at: new Date(2026, 8, 14, 10, 30).toISOString(),
+      任务: "巡检",
+      状态: "done",
+      消息: "已检查 5/5 家店铺。",
+      读取单数: 12,
+      计数标签: "识别 12 条｜新增 3 条｜告警 1 条",
+    });
+    const 记录 = 读取上次同步记录(文件路径);
+    assert.equal(记录.读取单数, 12);
+    assert.equal(构建上次同步文本(记录), "上次巡检：2026-09-14 10:30（识别 12 条｜新增 3 条｜告警 1 条）");
+  } finally {
+    fs.rmSync(临时目录, { recursive: true, force: true });
+  }
+});
+
 test("上次同步记录：无记录时展示空文本；任务没有读取单数时退回完成/失败", () => {
   assert.equal(构建上次同步文本(null), "");
   assert.equal(构建上次同步文本(读取上次同步记录(path.join(os.tmpdir(), "不存在的上次同步记录.json"))), "");
