@@ -48,11 +48,16 @@ function messageCountOf(session) {
   return Array.isArray(session.chatLogMessageList) ? session.chatLogMessageList.length : 0;
 }
 
+/** 京东咚咚把表情存成 #E-sXX 编码（如 #E-s33）；课件里应显示为可读占位，不能露出编码 */
+function normalizeEmojiCodes(text) {
+  return String(text == null ? '' : text).replace(/#E-s\d+/gi, '（表情）');
+}
+
 function firstLineOf(session) {
   const list = Array.isArray(session.chatLogMessageList) ? session.chatLogMessageList : [];
   for (const m of list) {
     if (m && m.content && !m.imgUrl) {
-      const t = String(m.content).replace(/<br\/?>/gi, ' ').replace(/\s+/g, ' ').trim();
+      const t = normalizeEmojiCodes(String(m.content)).replace(/<br\/?>/gi, ' ').replace(/\s+/g, ' ').trim();
       if (t) return t.slice(0, 40);
     }
   }
@@ -92,7 +97,7 @@ function rawSessionToChat(raw, { sid, meta = {} } = {}) {
     .map((m) => ({
       time: m.created || '',
       role: Number(m.waiterSend) === 1 ? 'waiter' : 'customer',
-      text: m.content != null ? String(m.content) : '',
+      text: normalizeEmojiCodes(m.content != null ? String(m.content) : ''),
       img: m.imgUrl || '',
       type: m.type || 'text'
     }))
@@ -113,4 +118,4 @@ function rawSessionToChat(raw, { sid, meta = {} } = {}) {
   });
 }
 
-module.exports = { sessionsOf, summarizeSessions, rawSessionToChat, messageCountOf };
+module.exports = { sessionsOf, summarizeSessions, rawSessionToChat, messageCountOf, normalizeEmojiCodes };

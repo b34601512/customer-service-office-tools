@@ -69,6 +69,22 @@ test('sessionsOf：新版“每元素一个消息包”按 sid 聚合会话字�
   assert.strictEqual(chat.meta.rawSid, 'N1');
 });
 
+test('normalizeEmojiCodes：京东表情编码转为（表情），并用于消息转换', () => {
+  const { normalizeEmojiCodes } = require('../src/services/jdConvert');
+  assert.strictEqual(normalizeEmojiCodes('#E-s33'), '（表情）');
+  assert.strictEqual(normalizeEmojiCodes('您好#E-s21 请问有什么可以帮到您'), '您好（表情） 请问有什么可以帮到您');
+  assert.strictEqual(normalizeEmojiCodes('嗯嗯 #E-s21'), '嗯嗯 （表情）');
+  assert.strictEqual(normalizeEmojiCodes('普通文本'), '普通文本');
+
+  const rawEmoji = { chatLogList: [
+    { chatLogMessageList: [
+      { sid: 'E1', customer: 'jd_e', waiter: 'w', created: '2026-08-24 08:37:13', content: '#E-s33', waiterSend: 1 }
+    ] }
+  ] };
+  const chat = rawSessionToChat(rawEmoji, { sid: 'E1' });
+  assert.strictEqual(chat.messages[0].text, '（表情）');
+});
+
 test('buildQueryUrl / buildFetchExpression（jdFetch 导出）', () => {
   const jd = require('../src/services/jdFetch');
   const url = jd.buildQueryUrl('https://kf.jd.com/chatLog/queryList.action', {
