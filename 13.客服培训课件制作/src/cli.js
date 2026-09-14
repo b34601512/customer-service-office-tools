@@ -5,6 +5,7 @@ const { createWorkspace } = require('./services/paths');
 const { loadConfig } = require('./services/config');
 const { listChatFiles, writeChat, reviewFileFor } = require('./services/chatStore');
 const { listPages, pickCandidates, fetchJdSummaryAndChat } = require('./services/jdFetch');
+const { fetchImFullLog, imSessionsOf, imSessionToChat, summarizeImSessions } = require('./services/jdImFetch');
 const { importFromFile } = require('./services/importers');
 const { generateCourseware } = require('./services/courseworkService');
 
@@ -36,10 +37,14 @@ function usage() {
 
   fetch:list  [--start YYYY-MM-DD] [--end YYYY-MM-DD] [--customer 值] [--port 端口]
               连接已登录 Chrome 调试端口，列出匹配会话（供选 sid）
-  fetch:save  <sid> [同上参数]    抓取并保存指定会话为聊天记录文件
+  fetch:save  <sid> [同上参数]    抓取并保存指定会话为聊天记录文件（⚠ 只含客服/客户消息）
+  fetch:full  <顾客ID> [--save <sid>] [--tag 主题] [--port 端口]
+              抓取该顾客「全量」聊天记录（含机器人自动回复/欢迎语/商品卡片），做课件用这个
   import      <文件路径>          导入 txt/json 聊天记录
   generate    [聊天文件基名]      出片+自检（缺省用最近的聊天记录；需同名解析文件）
 示例:
+  node src/cli.js fetch:full jd_4e7ead55726dd
+  node src/cli.js fetch:full jd_4e7ead55726dd --save 61ef8f0f603973f8245c108caadbe1a7
   node src/cli.js fetch:list --start 2026-08-05
   node src/cli.js fetch:save 3728192 --start 2026-08-05
   node src/cli.js import runtime/chat/我的案例.txt
@@ -94,6 +99,45 @@ async function cmdFetchSave(ws, cfg, opts, sid) {
   console.log(`下一步：读该文件确认主题与教学场景，然后写解析文件，再跑 generate。`);
 }
 
+// ---------- 取数：全量（含机器人自动回复/系统消息，课件取数必须用这个） ----------
+async function cmdFetchFull(ws, cfg, opts, pin) {
+  if (!pin) throw new Error('缺少顾客ID：node src/cli.js fetch:full <jd_客户号> [--save <sid>] [--tag 主题]');
+  const port = Number(opts.port) || cfg.cdp.port;
+  const pages = await listPages({ port });
+  const cands = pickCandidates(pages, cfg.cdp.pageTitleMatch);
+  if (cands.length === 0) {
+    const list = pages.slice(0, 8).map((p) => `  - ${p.title} | ${p.url}`).join('\n');
+    throw new Error(`没有匹配「${cfg.cdp.pageTitleMatch}」的页面。已打开页面：\n${list || '（无）'}`);
+  }
+  const pageInfo = cands[0].page;
+  console.log(`页面：${pageInfo.title}｜顾客：${pin}｜抓取全量聊天记录中（含机器人自动回复）…`);
+  const raw = await fetchImFullLog({ pageInfo, customerPin: pin });
+  const sessions = summarizeImSessions(raw);
+  if (sessions.length === 0) {
+    console.log('✗ 未查到聊天记录（检查顾客ID/登录店铺/该顾客是否真进过店）。');
+    return;
+  }
+  sessions.forEach((s) => {
+    console.log(`[${s.sid}] ${s.firstTime} ~ ${s.lastTime} | ${s.messageCount}条（客户${s.customerCount}/客服${s.waiterCount}/系统${s.systemCount}，其中自动回复${s.autoCount}）`);
+  });
+  const saveSid = opts.save && opts.save !== true ? String(opts.save) : '';
+  if (!saveSid) {
+    console.log(`\n共 ${sessions.length} 个会话。保存哪一个：node src/cli.js fetch:full ${pin} --save <sid> [--tag 主题]`);
+    return;
+  }
+  const session = imSessionsOf(raw).find((s) => s.sid === saveSid);
+  if (!session) throw new Error(`未找到 sid=${saveSid}（上面列表里的 sid）`);
+  const chat = imSessionToChat(session, {
+    customerPin: pin,
+    tag: opts.tag && opts.tag !== true ? String(opts.tag) : '',
+    store: opts.store && opts.store !== true ? String(opts.store) : ''
+  });
+  const saved = writeChat(ws, chat);
+  const sys = chat.messages.filter((m) => m.role === 'system').length;
+  console.log(`✔ 已保存全量：${saved.file}（${chat.messages.length} 条，其中机器人/系统 ${sys} 条）`);
+  console.log('下一步：通读全量内容（先看机器人自动回复，别冤枉客服）→ 写解析文件 → generate。');
+}
+
 // ---------- 导入 ----------
 async function cmdImport(ws, opts) {
   const file = opts._[0];
@@ -144,6 +188,7 @@ async function main() {
   try {
     if (sub === 'fetch:list') await cmdFetchList(ws, cfg, opts);
     else if (sub === 'fetch:save') await cmdFetchSave(ws, cfg, opts, opts._[0]);
+    else if (sub === 'fetch:full') await cmdFetchFull(ws, cfg, opts, opts._[0]);
     else if (sub === 'import') await cmdImport(ws, opts);
     else if (sub === 'generate') await cmdGenerate(ws, opts);
     else { console.error(`未知子命令：${sub}`); usage(); process.exitCode = 1; }

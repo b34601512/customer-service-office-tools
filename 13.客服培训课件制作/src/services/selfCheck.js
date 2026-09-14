@@ -2,7 +2,7 @@
 // 依据经验模板铁律：无目录/无结尾总结卡、就地解析、客服右客户左、
 // 无字面 <br/>、无乱码、客户ID 默认脱敏+眼睛按钮、图片全部内嵌。
 
-function runSelfCheck(html, { review, report }) {
+function runSelfCheck(html, { review, report, chat }) {
   const items = [];
   const add = (status, text) => items.push({ status, text });
 
@@ -39,6 +39,17 @@ function runSelfCheck(html, { review, report }) {
   // 8) 图片下载失败提示
   const fails = (report && report.imageFailures) || [];
   add(fails.length === 0 ? 'ok' : 'warn', `聊天图片下载（失败 ${fails.length} 张）`);
+
+  // 9) 机器人自动回复/系统消息必须全部画出来
+  // 漏画它们会把“机器人已答完、客服只发了个表情”误判成“客服不答问题”，冤枉客服
+  const sysExpected = ((chat && chat.messages) || []).filter((m) => m.role === 'system').length;
+  const sysActual = (html.match(/class="msg from-sys"/g) || []).length;
+  if (sysExpected > 0) {
+    add(sysActual === sysExpected ? 'ok' : 'fail', `机器人/系统消息全部渲染（期望 ${sysExpected}，实际 ${sysActual}）`);
+  } else {
+    const fromFullLog = /咚咚全量|全量记录/.test(String((chat && chat.meta && chat.meta.sourceNote) || ''));
+    add(fromFullLog ? 'ok' : 'warn', fromFullLog ? '该会话无机器人/系统消息（已用全量口径核对）' : '取数疑似旧口径（无机器人/系统消息）→ 用 fetch:full 全量核对');
+  }
 
   return items;
 }

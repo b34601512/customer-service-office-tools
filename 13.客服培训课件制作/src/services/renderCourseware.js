@@ -27,6 +27,9 @@ async function embedImage(url) {
 
 function renderMessage(msg, overlay, insightHtml, imgMap) {
   const isCus = msg.role === 'customer';
+  const isSys = msg.role === 'system';
+  const cls = isSys ? 'from-sys' : isCus ? 'from-cus' : 'from-kf';
+  const who = isSys ? `🔔 ${msg.label || '系统消息'}` : isCus ? '客户' : '客服';
   const noteBadge = overlay && overlay.note ? `<div class="note-mark">${esc(overlay.note)}</div>` : '';
   const badBadge = overlay && overlay.bad ? `<div class="key-mark"><span class="key-flag">◆ 可优化回复</span></div>` : '';
   let bubble;
@@ -36,9 +39,9 @@ function renderMessage(msg, overlay, insightHtml, imgMap) {
   } else {
     bubble = `<div class="bubble">${esc(msg.text)}</div>`;
   }
-  let html = `<div class="msg ${isCus ? 'from-cus' : 'from-kf'}">
+  let html = `<div class="msg ${cls}">
     <div class="msg-body">
-      <div class="msg-meta"><span class="who">${isCus ? '客户' : '客服'}</span><span class="time">${esc((msg.time || '').slice(11, 16))}</span>${noteBadge}</div>
+      <div class="msg-meta"><span class="who">${esc(who)}</span><span class="time">${esc((msg.time || '').slice(11, 16))}</span>${noteBadge}</div>
       ${bubble}
       ${badBadge}
     </div>
@@ -69,6 +72,10 @@ async function renderCourseware(chat, review) {
   }).join('');
 
   const customerLabel = chat.meta.customer || chat.meta.orderId || '';
+  // 系统消息（机器人自动回复/欢迎语）必须画出来：漏掉它们会把“机器人已答、客服只发了个表情”当成客服不答问题。
+  const hasSystem = chat.messages.some((m) => m.role === 'system');
+  const sysCss = hasSystem ? '\n.from-sys{justify-content:center}.from-sys .msg-body{max-width:82%}\n.from-sys .msg-meta{justify-content:center}.from-sys .bubble{background:#eef2f6;border:1px dashed #cbd5e1;color:#475569;font-size:12.5px;border-radius:10px}' : '';
+  const sysHint = hasSystem ? '灰色虚线框＝机器人自动回复/系统消息（不是客服发的）。' : '';
   // 标题只进浏览器标签页（<title>）；页面内不再做大标题头/摘要卡，打开即正文。
   const title = review.title || `${chat.meta.customer || chat.meta.window || '客服'} 培训案例`;
   const store = review.store || chat.meta.store || '';
@@ -118,7 +125,7 @@ body.show-cid .cid{display:inline}
 .compare .bad .col-label{color:#b91c1c}.compare .good .col-label{color:#15803d}
 .compare p{font-size:13px;line-height:1.82;color:#374151}.compare .good p{color:#14532d}.compare .bad p{color:#7f1d1d}
 .compare .why{margin-top:8px;font-size:12px;color:#b91c1c;border-top:1px dashed #fecaca;padding-top:8px}
-.arrow-note{text-align:center;margin:12px 0 0;font-size:12.5px;color:#94a3b8;line-height:1.8}.arrow-note b{color:#e1251b}
+.arrow-note{text-align:center;margin:12px 0 0;font-size:12.5px;color:#94a3b8;line-height:1.8}.arrow-note b{color:#e1251b}${sysCss}
 .tips{list-style:none;margin-top:10px}
 .tips li{display:flex;gap:12px;padding:10px 0;border-bottom:1px dashed #e5e7eb;font-size:13.5px;line-height:1.8}
 .tips .num{min-width:21px;height:21px;border-radius:50%;background:#1d4ed8;color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:3px}
@@ -131,7 +138,7 @@ body.show-cid .cid{display:inline}
 <body>
 <div class="wrap">
 <div class="card">
-  <div class="hint">👇 真实会话回放。每条“◆ 可优化回复”下方都有<b>就地解析</b>，点击展开看“当时怎么说 vs 建议怎么说”。</div>
+  <div class="hint">👇 真实会话回放。${sysHint}每条“◆ 可优化回复”下方都有<b>就地解析</b>，点击展开看“当时怎么说 vs 建议怎么说”。</div>
   <div class="chat-area">
     <div class="session-title">
       <span>💬 ${esc(review.window || chat.meta.window || '')} · <span class="cid">${esc(customerLabel)}</span> 会话</span>
@@ -150,6 +157,7 @@ body.show-cid .cid{display:inline}
     report: {
       messageCount: chat.messages.length,
       insightCount: Object.keys(review.insights || {}).length,
+      systemCount: chat.messages.filter((m) => m.role === 'system').length,
       imageFailures,
       monthDir: monthDirOf(review.window || chat.meta.window)
     }

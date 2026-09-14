@@ -9,7 +9,7 @@
 ## 新链路（四步，见 SKILL.md）
 
 ```
-1. 取数（程序）：node src/cli.js fetch:list / fetch:save（京东抓取，需已登录 Chrome + 调试端口9222）
+1. 取数（程序）：`node src/cli.js fetch:full <顾客ID> --save <sid>`（京东全量抓取，含机器人自动回复；需已登录 Chrome + 调试端口9222/9223）。
                 或 node src/cli.js import <文件>（手动导入）→ runtime/chat/<基名>.chat.json
 2. AI 读记录、确认教学场景（涨价应对/议价/三通识别/安抚情绪…）
 3. AI 按 SKILL.md 契约写 runtime/review/<基名>.review.json（唯一创作部分）

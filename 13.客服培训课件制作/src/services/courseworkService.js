@@ -40,7 +40,7 @@ async function generateCourseware(ws, { chatFile, reviewFile, outputName } = {})
   }
 
   const { html, report } = await renderCourseware(chat, review);
-  const checkItems = runSelfCheck(html, { review, report });
+  const checkItems = runSelfCheck(html, { review, report, chat });
 
   // 落盘到 runtime/outputs/<月份目录>/<outputName>
   const dir = path.join(ws.dirs.outputs, report.monthDir);

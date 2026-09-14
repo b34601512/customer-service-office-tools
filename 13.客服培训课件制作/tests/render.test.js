@@ -50,7 +50,7 @@ test('renderCourseware 输出关键结构与样式', async () => {
 
 test('selfCheck 全绿（无图片）', async () => {
   const { html, report } = await renderCourseware(chat, review);
-  const items = runSelfCheck(html, { review, report });
+  const items = runSelfCheck(html, { review, report, chat });
   const s = summarize(items);
   assert.strictEqual(s.fail, 0);
   assert.strictEqual(s.ok, items.length - s.warn);
@@ -61,6 +61,28 @@ test('图片下载失败进入报告且自检警告', async () => {
   chatImg.messages[0].img = 'http://127.0.0.1:1/nope.png';
   const { html, report } = await renderCourseware(chatImg, review);
   assert.strictEqual(report.imageFailures.length, 1);
-  const items = runSelfCheck(html, { review, report });
+  const items = runSelfCheck(html, { review, report, chat: chatImg });
   assert.ok(items.some((x) => x.status === 'warn' && x.text.includes('图片下载')));
+});
+
+test('系统消息（机器人自动回复）必须画出来且自检通过', async () => {
+  const chatSys = JSON.parse(JSON.stringify(chat));
+  chatSys.meta.sourceNote = '京东咚咚全量记录 sid=x（含机器人自动回复/系统消息）';
+  chatSys.messages.splice(1, 0, { time: '2026-08-05 15:07:40', role: 'system', label: '自动回复', text: '亲亲～帮您查一下哦～' });
+  const { html, report } = await renderCourseware(chatSys, review);
+  assert.ok(html.includes('class="msg from-sys"'));
+  assert.ok(html.includes('自动回复'));
+  assert.ok(html.includes('灰色虚线框'));
+  assert.strictEqual(report.systemCount, 1);
+  const items = runSelfCheck(html, { review, report, chat: chatSys });
+  const sysItem = items.find((x) => x.text.includes('机器人/系统消息'));
+  assert.strictEqual(sysItem.status, 'ok');
+  assert.strictEqual(summarize(items).fail, 0);
+});
+
+test('旧口径（无机器人消息且非全量来源）自检给出提醒', async () => {
+  const { html, report } = await renderCourseware(chat, review);
+  const items = runSelfCheck(html, { review, report, chat });
+  const sysItem = items.find((x) => x.text.includes('取数疑似旧口径'));
+  assert.strictEqual(sysItem.status, 'warn');
 });

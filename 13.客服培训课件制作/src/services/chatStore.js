@@ -5,7 +5,8 @@ const { validateChat } = require('./chatSchema');
 const { sanitize } = require('./paths');
 
 function chatFileName(chat) {
-  const base = [chat.meta.window, chat.meta.customer || chat.meta.orderId || '会话']
+  // tag 只用于文件名区分同一顾客的多个会话（客户ID 本身保持干净，页面上不露出主题）
+  const base = [chat.meta.window, chat.meta.customer || chat.meta.orderId || '会话', chat.meta.tag]
     .filter(Boolean)
     .join('_');
   return `${sanitize(base)}.chat.json`;
