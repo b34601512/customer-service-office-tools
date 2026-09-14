@@ -2,6 +2,10 @@
 // 复用已登录的京东后台会话；不负责界面，调用方负责展示/选择会话。
 const { summarizeSessions, rawSessionToChat } = require('./jdConvert');
 
+// 本机 CDP 请求必须绕过代理，否则代理可能把 127.0.0.1 改写成网关请求。
+process.env.NO_PROXY = [process.env.NO_PROXY, '127.0.0.1', 'localhost'].filter(Boolean).join(',');
+process.env.no_proxy = process.env.NO_PROXY;
+
 async function httpGetJson(url, timeoutMs = 5000) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeoutMs);
@@ -19,14 +23,20 @@ async function listPages({ port = 9222, timeoutMs = 5000 } = {}) {
   const meta = await httpGetJson(`http://127.0.0.1:${port}/json/list`, timeoutMs).catch((e) => {
     throw new Error(`连不上 Chrome 调试端口 ${port}（${e.message}）。请确认已用 --remote-debugging-port=${port} 启动 Chrome 并登录京东后台。`);
   });
-  return (Array.isArray(meta) ? meta : []).filter((t) => t.type === 'page');
+  return (Array.isArray(meta) ? meta : [])
+    .filter((t) => t.type === 'page')
+    .filter((t) => !/^(about|edge|chrome|chrome-extension):/i.test(String(t.url || '')));
 }
 
 /** 候选匹配：优先标题包含配置词，其次 URL 含 kf.jd.com */
 function matchPageScore(page, titleMatch) {
   let score = 0;
-  if (titleMatch && String(page.title || '').includes(titleMatch)) score += 10;
-  if (String(page.url || '').includes('kf.jd.com')) score += 5;
+  const title = String(page.title || '');
+  const url = String(page.url || '');
+  if (titleMatch && title.includes(titleMatch)) score += 10;
+  if (url.includes('kf.jd.com')) score += 5;
+  // 实际登录后的客服后台常停在 shop.jd.com/jdm/kefu/*，标题通常只是“京麦/聊天记录”。
+  if (/shop\.jd\.com\/jdm\/kefu(?:\/|$)/i.test(url)) score += 5;
   return score;
 }
 
@@ -101,7 +111,13 @@ function buildFetchExpression(apiBase, params) {
 async function fetchChatLogRaw({ pageInfo, apiBase, query, pageSize = 50, maxPages = 5 } = {}) {
   const page = pageInfo;
   if (!page || !page.webSocketDebuggerUrl) throw new Error('缺少目标页面信息');
-  if (!String(page.url || '').includes('kf.jd.com') && !String(page.title || '').includes('京东')) {
+  const pageUrl = String(page.url || '');
+  const pageTitle = String(page.title || '');
+  if (!pageUrl.includes('kf.jd.com')
+      && !/shop\.jd\.com\/jdm\/kefu(?:\/|$)/i.test(pageUrl)
+      && !pageTitle.includes('京东')
+      && !pageTitle.includes('京麦')
+      && !pageTitle.includes('聊天记录')) {
     // 仅在页面明显不相关时报错（避免误点别的网页执行带 Cookie 请求）
     throw new Error(`目标页面似乎不是京东客服管家页面：${page.title} / ${page.url}`);
   }
@@ -127,7 +143,12 @@ async function fetchJdSummaryAndChat({ pageInfo, apiBase, query, pageSize = 50, 
   const fetched = await fetchChatLogRaw({ pageInfo, apiBase, query, pageSize, maxPages });
   return {
     ...fetched,
-    toChat: (sid) => rawSessionToChat({ chatLogList: fetched.sessions }, { sid, meta: { window: query.startTime } })
+    toChat: (sid) => rawSessionToChat({ chatLogList: fetched.sessions }, {
+      sid,
+      // 只有“单日查询”才用查询日期做窗口；宽窗口时应按会话消息真实日期推导，
+      // 否则文件名/输出月份会错挂成查询起始日。
+      meta: { window: query.startTime && query.startTime === query.endTime ? query.startTime : '' }
+    })
   };
 }
 

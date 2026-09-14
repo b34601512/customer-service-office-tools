@@ -74,7 +74,7 @@ node src/cli.js import <文件路径>
 ### 第 4 步：出片 + 自检 + 验收
 ```bash
 node src/cli.js generate [聊天文件基名]      # 出片 + 铁律自检，全绿才算完成
-node --test tests/                            # 回归测试（改了本项目代码才需要）
+node --test                                    # 回归测试（改了本项目代码才需要；Node 24 下目录写法 node --test tests/ 会报 Cannot find module，用这个）
 ```
 `generate` 输出含成品路径（`runtime/outputs/<年>年<月>月/<文件名>.html`）与自检清单。
 

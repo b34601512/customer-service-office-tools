@@ -42,6 +42,33 @@ test('rawSessionToChat：指定 sid', () => {
   assert.strictEqual(chat.meta.customer, 'jd_a');
 });
 
+test('sessionsOf：新版“每元素一个消息包”按 sid 聚合会话字段', () => {
+  const rawNew = {
+    chatLogList: [
+      { chatLogMessageList: [
+        { sid: 'N1', customer: 'jd_x', waiter: 'w1', created: '2026-08-21 10:00:00', content: '价格能优惠点吗', waiterSend: 0 },
+        { sid: 'N1', customer: 'jd_x', waiter: 'w1', created: '2026-08-21 10:00:05', content: '亲，给您查下', waiterSend: 1 }
+      ] },
+      { chatLogMessageList: [
+        { sid: 'N2', customer: 'jd_y', waiter: 'w2', created: '2026-08-21 11:00:00', content: '在吗', waiterSend: 0 }
+      ] }
+    ]
+  };
+  const sessions = sessionsOf(rawNew);
+  assert.strictEqual(sessions.length, 2);
+  assert.strictEqual(sessions.find((s) => s.sid === 'N1').chatLogMessageList.length, 2);
+  assert.strictEqual(sessions.find((s) => s.sid === 'N1').customer, 'jd_x');
+
+  const sum = summarizeSessions(rawNew);
+  assert.strictEqual(sum.length, 2);
+  assert.ok(sum.some((s) => s.customer === 'jd_x' && s.messageCount === 2));
+
+  const chat = rawSessionToChat(rawNew, { sid: 'N1' });
+  assert.strictEqual(chat.messages.length, 2);
+  assert.strictEqual(chat.meta.customer, 'jd_x');
+  assert.strictEqual(chat.meta.rawSid, 'N1');
+});
+
 test('buildQueryUrl / buildFetchExpression（jdFetch 导出）', () => {
   const jd = require('../src/services/jdFetch');
   const url = jd.buildQueryUrl('https://kf.jd.com/chatLog/queryList.action', {

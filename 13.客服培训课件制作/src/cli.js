@@ -121,8 +121,11 @@ async function cmdGenerate(ws, opts) {
     console.log('解析文件：' + reviewPath);
   } else {
     console.log(`✔ 已生成：${result.htmlPath}`);
-    (result.checkItems || []).forEach((c) => console.log(`  ${c.pass ? '✔' : '✗'} ${c.name}`));
-    if (result.checkItems && result.checkItems.some((c) => !c.pass)) process.exitCode = 1;
+    (result.checkItems || []).forEach((c) => {
+      const mark = c.status === 'ok' ? '✔' : c.status === 'warn' ? '⚠' : '✗';
+      console.log(`  ${mark} ${c.text || c.name || ''}`);
+    });
+    if (result.checkItems && result.checkItems.some((c) => c.status === 'fail' || c.pass === false)) process.exitCode = 1;
   }
 }
 

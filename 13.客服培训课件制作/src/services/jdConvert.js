@@ -10,7 +10,38 @@ function sessionsOf(raw) {
     : raw.data && Array.isArray(raw.data.chatLogList) ? raw.data.chatLogList
     : raw.data && Array.isArray(raw.data) ? raw.data
     : Array.isArray(raw) ? raw : [];
-  return list.filter((s) => s && typeof s === 'object');
+  const objects = list.filter((s) => s && typeof s === 'object');
+  if (!objects.some((s) => Array.isArray(s.chatLogMessageList))) return objects;
+
+  // 新版接口返回“每个元素一个消息包”，会话字段在消息的 sid/customer/waiter 中。
+  // 先按 sid 聚合，兼容旧版“每个元素就是一个完整会话”的返回格式。
+  const grouped = new Map();
+  const ungrouped = [];
+  for (const row of objects) {
+    const messages = Array.isArray(row.chatLogMessageList) ? row.chatLogMessageList : [];
+    if (!messages.length) {
+      ungrouped.push(row);
+      continue;
+    }
+    for (const message of messages) {
+      const sid = message && message.sid != null ? String(message.sid) : (row.sid != null ? String(row.sid) : '');
+      if (!sid) {
+        ungrouped.push({ ...row, chatLogMessageList: [message] });
+        continue;
+      }
+      if (!grouped.has(sid)) {
+        grouped.set(sid, {
+          sid,
+          customer: message.customer || row.customer || '',
+          waiter: message.waiter || row.waiter || '',
+          closeTypeDesc: message.closeTypeDesc || row.closeTypeDesc || '',
+          chatLogMessageList: []
+        });
+      }
+      grouped.get(sid).chatLogMessageList.push(message);
+    }
+  }
+  return [...grouped.values(), ...ungrouped];
 }
 
 function messageCountOf(session) {
