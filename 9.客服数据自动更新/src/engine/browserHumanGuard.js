@@ -9,7 +9,7 @@ const PLATFORM_HOSTS = {
   pdd: ["pinduoduo.com", "yangkeduo.com"],
   douyin: ["jinritemai.com", "douyin.com"]
 };
-const CHALLENGE_TEXT = /拖动.{0,16}滑块|滑动.{0,16}(验证|拼图)|请完成.{0,8}(安全验证|身份验证)|请依次点击|通过验证以确保正常访问|异常访问行为|检测到.{0,8}(异常访问|访问异常)|请.{0,8}输入.{0,8}短信验证码/;
+const CHALLENGE_TEXT = /拖动.{0,16}滑块|滑动.{0,16}(验证|拼图)|拖动.{0,16}(拼图|箭头)|请完成.{0,8}(安全验证|身份验证)|请依次点击|通过验证以确保正常访问|异常访问行为|检测到.{0,8}(异常访问|访问异常)|请.{0,8}输入.{0,8}短信验证码/;
 const LOGIN_TEXT = /^(扫码登录|请扫码登录|手机验证码登录|短信验证码登录|登录已过期|请重新登录)$/;
 
 function isPlatformUrl(rawUrl, platformKey) {

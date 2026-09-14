@@ -49,6 +49,29 @@ function hasJdLoginFormText(text) {
     .some((keyword) => normalizedText.includes(keyword));
 }
 
+// 京东登录页/安全验证（含滑块）的稳定文案特征。
+// 现场规律：登录态失效后会出现“个人用户登录/企业用户登录/手机扫码安全登录”，
+// 需要滑块时再叠加“安全验证/拖动滑块/移动滑块填充拼图”弹层。
+// 这些都属于必须人工完成的验证，不能当成可自动关闭的遮挡弹窗。
+const JD_LOGIN_OR_VERIFICATION_TEXT_MARKERS = [
+  "个人用户登录",
+  "企业用户登录",
+  "手机扫码安全登录",
+  "移动滑块填充拼图",
+  "拖动滑块",
+  "请完成安全验证",
+  "安全验证",
+  "登录京东",
+  "请重新登录"
+];
+
+function hasJdLoginOrVerificationText(text) {
+  // 这里只识别明确的登录页/安全验证文案，避免把业务页里的普通“登录”字样误判为验证面。
+  const normalizedText = normalizeText(text);
+  if (!normalizedText) return false;
+  return JD_LOGIN_OR_VERIFICATION_TEXT_MARKERS.some((keyword) => normalizedText.includes(keyword));
+}
+
 function hasJdSessionExpiredText(text) {
   // 这里识别京东系统会话失效文案，便于重新回到官方登录页。
   const normalizedText = normalizeText(text);
@@ -111,6 +134,8 @@ module.exports = {
   isJdSystemUrl,
   isSameTargetUrl,
   hasJdLoginFormText,
+  JD_LOGIN_OR_VERIFICATION_TEXT_MARKERS,
+  hasJdLoginOrVerificationText,
   hasJdSessionExpiredText,
   isJdLoginReady,
   pickBestCandidatePage

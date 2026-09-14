@@ -1,6 +1,10 @@
 const { dismissBlockingPopups } = require("../../shared/blockingPopupEngine");
 const { getJdDateRangeEditors, getJdExportButton, getJdSearchButton } = require("./jdControls");
-const { hasJdSessionExpiredText } = require("./jdLoginPageClassifier");
+const {
+  hasJdSessionExpiredText,
+  hasJdLoginOrVerificationText,
+  isJdPassportLoginUrl
+} = require("./jdLoginPageClassifier");
 
 const jdExpiredSessionLoginSelectors = [
   ".el-message-box__btns .el-button--primary:has-text('现在登录')",
@@ -23,8 +27,35 @@ async function readSurfaceBodyText(surface) {
 }
 
 async function attemptDismissJdPopup(surface) {
+  // 登录页/安全验证（含滑块）必须留给人工作业：
+  // 这类“弹层”没有唯一关闭入口，若交给弹窗引擎会直接抛错并误报为遮挡弹窗，
+  // 导致登录等待流程被提前中断。这里明确跳过，让上层继续轮询等待人工登录。
+  if (await isJdLoginOrVerificationSurface(surface)) {
+    return false;
+  }
   // 该函数只关闭当前京东操作面中唯一明确的关闭入口。
   return (await dismissBlockingPopups(surface, { platformName: "京东" })) > 0;
+}
+
+async function isJdLoginOrVerificationSurface(surface) {
+  // 该函数只判断当前操作面是否属于京东登录页或安全验证面，不做任何点击。
+  try {
+    const surfaceUrl = typeof surface?.url === "function" ? String(surface.url() || "") : "";
+    if (surfaceUrl && isJdPassportLoginUrl(surfaceUrl)) {
+      return true;
+    }
+    const bodyText = await readSurfaceBodyText(surface);
+    return hasJdLoginOrVerificationText(bodyText) && !hasJdSystemReadySurfaceText(bodyText);
+  } catch (_error) {
+    return false;
+  }
+}
+
+function hasJdSystemReadySurfaceText(bodyText) {
+  // 该函数只兜住“业务面同时残留登录字样”的误判：业务面出现查询+导出时按业务页处理。
+  const normalizedText = String(bodyText || "");
+  return normalizedText.includes("客服工作台") ||
+    (normalizedText.includes("查询") && /导出/.test(normalizedText));
 }
 
 function isJdBusinessPage(page) {
@@ -70,6 +101,7 @@ async function isJdReportSurfaceReady(surface) {
 
 module.exports = {
   attemptDismissJdPopup,
+  isJdLoginOrVerificationSurface,
   stabilizeJdBrowser,
   readSurfaceBodyText,
   isJdReportSurfaceReady
