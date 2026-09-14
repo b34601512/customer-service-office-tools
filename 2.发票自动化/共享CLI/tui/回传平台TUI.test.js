@@ -398,6 +398,33 @@ test("总览页：任务结束后把时间与读取单数写进上次同步记�
   }
 });
 
+test("订单页：没有订单时要说清楚本地数据最后更新时间，别让人看成没同步过", () => {
+  const fs = require("node:fs");
+  const os = require("node:os");
+  const path = require("node:path");
+  const 临时目录 = fs.mkdtempSync(path.join(os.tmpdir(), "订单页空列表-"));
+  const 数据文件 = path.join(临时目录, "orders.json");
+  try {
+    fs.writeFileSync(数据文件, "{}", "utf8");
+    const output = 创建模拟输出();
+    const { app, dispose } = 创建回传平台TUI({
+      标题: "模拟回传控制台",
+      output,
+      ...创建模拟服务(),
+      读取全部订单: () => [],
+      数据更新时间文件: 数据文件,
+    });
+    app.running = true;
+    app.切换页面(1);
+    const 帧 = app.构建帧().map((行) => 行.replace(/\u001b\[[0-9;]*m/g, ""));
+    assert.ok(帧.some((行) => 行.includes("暂无同步到的订单明细")));
+    assert.ok(帧.some((行) => 行.includes("本地数据最后更新：")));
+    dispose();
+  } finally {
+    fs.rmSync(临时目录, { recursive: true, force: true });
+  }
+});
+
 test("总览页：只留状态行与快捷操作，不再渲染店铺订单一览", () => {
   const output = 创建模拟输出();
   const { app, dispose } = 创建回传平台TUI({
