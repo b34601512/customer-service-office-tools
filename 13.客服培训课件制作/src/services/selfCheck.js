@@ -9,6 +9,7 @@ function runSelfCheck(html, { review, report }) {
   // 1) 无左侧目录 / 无独立结尾总结卡片
   add((!html.includes('class="toc"') && !/<nav/i.test(html)) ? 'ok' : 'fail', '无左侧目录/锚点栏');
   add(!html.includes('结尾总结') && !html.includes('class="summary-card"') ? 'ok' : 'fail', '无独立结尾总结卡片');
+  add(!html.includes('class="header"') ? 'ok' : 'fail', '无顶部大标题/摘要卡（打开即正文）');
 
   // 2) 就地解析：insight 数量与解析文件一致
   const expected = Object.keys(review.insights || {}).length;

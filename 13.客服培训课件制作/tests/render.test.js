@@ -40,6 +40,9 @@ test('renderCourseware 输出关键结构与样式', async () => {
   assert.ok(html.includes('.cid{display:none}'));
   assert.ok(html.includes('body.show-cid .cid{display:inline}'));
   assert.ok(html.includes('<details class="insight"'));
+  assert.ok(!html.includes('class="header"'));
+  assert.ok(html.includes('<title>培训课件：'));
+  assert.ok(!html.includes(review.sub), '案例看点摘要不应再渲染进页面');
   assert.strictEqual((html.match(/<details class="insight"/g) || []).length, 2);
   assert.strictEqual(report.messageCount, 3);
   assert.strictEqual(report.monthDir, '2026年8月');

@@ -69,9 +69,8 @@ async function renderCourseware(chat, review) {
   }).join('');
 
   const customerLabel = chat.meta.customer || chat.meta.orderId || '';
+  // 标题只进浏览器标签页（<title>）；页面内不再做大标题头/摘要卡，打开即正文。
   const title = review.title || `${chat.meta.customer || chat.meta.window || '客服'} 培训案例`;
-  const sub = review.sub || '';
-  const tagline = review.tagline || '客服培训';
   const store = review.store || chat.meta.store || '';
 
   const html = `<!DOCTYPE html>
@@ -84,17 +83,13 @@ async function renderCourseware(chat, review) {
 *{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}
 body{font-family:-apple-system,"Segoe UI","Microsoft YaHei","PingFang SC",sans-serif;background:#eef0f3;color:#2d3436;line-height:1.7;font-size:14px}
 .wrap{max-width:980px;margin:0 auto;padding:20px 16px 60px}
-.header{background:linear-gradient(135deg,#b91c1c,#e1251b,#ff5a3c);color:#fff;border-radius:14px;padding:22px 26px;margin-bottom:18px}
-.header .tagline{display:inline-block;background:rgba(255,255,255,.22);border-radius:20px;padding:2px 14px;font-size:12px;margin-bottom:10px}
-.header h1{font-size:22px;font-weight:800;margin-bottom:10px;letter-spacing:.5px}
-.header .sub{font-size:13px;opacity:.95;line-height:1.9}.header .sub b{font-weight:700}
 .card{background:#fff;border-radius:14px;padding:20px 22px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
 .card .hint{font-size:12.5px;color:#64748b;margin-bottom:14px}
 .chat-area{background:#f8f9fb;border:1px solid #eef0f3;border-radius:12px;padding:18px}
-.session-title{display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:800;color:#e1251b;background:#fff1f0;border:1px solid #ffd9d6;border-radius:8px;padding:6px 12px;margin-bottom:14px}
+.session-title{display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:800;color:#475569;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:6px 12px;margin-bottom:14px}
 .cid{display:none}
 body.show-cid .cid{display:inline}
-.cid-toggle{background:none;border:1px solid #ffc7c3;border-radius:16px;color:#b91c1c;font-size:12px;padding:2px 12px;cursor:pointer;font-weight:700}
+.cid-toggle{background:none;border:1px solid #cbd5e1;border-radius:16px;color:#64748b;font-size:12px;padding:2px 12px;cursor:pointer;font-weight:700}
 .msg{display:flex;margin-bottom:8px}.msg-body{max-width:78%}
 .from-cus{justify-content:flex-start;margin-right:auto}.from-kf{justify-content:flex-end;margin-left:auto}
 .msg-meta{display:flex;align-items:center;gap:8px;font-size:11.5px;color:#8a94a6;margin-bottom:4px;flex-wrap:wrap}
@@ -135,11 +130,6 @@ body.show-cid .cid{display:inline}
 </head>
 <body>
 <div class="wrap">
-<div class="header">
-  <div class="tagline">${esc(tagline)}</div>
-  <h1>${esc(title)}</h1>
-  <div class="sub">${sub}</div>
-</div>
 <div class="card">
   <div class="hint">👇 真实会话回放。每条“◆ 可优化回复”下方都有<b>就地解析</b>，点击展开看“当时怎么说 vs 建议怎么说”。</div>
   <div class="chat-area">
