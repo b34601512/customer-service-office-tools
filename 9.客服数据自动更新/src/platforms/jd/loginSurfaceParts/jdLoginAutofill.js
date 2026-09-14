@@ -29,14 +29,33 @@ async function waitForJdLoginInputsAfterSwitch(page) {
   );
 }
 
+function isLoginSurfaceRaceError(error) {
+  // 这个函数只识别“填表过程中页面已经跳走”的竞态错误。
+  // 京东登录成功的瞬间会从登录页跳到业务页，此时 fill 会报超时或元素脱离；
+  // 这属于竞态收敛而不是真失败，绝不能因此让整店失败。
+  const message = String(error?.message || "");
+  return /Timeout \d+ms exceeded|not attached|detached|Execution context was destroyed|Target closed|Target page, context or browser has been closed/i.test(message);
+}
+
 async function fillJdLoginCredentials(usernameLocator, passwordLocator, credentials) {
-  // 这个函数只把非空京东账号密码写入已定位输入框。
-  if (credentials.username) {
-    await usernameLocator.fill(credentials.username);
-  }
-  if (credentials.password) {
-    await passwordLocator.fill(credentials.password);
-  }
+  // 这个函数只把非空京东账号密码写入已定位输入框；填入失败（页面跳转）时返回 false 交回上层重新判断。
+  const fillOnce = async (locator, value) => {
+    if (!value) {
+      return true;
+    }
+    try {
+      await locator.fill(value, { timeout: 5000 });
+      return true;
+    } catch (error) {
+      if (isLoginSurfaceRaceError(error)) {
+        return false;
+      }
+      throw error;
+    }
+  };
+  const usernameFilled = await fillOnce(usernameLocator, credentials.username);
+  const passwordFilled = await fillOnce(passwordLocator, credentials.password);
+  return usernameFilled && passwordFilled;
 }
 
 async function tryAutofillLoginFrame(surface, credentials) {
@@ -67,7 +86,11 @@ async function tryAutofillLoginFrame(surface, credentials) {
   if (!usernameLocator || !passwordLocator) {
     return false;
   }
-  await fillJdLoginCredentials(usernameLocator, passwordLocator, credentials);
+  const filled = await fillJdLoginCredentials(usernameLocator, passwordLocator, credentials);
+  if (!filled) {
+    // 登录页在填表过程中已跳走（登录成功或人工完成验证），交回上层继续轮询登录状态。
+    return false;
+  }
   const submitLocator = await findJdPasswordLoginSubmitButton(surface);
   if (!submitLocator) {
     throw new Error("京东登录按钮定位失败：账号密码已填写，但未找到唯一密码提交按钮 #loginsubmit。");
@@ -77,5 +100,7 @@ async function tryAutofillLoginFrame(surface, credentials) {
 }
 
 module.exports = {
-  tryAutofillLoginFrame
+  tryAutofillLoginFrame,
+  fillJdLoginCredentials,
+  isLoginSurfaceRaceError
 };
