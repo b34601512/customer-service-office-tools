@@ -75,7 +75,7 @@ async function renderCourseware(chat, review) {
   // 系统消息（机器人自动回复/欢迎语）必须画出来：漏掉它们会把“机器人已答、客服只发了个表情”当成客服不答问题。
   const hasSystem = chat.messages.some((m) => m.role === 'system');
   const sysCss = hasSystem ? '\n.from-sys{justify-content:center}.from-sys .msg-body{max-width:82%}\n.from-sys .msg-meta{justify-content:center}.from-sys .bubble{background:#eef2f6;border:1px dashed #cbd5e1;color:#475569;font-size:12.5px;border-radius:10px}' : '';
-  const sysHint = hasSystem ? '灰色虚线框＝机器人自动回复/系统消息（不是客服发的）。' : '';
+  const sysHint = hasSystem ? '灰色虚线框＝机器人自动回复/系统消息。' : '';
   // 标题只进浏览器标签页（<title>）；页面内不再做大标题头/摘要卡，打开即正文。
   const title = review.title || `${chat.meta.customer || chat.meta.window || '客服'} 培训案例`;
   const store = review.store || chat.meta.store || '';
