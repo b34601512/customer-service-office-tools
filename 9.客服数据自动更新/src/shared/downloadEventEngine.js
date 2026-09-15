@@ -1,5 +1,15 @@
 const { checkBrowserHumanRequirement } = require("../engine/browserHumanGuard");
-const { assertAutomationActive, getAutomationTime } = require("../engine/browserAutomationScope");
+const { assertAutomationActive, getAutomationScope, getAutomationTime } = require("../engine/browserAutomationScope");
+
+function resolveAbsoluteDeadlineMs(timeoutMs) {
+  // 人工等待时间不计入 automation time（这是为了让用户解验证码不烧掉下载时限），
+  // 但这样存在一个真实风险：只要人工守卫反复耗时，自然超时可以被无限推迟，
+  // 整轮任务会静默卡死、既不上报也不报错。这里再兜一层墙钟上限，
+  // 保证无论如何都能在“下载时限 + 人工验证预算”内收敛，让失败变成可见的错误。
+  const scope = getAutomationScope();
+  const humanBudgetMs = Math.max(0, Number(scope?.humanTimeoutMs) || 0);
+  return Date.now() + timeoutMs + humanBudgetMs;
+}
 
 async function waitForDownloadArtifactState(readArtifact, timeoutMs, pollIntervalMs) {
   // 这里统一重复读取下载产物状态，命中即返回，读取错误直接暴露。
@@ -9,6 +19,7 @@ async function waitForDownloadArtifactState(readArtifact, timeoutMs, pollInterva
   const safeTimeoutMs = Math.max(1, Number(timeoutMs) || 120000);
   const safePollIntervalMs = Math.max(20, Number(pollIntervalMs) || 2000);
   const deadline = getAutomationTime() + safeTimeoutMs;
+  const absoluteDeadlineMs = resolveAbsoluteDeadlineMs(safeTimeoutMs);
 
   while (true) {
     assertAutomationActive();
@@ -18,10 +29,12 @@ async function waitForDownloadArtifactState(readArtifact, timeoutMs, pollInterva
     }
     await checkBrowserHumanRequirement();
     const remainingMs = deadline - getAutomationTime();
-    if (remainingMs <= 0) {
+    const wallRemainingMs = absoluteDeadlineMs - Date.now();
+    if (remainingMs <= 0 || wallRemainingMs <= 0) {
       return null;
     }
-    await new Promise((resolve) => setTimeout(resolve, Math.min(safePollIntervalMs, remainingMs)));
+    const sleepMs = Math.max(1, Math.min(safePollIntervalMs, remainingMs, wallRemainingMs));
+    await new Promise((resolve) => setTimeout(resolve, sleepMs));
   }
 
 }

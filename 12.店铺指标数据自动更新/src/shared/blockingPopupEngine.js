@@ -21,6 +21,8 @@ const DEFAULT_CLOSE_SELECTORS = [
 const DEFAULT_CLOSE_TEXTS = ["关闭", "取消", "知道了"];
 const DEFAULT_POPUP_POLL_INTERVAL_MS = 100;
 const DEFAULT_POPUP_TRANSITION_TIMEOUT_MS = 5000;
+// 弹层“已自行消失”最多连续认账这么多次；超过就停下不猜点，避免反复重建的遮挡层造成无界循环。
+const MAX_SELF_DISMISSED_STREAK = 3;
 
 function buildVisibleSelector(selectors) {
   // 该函数只把多个候选结构限制为当前可见元素。
@@ -169,6 +171,36 @@ async function findOnlyExplicitCloseTarget(popup, options) {
   throw buildPopupFailure(options.platformName, "未找到唯一明确关闭入口");
 }
 
+async function isPopupStillInPage(popupElementHandle) {
+  // 该函数只判断弹层元素是否仍连在页面且仍有可见区域；句柄已失效一律视为已消失。
+  return Boolean(
+    await popupElementHandle
+      .evaluate((element) => Boolean(element && element.isConnected && element.getClientRects().length > 0))
+      .catch(() => false)
+  );
+}
+
+async function clickExplicitCloseTarget(closeTarget, popupElementHandle, platformName) {
+  // 该函数只点击唯一明确关闭入口；若点击期间弹层已自行消失，按“关闭目标已达成”返回 false。
+  // 常见弹窗规律：关闭按钮带动画/继交层，Playwright 判定元素不稳定而超时，
+  // 实际弹层已经消失；这种情形不能当作整店失败。
+  try {
+    await closeTarget.click({ timeout: 5000 });
+    return true;
+  } catch (clickError) {
+    if (await isPopupStillInPage(popupElementHandle)) {
+      throw clickError;
+    }
+    log(
+      "主线:完成",
+      "弹窗治理",
+      "弹层已自行消失",
+      `平台=${platformName}，关闭点击未完成但弹层已不在页面中，按已关闭继续`
+    );
+    return false;
+  }
+}
+
 async function dismissBlockingPopups(surface, options = {}) {
   // 该函数只循环关闭当前操作面中唯一、明确的遮挡弹窗，并等待异步晚到弹层稳定。
   const platformName = String(options.platformName || "当前页面").trim() || "当前页面";
@@ -176,6 +208,7 @@ async function dismissBlockingPopups(surface, options = {}) {
   const idleTimeoutMs = Math.max(0, Number(options.popupIdleTimeoutMs) || 0);
   const pollIntervalMs = Number(options.popupPollIntervalMs) || DEFAULT_POPUP_POLL_INTERVAL_MS;
   let closedPopupCount = 0;
+  let selfDismissedStreak = 0;
   let idleDeadline = Date.now() + idleTimeoutMs;
 
   while (true) {
@@ -194,12 +227,26 @@ async function dismissBlockingPopups(surface, options = {}) {
     if (!popupElementHandle) {
       throw buildPopupFailure(platformName, "当前可见弹层在操作前已经失效");
     }
+    let clicked = true;
     try {
       const originalSignature = await readPopupSignature(popupElementHandle);
-      await closeTarget.click({ timeout: 5000 });
-      await waitForPopupTransition(surface, popupElementHandle, originalSignature, resolvedOptions);
+      clicked = await clickExplicitCloseTarget(closeTarget, popupElementHandle, platformName);
+      if (clicked) {
+        await waitForPopupTransition(surface, popupElementHandle, originalSignature, resolvedOptions);
+      }
     } finally {
       await popupElementHandle.dispose().catch(() => {});
+    }
+    if (clicked) {
+      selfDismissedStreak = 0;
+    } else {
+      selfDismissedStreak += 1;
+      if (selfDismissedStreak > MAX_SELF_DISMISSED_STREAK) {
+        throw buildPopupFailure(
+          platformName,
+          `连续${selfDismissedStreak}次确认弹层已消失，但仍反复检测到遮挡层`
+        );
+      }
     }
     closedPopupCount += 1;
     idleDeadline = Date.now() + idleTimeoutMs;
