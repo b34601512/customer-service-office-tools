@@ -126,3 +126,14 @@ test('旧口径（无机器人消息且非全量来源）自检给出提醒', as
   const sysItem = items.find((x) => x.text.includes('取数疑似旧口径'));
   assert.strictEqual(sysItem.status, 'warn');
 });
+
+test('定稿版式（美化版）关键样式还在：白底解析卡/绿色按钮/.closer 高亮', async () => {
+  const rv = JSON.parse(JSON.stringify(review));
+  rv.insights.r1 = '<details class="insight" id="r1"><summary><span class="sum-main">解析1</span></summary><div class="insight-body"><div class="compare"><div class="col good"><p>好的 <b class="closer">您现在下单，我帮您备注好赠品~</b></p></div></div></div></details>';
+  const { html } = await renderCourseware(chat, rv);
+  assert.ok(/\.closer\{/.test(html), '逼单收尾高亮样式要还在');
+  assert.ok(/#16a34a/.test(html), '绿色按钮主色要还在');
+  assert.ok(/\.sum-btn\{/.test(html), '展开按钮样式要还在');
+  assert.ok(/\.insight\{/.test(html), '解析卡样式要还在');
+  assert.ok(!/class="header"/.test(html), '不能把废弃的顶部大标题加回来');
+});
