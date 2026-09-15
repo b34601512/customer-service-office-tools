@@ -10,6 +10,20 @@ function esc(s) {
     .replace(/&lt;br\/&gt;/gi, '<br/>');
 }
 
+// 「点击可展开」必须一眼可见（2026-09-15 用户要求）：按钮由渲染器统一注入，AI 不必手写、也不会漏。
+const TOGGLE_BTN = '<span class="sum-btn" aria-hidden="true"><span class="t-open">点击展开解析</span><span class="t-close">点击收起</span><span class="sum-caret">▾</span></span>';
+const LEGACY_HINT_RE = /<span class="sum-hint"[^>]*>[\s\S]*?<\/span>\s*/gi;
+
+/** 给解析块补统一的、明显的可点击按钮；旧文件里的文字提示（sum-hint）一并去掉，避免重复 */
+function withToggleAffordance(html) {
+  if (!html) return html;
+  return String(html).replace(/<summary\b[^>]*>([\s\S]*?)<\/summary>/gi, (tag, inner) => {
+    const cleaned = inner.replace(LEGACY_HINT_RE, '');
+    if (/class="sum-btn"/.test(cleaned)) return tag.replace(inner, () => cleaned);
+    return tag.replace(inner, () => cleaned + TOGGLE_BTN);
+  });
+}
+
 const MIME_BY_EXT = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp' };
 
 async function embedImage(url) {
@@ -67,7 +81,7 @@ async function renderCourseware(chat, review) {
 
   const chatArea = chat.messages.map((msg, i) => {
     const overlay = overlayMap.get(i);
-    const insightHtml = overlay && overlay.insight ? review.insights[overlay.insight] : null;
+    const insightHtml = overlay && overlay.insight ? withToggleAffordance(review.insights[overlay.insight]) : null;
     return renderMessage(msg, overlay, insightHtml, imgMap);
   }).join('');
 
@@ -108,15 +122,23 @@ body.show-cid .cid{display:inline}
 .bubble-img img{display:block;max-width:260px;margin-top:8px;border-radius:8px;cursor:zoom-in;border:1px solid rgba(255,255,255,.4)}
 .bubble-img img.zoom{max-width:100%}
 .key-mark{margin-top:6px;display:flex;justify-content:flex-start}.key-flag{background:#e1251b;color:#fff;font-size:11px;font-weight:800;border-radius:6px;padding:2px 10px}
-.insight{margin:12px 0 16px;border-radius:12px;overflow:hidden}
+.insight{margin:12px 0 16px;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(15,23,42,.07)}
 .speech-insight{background:#fffaf3;border:1px solid #fde0a8}
-.insight summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;padding:11px 14px;user-select:none;transition:.15s}
+.insight summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;padding:12px 14px;user-select:none;background:linear-gradient(180deg,#fff8ec,#fff2dc);transition:.15s}
 .insight summary::-webkit-details-marker{display:none}
-.speech-insight summary:hover{background:#fff3d9}
-.sum-ico{font-size:15px}.sum-main{font-size:13px;font-weight:800;color:#b45309;flex:1;line-height:1.5}
-.sum-hint{font-size:11px;color:#94a3b8;background:#f1f5f9;border-radius:10px;padding:2px 10px;flex-shrink:0}
-.insight summary::after{content:'▾';color:#94a3b8;font-size:13px;transition:.2s}
-.insight[open] summary::after{transform:rotate(180deg)}
+.speech-insight summary:hover{background:#ffe9bd}
+.insight summary:focus-visible{outline:2px solid #d97706;outline-offset:-2px}
+.sum-ico{font-size:16px}.sum-main{font-size:13.5px;font-weight:800;color:#92400e;flex:1;line-height:1.5}
+.sum-hint{display:none}/* 旧解析文件里的文字提示：按钮已统一，不再显示 */
+.sum-btn{display:inline-flex;align-items:center;gap:6px;background:#e1251b;color:#fff;font-size:12.5px;font-weight:800;border-radius:18px;padding:5px 14px;flex-shrink:0;box-shadow:0 2px 8px rgba(225,37,27,.35);animation:sumPulse 2.4s ease-in-out infinite}
+.insight[open] .sum-btn{background:#94a3b8;box-shadow:none;animation:none}
+.sum-btn .t-close{display:none}
+.insight[open] .sum-btn .t-open{display:none}
+.insight[open] .sum-btn .t-close{display:inline}
+.sum-caret{font-size:10px;line-height:1;transition:.2s}
+.insight[open] .sum-caret{transform:rotate(180deg)}
+@keyframes sumPulse{0%,100%{box-shadow:0 2px 8px rgba(225,37,27,.32)}50%{box-shadow:0 2px 14px rgba(225,37,27,.62)}}
+@media (prefers-reduced-motion:reduce){.sum-btn{animation:none}}
 .insight-body{padding:0 14px 14px;border-top:1px dashed #e2e8f0}
 .compare{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
 .compare .col{border-radius:12px;padding:14px 15px}
@@ -132,13 +154,13 @@ body.show-cid .cid{display:inline}
 .tips b{color:#1e293b}
 .footer{text-align:center;font-size:11px;color:#a0aab8;margin-top:22px;line-height:1.8}
 @media print{.insight:not([open]){display:block}.insight summary{display:none}}
-@media (max-width:720px){.wrap{max-width:100%;padding:14px 10px 40px}.card{padding:14px}.chat-area{padding:12px}.compare{grid-template-columns:1fr}.msg-body{max-width:90%}.sum-hint{display:none}}
+@media (max-width:720px){.wrap{max-width:100%;padding:14px 10px 40px}.card{padding:14px}.chat-area{padding:12px}.compare{grid-template-columns:1fr}.msg-body{max-width:90%}.sum-btn{font-size:11.5px;padding:4px 11px}}
 </style>
 </head>
 <body>
 <div class="wrap">
 <div class="card">
-  <div class="hint">👇 真实会话回放。${sysHint}每条“◆ 可优化回复”下方都有<b>就地解析</b>，点击展开看“当时怎么说 vs 建议怎么说”。</div>
+  <div class="hint">👇 真实会话回放。${sysHint}每条“◆ 可优化回复”下方都有<b>就地解析</b>：点右侧红色<b>「点击展开解析」</b>按钮，看“当时怎么说 vs 建议怎么说”。</div>
   <div class="chat-area">
     <div class="session-title">
       <span>💬 ${esc(review.window || chat.meta.window || '')} · <span class="cid">${esc(customerLabel)}</span> 会话</span>

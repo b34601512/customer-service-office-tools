@@ -1,6 +1,7 @@
 // 铁律自检（纯业务）：对生成的 HTML 做程序化检查，返回逐条报告项
 // 依据经验模板铁律：无目录/无结尾总结卡、就地解析、客服右客户左、
-// 无字面 <br/>、无乱码、客户ID 默认脱敏+眼睛按钮、图片全部内嵌。
+// 无字面 <br/>、无乱码、客户ID 默认脱敏+眼睛按钮、图片全部内嵌、
+// 解析块必须有显而易见的「点击展开」按钮。
 
 function runSelfCheck(html, { review, report, chat }) {
   const items = [];
@@ -50,6 +51,11 @@ function runSelfCheck(html, { review, report, chat }) {
     const fromFullLog = /咚咚全量|全量记录/.test(String((chat && chat.meta && chat.meta.sourceNote) || ''));
     add(fromFullLog ? 'ok' : 'warn', fromFullLog ? '该会话无机器人/系统消息（已用全量口径核对）' : '取数疑似旧口径（无机器人/系统消息）→ 用 fetch:full 全量核对');
   }
+
+  // 10) 解析块必须一眼看出能点（2026-09-15 用户反馈：不明显，不知道能点）
+  // 渲染器会给每个 summary 自动注入统一按钮；这里守铁律，防止以后改渲染器又弄丢
+  const btnCount = (html.match(/class="sum-btn"/g) || []).length;
+  add(expected === 0 || btnCount >= expected ? 'ok' : 'fail', `解析块有显而易见的「点击展开」按钮（期望 ≥ ${expected}，实际 ${btnCount}）`);
 
   return items;
 }

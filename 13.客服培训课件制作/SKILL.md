@@ -56,11 +56,12 @@ node src/cli.js import <文件路径>
 }
 ```
 
-解析块推荐结构（`insight-body` 内可用 `compare`(bad/good 两栏对比)、`arrow-note` 要点、`ul.tips` 补充话术，可加 `speech-insight` 类；注意转义双引号）：
+解析块推荐结构（`insight-body` 内可用 `compare`(bad/good 两栏对比)、`arrow-note` 要点、`ul.tips` 补充话术，可加 `speech-insight` 类；注意转义双引号）。
+**「点击展开」按钮不用你写**：渲染器会自动在每个 `<summary>` 末尾注入红色按钮（`点击展开解析` / 点击后变 `点击收起`），所以**不要手写 `sum-hint` 之类的文字提示**（旧文件里的会被自动去掉）：
 
 ```html
 <details class="insight speech-insight" id="r1">
-  <summary><span class="sum-ico">🔥</span><span class="sum-main">标题</span><span class="sum-hint">点击展开</span></summary>
+  <summary><span class="sum-ico">🔥</span><span class="sum-main">标题</span></summary>
   <div class="insight-body">
     <div class="compare">
       <div class="col bad"><div class="col-label"><span class="ico">✖</span> 当时客服这么回</div><p>原文</p><div class="why">为什么不对</div></div>
@@ -100,6 +101,7 @@ node --test                                    # 回归测试（改了本项目�
 9. **课件里不写"口径 / 排查"类解释**（2026-09-14 用户要求）：课件是给客服看的，按"第一次打开"的视角写——只放真实会话 + 就事论事的解析（当时怎么说 / 建议怎么说）。
    - 不要出现"机器人已答完、不是客服敷衍""旧口径/全量口径""避免误判""别冤枉客服"这类**我们内部排查的自述**；机器人消息用灰框自然呈现即可。
    - 同理：解析里的 `sub`/`tagline` 也只写案例本身（它们不进页面，但别把排查语气留在里面）。
+10. **「点击展开」必须一眼可见**（2026-09-15 用户反馈：原来的按钮不明显，别人不知道能点）：展开按钮由渲染器统一注入并做成红色胶囊（`点击展开解析` / `点击收起` + 轻微呼吸光晕、悬停高亮、移动端不隐藏），AI **不要手写** `sum-hint` 文字提示。自检项「解析块有显而易见的『点击展开』按钮」必须为 ok，缺按钮直接 fail。
 
 ## 验收清单（做完逐项打勾）
 

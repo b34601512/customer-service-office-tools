@@ -44,6 +44,9 @@ test('renderCourseware 输出关键结构与样式', async () => {
   assert.ok(html.includes('<title>培训课件：'));
   assert.ok(!html.includes(review.sub), '案例看点摘要不应再渲染进页面');
   assert.strictEqual((html.match(/<details class="insight"/g) || []).length, 2);
+  assert.strictEqual((html.match(/class="sum-btn"/g) || []).length, 2, '每个解析块都要有统一的展开按钮');
+  assert.ok(html.includes('点击展开解析'));
+  assert.ok(html.includes('点击收起'));
   assert.strictEqual(report.messageCount, 3);
   assert.strictEqual(report.monthDir, '2026年8月');
 });
@@ -54,6 +57,22 @@ test('selfCheck 全绿（无图片）', async () => {
   const s = summarize(items);
   assert.strictEqual(s.fail, 0);
   assert.strictEqual(s.ok, items.length - s.warn);
+});
+
+test('旧解析文件里的 sum-hint 被按钮替代，且按钮不重复', async () => {
+  const legacy = JSON.parse(JSON.stringify(review));
+  legacy.insights.r1 = '<details class="insight" id="r1"><summary><span class="sum-main">解析1</span><span class="sum-hint">点击展开</span></summary><div class="insight-body">当时 vs 建议</div></details>';
+  const { html } = await renderCourseware(chat, legacy);
+  assert.ok(!html.includes('class="sum-hint"'), '旧文字提示应被去掉');
+  assert.strictEqual((html.match(/class="sum-btn"/g) || []).length, 2);
+  assert.strictEqual((html.match(/<span class="t-open">点击展开解析<\/span>/g) || []).length, 2);
+});
+
+test('selfCheck：解析块缺按钮判 fail', () => {
+  const bare = '<html><style>.from-kf{}.from-cus{}</style>.cid{display:none}body.show-cid .cid{display:inline}<button class="cid-toggle"></button><details class="insight" id="r1"><summary><span class="sum-main">解析1</span></summary><div class="insight-body">x</div></details></html>';
+  const items = runSelfCheck(bare, { review, report: { imageFailures: [] }, chat });
+  const item = items.find((x) => x.text.includes('显而易见的「点击展开」按钮'));
+  assert.strictEqual(item.status, 'fail');
 });
 
 test('图片下载失败进入报告且自检警告', async () => {
