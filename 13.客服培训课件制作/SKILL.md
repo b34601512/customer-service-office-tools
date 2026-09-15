@@ -2,6 +2,7 @@
 
 > 这是「13.客服培训课件制作」项目的 AI 指导书。**什么时候用**：老板说"做一份 XX 培训课件"、或要基于聊天记录出教学 HTML。
 > 机械步骤全部由本项目的程序（`src/services` + `src/cli.js`）完成，你**只负责内容创作**（挑点、点评、话术）。
+> **真源层级（避免新旧混用）**：本文件 = 唯一「怎么做」的真源（流程/契约/铁律/版式/验收）；`README.md` 只是概览；`历史资料备份/` 里**全部是历史存档，已标「已废弃」，任何做法与本文件冲突时一律以本文件为准、不要照做**；`断点记录.md` 只记当前进度与待办。
 
 ## 流程（四步，缺一不可）
 
@@ -13,16 +14,16 @@
 工作目录：`D:\桌面\办公软件\13.客服培训课件制作\`（所有命令在此目录跑）。
 
 ```bash
-# 京东抓取（需已登录京东后台 + Chrome 调试端口 9222；日期必填，建议单日/窄窗口）
+# 京东抓取（需已登录京东后台 + Chrome 调试端口；端口/页面标题匹配见 runtime/config/config.json，本项目实测 9223）
 node src/cli.js fetch:full <顾客ID>                       # 【课件取数用这个】抓全量（含机器人自动回复），列出会话与 sid
 node src/cli.js fetch:full <顾客ID> --save <sid> [--tag 主题]  # 保存该会话为聊天记录（含系统/自动回复消息）
-node src/cli.js fetch:list --start 2026-08-05            # 只含客服/客户消息（旧口径），仅用于定位 sid
+node src/cli.js fetch:list --start 2026-08-05            # 旧口径列表（不含机器人）：只用于找 sid/日期，做课件别用它取内容
 
 # 或手动导入（聊天记录备份 txt/json）
 node src/cli.js import <文件路径>
 ```
 
-输出会落在 `runtime/chat/<基名>.chat.json`——**这就是标准聊天记录**（`meta{customer,orderId,window,store}` + `messages[{time,role:'customer'|'waiter',text,img?}]`）。
+输出会落在 `runtime/chat/<基名>.chat.json`——**这就是标准聊天记录**（`meta{customer,orderId,window,store}` + `messages[{time,role:'customer'|'waiter'|'system',text,img?}]`，`system` = 机器人/系统消息，会画成灰框）。
 
 ### 第 2 步：读记录、定教学场景
 - 通读聊天记录，向老板确认/自己判断**教什么**（如 涨价应对/议价/三通识别/安抚情绪/挽留话术）。

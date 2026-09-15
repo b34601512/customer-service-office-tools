@@ -26,13 +26,14 @@
 
 ## 京东抓取（步骤1·程序）
 
-- 需 Chrome 已登录京东客服后台，并带调试端口启动：
+- 需 Chrome 已登录京东客服后台，并以**带调试端口 + 专用 profile** 启动（别用日常 profile，避免占用）：
   ```
-  chrome.exe --remote-debugging-port=9222 --user-data-dir="C:\Users\<用户>\AppData\Local\Google\Chrome\User Data" --restore-last-session
+  chrome.exe --remote-debugging-port=9223 --user-data-dir="D:\桌面\办公软件\13.客服培训课件制作\runtime\browser-profile-jd6"
   ```
 - 配置在 `runtime/config/config.json`（调试端口/页面标题匹配/接口地址/每页条数；不入库），模板见 `config.example.json`。
-- 抓取接口：`kf.jd.com/chatLog/queryList.action`（单日/窄窗口查询，多页自动翻取）。
-- 程序列出会话供你选择；抓完会打印前若干条，**请通读确认会话主题与教学场景匹配**再继续（见铁律 8）。
+- 取数一律走 `fetch:full`（CDP 驱动页面「查询 → 查看 → 切换为该用户全部聊天信息」并抓 `queryLastLogs`，含机器人自动回复；日期范围程序会自动放开）。旧接口 `kf.jd.com/chatLog/queryList.action`（单日、旧口径）**已不作课件取数用**。
+- 2026-09-15 页面改版（V13.8.0）后两个易踩点：日期默认只查「今天」、面板默认「列表视图」不含机器人——都已写进程序，报错先看这两处。
+- 程序列出会话供你选择；抓完会打印前若干条，**请通读确认会话主题与教学场景匹配**再继续（见铁律 8、9）。
 
 ## 导入聊天记录（步骤1·程序，备用取数）
 
@@ -90,6 +91,6 @@
 
 ## 常见问题
 
-- **连不上调试端口**：确认 Chrome 以 `--remote-debugging-port=9222` 启动且已登录；或被代理拦截，参考 12 号项目 NO_PROXY 处理。
-- **查不到会话**：日期跨度别过大（单日/窄窗口）；确认登录的是目标店铺。
+- **连不上调试端口**：确认 Chrome 以 `--remote-debugging-port=9223 --user-data-dir=…\runtime\browser-profile-jd6` 启动且已登录（端口以 `runtime/config/config.json` 为准；本机 9号/19号项目占用 9333，别混用）。
+- **查不到会话（NO_ROW）**：多半是页面日期筛选停在「今天」或面板停在「列表视图」——`fetch:full` 会自动处理，仍失败就先手动在页面上点「近30天」并确认能看到目标行。
 - **登录错店铺**：先核对会话内容是否匹配教学场景，别硬套。

@@ -9,7 +9,7 @@
 ## 新链路（四步，见 SKILL.md）
 
 ```
-1. 取数（程序）：`node src/cli.js fetch:full <顾客ID> --save <sid>`（京东全量抓取，含机器人自动回复；需已登录 Chrome + 调试端口9222/9223）。
+1. 取数（程序）：`node src/cli.js fetch:full <顾客ID> --save <sid>`（京东全量抓取，含机器人自动回复；需已登录 Chrome + 调试端口 9223，以 `runtime/config/config.json` 为准）。
                 或 node src/cli.js import <文件>（手动导入）→ runtime/chat/<基名>.chat.json
 2. AI 读记录、确认教学场景（涨价应对/议价/三通识别/安抚情绪…）
 3. AI 按 SKILL.md 契约写 runtime/review/<基名>.review.json（唯一创作部分）
@@ -27,7 +27,8 @@
 
 ## 旧方法与历史
 
-- 旧 TUI 版（启动 bat 菜单）、旧解析提示词模板、旧脚本、旧成品已归档到 `历史资料备份/TUI版备份/` 等，需要参考旧版式/旧脚本时去那里读，**不再维护、别混用**。
+- 旧 TUI 版（启动 bat 菜单）、旧解析提示词模板、旧脚本、旧成品已归档到 `历史资料备份/`，**不再维护、别混用**：该目录里每个文件开头都标了「⚠️ 已废弃」，并有 `历史资料备份/README.md` 列出废弃清单。
+- **真源唯一**：怎么做只看 `SKILL.md`（流程/契约/铁律/版式/验收）；README 只是概览；断点记录只记进度。任何历史文件的做法与 SKILL.md 冲突，一律按 SKILL.md。
 - 千店话术通（京东官方机器人话术自动配置，aics.jd.com）与课件无关，历史实现见 `历史资料备份/scripts/qianDian_tool.js`。
 - 知你客服（zhinikefu.com）数据抓取历史经验见 `历史资料备份/经验模板-聊天记录演示制作方法.md` 相关段落。
 
