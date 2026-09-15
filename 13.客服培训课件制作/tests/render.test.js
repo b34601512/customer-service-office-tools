@@ -75,6 +75,27 @@ test('selfCheck：解析块缺按钮判 fail', () => {
   assert.strictEqual(item.status, 'fail');
 });
 
+test('selfCheck：建议话术收尾问「需要吗」判 fail，收尾逼单句带 closer 才 ok', () => {
+  const rv = JSON.parse(JSON.stringify(review));
+  rv.insights.r1 = '<details class="insight" id="r1"><summary><span class="sum-main">解析1</span></summary><div class="insight-body"><div class="compare"><div class="col good"><p>这款带雾化更适合老人。<b>需要吗？</b></p></div></div></div></details>';
+  const htmlOpen = '<html><style>.from-kf{}.from-cus{} .cid{display:none}</style>body.show-cid .cid{display:inline}<button class="cid-toggle"></button><details class="insight" id="r1"><summary><span class="sum-main">x</span><span class="sum-btn"></span></summary><div class="insight-body"><div class="compare"><div class="col good"><p>需要吗？</p></div></div></div></details></html>';
+  const itemsOpen = runSelfCheck(htmlOpen, { review: rv, report: { imageFailures: [] }, chat });
+  assert.strictEqual(itemsOpen.find((x) => x.text.includes('开放式问句')).status, 'fail');
+
+  const rvOk = JSON.parse(JSON.stringify(rv));
+  rvOk.insights.r1 = rvOk.insights.r1.replace('<b>需要吗？</b>', '<b class="closer">您现在下单，我帮您把赠品备注好～</b>');
+  const htmlOk = htmlOpen.replace('需要吗？', '您现在下单，我帮您把赠品备注好～').replace('<div class="col good">', '<div class="col good"><b class="closer"></b>');
+  const itemsOk = runSelfCheck(htmlOk, { review: rvOk, report: { imageFailures: [] }, chat });
+  assert.strictEqual(itemsOk.find((x) => x.text.includes('开放式问句')).status, 'ok');
+  assert.strictEqual(itemsOk.find((x) => x.text.includes('逼单收尾句已高亮')).status, 'ok');
+
+  // 引号里提到“需要吗”是在讲规则，不算违规（否则教学要点会被误伤）
+  const rvQuoted = JSON.parse(JSON.stringify(rv));
+  rvQuoted.insights.r1 = '<details class="insight" id="r1"><summary><span class="sum-main">解析1</span></summary><div class="insight-body"><ul class="tips"><li><span>收尾别说“需要吗”，改成：<b class="closer">您现在下单，我帮您备注好赠品~</b></span></li></ul></div></details>';
+  const itemsQuoted = runSelfCheck(htmlOpen, { review: rvQuoted, report: { imageFailures: [] }, chat });
+  assert.strictEqual(itemsQuoted.find((x) => x.text.includes('开放式问句')).status, 'ok');
+});
+
 test('图片下载失败进入报告且自检警告', async () => {
   const chatImg = JSON.parse(JSON.stringify(chat));
   chatImg.messages[0].img = 'http://127.0.0.1:1/nope.png';

@@ -1,7 +1,7 @@
 // 铁律自检（纯业务）：对生成的 HTML 做程序化检查，返回逐条报告项
 // 依据经验模板铁律：无目录/无结尾总结卡、就地解析、客服右客户左、
 // 无字面 <br/>、无乱码、客户ID 默认脱敏+眼睛按钮、图片全部内嵌、
-// 解析块必须有显而易见的「点击展开」按钮。
+// 解析块必须有显而易见的「点击展开」按钮；建议话术收尾必须是逼单（不能问「需要吗？」）。
 
 function runSelfCheck(html, { review, report, chat }) {
   const items = [];
@@ -57,7 +57,42 @@ function runSelfCheck(html, { review, report, chat }) {
   const btnCount = (html.match(/class="sum-btn"/g) || []).length;
   add(expected === 0 || btnCount >= expected ? 'ok' : 'fail', `解析块有显而易见的「点击展开」按钮（期望 ≥ ${expected}，实际 ${btnCount}）`);
 
+  // 11) 收尾话术必须是逼单，不能问「需要吗？」（2026-09-15 用户要求）
+  // 客户前面关注过配件/赠品等，就用它做钩子把单推下去；开放式问句会把决定权又丢回给客户
+  const closings = closingTextsOf(review.insights);
+  const openEnded = closings.filter((t) => /(需要吗|要不要|需不需要|还需要吗|还需要什么)/.test(t));
+  add(openEnded.length === 0 ? 'ok' : 'fail', `建议话术收尾不用开放式问句（疑似 ${openEnded.length} 处${openEnded.length ? '：' + openEnded.slice(0, 2).join(' / ') : ''}）`);
+
+  // 12) 逼单收尾句用 .closer 高亮（有 good 对比栏时给提醒，不阻断）
+  const closerCount = (html.match(/class="closer"/g) || []).length;
+  const hasGoodCol = /class="col good"/.test(html);
+  add(!hasGoodCol || closerCount > 0 ? 'ok' : 'warn', `逼单收尾句已高亮（closer ${closerCount} 处）`);
+
   return items;
+}
+
+/** 取每条建议话术/要点列表的最后一句，用于检查收尾语气 */
+function closingTextsOf(insights) {
+  const texts = [];
+  for (const raw of Object.values(insights || {})) {
+    const html = String(raw || '');
+    for (const part of html.split(/<div class="col good">/).slice(1)) {
+      const p = part.match(/<p>([\s\S]*?)<\/p>/);
+      if (p) texts.push(lastSentence(p[1]));
+    }
+    const tips = html.match(/<ul class="tips">([\s\S]*?)<\/ul>/);
+    if (tips) for (const li of tips[1].match(/<li>[\s\S]*?<\/li>/g) || []) texts.push(lastSentence(li));
+  }
+  return texts.filter(Boolean);
+}
+
+function lastSentence(html) {
+  // 引号里提到“需要吗”是在讲规则，不算收尾话术本身：先把引号内容去掉
+  const t = String(html).replace(/<[^>]*>/g, ' ')
+    .replace(/“[^”]*”/g, ' ').replace(/"[^"]*"/g, ' ')
+    .replace(/\s+/g, ' ').trim();
+  const parts = t.split(/[。！？!?~～]+/).map((x) => x.trim()).filter(Boolean);
+  return parts[parts.length - 1] || t;
 }
 
 function summarize(items) {

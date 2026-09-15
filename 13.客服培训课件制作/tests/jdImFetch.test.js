@@ -70,3 +70,54 @@ test('转标准聊天记录：保留系统角色与 label，时间按北京时�
   assert.strictEqual(first.time, '2026-08-24 08:36:25');
   assert.strictEqual(first.role, 'system');
 });
+
+// 日期范围自动放开（2026-09-15 踩坑）：页面默认只查「今天」，老会话的行不会出现 → NO_ROW。
+// 抓取前必须点日期选择器的「近30天」快捷项，否则任何老会话都抓不到全量记录。
+const { ensureWideDateRange, dateRangeExpr, RANGE_PRESET } = require('../src/services/jdImFetch');
+
+test('dateRangeExpr：能算出日期跨度（今天=0，30天=28~30）', () => {
+  const fakeDoc = (start, end) => ({
+    querySelectorAll: () => [
+      { placeholder: '开始日期', value: start },
+      { placeholder: '结束日期', value: end }
+    ]
+  });
+  const run = (s, e) => JSON.parse(new Function('document', `return ${dateRangeExpr()}`)(fakeDoc(s, e)));
+  assert.strictEqual(run('2026-09-15 00:00:00', '2026-09-15 23:59:59').spanDays, 0);
+  assert.ok(run('2026-08-16 00:00:00', '2026-09-14 23:59:59').spanDays >= 25);
+  assert.strictEqual(run('', '').spanDays, 0);
+});
+
+test('ensureWideDateRange：范围够宽就不动；太窄就点「近30天」', async () => {
+  const clicks = [];
+  const deps = {
+    clickAt: async (ws, id, x, y) => clicks.push([id, x, y]),
+    sleep: async () => {},
+    evaluate: async (ws, id, expr) => {
+      if (expr.includes('spanDays')) {
+        // 第一次探到「今天」，点完预设后再探到 30 天
+        return id < 45 ? JSON.stringify({ start: '2026-09-15 00:00:00', end: '2026-09-15 23:59:59', spanDays: 0 })
+          : JSON.stringify({ start: '2026-08-16 00:00:00', end: '2026-09-14 23:59:59', spanDays: 29 });
+      }
+      if (expr.includes('开始日期')) return JSON.stringify({ x: 400, y: 300 });
+      if (expr.includes(JSON.stringify(RANGE_PRESET))) return JSON.stringify({ x: 260, y: 557 });
+      return '';
+    }
+  };
+  assert.strictEqual(await ensureWideDateRange({}, { deps }), 'ok');
+  assert.strictEqual(clicks.length, 2, '应点一次日期框 + 一次快捷项');
+  assert.strictEqual(clicks[1][1], 260);
+
+  const wide = await ensureWideDateRange({}, {
+    deps: { ...deps, evaluate: async () => JSON.stringify({ spanDays: 40 }) }
+  });
+  assert.strictEqual(wide, 'already-wide');
+});
+
+test('新版页面的全量入口：会生成点「切换为该用户全部聊天信息」的表达式', () => {
+  const { switchToFullLogExpr, FULL_LOG_SWITCH_TEXT } = require('../src/services/jdImFetch');
+  assert.strictEqual(FULL_LOG_SWITCH_TEXT, '切换为该用户全部聊天信息');
+  const expr = switchToFullLogExpr();
+  assert.ok(expr.includes(FULL_LOG_SWITCH_TEXT), '表达式里要包含按钮文案');
+  assert.ok(expr.includes('querySelectorAll'), '要在页面里找按钮');
+});

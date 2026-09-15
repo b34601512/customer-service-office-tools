@@ -3,7 +3,9 @@
 // 背景（2026-09-14 踩坑，勿删）：kf.jd.com 的 chatLog/queryList.action、waiterSession/queryChatLog
 // 只返回客服与客户的消息，**不含**机器人自动回复。会话行「查看」面板的“该用户全部聊天记录”
 // 才是全量，数据来自 api.m.jd.com/client.action?functionId=queryLastLogs（带 h5st 签名，
-// 只能由页面自己发请求），所以这里用 CDP 驱动页面 UI（填顾客ID→查询→查看）并监听网络把响应抓回来。
+// 只能由页面自己发请求），所以这里用 CDP 驱动页面 UI（填顾客ID→查询→查看→切换为该用户全部聊天信息）并监听网络把响应抓回来。
+// 2026-09-15 页面改版：点「查看」后面板默认是「列表视图」（不含机器人），必须再点「切换为该用户全部聊天信息」；
+// 另外页面日期筛选默认是「今天」，抓取前要先点「近30天」，否则老会话的行根本查不到。
 // 只看旧口径会把“机器人已答完、客服只发了个表情打招呼”误判成“客服不答问题”，误伤客服。
 const { normalizeEmojiCodes } = require('./jdConvert');
 const { makeChat, windowOfMessages } = require('./chatSchema');
@@ -69,6 +71,76 @@ function clickViewExpr(pin) {
   })()`;
 }
 
+// 2026-09-15 页面改版（V13.8.0）：点「查看」后面板默认只看「列表视图」，
+// 全量（含机器人）要再点面板里的「切换为该用户全部聊天信息」。
+const FULL_LOG_SWITCH_TEXT = '切换为该用户全部聊天信息';
+
+function switchToFullLogExpr(text = FULL_LOG_SWITCH_TEXT) {
+  return `(() => {
+    const btn = [...document.querySelectorAll('button')].find((b) => (b.innerText || '').trim() === ${JSON.stringify(text)});
+    if (!btn) return 'NO_SWITCH_BTN';
+    btn.click();
+    return 'ok';
+  })()`;
+}
+
+// 页面日期筛选默认是「今天」，老会话的行根本不会出现（2026-09-15 踩坑：
+// 只有今天范围的查询结果 → NO_ROW）；而且刷新页面后范围又会变回今天。
+// 所以抓取前先把日期范围放开（点日期选择器里的「近30天」快捷项）。
+const RANGE_PRESET = '近30天';
+const RANGE_MIN_SPAN_DAYS = 25;
+
+function dateRangeExpr() {
+  return `(() => {
+    const val = (ph) => { const el = [...document.querySelectorAll('input')].find(i => (i.placeholder || '') === ph); return el ? el.value : ''; };
+    const ms = (t) => { const m = /(\\d{4})-(\\d{2})-(\\d{2})/.exec(t || ''); return m ? Date.UTC(+m[1], +m[2] - 1, +m[3]) : 0; };
+    return JSON.stringify({ start: val('开始日期'), end: val('结束日期'), spanDays: ms(val('结束日期')) && ms(val('开始日期')) ? Math.round((ms(val('结束日期')) - ms(val('开始日期'))) / 86400000) : 0 });
+  })()`;
+}
+
+function rectExpr(kind, value) {
+  const find = kind === 'preset'
+    ? `[...document.querySelectorAll('button')].find(b => (b.innerText || '').trim() === ${JSON.stringify(value)})`
+    : `[...document.querySelectorAll('input')].find(i => (i.placeholder || '') === ${JSON.stringify(value)})`;
+  return `(() => { const el = ${find}; if (!el) return ''; const r = el.getBoundingClientRect(); return JSON.stringify({ x: Math.round(r.left + r.width / 2), y: Math.round(r.top + r.height / 2) }); })()`;
+}
+
+async function clickAt(ws, id, x, y) {
+  await send(ws, id, 'Input.dispatchMouseEvent', { type: 'mouseMoved', x, y });
+  await send(ws, id + 1, 'Input.dispatchMouseEvent', { type: 'mousePressed', x, y, button: 'left', clickCount: 1 });
+  await send(ws, id + 2, 'Input.dispatchMouseEvent', { type: 'mouseReleased', x, y, button: 'left', clickCount: 1 });
+}
+
+/** 确保日期筛选范围够宽（默认「今天」时点「近30天」）；返回 'ok' / 'already-wide' / 失败原因 */
+async function ensureWideDateRange(ws, { idBase = 40, preset = RANGE_PRESET, minSpanDays = RANGE_MIN_SPAN_DAYS, deps = {} } = {}) {
+  const evaluateFn = deps.evaluate || evaluate;
+  const clickFn = deps.clickAt || clickAt;
+  const sleepFn = deps.sleep || sleep;
+  const before = JSON.parse((await evaluateFn(ws, idBase, dateRangeExpr())) || '{}');
+  if (before.spanDays >= minSpanDays) return 'already-wide';
+  // 页面（微应用）刚刷新完时表单会晚一步渲染，这里多等几次再放弃
+  let inputRect = '';
+  for (let i = 0; i < 5 && !inputRect; i++) {
+    inputRect = await evaluateFn(ws, idBase + 1 + i, rectExpr('input', '开始日期'));
+    if (!inputRect) await sleepFn(2000);
+  }
+  if (!inputRect) return 'NO_DATE_INPUT';
+  const ir = JSON.parse(inputRect);
+  await clickFn(ws, idBase + 2, ir.x, ir.y);
+  await sleepFn(600);
+  let presetRect = '';
+  for (let i = 0; i < 4 && !presetRect; i++) {
+    presetRect = await evaluateFn(ws, idBase + 5 + i, rectExpr('preset', preset));
+    if (!presetRect) await sleepFn(800);
+  }
+  if (!presetRect) return 'NO_PRESET';
+  const pr = JSON.parse(presetRect);
+  await clickFn(ws, idBase + 6, pr.x, pr.y);
+  await sleepFn(900);
+  const after = JSON.parse((await evaluateFn(ws, idBase + 9, dateRangeExpr())) || '{}');
+  return after.spanDays >= minSpanDays ? 'ok' : 'PRESET_NOT_APPLIED';
+}
+
 /** 刷新页面并等到查询表单出现（重复点“查看”时页面不会重新发请求，只能刷新重置状态） */
 async function reloadAndWait(ws) {
   await send(ws, 20, 'Page.enable', {});
@@ -104,11 +176,17 @@ async function fetchImFullLog({ pageInfo, customerPin, timeoutMs = 30000 } = {})
 
   const attempt = async (before) => {
     if (before) await before();
+    // 先放开日期范围，否则默认「今天」的筛选会让老会话查不到行
+    await ensureWideDateRange(ws).catch(() => {});
     const set = await evaluate(ws, 2, setCustomerExpr(customerPin));
     if (set !== 'ok') throw new Error(`页面上没找到顾客ID输入框/查询按钮（${set}）`);
     await sleep(5000);
     const clicked = await evaluate(ws, 3, clickViewExpr(customerPin));
     if (clicked !== 'ok') throw new Error(`没找到「${customerPin}」的会话行或「查看」链接（${clicked}）`);
+    // 新版页面：面板默认是「列表视图」（只含客服/客户消息），要切到「全部聊天信息」才会发 queryLastLogs。
+    // 老版页面没有这个按钮，点不到就继续（直接进全量面板）。
+    await sleep(2500);
+    await evaluate(ws, 4, switchToFullLogExpr()).catch(() => {});
     const deadline = Date.now() + timeoutMs;
     while (captured.length === 0 && Date.now() < deadline) await sleep(500);
   };
@@ -313,5 +391,7 @@ function summarizeImSessions(raw) {
 
 module.exports = {
   fetchImFullLog, imMessagesOf, imSessionsOf, imSessionToChat, summarizeImSessions,
-  classifyMessage, formatCnTime, BOT_PIN
+  classifyMessage, formatCnTime, BOT_PIN,
+  ensureWideDateRange, dateRangeExpr, rectExpr, RANGE_PRESET,
+  switchToFullLogExpr, FULL_LOG_SWITCH_TEXT
 };
