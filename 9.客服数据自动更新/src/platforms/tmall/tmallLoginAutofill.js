@@ -1,7 +1,7 @@
 const appConfig = require("../../config/appConfig");
 const { log } = require("../../engine/logger");
 const { clickLocatorWhenReady } = require("../../shared/browserActionEngine");
-const { findFirstVisibleLocator } = require("./tmallLoginSurface");
+const { findFirstVisibleLocator, isTmallLoginSurfaceRaceError } = require("./tmallLoginSurface");
 
 function buildTmallLoginClickOptions(timeoutMs) {
   // 这个函数只定义登录页按钮的点击节奏。
@@ -14,83 +14,105 @@ function buildTmallLoginClickOptions(timeoutMs) {
 }
 
 async function hasVisiblePasswordInput(frame) {
-  // 这个函数只判断当前登录面是否已经切到密码登录。
-  return frame
-    .locator("input[type='password'], input[name*='password'], input[placeholder*='密码']")
-    .evaluateAll((nodes) =>
-      nodes.some((element) => {
-        const style = window.getComputedStyle(element);
-        return (
-          style &&
-          style.display !== "none" &&
-          style.visibility !== "hidden" &&
-          element.getClientRects().length > 0
-        );
-      })
-    );
+  // 这个函数只判断当前登录面是否已经切到密码登录；登录跳转把上下文销毁时按“尚未切换”处理。
+  try {
+    return await frame
+      .locator("input[type='password'], input[name*='password'], input[placeholder*='密码']")
+      .evaluateAll((nodes) =>
+        nodes.some((element) => {
+          const style = window.getComputedStyle(element);
+          return (
+            style &&
+            style.display !== "none" &&
+            style.visibility !== "hidden" &&
+            element.getClientRects().length > 0
+          );
+        })
+      );
+  } catch (error) {
+    if (isTmallLoginSurfaceRaceError(error)) {
+      return false;
+    }
+    throw error;
+  }
 }
 
 async function switchToPasswordLogin(frame) {
-  // 这个函数只在没有密码框时切换一次登录方式。
+  // 这个函数只在没有密码框时切换一次登录方式；页面跳走时按“无需切换”交回上层。
   for (const text of ["密码登录", "账号登录", "账户登录", "短信登录"]) {
-    if (await hasVisiblePasswordInput(frame)) {
-      return false;
-    }
-    const locator = frame.getByText(text, { exact: false }).first();
-    if ((await locator.count()) > 0 && (await locator.isVisible())) {
-      await clickLocatorWhenReady(
-        locator,
-        `天猫登录方式切换${text}`,
-        buildTmallLoginClickOptions(3000)
-      );
-      return true;
+    try {
+      if (await hasVisiblePasswordInput(frame)) {
+        return false;
+      }
+      const locator = frame.getByText(text, { exact: false }).first();
+      if ((await locator.count()) > 0 && (await locator.isVisible())) {
+        await clickLocatorWhenReady(
+          locator,
+          `天猫登录方式切换${text}`,
+          buildTmallLoginClickOptions(3000)
+        );
+        return true;
+      }
+    } catch (error) {
+      if (isTmallLoginSurfaceRaceError(error)) {
+        return false;
+      }
+      throw error;
     }
   }
   return false;
 }
 
 async function fillTmallLoginFrame(frame, credentials, autofilledFrames) {
-  // 这个函数只填写一个尚未处理的登录面并点击登录。
+  // 这个函数只填写一个尚未处理的登录面并点击登录；登录页在过程中跳走时返回 false 交回上层继续轮询。
   if (autofilledFrames.has(frame)) {
     return false;
   }
-  if (await switchToPasswordLogin(frame)) {
-    return false;
+  try {
+    if (await switchToPasswordLogin(frame)) {
+      return false;
+    }
+    const usernameLocator = await findFirstVisibleLocator(frame, [
+      "input[type='text']",
+      "input[type='tel']",
+      "input[id*='fm-login-id']",
+      "input[name*='user']",
+      "input[placeholder*='会员名']",
+      "input[placeholder*='账号']",
+      "input[placeholder*='手机号']"
+    ]);
+    const passwordLocator = await findFirstVisibleLocator(frame, [
+      "input[type='password']",
+      "input[name*='password']",
+      "input[placeholder*='密码']"
+    ]);
+    if (!usernameLocator || !passwordLocator) {
+      return false;
+    }
+    await usernameLocator.fill(credentials.username);
+    await passwordLocator.fill(credentials.password);
+    const submitLocator = await findFirstVisibleLocator(frame, [
+      "button[type='submit']",
+      "button.fm-submit",
+      ".fm-submit",
+      "button:has-text('登录')"
+    ]);
+    if (submitLocator) {
+      await clickLocatorWhenReady(
+        submitLocator,
+        "天猫登录按钮",
+        buildTmallLoginClickOptions(5000)
+      );
+    }
+    autofilledFrames.add(frame);
+    return true;
+  } catch (error) {
+    if (isTmallLoginSurfaceRaceError(error)) {
+      // 登录页在填表/提交过程中已跳走（登录成功或人工完成验证），交回上层继续轮询登录状态。
+      return false;
+    }
+    throw error;
   }
-  const usernameLocator = await findFirstVisibleLocator(frame, [
-    "input[type='text']",
-    "input[type='tel']",
-    "input[id*='fm-login-id']",
-    "input[name*='user']",
-    "input[placeholder*='会员名']",
-    "input[placeholder*='账号']",
-    "input[placeholder*='手机号']"
-  ]);
-  const passwordLocator = await findFirstVisibleLocator(frame, [
-    "input[type='password']",
-    "input[name*='password']",
-    "input[placeholder*='密码']"
-  ]);
-  if (!usernameLocator || !passwordLocator) {
-    return false;
-  }
-  await usernameLocator.fill(credentials.username);
-  await passwordLocator.fill(credentials.password);
-  const submitLocator = await findFirstVisibleLocator(frame, [
-    "button[type='submit']",
-    "button.fm-submit",
-    ".fm-submit",
-    "button:has-text('登录')"
-  ]);
-  if (submitLocator) {
-    await clickLocatorWhenReady(
-      submitLocator,
-      "天猫登录按钮",
-      buildTmallLoginClickOptions(5000)
-    );
-  }
-  autofilledFrames.add(frame);
-  return true;
 }
 
 async function tryAutofillTmallLoginPage(page, storeConfig, autofilledFrames) {
@@ -115,5 +137,6 @@ async function tryAutofillTmallLoginPage(page, storeConfig, autofilledFrames) {
 }
 
 module.exports = {
+  isTmallLoginSurfaceRaceError,
   tryAutofillTmallLoginPage
 };

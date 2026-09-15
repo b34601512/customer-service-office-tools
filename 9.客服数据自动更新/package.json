@@ -8,7 +8,7 @@
     "start": "node src/cli/startCli.js",
     "cli": "node src/cli/startCli.js",
     "panel": "node src/cli/startCli.js",
-    "test": "node tests/blockingPopupAndDouyinDate.test.js && node tests/douyinLoginRecovery.test.js && node tests/tmallSingleDayDate.test.js && node tests/tmallLoginPersistence.test.js && node tests/pddDateRefreshSafety.test.js && node tests/defaultDateRange.test.js && node tests/homeSummaryDateRange.test.js && node tests/thirtySecondResponseRate.test.js && node tests/summaryRetryAndMissingData.test.js && node tests/forceRedownloadMenu.test.js && node tests/cliInterface.test.js && node tests/tuiInterface.test.js && node tests/evidenceFolderMenu.test.js && node tests/evidenceNaming.test.js && node tests/kdocsDataDetailSync.test.js && node tests/jdCustomerServiceScope.test.js && npm run test:hybrid",
+    "test": "node tests/blockingPopupAndDouyinDate.test.js && node tests/douyinLoginRecovery.test.js && node tests/tmallSingleDayDate.test.js && node tests/tmallLoginPersistence.test.js && node tests/tmallLoginRaceTolerance.test.js && node tests/pddDateRefreshSafety.test.js && node tests/defaultDateRange.test.js && node tests/homeSummaryDateRange.test.js && node tests/thirtySecondResponseRate.test.js && node tests/summaryRetryAndMissingData.test.js && node tests/forceRedownloadMenu.test.js && node tests/cliInterface.test.js && node tests/tuiInterface.test.js && node tests/evidenceFolderMenu.test.js && node tests/evidenceNaming.test.js && node tests/kdocsDataDetailSync.test.js && node tests/jdCustomerServiceScope.test.js && npm run test:hybrid",
     "cli:hybrid": "node scripts/startBrowserMode.js hybrid",
     "cli:headed": "node scripts/startBrowserMode.js headed",
     "cli:headless": "node scripts/startBrowserMode.js headless",
