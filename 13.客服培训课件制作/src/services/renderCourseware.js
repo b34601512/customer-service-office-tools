@@ -126,18 +126,18 @@ body.show-cid .cid{display:inline}
 .speech-insight{background:#fffaf3;border:1px solid #fde0a8}
 .insight summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;padding:12px 14px;user-select:none;background:linear-gradient(180deg,#fff8ec,#fff2dc);transition:.15s}
 .insight summary::-webkit-details-marker{display:none}
-.speech-insight summary:hover{background:#ffe9bd}
-.insight summary:focus-visible{outline:2px solid #d97706;outline-offset:-2px}
+.speech-insight summary:hover{background:#e8f6ee}
+.insight summary:focus-visible{outline:2px solid #16a34a;outline-offset:-2px}
 .sum-ico{font-size:16px}.sum-main{font-size:13.5px;font-weight:800;color:#92400e;flex:1;line-height:1.5}
 .sum-hint{display:none}/* 旧解析文件里的文字提示：按钮已统一，不再显示 */
-.sum-btn{display:inline-flex;align-items:center;gap:6px;background:#e1251b;color:#fff;font-size:12.5px;font-weight:800;border-radius:18px;padding:5px 14px;flex-shrink:0;box-shadow:0 2px 8px rgba(225,37,27,.35);animation:sumPulse 2.4s ease-in-out infinite}
+.sum-btn{display:inline-flex;align-items:center;gap:6px;background:#16a34a;color:#fff;font-size:12.5px;font-weight:800;border-radius:18px;padding:5px 14px;flex-shrink:0;box-shadow:0 2px 8px rgba(22,163,74,.35);animation:sumPulse 2.4s ease-in-out infinite}
 .insight[open] .sum-btn{background:#94a3b8;box-shadow:none;animation:none}
 .sum-btn .t-close{display:none}
 .insight[open] .sum-btn .t-open{display:none}
 .insight[open] .sum-btn .t-close{display:inline}
 .sum-caret{font-size:10px;line-height:1;transition:.2s}
 .insight[open] .sum-caret{transform:rotate(180deg)}
-@keyframes sumPulse{0%,100%{box-shadow:0 2px 8px rgba(225,37,27,.32)}50%{box-shadow:0 2px 14px rgba(225,37,27,.62)}}
+@keyframes sumPulse{0%,100%{box-shadow:0 2px 8px rgba(22,163,74,.32)}50%{box-shadow:0 2px 14px rgba(22,163,74,.62)}}
 @media (prefers-reduced-motion:reduce){.sum-btn{animation:none}}
 .insight-body{padding:0 14px 14px;border-top:1px dashed #e2e8f0}
 .compare{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
@@ -160,7 +160,7 @@ body.show-cid .cid{display:inline}
 <body>
 <div class="wrap">
 <div class="card">
-  <div class="hint">👇 真实会话回放。${sysHint}每条“◆ 可优化回复”下方都有<b>就地解析</b>：点右侧红色<b>「点击展开解析」</b>按钮，看“当时怎么说 vs 建议怎么说”。</div>
+  <div class="hint">👇 真实会话回放。${sysHint}每条“◆ 可优化回复”下方都有<b>就地解析</b>：点右侧绿色<b>「点击展开解析」</b>按钮，看“当时怎么说 vs 建议怎么说”。</div>
   <div class="chat-area">
     <div class="session-title">
       <span>💬 ${esc(review.window || chat.meta.window || '')} · <span class="cid">${esc(customerLabel)}</span> 会话</span>
