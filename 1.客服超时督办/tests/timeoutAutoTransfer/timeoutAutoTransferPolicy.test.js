@@ -204,8 +204,8 @@ test("售后全部下班后不转，也不惊动主管", () => {
   assert.equal(result.requiresAttention, false);
 });
 
-test("当班没有带值班标记的客服时要提醒主管", () => {
-  // 原接待自己排的是晚班，10 点属于不在班，而早班售后没有任何值班标记，属于无人可接。
+test("当班没有值班人时要提醒主管", () => {
+  // 原接待自己排的是晚班，10 点属于不在班，而早班售后既没有组长也没有任何值班标记，属于无人可接。
   const result = decide({
     assignment: buildAssignment("after-miao", "after_sales", "缪婷婷"),
     scheduleData: buildScheduleData({
@@ -216,8 +216,78 @@ test("当班没有带值班标记的客服时要提醒主管", () => {
   });
 
   assert.equal(result.shouldTransfer, false);
-  assert.equal(result.reason, "no_colored_duty_member");
+  assert.equal(result.reason, "no_duty_member");
   assert.equal(result.requiresAttention, true);
+});
+
+const leaderMemberMap = {
+  ...memberMapByUserId,
+  "after-li": {
+    userId: "after-li",
+    staffName: "李守耀",
+    staffGroup: "after_sales",
+    roleLabel: "售后组长"
+  }
+};
+
+const leaderEarlySchedule = buildScheduleData({
+  shiftMap: {
+    李守耀: { normalizedShift: "早班", hasBackgroundColor: false, backgroundColor: "" }
+  }
+});
+
+test("售后组长在班时他就是值班人，不看背景色", () => {
+  // 用户口径：售后组长在班就是值班，排班表不给他标颜色。
+  const result = decide({
+    assignment: buildAssignment("after-miao", "after_sales", "缪婷婷"),
+    memberMapByUserId: leaderMemberMap,
+    scheduleData: leaderEarlySchedule
+  });
+
+  assert.equal(result.shouldTransfer, true);
+  assert.equal(result.targetStaffName, "李守耀");
+  assert.equal(result.targetUserId, "after-li");
+  assert.equal(result.targetStaffGroup, "after_sales");
+  assert.equal(result.targetDutySource, "group_leader");
+  assert.equal(result.requiresAttention, false);
+});
+
+test("售后组长在班但接单开关关着时不转并提醒主管", () => {
+  publishPresence({
+    李守耀: { staffName: "李守耀", staffGroup: "after_sales", transferEnabled: false, autoAssignEnabled: false }
+  });
+
+  const result = decide({
+    assignment: buildAssignment("after-miao", "after_sales", "缪婷婷"),
+    memberMapByUserId: leaderMemberMap,
+    scheduleData: leaderEarlySchedule
+  });
+
+  assert.equal(result.shouldTransfer, false);
+  assert.equal(result.reason, "duty_member_offline");
+  assert.equal(result.requiresAttention, true);
+  assert.deepEqual(result.offlineStaffNames, ["李守耀"]);
+});
+
+test("组长不在该班次时仍然按背景色找值班人", () => {
+  publishPresence({
+    陈燕玲: { staffName: "陈燕玲", staffGroup: "after_sales", transferEnabled: false, autoAssignEnabled: true }
+  });
+
+  const result = decide({
+    assignment: buildAssignment("after-miao", "after_sales", "缪婷婷"),
+    memberMapByUserId: leaderMemberMap,
+    scheduleData: buildScheduleData({
+      shiftMap: {
+        李守耀: { normalizedShift: "晚班", hasBackgroundColor: false, backgroundColor: "" },
+        陈燕玲: { normalizedShift: "早班", hasBackgroundColor: true, backgroundColor: "#BDD7EE" }
+      }
+    })
+  });
+
+  assert.equal(result.shouldTransfer, true);
+  assert.equal(result.targetStaffName, "陈燕玲");
+  assert.equal(result.targetDutySource, "background_color");
 });
 
 test("排班背景色读不到时不转并提醒主管", () => {

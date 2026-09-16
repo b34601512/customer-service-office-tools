@@ -30,7 +30,7 @@ const TRANSFER_TARGET_GROUP_BY_SOURCE_GROUP = Object.freeze({
 // 命中这些原因说明“客户当前确实没人能接手”，必须让主管知道，不能静默跳过。
 const ATTENTION_REASONS = new Set([
   "background_color_unavailable",
-  "no_colored_duty_member",
+  "no_duty_member",
   "duty_member_offline"
 ]);
 
@@ -74,7 +74,8 @@ function listDutyGroupMembers(scheduleData, memberMapByUserId, staffGroup, expec
         ? {
             member,
             staffName: normalizedStaffName,
-            shiftInfo
+            shiftInfo,
+            dutySource: "background_color"
           }
         : null;
     })
@@ -98,6 +99,64 @@ function listColoredStaffNamesByGroup(scheduleData, memberMapByUserId, staffGrou
       return member ? `${normalizedStaffName}(${shiftInfo.normalizedShift || "-"})` : null;
     })
     .filter(Boolean);
+}
+
+function isGroupLeaderRoleLabel(roleLabel) {
+  // 售后组长在班即值班（排班表不给组长标背景色），组长角色按角色文案识别，不写死具体姓名。
+  return String(roleLabel || "").includes("组长");
+}
+
+function listGroupLeaderDutyMembers(scheduleData, memberMapByUserId, staffGroup, expectedShiftStage) {
+  // 这里找出“当天该班次的组长”：组长固定值班，不依赖背景色。
+  const expectedShiftLabel = SHIFT_LABEL_BY_STAGE[expectedShiftStage];
+  if (!expectedShiftLabel || !staffGroup) {
+    return [];
+  }
+
+  return Object.values(memberMapByUserId || {})
+    .filter((member) =>
+      member?.staffGroup === staffGroup &&
+      isGroupLeaderRoleLabel(member?.roleLabel)
+    )
+    .map((member) => {
+      const staffName = normalizeStaffName(member?.staffName);
+      const shiftInfo = staffName ? scheduleData?.shiftMap?.[staffName] || null : null;
+      if (!shiftInfo || shiftInfo?.normalizedShift !== expectedShiftLabel) {
+        return null;
+      }
+      return {
+        member,
+        staffName,
+        shiftInfo,
+        dutySource: "group_leader"
+      };
+    })
+    .filter(Boolean);
+}
+
+function collectDutyCandidates(input) {
+  // 值班人 = 当天该班次的组长（固定值班、无背景色）+ 带值班背景色的客服；组长优先，同人去重。
+  const leaderCandidates = listGroupLeaderDutyMembers(
+    input.scheduleData,
+    input.memberMapByUserId,
+    input.targetStaffGroup,
+    input.expectedShiftStage
+  );
+  const coloredCandidates = listDutyGroupMembers(
+    input.scheduleData,
+    input.memberMapByUserId,
+    input.targetStaffGroup,
+    input.expectedShiftStage
+  );
+  const seen = new Set();
+  return [...leaderCandidates, ...coloredCandidates].filter((candidate) => {
+    const key = normalizeStaffName(candidate?.member?.userId) || normalizeStaffName(candidate?.staffName);
+    if (!key || seen.has(key)) {
+      return false;
+    }
+    seen.add(key);
+    return true;
+  });
 }
 
 function resolveTargetStaffGroup(assigneeMember) {
@@ -244,15 +303,17 @@ function decideTimeoutAutoTransfer(input = {}) {
     });
   }
 
-  const candidates = listDutyGroupMembers(
+  const candidates = collectDutyCandidates({
     scheduleData,
-    input.memberMapByUserId,
+    memberMapByUserId: input.memberMapByUserId,
     targetStaffGroup,
     expectedShiftStage
-  ).filter((candidate) => normalizeStaffName(candidate.member?.userId) !== normalizeStaffName(assignment.assignedToUserId));
+  }).filter((candidate) =>
+    normalizeStaffName(candidate.member?.userId) !== normalizeStaffName(assignment.assignedToUserId)
+  );
 
   if (candidates.length === 0) {
-    return noTransferDecision("no_colored_duty_member", {
+    return noTransferDecision("no_duty_member", {
       currentAssigneeName,
       currentAssigneeShift: dutyState.shiftLabel,
       currentAssigneeOffDutyReason: dutyState.reason,
@@ -320,6 +381,7 @@ function decideTimeoutAutoTransfer(input = {}) {
     targetStaffName: picked.target.staffName,
     targetUserId,
     targetBackgroundColor: picked.target.shiftInfo.backgroundColor || "",
+    targetDutySource: picked.target.dutySource || "",
     targetMember
   };
 }
@@ -331,9 +393,12 @@ module.exports = {
   STAFF_GROUP_LABELS,
   TRANSFER_TARGET_GROUP_BY_SOURCE_GROUP,
   decideTimeoutAutoTransfer,
+  collectDutyCandidates,
   isCurrentAssigneeOnDuty,
+  isGroupLeaderRoleLabel,
   listColoredStaffNamesByGroup,
   listDutyGroupMembers,
+  listGroupLeaderDutyMembers,
   resolveStaffGroupLabel,
   resolveTargetStaffGroup
 };

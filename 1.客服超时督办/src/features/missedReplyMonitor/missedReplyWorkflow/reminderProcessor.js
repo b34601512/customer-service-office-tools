@@ -171,11 +171,12 @@ async function attemptTimeoutAutoTransfer(options = {}) {
     };
   }
 
+  const dutySourceLabel = decision.targetDutySource === "group_leader" ? "组长在班" : "值班标记";
   log(
     "主线:执行",
     TIMEOUT_AUTO_TRANSFER_LOG_MODULE_NAME,
     "已发送转接指令",
-    `客户=${candidate.customerName}，触发=${candidate.reminderKind}，原接待=${decision.currentAssigneeName}（${decision.sourceStaffGroupLabel}，不在班），目标=${decision.targetStaffName}（${decision.targetStaffGroupLabel}当班），班次=${decision.expectedShiftStage}，socket序号=${sendResult.socketIndex}，命名空间=${sendResult.namespacePrefix || "默认"}，观察帧数=${sendResult.observedFrameCount}`
+    `客户=${candidate.customerName}，触发=${candidate.reminderKind}，原接待=${decision.currentAssigneeName}（${decision.sourceStaffGroupLabel}，不在班），目标=${decision.targetStaffName}（${decision.targetStaffGroupLabel}当班，值班来源=${dutySourceLabel}），班次=${decision.expectedShiftStage}，socket序号=${sendResult.socketIndex}，命名空间=${sendResult.namespacePrefix || "默认"}，观察帧数=${sendResult.observedFrameCount}`
   );
   // 指令发出去不等于转成功，按联系人快照确认后才算成功。
   recordPendingTransferVerification({

@@ -9,7 +9,7 @@ const AUTO_TRANSFER_LOG_MODULE_NAME = "超时自动转接";
 
 const FAILURE_REASON_LABELS = Object.freeze({
   background_color_unavailable: "排班表当天没有可用值班标记",
-  no_colored_duty_member: "当班没有带值班标记的客服",
+  no_duty_member: "当班没有值班客服（组长不在班且没有带值班标记的客服）",
   duty_member_offline: "当班客服都没开接单开关（不在线）",
   assignment_unchanged: "已发出转接指令，但平台分配结果没有变化",
   assignment_still_empty: "已发出转接指令，但平台仍显示未分配",
