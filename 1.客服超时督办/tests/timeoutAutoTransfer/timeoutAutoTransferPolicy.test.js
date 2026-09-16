@@ -220,6 +220,40 @@ test("当班没有值班人时要提醒主管", () => {
   assert.equal(result.requiresAttention, true);
 });
 
+test("黄色标记不代表值班，不能当值班人", () => {
+  // 用户口径：休息的黄色标记没有意义，休息的人直接忽略；黄标不算值班。
+  const result = decide({
+    assignment: buildAssignment("after-miao", "after_sales", "缪婷婷"),
+    scheduleData: buildScheduleData({
+      shiftMap: {
+        李守耀: { normalizedShift: "早班", hasBackgroundColor: false, backgroundColor: "" },
+        陈燕玲: { normalizedShift: "早班", hasBackgroundColor: true, backgroundColor: "#FFFF00" }
+      }
+    })
+  });
+
+  assert.equal(result.shouldTransfer, false);
+  assert.equal(result.reason, "no_duty_member");
+  assert.equal(result.requiresAttention, true);
+});
+
+test("休息/年假的人即使带颜色也不当值班人", () => {
+  const result = decide({
+    assignment: buildAssignment("after-miao", "after_sales", "缪婷婷"),
+    scheduleData: buildScheduleData({
+      shiftMap: {
+        李守耀: { normalizedShift: "早班", hasBackgroundColor: false, backgroundColor: "" },
+        陈燕玲: { normalizedShift: "休息", hasBackgroundColor: true, backgroundColor: "#E2F0D9" },
+        邓远祥: { normalizedShift: "年假", hasBackgroundColor: true, backgroundColor: "#BDD7EE" }
+      }
+    })
+  });
+
+  assert.equal(result.shouldTransfer, false);
+  assert.equal(result.reason, "no_duty_member");
+  assert.equal(result.requiresAttention, true);
+});
+
 const leaderMemberMap = {
   ...memberMapByUserId,
   "after-li": {

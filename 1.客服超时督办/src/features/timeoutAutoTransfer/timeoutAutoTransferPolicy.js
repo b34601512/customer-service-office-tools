@@ -20,6 +20,20 @@ const STAFF_GROUP_LABELS = Object.freeze({
   pre_sales: "售前"
 });
 
+// 用户口径（2026-09-16）：黄色背景是休息/调休那类标记，没有值班含义，不能当值班人；
+// 休息/年假/行政的人本来就不属于早/晚班班次，也不会被选为目标。
+const MEANINGLESS_DUTY_BACKGROUND_COLORS = new Set(["#FFFF00"]);
+
+function isDutyMarkedShift(shiftInfo) {
+  // 只有“带背景色且颜色有值班含义”的班次才算值班标记。
+  if (shiftInfo?.hasBackgroundColor !== true) {
+    return false;
+  }
+
+  const backgroundColor = String(shiftInfo?.backgroundColor || "").trim().toUpperCase();
+  return !MEANINGLESS_DUTY_BACKGROUND_COLORS.has(backgroundColor);
+}
+
 // 运营账号不负责接待，客户按售前口径处理；其余同组流转。
 const TRANSFER_TARGET_GROUP_BY_SOURCE_GROUP = Object.freeze({
   after_sales: "after_sales",
@@ -62,7 +76,7 @@ function listDutyGroupMembers(scheduleData, memberMapByUserId, staffGroup, expec
   return Object.entries(scheduleData?.shiftMap || {})
     .filter(([, shiftInfo]) =>
       shiftInfo?.normalizedShift === expectedShiftLabel &&
-      shiftInfo?.hasBackgroundColor === true
+      isDutyMarkedShift(shiftInfo)
     )
     .map(([staffName, shiftInfo]) => {
       const normalizedStaffName = normalizeStaffName(staffName);
@@ -395,7 +409,9 @@ module.exports = {
   decideTimeoutAutoTransfer,
   collectDutyCandidates,
   isCurrentAssigneeOnDuty,
+  isDutyMarkedShift,
   isGroupLeaderRoleLabel,
+  MEANINGLESS_DUTY_BACKGROUND_COLORS,
   listColoredStaffNamesByGroup,
   listDutyGroupMembers,
   listGroupLeaderDutyMembers,
