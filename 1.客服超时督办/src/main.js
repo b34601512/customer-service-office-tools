@@ -15,6 +15,7 @@ const { collectBusinessBrowserDataDirs } = require("./engine/browserCacheSanitiz
 const { monitorOffDutyWorkflow } = require("./features/offDutyClose/offDutyWorkflow");
 const { monitorSharedChatWorkflow } = require("./features/chatMonitorRuntime/workflowRunner");
 const { monitorOnlinePresenceWorkflow } = require("./features/onlinePresenceMonitor/onlinePresenceWorkflow");
+const { installAppSocketFrameProbe } = require("./features/transferMonitor/appSocketFrameProbe");
 const { prepareBrowserRuntimeForLaunch } = require("./engine/browserRuntimeGuard");
 
 function resolveMode() {
@@ -54,6 +55,8 @@ async function runHeadlessMode() {
   });
 
   try {
+    // 超时自动转接要靠页面自己的 socket.io 连接，必须在任何页面脚本之前装好探针。
+    await installAppSocketFrameProbe(context);
     // 先在唯一初始页验证登录，再启动任何可能发送通知或改开关的工作流。
     const initialPage = context.pages()[0] || await context.newPage();
     await navigateToTargetPage(initialPage, "登录自检");

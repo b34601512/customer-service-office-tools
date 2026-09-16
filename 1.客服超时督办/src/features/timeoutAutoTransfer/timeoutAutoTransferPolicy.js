@@ -1,17 +1,44 @@
-// 该文件只负责裁决“当前超时事件能否转给哪名值班售前”，不依赖页面或接口写入。
+// 该文件只负责裁决“这条超时/漏回复提醒该不该自动转接、转给当前当班的谁”，不依赖页面或接口写入。
+// 口径：原接待在值班时段（或在值班但已不是当前班次）就不转；确属不在班时，
+// 运营 → 转当班售前（运营不接待），售前 → 转当班售前，售后 → 转当班售后，绝不跨组互转。
 const { ASSIGNMENT_STATUS } = require("../shared/currentAssignment");
+const { resolveShiftStage } = require("../offDutyClose/offDutyConfig");
 const { resolveExpectedShiftStageForGroup } = require("../onlinePresenceMonitor/onlinePresencePolicy");
+const { resolveOnlinePresenceRow } = require("../onlinePresenceMonitor/onlinePresenceSnapshotStore");
 
 const AUTO_TRANSFER_REMINDER_KINDS = new Set(["timeout", "missedReply"]);
+
 const SHIFT_LABEL_BY_STAGE = Object.freeze({
   early: "早班",
   late: "晚班"
 });
 
+const STAFF_GROUP_LABELS = Object.freeze({
+  after_sales: "售后",
+  management: "管理",
+  operation: "运营",
+  pre_sales: "售前"
+});
+
+// 运营账号不负责接待，客户按售前口径处理；其余同组流转。
+const TRANSFER_TARGET_GROUP_BY_SOURCE_GROUP = Object.freeze({
+  after_sales: "after_sales",
+  operation: "pre_sales",
+  pre_sales: "pre_sales"
+});
+
+// 命中这些原因说明“客户当前确实没人能接手”，必须让主管知道，不能静默跳过。
+const ATTENTION_REASONS = new Set([
+  "background_color_unavailable",
+  "no_colored_duty_member",
+  "duty_member_offline"
+]);
+
 function noTransferDecision(reason, extra = {}) {
   return {
     shouldTransfer: false,
     reason,
+    requiresAttention: ATTENTION_REASONS.has(reason),
     ...extra
   };
 }
@@ -20,10 +47,14 @@ function normalizeStaffName(value) {
   return String(value || "").trim();
 }
 
-function listDutyPreSalesMembers(scheduleData, memberMapByUserId, expectedShiftStage) {
-  // Object.entries 保留排班表从上到下的顺序；多个有色单元格只取第一名。
+function resolveStaffGroupLabel(staffGroup) {
+  return STAFF_GROUP_LABELS[String(staffGroup || "").trim()] || String(staffGroup || "").trim();
+}
+
+function listDutyGroupMembers(scheduleData, memberMapByUserId, staffGroup, expectedShiftStage) {
+  // 排班表当天该班次且带值班背景色的客服才算当班人；多个时沿用排班表从上到下的顺序。
   const expectedShiftLabel = SHIFT_LABEL_BY_STAGE[expectedShiftStage];
-  if (!expectedShiftLabel) {
+  if (!expectedShiftLabel || !staffGroup) {
     return [];
   }
 
@@ -37,7 +68,7 @@ function listDutyPreSalesMembers(scheduleData, memberMapByUserId, expectedShiftS
       const normalizedStaffName = normalizeStaffName(staffName);
       const member = members.find((item) =>
         normalizeStaffName(item?.staffName) === normalizedStaffName &&
-        item?.staffGroup === "pre_sales"
+        item?.staffGroup === staffGroup
       );
       return member
         ? {
@@ -48,6 +79,75 @@ function listDutyPreSalesMembers(scheduleData, memberMapByUserId, expectedShiftS
         : null;
     })
     .filter(Boolean);
+}
+
+function resolveTargetStaffGroup(assigneeMember) {
+  // 成员角色缺失（未识别/经理等）时不做猜测，直接不转。
+  const sourceStaffGroup = normalizeStaffName(assigneeMember?.staffGroup);
+  return {
+    sourceStaffGroup,
+    targetStaffGroup: TRANSFER_TARGET_GROUP_BY_SOURCE_GROUP[sourceStaffGroup] || ""
+  };
+}
+
+function isCurrentAssigneeOnDuty(input) {
+  // 运营不参与排班值班，一律视为不在班；售前/售后按“当天班次是否等于当前应值班班次”判断。
+  const { assigneeMember, sourceStaffGroup, scheduleData, expectedShiftStage } = input;
+  if (sourceStaffGroup === "operation") {
+    return { onDuty: false, reason: "operation_not_on_duty", shiftLabel: "" };
+  }
+
+  const staffName = normalizeStaffName(assigneeMember?.staffName);
+  const shiftInfo = scheduleData?.shiftMap?.[staffName] || null;
+  const shiftLabel = String(shiftInfo?.normalizedShift || "").trim();
+  const shiftStage = resolveShiftStage(shiftLabel);
+  if (!shiftInfo || !["early", "late"].includes(shiftStage)) {
+    return { onDuty: false, reason: "no_scheduled_shift_today", shiftLabel };
+  }
+
+  if (shiftStage !== expectedShiftStage) {
+    return { onDuty: false, reason: "shift_stage_mismatch", shiftLabel };
+  }
+
+  return { onDuty: true, reason: "on_shift_now", shiftLabel };
+}
+
+function pickOnlineDutyTarget(input) {
+  // 当班但是没开接单开关等于没在线，用户口径明确：不在线不能转。
+  // 快照新鲜度按墙钟判断：上班快照本身就是按真实时间写的，不能用业务时间戳去比对它。
+  const { candidates, staffGroup, nowMs = Date.now() } = input;
+  const offlineStaffNames = [];
+  const unknownStaffNames = [];
+  const unknownReasons = [];
+
+  for (const candidate of candidates) {
+    const presence = resolveOnlinePresenceRow(candidate.staffName, staffGroup, nowMs);
+    if (!presence.available) {
+      unknownStaffNames.push(candidate.staffName);
+      if (!unknownReasons.includes(presence.reason)) {
+        unknownReasons.push(presence.reason);
+      }
+      continue;
+    }
+
+    if (presence.online) {
+      return {
+        target: candidate,
+        offlineStaffNames,
+        unknownStaffNames: [],
+        unknownReasons: []
+      };
+    }
+
+    offlineStaffNames.push(candidate.staffName);
+  }
+
+  return {
+    target: null,
+    offlineStaffNames,
+    unknownStaffNames,
+    unknownReasons
+  };
 }
 
 function decideTimeoutAutoTransfer(input = {}) {
@@ -68,9 +168,13 @@ function decideTimeoutAutoTransfer(input = {}) {
     });
   }
 
-  if (assignment.assigneeMember?.staffGroup !== "operation") {
-    return noTransferDecision("current_assignee_not_operation", {
-      currentAssigneeName: normalizeStaffName(assignment.assigneeMember?.staffName)
+  const assigneeMember = assignment.assigneeMember || null;
+  const { sourceStaffGroup, targetStaffGroup } = resolveTargetStaffGroup(assigneeMember);
+  const currentAssigneeName = normalizeStaffName(assigneeMember?.staffName);
+  if (!targetStaffGroup) {
+    return noTransferDecision("unsupported_assignee_group", {
+      currentAssigneeName,
+      sourceStaffGroup
     });
   }
 
@@ -81,67 +185,132 @@ function decideTimeoutAutoTransfer(input = {}) {
 
   let expectedShiftStage = "";
   try {
-    expectedShiftStage = resolveExpectedShiftStageForGroup(input.config, "pre_sales", now);
+    expectedShiftStage = resolveExpectedShiftStageForGroup(input.config, targetStaffGroup, now);
   } catch (error) {
-    return noTransferDecision("invalid_pre_sales_work_time", {
-      errorMessage: error instanceof Error ? error.message : String(error)
+    return noTransferDecision("invalid_work_time_config", {
+      errorMessage: error instanceof Error ? error.message : String(error),
+      targetStaffGroup
     });
   }
   if (!expectedShiftStage) {
-    return noTransferDecision("outside_pre_sales_work_time");
+    return noTransferDecision("outside_target_group_work_time", {
+      currentAssigneeName,
+      sourceStaffGroup,
+      targetStaffGroup
+    });
   }
 
   const scheduleData = input.scheduleData;
   if (scheduleData?.backgroundColorAvailable !== true) {
     return noTransferDecision("background_color_unavailable", {
+      currentAssigneeName,
+      sourceStaffGroup,
+      targetStaffGroup,
       expectedShiftStage
     });
   }
 
-  const candidates = listDutyPreSalesMembers(
+  const dutyState = isCurrentAssigneeOnDuty({
+    assigneeMember,
+    sourceStaffGroup,
+    scheduleData,
+    expectedShiftStage
+  });
+  if (dutyState.onDuty) {
+    return noTransferDecision("current_assignee_on_duty", {
+      currentAssigneeName,
+      sourceStaffGroup,
+      targetStaffGroup,
+      expectedShiftStage,
+      currentAssigneeShift: dutyState.shiftLabel
+    });
+  }
+
+  const candidates = listDutyGroupMembers(
     scheduleData,
     input.memberMapByUserId,
+    targetStaffGroup,
     expectedShiftStage
-  );
+  ).filter((candidate) => normalizeStaffName(candidate.member?.userId) !== normalizeStaffName(assignment.assignedToUserId));
+
   if (candidates.length === 0) {
-    return noTransferDecision("no_colored_duty_pre_sales", {
+    return noTransferDecision("no_colored_duty_member", {
+      currentAssigneeName,
+      currentAssigneeOffDutyReason: dutyState.reason,
+      sourceStaffGroup,
+      targetStaffGroup,
       expectedShiftStage
     });
   }
 
-  const target = candidates[0];
-  const targetUserId = normalizeStaffName(target.member?.userId);
-  if (!targetUserId) {
-    return noTransferDecision("duty_pre_sales_user_id_missing", {
+  const picked = pickOnlineDutyTarget({
+    candidates,
+    staffGroup: targetStaffGroup
+  });
+
+  if (!picked.target) {
+    if (picked.unknownStaffNames.length > 0) {
+      return noTransferDecision("presence_unavailable", {
+        currentAssigneeName,
+        sourceStaffGroup,
+        targetStaffGroup,
+        expectedShiftStage,
+        unknownStaffNames: picked.unknownStaffNames,
+        unknownReasons: picked.unknownReasons
+      });
+    }
+
+    return noTransferDecision("duty_member_offline", {
+      currentAssigneeName,
+      sourceStaffGroup,
+      targetStaffGroup,
       expectedShiftStage,
-      targetStaffName: target.staffName
+      offlineStaffNames: picked.offlineStaffNames
     });
   }
 
-  if (targetUserId === normalizeStaffName(assignment.assignedToUserId)) {
-    return noTransferDecision("already_assigned_to_duty_pre_sales", {
+  const targetMember = picked.target.member;
+  const targetUserId = normalizeStaffName(targetMember?.userId);
+  if (!targetUserId) {
+    return noTransferDecision("duty_member_user_id_missing", {
+      currentAssigneeName,
+      sourceStaffGroup,
+      targetStaffGroup,
       expectedShiftStage,
-      targetStaffName: target.staffName,
-      targetUserId,
-      targetBackgroundColor: target.shiftInfo.backgroundColor || ""
+      targetStaffName: picked.target.staffName
     });
   }
 
   return {
     shouldTransfer: true,
+    requiresAttention: false,
     reason: "eligible",
     reminderKind,
+    currentAssigneeName,
+    currentAssigneeOffDutyReason: dutyState.reason,
+    currentAssigneeShift: dutyState.shiftLabel,
+    sourceStaffGroup,
+    sourceStaffGroupLabel: resolveStaffGroupLabel(sourceStaffGroup),
+    targetStaffGroup,
+    targetStaffGroupLabel: resolveStaffGroupLabel(targetStaffGroup),
     expectedShiftStage,
-    targetStaffName: target.staffName,
+    offlineDutyStaffNames: picked.offlineStaffNames,
+    targetStaffName: picked.target.staffName,
     targetUserId,
-    targetBackgroundColor: target.shiftInfo.backgroundColor || "",
-    targetMember: target.member,
-    currentAssigneeName: normalizeStaffName(assignment.assigneeMember?.staffName)
+    targetBackgroundColor: picked.target.shiftInfo.backgroundColor || "",
+    targetMember
   };
 }
 
 module.exports = {
+  ATTENTION_REASONS,
   AUTO_TRANSFER_REMINDER_KINDS,
+  SHIFT_LABEL_BY_STAGE,
+  STAFF_GROUP_LABELS,
+  TRANSFER_TARGET_GROUP_BY_SOURCE_GROUP,
   decideTimeoutAutoTransfer,
-  listDutyPreSalesMembers
+  isCurrentAssigneeOnDuty,
+  listDutyGroupMembers,
+  resolveStaffGroupLabel,
+  resolveTargetStaffGroup
 };

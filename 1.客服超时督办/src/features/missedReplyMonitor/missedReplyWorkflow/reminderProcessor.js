@@ -16,10 +16,14 @@ const { buildReminderSnapshot, recordUnresolvedReplyProcess } = require('./remin
 const { persistMissedReplyRuntimeState } = require('./runtimeState');
 const { MISSED_REPLY_LOG_MODULE_NAME } = require('./constants');
 const { recordTimeoutNotification } = require('../../timeoutPerformance/timeoutPerformanceLedger');
-const { assignChatToMember } = require('../../transferMonitor/transferApiClient');
+const { resolveTargetRouteMeta } = require('../../transferMonitor/transferApiClient');
+const { sendAppSocketEvent } = require('../../transferMonitor/appSocketFrameProbe');
+const { recordPendingTransferVerification } = require('../../transferMonitor/autoTransferVerificationStore');
+const { sendAutoTransferNoticeSafely } = require('../../transferMonitor/autoTransferNotifier');
 const { decideTimeoutAutoTransfer } = require('../../timeoutAutoTransfer/timeoutAutoTransferPolicy');
 
 const TIMEOUT_AUTO_TRANSFER_LOG_MODULE_NAME = "超时自动转接";
+const CHAT_ASSIGN_SOCKET_EVENT_NAME = "assignChat";
 
 function formatAssignmentForLog(assignment) {
   // 日志明确写平台当前分配状态；最后接待兜底要带状态说明，不再把“未分配”误写成“未识别”。
@@ -84,6 +88,16 @@ async function attemptTimeoutAutoTransfer(options = {}) {
       "跳过自动转接",
       `客户=${candidate.customerName}，触发=${candidate.reminderKind || "未知"}，原因=${decision.reason}`
     );
+    if (decision.requiresAttention) {
+      // 有人该接却没人能接时不能让主管蒙在鼓里，和转接失败共用同一套群通知。
+      await sendAutoTransferNoticeSafely({
+        outcome: "failed",
+        customerName: candidate.customerName,
+        sourceStaffName: decision.currentAssigneeName || formatAssignmentForLog(assignment),
+        reminderKindLabel: resolveReminderKindLabel(candidate.reminderKind),
+        reason: decision.reason
+      });
+    }
     return {
       status: "skipped",
       reason: decision.reason,
@@ -91,27 +105,16 @@ async function attemptTimeoutAutoTransfer(options = {}) {
     };
   }
 
+  let sendResult;
   try {
-    const transferResult = await assignChatToMember(
-      page,
-      candidate.chatId,
-      decision.targetUserId,
-      {
-        logModuleName: TIMEOUT_AUTO_TRANSFER_LOG_MODULE_NAME
+    sendResult = await sendAppSocketEvent(page, {
+      eventName: CHAT_ASSIGN_SOCKET_EVENT_NAME,
+      payload: {
+        chatId: candidate.chatId,
+        groupId: resolveTargetRouteMeta().groupId,
+        assigneeId: decision.targetUserId
       }
-    );
-    log(
-      "主线:完成",
-      TIMEOUT_AUTO_TRANSFER_LOG_MODULE_NAME,
-      "自动转接成功",
-      `客户=${candidate.customerName}，触发=${candidate.reminderKind}，原接待=${decision.currentAssigneeName}，目标=${decision.targetStaffName}，班次=${decision.expectedShiftStage}，背景色=${decision.targetBackgroundColor}`
-    );
-    return {
-      status: "succeeded",
-      reason: decision.reason,
-      decision,
-      transferResult
-    };
+    });
   } catch (error) {
     if (isLoginRequiredError(error)) {
       throw error;
@@ -122,6 +125,14 @@ async function attemptTimeoutAutoTransfer(options = {}) {
       `自动转接失败（客户=${candidate.customerName}，目标=${decision.targetStaffName}）`,
       error
     );
+    await sendAutoTransferNoticeSafely({
+      outcome: "failed",
+      customerName: candidate.customerName,
+      sourceStaffName: decision.currentAssigneeName,
+      targetStaffName: decision.targetStaffName,
+      reminderKindLabel: resolveReminderKindLabel(candidate.reminderKind),
+      reason: "assign_request_failed"
+    });
     return {
       status: "failed",
       reason: "assign_request_failed",
@@ -129,6 +140,54 @@ async function attemptTimeoutAutoTransfer(options = {}) {
       error
     };
   }
+
+  if (!sendResult.ok) {
+    logError(
+      "主线:失败",
+      TIMEOUT_AUTO_TRANSFER_LOG_MODULE_NAME,
+      `自动转接失败（客户=${candidate.customerName}，目标=${decision.targetStaffName}）`,
+      new Error(sendResult.message || sendResult.reason)
+    );
+    await sendAutoTransferNoticeSafely({
+      outcome: "failed",
+      customerName: candidate.customerName,
+      sourceStaffName: decision.currentAssigneeName,
+      targetStaffName: decision.targetStaffName,
+      reminderKindLabel: resolveReminderKindLabel(candidate.reminderKind),
+      reason: sendResult.reason
+    });
+    return {
+      status: "failed",
+      reason: sendResult.reason,
+      decision,
+      sendResult
+    };
+  }
+
+  log(
+    "主线:执行",
+    TIMEOUT_AUTO_TRANSFER_LOG_MODULE_NAME,
+    "已发送转接指令",
+    `客户=${candidate.customerName}，触发=${candidate.reminderKind}，原接待=${decision.currentAssigneeName}（${decision.sourceStaffGroupLabel}，不在班），目标=${decision.targetStaffName}（${decision.targetStaffGroupLabel}当班），班次=${decision.expectedShiftStage}，socket序号=${sendResult.socketIndex}，命名空间=${sendResult.namespacePrefix || "默认"}，观察帧数=${sendResult.observedFrameCount}`
+  );
+  // 指令发出去不等于转成功，按联系人快照确认后才算成功。
+  recordPendingTransferVerification({
+    chatId: candidate.chatId,
+    customerName: candidate.customerName,
+    sourceStaffName: decision.currentAssigneeName,
+    sourceStaffGroup: decision.sourceStaffGroup,
+    targetStaffName: decision.targetStaffName,
+    targetUserId: decision.targetUserId,
+    targetStaffGroup: decision.targetStaffGroup,
+    reminderKind: candidate.reminderKind,
+    socketIndex: sendResult.socketIndex
+  });
+  return {
+    status: "sent",
+    reason: decision.reason,
+    decision,
+    sendResult
+  };
 }
 
 async function processReminderCandidate(runtimeState, candidate, memberMapByUserId, options = {}) {

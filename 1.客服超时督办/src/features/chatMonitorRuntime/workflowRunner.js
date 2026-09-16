@@ -12,10 +12,19 @@ const {
 } = require("../transferMonitor/transferMonitorWorkflow");
 const { createMissedReplyMonitorRuntimeState } = require("../missedReplyMonitor/missedReplyWorkflow/runtimeState");
 const { runMissedReplyMonitorScanWithSnapshot } = require("../missedReplyMonitor/missedReplyWorkflow/scanRunner");
+const {
+  listPendingTransferVerifications,
+  settlePendingTransferVerifications
+} = require("../transferMonitor/autoTransferVerificationStore");
+const {
+  sendAutoTransferNoticeSafely,
+  resolveReminderKindText
+} = require("../transferMonitor/autoTransferNotifier");
 const { recordActiveStaffSnapshot } = require("../timeoutPerformance/timeoutPerformanceLedger");
 const { createDailyScheduleService } = require("../scheduleQuery/dailyScheduleService");
 
 const CHAT_MONITOR_LOG_MODULE_NAME = "聊天监控";
+const AUTO_TRANSFER_LOG_MODULE_NAME = "超时自动转接";
 
 function createChatMonitorRuntimeState(nowMs = 0) {
   // 这里集中保存聊天监控状态，避免转接和未回复各自管理页面轮询。
@@ -119,10 +128,52 @@ async function runDueChatMonitorTasks(page, runtimeState, replyConfig, dueTasks,
 
   if (needsSnapshot) {
     recordActiveStaffSnapshot(snapshot.contacts, snapshot.memberMapByUserId);
+    await settlePendingAutoTransfers(snapshot.contacts);
   }
 
   await runTransferTaskIfDue(page, runtimeState, dueTasks, snapshot);
   await runMissedReplyTaskIfDue(page, runtimeState, dueTasks, snapshot, options.scheduleService);
+}
+
+async function settlePendingAutoTransfers(contacts, options = {}) {
+  // 自动转接发出去的是 socket 指令，只有联系人快照改口到目标客服才算真成功。
+  if (listPendingTransferVerifications().length === 0) {
+    return;
+  }
+
+  const { verified, failed } = settlePendingTransferVerifications(contacts, options);
+  for (const item of verified) {
+    log(
+      "主线:完成",
+      AUTO_TRANSFER_LOG_MODULE_NAME,
+      "转接已核验",
+      `客户=${item.customerName}，原接待=${item.sourceStaffName}，现接待=${item.targetStaffName}，耗时=${Math.round(item.elapsedMs / 1000)}秒`
+    );
+    await sendAutoTransferNoticeSafely({
+      outcome: "succeeded",
+      customerName: item.customerName,
+      sourceStaffName: item.sourceStaffName,
+      targetStaffName: item.targetStaffName,
+      reminderKindLabel: resolveReminderKindText(item.reminderKind)
+    });
+  }
+
+  for (const item of failed) {
+    logError(
+      "主线:失败",
+      AUTO_TRANSFER_LOG_MODULE_NAME,
+      `转接未生效（客户=${item.customerName}，目标=${item.targetStaffName}）`,
+      new Error(item.reason)
+    );
+    await sendAutoTransferNoticeSafely({
+      outcome: "failed",
+      customerName: item.customerName,
+      sourceStaffName: item.sourceStaffName,
+      targetStaffName: item.targetStaffName,
+      reminderKindLabel: resolveReminderKindText(item.reminderKind),
+      reason: item.reason
+    });
+  }
 }
 
 async function monitorSharedChatWorkflow(createChatPage, stopState) {
@@ -167,5 +218,6 @@ module.exports = {
   monitorSharedChatWorkflow,
   resolveDueChatMonitorTasks,
   resolveSharedSnapshotPageSize,
-  runDueChatMonitorTasks
+  runDueChatMonitorTasks,
+  settlePendingAutoTransfers
 };

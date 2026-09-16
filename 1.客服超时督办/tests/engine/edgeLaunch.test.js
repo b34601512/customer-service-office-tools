@@ -50,6 +50,7 @@ test("登录自检失败时不会启动任何工作流，并关闭浏览器", as
   let started = 0;
   let closed = 0;
   let stopped = false;
+  let probeInstalled = 0;
   const initialPage = {};
   const noop = () => {};
   const main = load("main.js", {
@@ -62,10 +63,12 @@ test("登录自检失败时不会启动任何工作流，并关闭浏览器", as
     "./features/offDutyClose/offDutyWorkflow": { monitorOffDutyWorkflow() { started++; } },
     "./features/chatMonitorRuntime/workflowRunner": { monitorSharedChatWorkflow() { started++; } },
     "./features/onlinePresenceMonitor/onlinePresenceWorkflow": { monitorOnlinePresenceWorkflow() { started++; } },
+    "./features/transferMonitor/appSocketFrameProbe": { installAppSocketFrameProbe: async () => { probeInstalled++; } },
     "./engine/browserRuntimeGuard": {}
   });
   await assert.rejects(main.runHeadlessMode(), /登录失效/);
   assert.equal(started, 0);
   assert.equal(closed, 1);
   assert.equal(stopped, true);
+  assert.equal(probeInstalled, 1);
 });

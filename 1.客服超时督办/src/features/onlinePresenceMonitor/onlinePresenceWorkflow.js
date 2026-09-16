@@ -7,6 +7,7 @@ const { createDailyScheduleService } = require("../scheduleQuery/dailyScheduleSe
 const {
   createOnlinePresenceStateStore
 } = require("./onlinePresenceStateStore");
+const { publishOnlinePresenceSnapshot } = require("./onlinePresenceSnapshotStore");
 const {
   summarizeOnlinePresenceStatus
 } = require("./onlinePresencePolicy");
@@ -270,6 +271,10 @@ async function runOnlinePresenceScan(page, scheduleService, stateStore, runtimeS
   const memberRows = await readScheduledMemberRows(page, scheduledStaffNames);
   await autoOpenTransferEnabled(page, memberRows.rowMap, config);
   await autoCloseTransferEnabled(page, memberRows.rowMap, config);
+  // 把这一轮读到的成员开关登记为共享快照，供超时自动转接判断目标是否真的在线。
+  publishOnlinePresenceSnapshot({
+    rowsByStaffName: memberRows.rowMap
+  });
 
   // 休息人员（非早晚班）不参与在线提醒，但若还开着接单开关需要自动关闭；
   // 单独读取单独处理，读取失败不污染主 rowMap，避免影响在线提醒判断。
