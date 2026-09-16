@@ -2,7 +2,12 @@
 // 口径：原接待在值班时段（或在值班但已不是当前班次）就不转；确属不在班时，
 // 运营 → 转当班售前（运营不接待），售前 → 转当班售前，售后 → 转当班售后，绝不跨组互转。
 const { ASSIGNMENT_STATUS } = require("../shared/currentAssignment");
-const { resolveShiftStage } = require("../offDutyClose/offDutyConfig");
+const {
+  parseTimeTextToDate,
+  resolveOffDutyCloseTime,
+  resolveOffDutyStartTime,
+  resolveShiftStage
+} = require("../offDutyClose/offDutyConfig");
 const { resolveExpectedShiftStageForGroup } = require("../onlinePresenceMonitor/onlinePresencePolicy");
 const { resolveOnlinePresenceRow } = require("../onlinePresenceMonitor/onlinePresenceSnapshotStore");
 
@@ -182,9 +187,29 @@ function resolveTargetStaffGroup(assigneeMember) {
   };
 }
 
+function isWithinOwnShiftWindow(config, staffGroup, shiftLabel, now) {
+  // “在班”＝当前时刻落在本人班次的时间窗内（早班 8:00~16:30，晚班 15:45/14:00~23:45/22:30）。
+  // 早晚班重叠时段（售后 14:00~16:30、售前 15:45~16:30）里早班人还没下班，不能把他当成不在班。
+  const startTimeText = resolveOffDutyStartTime(config, staffGroup, shiftLabel);
+  const closeTimeText = resolveOffDutyCloseTime(config, staffGroup, shiftLabel);
+  if (!startTimeText || !closeTimeText) {
+    return false;
+  }
+
+  const currentTime = now instanceof Date ? now : new Date(now || Date.now());
+  if (Number.isNaN(currentTime.getTime())) {
+    return false;
+  }
+
+  return (
+    currentTime.getTime() >= parseTimeTextToDate(currentTime, startTimeText).getTime() &&
+    currentTime.getTime() < parseTimeTextToDate(currentTime, closeTimeText).getTime()
+  );
+}
+
 function isCurrentAssigneeOnDuty(input) {
-  // 运营不参与排班值班，一律视为不在班；售前/售后按“当天班次是否等于当前应值班班次”判断。
-  const { assigneeMember, sourceStaffGroup, scheduleData, expectedShiftStage } = input;
+  // 运营不参与排班值班，一律视为不在班；售前/售后看本人班次的时间窗是否覆盖当前时刻。
+  const { assigneeMember, sourceStaffGroup, scheduleData, config, now } = input;
   if (sourceStaffGroup === "operation") {
     return { onDuty: false, reason: "operation_not_on_duty", shiftLabel: "" };
   }
@@ -197,8 +222,9 @@ function isCurrentAssigneeOnDuty(input) {
     return { onDuty: false, reason: "no_scheduled_shift_today", shiftLabel };
   }
 
-  if (shiftStage !== expectedShiftStage) {
-    return { onDuty: false, reason: "shift_stage_mismatch", shiftLabel };
+  if (!isWithinOwnShiftWindow(config, sourceStaffGroup, shiftLabel, now)) {
+    // 早班过早/晚班未到、或已过本人下班时间，都算不在班。
+    return { onDuty: false, reason: "outside_own_shift_window", shiftLabel };
   }
 
   return { onDuty: true, reason: "on_shift_now", shiftLabel };
@@ -305,7 +331,8 @@ function decideTimeoutAutoTransfer(input = {}) {
     assigneeMember,
     sourceStaffGroup,
     scheduleData,
-    expectedShiftStage
+    config: input.config,
+    now
   });
   if (dutyState.onDuty) {
     return noTransferDecision("current_assignee_on_duty", {
@@ -411,6 +438,7 @@ module.exports = {
   isCurrentAssigneeOnDuty,
   isDutyMarkedShift,
   isGroupLeaderRoleLabel,
+  isWithinOwnShiftWindow,
   MEANINGLESS_DUTY_BACKGROUND_COLORS,
   listColoredStaffNamesByGroup,
   listDutyGroupMembers,

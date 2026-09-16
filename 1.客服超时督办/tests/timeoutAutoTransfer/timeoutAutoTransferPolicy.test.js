@@ -14,6 +14,10 @@ const {
 const config = {
   timeoutAutoTransferEnabled: true,
   onlinePresenceWorkStartTime: "08:00",
+  offDutyPreSalesEarlyStartTime: "08:00",
+  offDutyPreSalesLateStartTime: "15:45",
+  offDutyAfterSalesEarlyStartTime: "08:00",
+  offDutyAfterSalesLateStartTime: "14:00",
   offDutyPreSalesEarlyCloseTime: "16:30",
   offDutyPreSalesLateCloseTime: "23:45",
   offDutyAfterSalesEarlyCloseTime: "16:30",
@@ -149,7 +153,56 @@ test("早班售前在晚班时段超时，应该转给当班晚班售前", () =>
   assert.equal(result.shouldTransfer, true);
   assert.equal(result.targetStaffName, "刘秀文");
   assert.equal(result.expectedShiftStage, "late");
-  assert.equal(result.currentAssigneeOffDutyReason, "shift_stage_mismatch");
+  assert.equal(result.currentAssigneeOffDutyReason, "outside_own_shift_window");
+});
+
+test("早晚班重叠期间早班人还在班，不能把他当成不在班", () => {
+  // 售后早班 8:00~16:30、晚班 14:00 到岗；15:00 早班的人仍在上班，客户不能从他手里转走。
+  const result = decide({
+    assignment: buildAssignment("after-chen", "after_sales", "陈燕玲"),
+    now: new Date(2026, 8, 16, 15, 0)
+  });
+
+  assert.equal(result.shouldTransfer, false);
+  assert.equal(result.reason, "current_assignee_on_duty");
+  assert.equal(result.currentAssigneeShift, "早班");
+});
+
+test("售前重叠期间早班人还在班，同样不转", () => {
+  const result = decide({
+    assignment: buildAssignment("pre-liu", "pre_sales", "刘秀文"),
+    now: new Date(2026, 8, 16, 16, 0)
+  });
+
+  assert.equal(result.shouldTransfer, false);
+  assert.equal(result.reason, "current_assignee_on_duty");
+});
+
+test("早班人过了自己下班时间才转给当班晚班值班人", () => {
+  // 售后早班 16:30 下班，16:45 就该把客户交给当班晚班值班人。
+  const result = decide({
+    assignment: buildAssignment("after-chen", "after_sales", "陈燕玲"),
+    now: new Date(2026, 8, 16, 16, 45)
+  });
+
+  assert.equal(result.shouldTransfer, true);
+  assert.equal(result.currentAssigneeOffDutyReason, "outside_own_shift_window");
+  assert.equal(result.expectedShiftStage, "late");
+  assert.equal(result.targetStaffGroup, "after_sales");
+});
+
+test("晚班未到岗时就该转给当班值班人", () => {
+  // 售后晚班 14:00 到岗，13:00 排晚班的人还没上班 → 转给当班值班售后。
+  const result = decide({
+    assignment: buildAssignment("after-miao", "after_sales", "缪婷婷"),
+    now: new Date(2026, 8, 16, 13, 0)
+  });
+
+  assert.equal(result.shouldTransfer, true);
+  assert.equal(result.currentAssigneeShift, "晚班");
+  assert.equal(result.currentAssigneeOffDutyReason, "outside_own_shift_window");
+  assert.equal(result.targetStaffGroup, "after_sales");
+  assert.equal(result.expectedShiftStage, "early");
 });
 
 test("售后超时只转售后，绝不跨组转售前", () => {
