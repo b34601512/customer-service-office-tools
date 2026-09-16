@@ -9,6 +9,23 @@ const {
   clearSnapshotDir,
   saveDailyScheduleSnapshot
 } = require("./scheduleSnapshotStore");
+const { isMarkedBackgroundColor } = require("./scheduleStyleParser");
+
+function summarizeDutyColors(dateKey, backgroundMatrix, shiftMap) {
+  // 常驻诊断：把“今天哪些人带值班背景色”写进日志，排障时不用再翻金山表格猜。
+  const coloredCellCount = Array.isArray(backgroundMatrix)
+    ? backgroundMatrix.reduce(
+        (total, row) =>
+          total +
+          (Array.isArray(row) ? row.filter((cell) => isMarkedBackgroundColor(cell)).length : 0),
+        0
+      )
+    : 0;
+  const coloredMembers = Object.entries(shiftMap || {})
+    .filter(([, shiftInfo]) => shiftInfo?.hasBackgroundColor === true)
+    .map(([staffName, shiftInfo]) => `${staffName}(${shiftInfo.normalizedShift || "-"}|${shiftInfo.backgroundColor || "无色"})`);
+  return `日期=${dateKey}，整表带色单元格=${coloredCellCount}，当天带色值班=${coloredMembers.length > 0 ? coloredMembers.join(" / ") : "无"}`;
+}
 
 function formatDateKey(targetDate) {
   // 这里统一生成日期缓存键，避免今天和明天的排班缓存串在一起。
@@ -81,6 +98,12 @@ function createDailyScheduleService(options = {}) {
       shiftMap: buildDailyShiftMap(monthData.matrix, targetDate, monthData.backgroundMatrix)
     };
     dayCache.set(dateKey, value);
+    log(
+      "主线:执行",
+      logModuleName,
+      "排班颜色清单",
+      summarizeDutyColors(value.dateKey, monthData.backgroundMatrix, value.shiftMap)
+    );
     return value;
   }
 

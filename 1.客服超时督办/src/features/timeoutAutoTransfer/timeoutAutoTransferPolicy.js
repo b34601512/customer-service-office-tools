@@ -81,6 +81,25 @@ function listDutyGroupMembers(scheduleData, memberMapByUserId, staffGroup, expec
     .filter(Boolean);
 }
 
+function listColoredStaffNamesByGroup(scheduleData, memberMapByUserId, staffGroup) {
+  // 诊断用：列出该组当天所有带值班背景色的人（不分班次），排障时一眼看出“今天到底谁被标了值班”。
+  if (!staffGroup) {
+    return [];
+  }
+  const members = Object.values(memberMapByUserId || {});
+  return Object.entries(scheduleData?.shiftMap || {})
+    .filter(([, shiftInfo]) => shiftInfo?.hasBackgroundColor === true)
+    .map(([staffName, shiftInfo]) => {
+      const normalizedStaffName = normalizeStaffName(staffName);
+      const member = members.find((item) =>
+        normalizeStaffName(item?.staffName) === normalizedStaffName &&
+        item?.staffGroup === staffGroup
+      );
+      return member ? `${normalizedStaffName}(${shiftInfo.normalizedShift || "-"})` : null;
+    })
+    .filter(Boolean);
+}
+
 function resolveTargetStaffGroup(assigneeMember) {
   // 成员角色缺失（未识别/经理等）时不做猜测，直接不转。
   const sourceStaffGroup = normalizeStaffName(assigneeMember?.staffGroup);
@@ -209,7 +228,6 @@ function decideTimeoutAutoTransfer(input = {}) {
       expectedShiftStage
     });
   }
-
   const dutyState = isCurrentAssigneeOnDuty({
     assigneeMember,
     sourceStaffGroup,
@@ -236,10 +254,13 @@ function decideTimeoutAutoTransfer(input = {}) {
   if (candidates.length === 0) {
     return noTransferDecision("no_colored_duty_member", {
       currentAssigneeName,
+      currentAssigneeShift: dutyState.shiftLabel,
       currentAssigneeOffDutyReason: dutyState.reason,
       sourceStaffGroup,
       targetStaffGroup,
-      expectedShiftStage
+      expectedShiftStage,
+      // 排班表当天该组该班次带色的名单，供日志对账“为什么没人能接”。
+      coloredDutyStaffNames: listColoredStaffNamesByGroup(scheduleData, input.memberMapByUserId, targetStaffGroup)
     });
   }
 
@@ -262,6 +283,7 @@ function decideTimeoutAutoTransfer(input = {}) {
 
     return noTransferDecision("duty_member_offline", {
       currentAssigneeName,
+      currentAssigneeShift: dutyState.shiftLabel,
       sourceStaffGroup,
       targetStaffGroup,
       expectedShiftStage,
@@ -310,6 +332,7 @@ module.exports = {
   TRANSFER_TARGET_GROUP_BY_SOURCE_GROUP,
   decideTimeoutAutoTransfer,
   isCurrentAssigneeOnDuty,
+  listColoredStaffNamesByGroup,
   listDutyGroupMembers,
   resolveStaffGroupLabel,
   resolveTargetStaffGroup

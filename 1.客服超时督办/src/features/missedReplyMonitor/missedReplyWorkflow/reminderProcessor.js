@@ -85,12 +85,15 @@ async function attemptTimeoutAutoTransfer(options = {}) {
     now: now || new Date()
   });
   if (!decision.shouldTransfer) {
+    const coloredDutySuffix = Array.isArray(decision.coloredDutyStaffNames)
+      ? `，当日带色${resolveStaffGroupLabel(decision.targetStaffGroup)}=${decision.coloredDutyStaffNames.join(" / ") || "无"}`
+      : "";
     log(
       "主线:等待",
       TIMEOUT_AUTO_TRANSFER_LOG_MODULE_NAME,
       "跳过自动转接",
       // 跳过也要能审计：记下原接待、所属组、排班班次，方便事后对“为什么没转”对账。
-      `客户=${candidate.customerName}，触发=${candidate.reminderKind || "未知"}，原接待=${decision.currentAssigneeName || formatAssignmentForLog(assignment) || "-"}（${resolveStaffGroupLabel(decision.sourceStaffGroup) || "-"}，班次=${decision.currentAssigneeShift || "-"}，当前应值=${decision.expectedShiftStage || "-"}），原因=${decision.reason}`
+      `客户=${candidate.customerName}，触发=${candidate.reminderKind || "未知"}，原接待=${decision.currentAssigneeName || formatAssignmentForLog(assignment) || "-"}（${resolveStaffGroupLabel(decision.sourceStaffGroup) || "-"}，班次=${decision.currentAssigneeShift || "-"}，当前应值=${decision.expectedShiftStage || "-"}），原因=${decision.reason}${coloredDutySuffix}`
     );
     if (decision.requiresAttention) {
       // 有人该接却没人能接时不能让主管蒙在鼓里，和转接失败共用同一套群通知。
