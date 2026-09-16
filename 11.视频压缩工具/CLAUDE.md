@@ -8,7 +8,7 @@
 
 - Windows 本地 Python 工具，默认界面使用 Textual TUI，保留 Tkinter 兼容入口，命令行使用 `argparse`。
 - `imageio-ffmpeg` 自带 FFmpeg；压缩采用 H.264、AAC 和两遍码率控制。
-- `build_release.py` 使用 PyInstaller 生成单文件程序。
+- 启动：双击 `启动程序.bat`；依赖：`安装依赖.bat`。**不再打包发布**（`build_release.py`/`packaging/` 已删，2026-09-16 起只发源码）。
 
 ## 3. 模块结构
 
@@ -16,7 +16,7 @@
 - `video_compressor/ui/`：TUI/Tk 界面、参数、后台线程、进度和日志。
 - `video_compressor/compression/`、`media/`：探测视频、规划码率、执行压缩和超标重试。
 - `video_compressor/config/`：读写 `config.json`；`progress/`、`utils/` 提供进度、日志和运行路径。
-- `tests/`：码率和真实压缩测试；根目录脚本负责安装、启动和打包。
+- `tests/`：码率和真实压缩测试；根目录脚本负责安装和启动。
 
 ## 4. 数据流
 

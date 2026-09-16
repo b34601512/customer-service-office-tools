@@ -62,10 +62,6 @@ python main.py "D:\视频\示例.mp4" --target-size-mb 25 --output-dir "D:\视�
 python -m unittest discover -s tests -v
 ```
 
-## 打包发布
+## 启动方式
 
-```powershell
-python build_release.py
-```
-
-打包完成后，可执行文件会出现在 `release/视频压缩工具_v0.01/` 目录下。
+双击 `启动程序.bat`（走 `.venv` 里的 Python + `main.py`）。**不再提供打包发布**：`build_release.py` 与 `packaging/` 已于 2026-09-16 删除，需要分发时直接给源码 + `安装依赖.bat`。

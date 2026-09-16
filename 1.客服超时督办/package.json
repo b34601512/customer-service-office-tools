@@ -11,8 +11,7 @@
     "login": "node src/main.js login",
     "start": "node src/main.js run",
     "schedule": "node src/queryScheduleShift.js",
-    "test": "node scripts/test-isolated.js",
-    "build:portable": "node scripts/build-portable.js"
+    "test": "node scripts/test-isolated.js"
   },
   "keywords": [
     "playwright",

@@ -132,19 +132,18 @@ test('CLI架构边界：浏览器资料枚举不再包含旧控制台配置', ()
   assert.doesNotMatch(文本, /controlCenterProfileDir|控制台窗口目录|control-center-window/);
 });
 
-test('CLI架构边界：便携包不再创建旧控制台目录', () => {
-  const 文本 = fs.readFileSync(path.join(项目根目录, 'src/release/buildPortablePackage.js'), 'utf8');
-  assert.doesNotMatch(文本, /control-center-window/);
-});
-
-test('CLI架构边界：便携包安全校验不再枚举旧控制台目录', () => {
-  const 文本 = fs.readFileSync(path.join(项目根目录, 'src/release/packageSafetyGuard.js'), 'utf8');
-  assert.doesNotMatch(文本, /control-center-window/);
-});
-
-test('CLI架构边界：客服分发包不再创建旧控制台目录', () => {
-  const 文本 = fs.readFileSync(path.join(仓库根目录, '导出客服分发包.js'), 'utf8');
-  assert.doesNotMatch(文本, /control-center-window/);
+test('CLI架构边界：打包脚本已彻底移除（只发源码）', () => {
+  [
+    path.join(项目根目录, 'src/release'),
+    path.join(项目根目录, '导出客服分发包.bat'),
+    path.join(项目根目录, '打包配置.json'),
+    path.join(仓库根目录, '导出客服分发包.js'),
+  ].forEach((路径) => {
+    assert.equal(fs.existsSync(路径), false, `不应再存在打包产物：${路径}`);
+  });
+  const packageJson = JSON.parse(fs.readFileSync(path.join(项目根目录, 'package.json'), 'utf8'));
+  assert.equal(packageJson.scripts['pack:portable'], undefined);
+  assert.equal(packageJson.scripts['build:portable'], undefined);
 });
 
 test('CLI架构边界：旧发票状态服务文件已迁出', () => {

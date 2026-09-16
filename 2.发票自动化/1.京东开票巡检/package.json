@@ -1,6 +1,7 @@
 {
   "name": "jd-invoice-watch",
   "version": "0.0.1",
+  "displayVersion": "0.04",
   "private": true,
   "description": "京东开票巡检工具",
   "type": "commonjs",
@@ -9,7 +10,6 @@
     "panel:cli": "node src/cli/startCli.js",
     "start": "node src/tui/startTui.js",
     "check": "node src/main.js check",
-    "pack:portable": "node src/release/buildPortablePackage.js",
     "test": "node --test tests/*.test.js tests/tui/*.test.js"
   },
   "dependencies": {

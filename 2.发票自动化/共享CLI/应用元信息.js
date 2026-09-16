@@ -13,11 +13,8 @@ function 读取JSON文件(文件路径) {
 function 读取项目显示版本(项目根目录) {
   const packageJson路径 = path.join(项目根目录, 'package.json');
   const packageJson = 读取JSON文件(packageJson路径);
-  const 打包配置路径 = path.join(项目根目录, '打包配置.json');
-  const 打包配置 = fs.existsSync(打包配置路径) ? 读取JSON文件(打包配置路径) : {};
   return String(
-    打包配置.displayVersion
-    || packageJson.displayVersion
+    packageJson.displayVersion
     || packageJson.version
     || '0.0.1',
   ).trim();
