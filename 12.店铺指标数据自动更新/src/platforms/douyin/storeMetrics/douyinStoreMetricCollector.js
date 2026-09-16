@@ -36,22 +36,14 @@ function pickDouyinPage(browser) {
 }
 
 async function captureDouyinPageEvidence(page, evidenceDirectory, evidenceFiles) {
-  const screenshotPath = buildEvidenceFilePath({
-    evidenceDirectory,
-    evidenceLabel: "抖音-服务体验",
-    resultLabel: "读取成功",
-    fileExtension: "png"
-  });
   const textPath = buildEvidenceFilePath({
     evidenceDirectory,
     evidenceLabel: "抖音-服务体验",
     resultLabel: "读取成功",
     fileExtension: "txt"
   });
-  await page.screenshot({ path: screenshotPath, fullPage: true }).catch(() => {});
   const pageText = await page.locator("body").innerText({ timeout: 5000 }).catch(() => "");
   fs.writeFileSync(textPath, `URL: ${page.url()}\n\n${pageText}`, "utf8");
-  if (fs.existsSync(screenshotPath)) evidenceFiles.push({ label: "抖音服务体验读取凭证", filePath: screenshotPath });
   if (fs.existsSync(textPath)) evidenceFiles.push({ label: "抖音服务体验文字凭证", filePath: textPath });
 }
 

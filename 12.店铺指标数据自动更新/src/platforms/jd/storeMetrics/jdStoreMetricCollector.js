@@ -1,9 +1,7 @@
-const fs = require("fs");
 const { runManagedOpenWindowEngine } = require("../../../shared/managedOpenWindowEngine");
 const { runInAutomationScope, resolveHumanTimeoutMs } = require("../../../engine/browserAutomationScope");
 const {
   createStoreMetricEvidenceDirectory,
-  buildEvidenceFilePath,
   mergeEvidenceFiles,
   listExistingEvidenceFiles
 } = require("../../../shared/evidenceFiles");
@@ -33,35 +31,13 @@ function createStoreMetricResolvedConfig(store) {
   };
 }
 
-async function collectPageWithEvidence(browserContext, evidenceDirectory, evidenceName, evidenceFiles, collector) {
+async function collectPageWithEvidence(browserContext, evidenceDirectory, evidenceFiles, collector) {
   const page = await browserContext.newPage();
   try {
-    const records = await collector(page);
-    const successEvidencePath = buildEvidenceFilePath({
-      evidenceDirectory,
-      evidenceLabel: evidenceName,
-      resultLabel: "读取成功",
-      fileExtension: "png"
-    });
-    await page.screenshot({ path: successEvidencePath, fullPage: true }).catch(() => {});
-    if (fs.existsSync(successEvidencePath)) {
-      evidenceFiles.push({ label: `${evidenceName}读取凭证`, filePath: successEvidencePath });
-    }
-    return records;
+    return await collector(page);
   } catch (error) {
-    const evidencePath = buildEvidenceFilePath({
-      evidenceDirectory,
-      evidenceLabel: evidenceName,
-      resultLabel: "读取失败",
-      fileExtension: "png"
-    });
-    await page.screenshot({ path: evidencePath, fullPage: true }).catch(() => {});
-    if (fs.existsSync(evidencePath)) {
-      evidenceFiles.push({ label: `${evidenceName}失败现场`, filePath: evidencePath });
-    }
     error.evidenceDirectory = evidenceDirectory;
     error.evidenceFiles = mergeEvidenceFiles(error.evidenceFiles, evidenceFiles);
-    error.evidencePath = evidencePath;
     throw error;
   } finally {
     await page.close().catch(() => {});
@@ -75,11 +51,11 @@ async function collectPageMetricsFromLoggedBrowser(store, dateSelection, evidenc
     const browserContext = browser.contexts()[0];
     if (!browserContext) throw new Error("京东浏览器没有可用上下文。");
     const [shopStarResult, negativeServiceResult, complianceResult] = await Promise.all([
-      collectPageWithEvidence(browserContext, evidenceDirectory, "店铺星级", evidenceFiles, (page) =>
+      collectPageWithEvidence(browserContext, evidenceDirectory, evidenceFiles, (page) =>
         collectJdShopStarMetrics(page, store, dateSelection)),
-      collectPageWithEvidence(browserContext, evidenceDirectory, "违规服务分析", evidenceFiles, (page) =>
+      collectPageWithEvidence(browserContext, evidenceDirectory, evidenceFiles, (page) =>
         collectJdNegativeServiceMetrics(page, store)),
-      collectPageWithEvidence(browserContext, evidenceDirectory, "店铺合规", evidenceFiles, (page) =>
+      collectPageWithEvidence(browserContext, evidenceDirectory, evidenceFiles, (page) =>
         collectJdComplianceMetrics(page, store))
     ]);
     for (const warning of shopStarResult.sourceWarnings || []) {

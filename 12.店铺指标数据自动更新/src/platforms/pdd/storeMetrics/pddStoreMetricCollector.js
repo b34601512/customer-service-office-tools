@@ -38,22 +38,14 @@ function resolvePddEvidencePageDisplayName(pageType) {
 
 async function capturePddPageEvidence(page, pageType, evidenceDirectory, evidenceFiles) {
   const pageDisplayName = resolvePddEvidencePageDisplayName(pageType);
-  const filePath = buildEvidenceFilePath({
-    evidenceDirectory,
-    evidenceLabel: `拼多多-${pageDisplayName}`,
-    resultLabel: "读取成功",
-    fileExtension: "png"
-  });
   const textPath = buildEvidenceFilePath({
     evidenceDirectory,
     evidenceLabel: `拼多多-${pageDisplayName}`,
     resultLabel: "读取成功",
     fileExtension: "txt"
   });
-  await page.screenshot({ path: filePath, fullPage: true }).catch(() => {});
   const pageText = await page.locator("body").innerText({ timeout: 5000 }).catch(() => "");
   fs.writeFileSync(textPath, `URL: ${page.url()}\n\n${pageText}`, "utf8");
-  if (fs.existsSync(filePath)) evidenceFiles.push({ label: `拼多多${pageDisplayName}读取凭证`, filePath });
   if (fs.existsSync(textPath)) evidenceFiles.push({ label: `拼多多${pageDisplayName}文字凭证`, filePath: textPath });
 }
 

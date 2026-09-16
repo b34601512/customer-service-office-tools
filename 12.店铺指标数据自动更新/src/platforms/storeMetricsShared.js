@@ -23,22 +23,14 @@ async function captureFailurePageEvidence(evidenceDirectory, platformLabel) {
   const evidenceFiles = [];
   try {
     for (const [pageIndex, page] of browser.contexts().flatMap((context) => context.pages()).entries()) {
-      const screenshotPath = buildEvidenceFilePath({
-        evidenceDirectory,
-        evidenceLabel: `登录页面-${pageIndex + 1}`,
-        resultLabel: "读取失败",
-        fileExtension: "png"
-      });
       const textPath = buildEvidenceFilePath({
         evidenceDirectory,
         evidenceLabel: `登录页面-${pageIndex + 1}`,
         resultLabel: "读取失败",
         fileExtension: "txt"
       });
-      await page.screenshot({ path: screenshotPath, fullPage: true }).catch(() => {});
       const pageText = await page.locator("body").innerText({ timeout: 3000 }).catch(() => "");
       fs.writeFileSync(textPath, `URL: ${page.url()}\nTITLE: ${await page.title().catch(() => "")}\n\n${pageText}`, "utf8");
-      if (fs.existsSync(screenshotPath)) evidenceFiles.push({ label: `${platformLabel}失败页面${pageIndex + 1}`, filePath: screenshotPath });
       if (fs.existsSync(textPath)) evidenceFiles.push({ label: `${platformLabel}失败页面${pageIndex + 1}文字`, filePath: textPath });
     }
   } finally {
