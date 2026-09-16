@@ -22,6 +22,10 @@ const WECOM_CONFIG_PATH = setupIsolatedWecomTestConfig("attempt-timeout-auto-tra
 const config = {
   timeoutAutoTransferEnabled: true,
   onlinePresenceWorkStartTime: "08:00",
+  offDutyPreSalesEarlyStartTime: "08:00",
+  offDutyPreSalesLateStartTime: "15:45",
+  offDutyAfterSalesEarlyStartTime: "08:00",
+  offDutyAfterSalesLateStartTime: "14:00",
   offDutyPreSalesEarlyCloseTime: "16:30",
   offDutyPreSalesLateCloseTime: "23:45",
   offDutyAfterSalesEarlyCloseTime: "16:30",
@@ -169,7 +173,7 @@ test("当班客服不在线时不发转接指令，但必须@主管", async () =
   });
 
   assert.equal(result.status, "skipped");
-  assert.equal(result.reason, "duty_member_offline");
+  assert.equal(result.reason, "on_shift_member_offline");
   assert.equal(recorder.frames.length, 0);
   assert.equal(listPendingTransferVerifications().length, 0);
   assert.equal(sentBodies.length, 1);

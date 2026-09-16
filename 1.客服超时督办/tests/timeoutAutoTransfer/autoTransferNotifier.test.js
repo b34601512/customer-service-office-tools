@@ -28,8 +28,8 @@ test("转接成功文案说明原接待不在班与改派去向", () => {
     [
       "【超时自动转接】客户已改派",
       "客户：高勇【有意 以旧换新】",
-      "原接待：刘秀文（当时不在值班时段）",
-      "已转给：叶炳辉",
+      "原接待：刘秀文（当时不在自己班次内）",
+      "已转给：叶炳辉（当班且已上线）",
       "触发：首次超时提醒"
     ].join("\n")
   );
@@ -39,12 +39,12 @@ test("转接失败文案把机器原因翻成主管看得懂的中文", () => {
   const message = buildAutoTransferFailureMessage({
     customerName: "罗远建【客户】",
     sourceStaffName: "缪婷婷",
-    reason: "duty_member_offline"
+    reason: "on_shift_member_offline"
   });
 
   assert.match(message, /【超时自动转接失败】请主管介入/);
   assert.match(message, /客户：罗远建【客户】/);
-  assert.match(message, /原因：当班客服都没开接单开关（不在线）/);
+  assert.match(message, /原因：当班的客服都没上线（没开接单开关）/);
   assert.equal(resolveFailureReasonText("no_open_app_socket"), FAILURE_REASON_LABELS.no_open_app_socket);
   assert.equal(resolveFailureReasonText("从未见过的原因"), "从未见过的原因");
 });
@@ -87,7 +87,7 @@ test("失败通知必须@主管，成功通知只留痕不打扰", async () => {
       outcome: "failed",
       customerName: "客户甲",
       sourceStaffName: "缪婷婷",
-      reason: "duty_member_offline"
+      reason: "on_shift_member_offline"
     });
     const successResult = await sendAutoTransferNotice({
       outcome: "succeeded",

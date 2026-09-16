@@ -8,9 +8,8 @@ const { resolveEscalationTargets } = require("../timeoutSoothe/timeoutEscalation
 const AUTO_TRANSFER_LOG_MODULE_NAME = "超时自动转接";
 
 const FAILURE_REASON_LABELS = Object.freeze({
-  background_color_unavailable: "排班表当天没有可用值班标记",
-  no_duty_member: "当班没有值班客服（组长不在班且没有带值班标记的客服）",
-  duty_member_offline: "当班客服都没开接单开关（不在线）",
+  no_on_shift_member: "当时这个组没有当班的客服（排班表上都不是早/晚班）",
+  on_shift_member_offline: "当班的客服都没上线（没开接单开关）",
   assignment_unchanged: "已发出转接指令，但平台分配结果没有变化",
   assignment_still_empty: "已发出转接指令，但平台仍显示未分配",
   chat_not_found_in_snapshot: "已发出转接指令，但在联系人快照里找不到该客户",
@@ -34,8 +33,8 @@ function buildAutoTransferSuccessMessage(input) {
   return [
     "【超时自动转接】客户已改派",
     `客户：${input.customerName || "未命名客户"}`,
-    `原接待：${input.sourceStaffName || "未知"}（当时不在值班时段）`,
-    `已转给：${input.targetStaffName || "未知"}`,
+    `原接待：${input.sourceStaffName || "未知"}（当时不在自己班次内）`,
+    `已转给：${input.targetStaffName || "未知"}（当班且已上线）`,
     `触发：${input.reminderKindLabel || "超时提醒"}`
   ].join("\n");
 }
@@ -44,7 +43,7 @@ function buildAutoTransferFailureMessage(input) {
   return [
     "【超时自动转接失败】请主管介入",
     `客户：${input.customerName || "未命名客户"}`,
-    `原接待：${input.sourceStaffName || "未知"}（当时不在值班时段）`,
+    `原接待：${input.sourceStaffName || "未知"}（当时不在自己班次内）`,
     `触发：${input.reminderKindLabel || "超时提醒"}`,
     `原因：${resolveFailureReasonText(input.reason)}`
   ].join("\n");

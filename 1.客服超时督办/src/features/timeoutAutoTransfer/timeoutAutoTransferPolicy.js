@@ -1,6 +1,9 @@
-// 该文件只负责裁决“这条超时/漏回复提醒该不该自动转接、转给当前当班的谁”，不依赖页面或接口写入。
-// 口径：原接待在值班时段（或在值班但已不是当前班次）就不转；确属不在班时，
-// 运营 → 转当班售前（运营不接待），售前 → 转当班售前，售后 → 转当班售后，绝不跨组互转。
+// 该文件只负责裁决“这条超时/漏回复提醒该不该自动转接、转给谁”，不依赖页面或接口写入。
+// 口径（2026-09-16 用户确认，已简化到最朴素的一条）：客户消息必须有人回。
+//   1) 原接待还在自己班次的时间窗内 → 不转（他自己的客户自己跟）；
+//   2) 确属不在班 → 运营转售前、售前转售前、售后转售后，绝不跨组；
+//   3) 目标是“当班 + 已上线”的同组客服，不看值班标记/组长/背景色，谁当班在线谁就能接；
+//   4) 当班的人都不可接 → 不转（转了没人回），@主管让他安排。
 const { ASSIGNMENT_STATUS } = require("../shared/currentAssignment");
 const {
   parseTimeTextToDate,
@@ -25,20 +28,6 @@ const STAFF_GROUP_LABELS = Object.freeze({
   pre_sales: "售前"
 });
 
-// 用户口径（2026-09-16）：黄色背景是休息/调休那类标记，没有值班含义，不能当值班人；
-// 休息/年假/行政的人本来就不属于早/晚班班次，也不会被选为目标。
-const MEANINGLESS_DUTY_BACKGROUND_COLORS = new Set(["#FFFF00"]);
-
-function isDutyMarkedShift(shiftInfo) {
-  // 只有“带背景色且颜色有值班含义”的班次才算值班标记。
-  if (shiftInfo?.hasBackgroundColor !== true) {
-    return false;
-  }
-
-  const backgroundColor = String(shiftInfo?.backgroundColor || "").trim().toUpperCase();
-  return !MEANINGLESS_DUTY_BACKGROUND_COLORS.has(backgroundColor);
-}
-
 // 运营账号不负责接待，客户按售前口径处理；其余同组流转。
 const TRANSFER_TARGET_GROUP_BY_SOURCE_GROUP = Object.freeze({
   after_sales: "after_sales",
@@ -47,11 +36,7 @@ const TRANSFER_TARGET_GROUP_BY_SOURCE_GROUP = Object.freeze({
 });
 
 // 命中这些原因说明“客户当前确实没人能接手”，必须让主管知道，不能静默跳过。
-const ATTENTION_REASONS = new Set([
-  "background_color_unavailable",
-  "no_duty_member",
-  "duty_member_offline"
-]);
+const ATTENTION_REASONS = new Set(["no_on_shift_member", "on_shift_member_offline"]);
 
 function noTransferDecision(reason, extra = {}) {
   return {
@@ -70,125 +55,8 @@ function resolveStaffGroupLabel(staffGroup) {
   return STAFF_GROUP_LABELS[String(staffGroup || "").trim()] || String(staffGroup || "").trim();
 }
 
-function listDutyGroupMembers(scheduleData, memberMapByUserId, staffGroup, expectedShiftStage) {
-  // 排班表当天该班次且带值班背景色的客服才算当班人；多个时沿用排班表从上到下的顺序。
-  const expectedShiftLabel = SHIFT_LABEL_BY_STAGE[expectedShiftStage];
-  if (!expectedShiftLabel || !staffGroup) {
-    return [];
-  }
-
-  const members = Object.values(memberMapByUserId || {});
-  return Object.entries(scheduleData?.shiftMap || {})
-    .filter(([, shiftInfo]) =>
-      shiftInfo?.normalizedShift === expectedShiftLabel &&
-      isDutyMarkedShift(shiftInfo)
-    )
-    .map(([staffName, shiftInfo]) => {
-      const normalizedStaffName = normalizeStaffName(staffName);
-      const member = members.find((item) =>
-        normalizeStaffName(item?.staffName) === normalizedStaffName &&
-        item?.staffGroup === staffGroup
-      );
-      return member
-        ? {
-            member,
-            staffName: normalizedStaffName,
-            shiftInfo,
-            dutySource: "background_color"
-          }
-        : null;
-    })
-    .filter(Boolean);
-}
-
-function listColoredStaffNamesByGroup(scheduleData, memberMapByUserId, staffGroup) {
-  // 诊断用：列出该组当天所有带值班背景色的人（不分班次），排障时一眼看出“今天到底谁被标了值班”。
-  if (!staffGroup) {
-    return [];
-  }
-  const members = Object.values(memberMapByUserId || {});
-  return Object.entries(scheduleData?.shiftMap || {})
-    .filter(([, shiftInfo]) => shiftInfo?.hasBackgroundColor === true)
-    .map(([staffName, shiftInfo]) => {
-      const normalizedStaffName = normalizeStaffName(staffName);
-      const member = members.find((item) =>
-        normalizeStaffName(item?.staffName) === normalizedStaffName &&
-        item?.staffGroup === staffGroup
-      );
-      return member ? `${normalizedStaffName}(${shiftInfo.normalizedShift || "-"})` : null;
-    })
-    .filter(Boolean);
-}
-
-function isGroupLeaderRoleLabel(roleLabel) {
-  // 售后组长在班即值班（排班表不给组长标背景色），组长角色按角色文案识别，不写死具体姓名。
-  return String(roleLabel || "").includes("组长");
-}
-
-function listGroupLeaderDutyMembers(scheduleData, memberMapByUserId, staffGroup, expectedShiftStage) {
-  // 这里找出“当天该班次的组长”：组长固定值班，不依赖背景色。
-  const expectedShiftLabel = SHIFT_LABEL_BY_STAGE[expectedShiftStage];
-  if (!expectedShiftLabel || !staffGroup) {
-    return [];
-  }
-
-  return Object.values(memberMapByUserId || {})
-    .filter((member) =>
-      member?.staffGroup === staffGroup &&
-      isGroupLeaderRoleLabel(member?.roleLabel)
-    )
-    .map((member) => {
-      const staffName = normalizeStaffName(member?.staffName);
-      const shiftInfo = staffName ? scheduleData?.shiftMap?.[staffName] || null : null;
-      if (!shiftInfo || shiftInfo?.normalizedShift !== expectedShiftLabel) {
-        return null;
-      }
-      return {
-        member,
-        staffName,
-        shiftInfo,
-        dutySource: "group_leader"
-      };
-    })
-    .filter(Boolean);
-}
-
-function collectDutyCandidates(input) {
-  // 值班人 = 当天该班次的组长（固定值班、无背景色）+ 带值班背景色的客服；组长优先，同人去重。
-  const leaderCandidates = listGroupLeaderDutyMembers(
-    input.scheduleData,
-    input.memberMapByUserId,
-    input.targetStaffGroup,
-    input.expectedShiftStage
-  );
-  const coloredCandidates = listDutyGroupMembers(
-    input.scheduleData,
-    input.memberMapByUserId,
-    input.targetStaffGroup,
-    input.expectedShiftStage
-  );
-  const seen = new Set();
-  return [...leaderCandidates, ...coloredCandidates].filter((candidate) => {
-    const key = normalizeStaffName(candidate?.member?.userId) || normalizeStaffName(candidate?.staffName);
-    if (!key || seen.has(key)) {
-      return false;
-    }
-    seen.add(key);
-    return true;
-  });
-}
-
-function resolveTargetStaffGroup(assigneeMember) {
-  // 成员角色缺失（未识别/经理等）时不做猜测，直接不转。
-  const sourceStaffGroup = normalizeStaffName(assigneeMember?.staffGroup);
-  return {
-    sourceStaffGroup,
-    targetStaffGroup: TRANSFER_TARGET_GROUP_BY_SOURCE_GROUP[sourceStaffGroup] || ""
-  };
-}
-
 function isWithinOwnShiftWindow(config, staffGroup, shiftLabel, now) {
-  // “在班”＝当前时刻落在本人班次的时间窗内（早班 8:00~16:30，晚班 15:45/14:00~23:45/22:30）。
+  // “当班”＝当前时刻落在本人班次的时间窗内（早班 8:00~16:30，晚班 15:45/14:00~23:45/22:30）。
   // 早晚班重叠时段（售后 14:00~16:30、售前 15:45~16:30）里早班人还没下班，不能把他当成不在班。
   const startTimeText = resolveOffDutyStartTime(config, staffGroup, shiftLabel);
   const closeTimeText = resolveOffDutyCloseTime(config, staffGroup, shiftLabel);
@@ -205,6 +73,15 @@ function isWithinOwnShiftWindow(config, staffGroup, shiftLabel, now) {
     currentTime.getTime() >= parseTimeTextToDate(currentTime, startTimeText).getTime() &&
     currentTime.getTime() < parseTimeTextToDate(currentTime, closeTimeText).getTime()
   );
+}
+
+function resolveTargetStaffGroup(assigneeMember) {
+  // 成员角色缺失（未识别/经理等）时不做猜测，直接不转。
+  const sourceStaffGroup = normalizeStaffName(assigneeMember?.staffGroup);
+  return {
+    sourceStaffGroup,
+    targetStaffGroup: TRANSFER_TARGET_GROUP_BY_SOURCE_GROUP[sourceStaffGroup] || ""
+  };
 }
 
 function isCurrentAssigneeOnDuty(input) {
@@ -230,8 +107,61 @@ function isCurrentAssigneeOnDuty(input) {
   return { onDuty: true, reason: "on_shift_now", shiftLabel };
 }
 
-function pickOnlineDutyTarget(input) {
-  // 当班但是没开接单开关等于没在线，用户口径明确：不在线不能转。
+function listOnShiftGroupMembers(input) {
+  // 可接手名单：同组、当天排早/晚班、本人班次时间窗覆盖当前时刻的人（含非值班/无背景色的人），
+  // 顺序沿用排班表从上到下。休息/年假/行政不属于任何班次，直接不进名单。
+  const { scheduleData, memberMapByUserId, staffGroup, config, now } = input;
+  if (!staffGroup) {
+    return [];
+  }
+
+  const members = Object.values(memberMapByUserId || {});
+  return Object.entries(scheduleData?.shiftMap || {})
+    .filter(([, shiftInfo]) => {
+      const shiftLabel = String(shiftInfo?.normalizedShift || "").trim();
+      if (!["early", "late"].includes(resolveShiftStage(shiftLabel))) {
+        return false;
+      }
+      return isWithinOwnShiftWindow(config, staffGroup, shiftLabel, now);
+    })
+    .map(([staffName, shiftInfo]) => {
+      const normalizedStaffName = normalizeStaffName(staffName);
+      const member = members.find((item) =>
+        normalizeStaffName(item?.staffName) === normalizedStaffName &&
+        item?.staffGroup === staffGroup
+      );
+      return member
+        ? {
+            member,
+            staffName: normalizedStaffName,
+            shiftInfo
+          }
+        : null;
+    })
+    .filter(Boolean);
+}
+
+function listGroupShiftOverview(scheduleData, memberMapByUserId, staffGroup) {
+  // 诊断用：一眼看出“今天这个组谁排了什么班”，排障时不用再去翻排班表。
+  if (!staffGroup) {
+    return [];
+  }
+
+  const members = Object.values(memberMapByUserId || {});
+  return Object.entries(scheduleData?.shiftMap || {})
+    .map(([staffName, shiftInfo]) => {
+      const normalizedStaffName = normalizeStaffName(staffName);
+      const member = members.find((item) =>
+        normalizeStaffName(item?.staffName) === normalizedStaffName &&
+        item?.staffGroup === staffGroup
+      );
+      return member ? `${normalizedStaffName}(${shiftInfo?.normalizedShift || "-"})` : null;
+    })
+    .filter(Boolean);
+}
+
+function pickOnlineTarget(input) {
+  // 当班但没开接单开关＝没上线，用户口径明确：不在线不能转，转了没人回复。
   // 快照新鲜度按墙钟判断：上班快照本身就是按真实时间写的，不能用业务时间戳去比对它。
   const { candidates, staffGroup, nowMs = Date.now() } = input;
   const offlineStaffNames = [];
@@ -311,6 +241,7 @@ function decideTimeoutAutoTransfer(input = {}) {
     });
   }
   if (!expectedShiftStage) {
+    // 非工作时段没人值班是很正常的，不转也不打扰主管。
     return noTransferDecision("outside_target_group_work_time", {
       currentAssigneeName,
       sourceStaffGroup,
@@ -319,14 +250,16 @@ function decideTimeoutAutoTransfer(input = {}) {
   }
 
   const scheduleData = input.scheduleData;
-  if (scheduleData?.backgroundColorAvailable !== true) {
-    return noTransferDecision("background_color_unavailable", {
+  if (!scheduleData?.shiftMap || Object.keys(scheduleData.shiftMap).length === 0) {
+    // 排班表读不到就没有“谁当班”的依据，宁可不转也不乱转。
+    return noTransferDecision("schedule_unavailable", {
       currentAssigneeName,
       sourceStaffGroup,
       targetStaffGroup,
       expectedShiftStage
     });
   }
+
   const dutyState = isCurrentAssigneeOnDuty({
     assigneeMember,
     sourceStaffGroup,
@@ -344,35 +277,37 @@ function decideTimeoutAutoTransfer(input = {}) {
     });
   }
 
-  const candidates = collectDutyCandidates({
+  const candidates = listOnShiftGroupMembers({
     scheduleData,
     memberMapByUserId: input.memberMapByUserId,
-    targetStaffGroup,
-    expectedShiftStage
+    staffGroup: targetStaffGroup,
+    config: input.config,
+    now
   }).filter((candidate) =>
     normalizeStaffName(candidate.member?.userId) !== normalizeStaffName(assignment.assignedToUserId)
   );
 
   if (candidates.length === 0) {
-    return noTransferDecision("no_duty_member", {
+    return noTransferDecision("no_on_shift_member", {
       currentAssigneeName,
       currentAssigneeShift: dutyState.shiftLabel,
       currentAssigneeOffDutyReason: dutyState.reason,
       sourceStaffGroup,
       targetStaffGroup,
       expectedShiftStage,
-      // 排班表当天该组该班次带色的名单，供日志对账“为什么没人能接”。
-      coloredDutyStaffNames: listColoredStaffNamesByGroup(scheduleData, input.memberMapByUserId, targetStaffGroup)
+      // 当天该组的排班全貌，供日志对账“为什么没人能接”。
+      groupShiftOverview: listGroupShiftOverview(scheduleData, input.memberMapByUserId, targetStaffGroup)
     });
   }
 
-  const picked = pickOnlineDutyTarget({
+  const picked = pickOnlineTarget({
     candidates,
     staffGroup: targetStaffGroup
   });
 
   if (!picked.target) {
-    if (picked.unknownStaffNames.length > 0) {
+    if (picked.offlineStaffNames.length === 0 && picked.unknownStaffNames.length > 0) {
+      // 快照过期/缺人，一条“确认离线”的证据都没有：不擅自转，也不惊动主管。
       return noTransferDecision("presence_unavailable", {
         currentAssigneeName,
         sourceStaffGroup,
@@ -383,20 +318,21 @@ function decideTimeoutAutoTransfer(input = {}) {
       });
     }
 
-    return noTransferDecision("duty_member_offline", {
+    return noTransferDecision("on_shift_member_offline", {
       currentAssigneeName,
       currentAssigneeShift: dutyState.shiftLabel,
       sourceStaffGroup,
       targetStaffGroup,
       expectedShiftStage,
-      offlineStaffNames: picked.offlineStaffNames
+      offlineStaffNames: picked.offlineStaffNames,
+      unknownStaffNames: picked.unknownStaffNames
     });
   }
 
   const targetMember = picked.target.member;
   const targetUserId = normalizeStaffName(targetMember?.userId);
   if (!targetUserId) {
-    return noTransferDecision("duty_member_user_id_missing", {
+    return noTransferDecision("on_shift_member_user_id_missing", {
       currentAssigneeName,
       sourceStaffGroup,
       targetStaffGroup,
@@ -418,11 +354,12 @@ function decideTimeoutAutoTransfer(input = {}) {
     targetStaffGroup,
     targetStaffGroupLabel: resolveStaffGroupLabel(targetStaffGroup),
     expectedShiftStage,
-    offlineDutyStaffNames: picked.offlineStaffNames,
+    expectedShiftLabel: SHIFT_LABEL_BY_STAGE[expectedShiftStage] || "",
+    // 当班但没上线、被跳过的人，仅用于日志审计。
+    offlineStaffNames: picked.offlineStaffNames,
     targetStaffName: picked.target.staffName,
     targetUserId,
-    targetBackgroundColor: picked.target.shiftInfo.backgroundColor || "",
-    targetDutySource: picked.target.dutySource || "",
+    targetShiftLabel: String(picked.target.shiftInfo?.normalizedShift || "").trim(),
     targetMember
   };
 }
@@ -434,15 +371,11 @@ module.exports = {
   STAFF_GROUP_LABELS,
   TRANSFER_TARGET_GROUP_BY_SOURCE_GROUP,
   decideTimeoutAutoTransfer,
-  collectDutyCandidates,
   isCurrentAssigneeOnDuty,
-  isDutyMarkedShift,
-  isGroupLeaderRoleLabel,
   isWithinOwnShiftWindow,
-  MEANINGLESS_DUTY_BACKGROUND_COLORS,
-  listColoredStaffNamesByGroup,
-  listDutyGroupMembers,
-  listGroupLeaderDutyMembers,
+  listGroupShiftOverview,
+  listOnShiftGroupMembers,
+  pickOnlineTarget,
   resolveStaffGroupLabel,
   resolveTargetStaffGroup
 };

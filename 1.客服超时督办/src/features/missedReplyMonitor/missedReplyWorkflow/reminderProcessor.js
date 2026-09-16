@@ -85,15 +85,18 @@ async function attemptTimeoutAutoTransfer(options = {}) {
     now: now || new Date()
   });
   if (!decision.shouldTransfer) {
-    const coloredDutySuffix = Array.isArray(decision.coloredDutyStaffNames)
-      ? `，当日带色${resolveStaffGroupLabel(decision.targetStaffGroup)}=${decision.coloredDutyStaffNames.join(" / ") || "无"}`
+    const groupShiftSuffix = Array.isArray(decision.groupShiftOverview)
+      ? `，当日${resolveStaffGroupLabel(decision.targetStaffGroup)}排班=${decision.groupShiftOverview.join(" / ") || "无"}`
+      : "";
+    const offlineSuffix = Array.isArray(decision.offlineStaffNames) && decision.offlineStaffNames.length > 0
+      ? `，当班但未上线=${decision.offlineStaffNames.join(" / ")}`
       : "";
     log(
       "主线:等待",
       TIMEOUT_AUTO_TRANSFER_LOG_MODULE_NAME,
       "跳过自动转接",
       // 跳过也要能审计：记下原接待、所属组、排班班次，方便事后对“为什么没转”对账。
-      `客户=${candidate.customerName}，触发=${candidate.reminderKind || "未知"}，原接待=${decision.currentAssigneeName || formatAssignmentForLog(assignment) || "-"}（${resolveStaffGroupLabel(decision.sourceStaffGroup) || "-"}，班次=${decision.currentAssigneeShift || "-"}，当前应值=${decision.expectedShiftStage || "-"}），原因=${decision.reason}${coloredDutySuffix}`
+      `客户=${candidate.customerName}，触发=${candidate.reminderKind || "未知"}，原接待=${decision.currentAssigneeName || formatAssignmentForLog(assignment) || "-"}（${resolveStaffGroupLabel(decision.sourceStaffGroup) || "-"}，班次=${decision.currentAssigneeShift || "-"}，当前应值=${decision.expectedShiftStage || "-"}），原因=${decision.reason}${offlineSuffix}${groupShiftSuffix}`
     );
     if (decision.requiresAttention) {
       // 有人该接却没人能接时不能让主管蒙在鼓里，和转接失败共用同一套群通知。
@@ -171,12 +174,11 @@ async function attemptTimeoutAutoTransfer(options = {}) {
     };
   }
 
-  const dutySourceLabel = decision.targetDutySource === "group_leader" ? "组长在班" : "值班标记";
   log(
     "主线:执行",
     TIMEOUT_AUTO_TRANSFER_LOG_MODULE_NAME,
     "已发送转接指令",
-    `客户=${candidate.customerName}，触发=${candidate.reminderKind}，原接待=${decision.currentAssigneeName}（${decision.sourceStaffGroupLabel}，不在班），目标=${decision.targetStaffName}（${decision.targetStaffGroupLabel}当班，值班来源=${dutySourceLabel}），班次=${decision.expectedShiftStage}，socket序号=${sendResult.socketIndex}，命名空间=${sendResult.namespacePrefix || "默认"}，观察帧数=${sendResult.observedFrameCount}`
+    `客户=${candidate.customerName}，触发=${candidate.reminderKind}，原接待=${decision.currentAssigneeName}（${decision.sourceStaffGroupLabel}，不在班），目标=${decision.targetStaffName}（${decision.targetStaffGroupLabel}当班在线，班次=${decision.targetShiftLabel || "-"}），班次=${decision.expectedShiftStage}，socket序号=${sendResult.socketIndex}，命名空间=${sendResult.namespacePrefix || "默认"}，观察帧数=${sendResult.observedFrameCount}`
   );
   // 指令发出去不等于转成功，按联系人快照确认后才算成功。
   recordPendingTransferVerification({
