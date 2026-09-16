@@ -4,22 +4,11 @@ const path = require('node:path');
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const {
-  构建店铺凭证路径,
   验证凭证文件,
   规范化凭证名称,
 } = require('../src/common/evidenceService');
 
-test('凭证文件名包含店铺、日期、场景和成功失败结果', () => {
-  const 文件路径 = 构建店铺凭证路径({
-    批次目录: 'D:\\凭证批次',
-    店铺: { id: 'jd-store-2', name: '京东2店' },
-    开始时间: '2026-08-05T12:13:14.015Z',
-    结果状态: '失败',
-    尝试次数: 2,
-    场景: '登录恢复',
-  });
-
-  assert.match(path.basename(文件路径), /jd-store-2-京东2店-20260805-.*-登录恢复-第2次-失败\.png/);
+test('凭证名称会把非法字符换成短横线', () => {
   assert.equal(规范化凭证名称('京东/2店'), '京东-2店');
 });
 

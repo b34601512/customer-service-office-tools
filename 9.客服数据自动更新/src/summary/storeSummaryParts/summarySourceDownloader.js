@@ -55,9 +55,7 @@ async function downloadSummarySource(input) {
     task,
     sourceGroup,
     dateRange,
-    evidenceDir,
     evidenceFiles,
-    evidenceFileNamePrefix,
     onTaskProgress,
     ensurePlatformWindow
   } = input;
@@ -94,9 +92,6 @@ async function downloadSummarySource(input) {
       reportKey: sourceGroup.downloadReportKey,
       resolvedConfig,
       exportRange: dateRange,
-      evidenceDir,
-      evidenceFiles,
-      evidenceFileNamePrefix,
       sourceReportKeys: sourceGroup.reportKeys
     })
   );

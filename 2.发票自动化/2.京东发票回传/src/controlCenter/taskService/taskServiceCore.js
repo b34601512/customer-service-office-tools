@@ -1,4 +1,3 @@
-const path = require('path');
 const { 执行巡检 } = require('../../app/checkInvoiceUrges');
 const { 执行批量发票回传 } = require('../../app/returnInvoiceToJd');
 const { 关闭全部浏览器上下文 } = require('../../browser/browserContextHub');
@@ -16,7 +15,6 @@ const {
 } = require('../../order/jdOrderRecordStore');
 const {
   创建凭证批次目录,
-  构建店铺凭证路径,
 } = require('../../common/evidenceService');
 const { 批量单店最大尝试次数, 批量店铺页面保留模式, 批量回传页面保留模式 } = require('./taskConstants');
 const { 是需要自动拉起登录的错误 } = require('./loginError');
@@ -67,7 +65,6 @@ class ControlCenterTaskService {
       || (是否测试运行 ? () => {} : 更新最近单店摘要);
     this.创建凭证批次目录方法 = 依赖.创建凭证批次目录方法
       || ((选项) => 是否测试运行 ? '' : 创建凭证批次目录(选项));
-    this.构建店铺凭证路径方法 = 依赖.构建店铺凭证路径方法 || 构建店铺凭证路径;
     this.读取订单记录方法 = 依赖.读取订单记录方法
       || (是否测试运行 ? () => ({ version: 2, orders: {} }) : 读取订单记录);
     this.记录转列表方法 = 依赖.记录转列表方法 || 记录转列表;
@@ -106,17 +103,11 @@ class ControlCenterTaskService {
       }
 
       const 开始时间 = new Date().toISOString();
-      const 凭证批次目录 = this.创建凭证批次目录方法({
-        执行类型: '单店识别',
-        开始时间,
-      });
       try {
         const 店铺结果 = await this.#执行单店巡检(店铺, {
           可见模式: true,
           页面保留模式: 'wait',
           开始时间,
-          凭证批次目录,
-          截图场景: '人工登录',
         });
         this.#保存单店摘要({
           开始时间,
@@ -380,10 +371,6 @@ class ControlCenterTaskService {
   async #执行店铺列表排查(店铺列表, 任务名称) {
     // 解决：批量识别串行跑店铺，浏览器保持可见并保留每个店铺窗口，便于人工核对；退出程序时才统一关闭。
     const 开始时间 = new Date().toISOString();
-    const 凭证批次目录 = this.创建凭证批次目录方法({
-      执行类型: '批量识别',
-      开始时间,
-    });
     打印日志('后台任务', 任务名称, `本轮店铺 ${店铺列表.length} 个：${店铺列表.map((店铺) => 店铺.name).join('、')}`);
     店铺列表.forEach((店铺) => {
       this.state.updateStoreResult(构建等待店铺结果(店铺));
@@ -397,7 +384,6 @@ class ControlCenterTaskService {
       }
       await this.#执行批量单店(店铺, 索引, 店铺列表.length, 任务名称, 统计, {
         开始时间,
-        凭证批次目录,
       });
     }
 
@@ -419,7 +405,7 @@ class ControlCenterTaskService {
     };
   }
 
-  async #执行批量单店(店铺, 索引, 总数, 任务名称, 统计, 凭证选项 = {}) {
+  async #执行批量单店(店铺, 索引, 总数, 任务名称, 统计, 单店选项 = {}) {
     // 解决：单个批量店铺独立负责重试，避免批量主循环塞满细节。
     const 进度文本 = `第 ${索引 + 1}/${总数} 家`;
     let 店铺已成功 = false;
@@ -434,9 +420,8 @@ class ControlCenterTaskService {
           可见模式: true,
           页面保留模式: 批量店铺页面保留模式,
           批量进度文本: 执行进度文本,
-          ...凭证选项,
+          ...单店选项,
           尝试次数,
-          截图场景: '批量识别',
         });
         记录成功店铺(统计);
         记录店铺结果(统计, 店铺结果);
@@ -469,9 +454,7 @@ class ControlCenterTaskService {
       页面保留模式 = 可见模式 ? 'wait' : 'close',
       批量进度文本 = '',
       开始时间 = new Date().toISOString(),
-      凭证批次目录 = '',
       尝试次数 = 1,
-      截图场景 = 可见模式 ? '人工登录' : '批量识别',
     } = 选项;
     const 店铺展示名 = 批量进度文本 ? `${批量进度文本}「${店铺.name}」` : `「${店铺.name}」`;
 
@@ -481,9 +464,7 @@ class ControlCenterTaskService {
       可见模式,
       页面保留模式,
       开始时间,
-      凭证批次目录,
       尝试次数,
-      截图场景,
       onProgress: (进度) => this.#推送分页读取状态(店铺, 店铺展示名, 可见模式, 进度),
     });
     const 店铺结果 = 构建成功店铺结果(店铺, 巡检结果);
@@ -549,9 +530,7 @@ class ControlCenterTaskService {
         可见模式: true,
         页面保留模式: 选项.页面保留模式,
         开始时间: 选项.开始时间,
-        凭证批次目录: 选项.凭证批次目录,
         尝试次数: 选项.尝试次数,
-        截图场景: '登录恢复',
         onProgress: 选项.onProgress,
       });
     } catch (恢复错误) {
@@ -562,34 +541,14 @@ class ControlCenterTaskService {
 
   async #调用巡检(店铺, 选项) {
     // 解决：巡检方法参数集中构造，批量关闭窗口规则不会散落到多处分支。
-    const 巡检选项 = {
+    // 2026-09-16 起巡检不再保存截图，所以这里不再向巡检传任何截图路径。
+    return this.执行巡检方法({
       店铺配置: 店铺,
       headless: !选项.可见模式,
       允许人工登录: 选项.可见模式,
       页面保留模式: 选项.页面保留模式,
-      截图文件名: `${店铺.id}-latest.png`,
       onProgress: 选项.onProgress,
-    };
-    if (选项.凭证批次目录) {
-      巡检选项.截图路径 = this.构建店铺凭证路径方法({
-        批次目录: 选项.凭证批次目录,
-        店铺,
-        开始时间: 选项.开始时间,
-        结果状态: '成功',
-        尝试次数: 选项.尝试次数,
-        场景: 选项.截图场景,
-      });
-      巡检选项.失败截图路径 = this.构建店铺凭证路径方法({
-        批次目录: 选项.凭证批次目录,
-        店铺,
-        开始时间: 选项.开始时间,
-        结果状态: '失败',
-        尝试次数: 选项.尝试次数,
-        场景: 选项.截图场景,
-      });
-      巡检选项.截图文件名 = path.basename(巡检选项.截图路径);
-    }
-    return this.执行巡检方法(巡检选项);
+    });
   }
 
   #保存失败店铺结果(店铺, 错误) {

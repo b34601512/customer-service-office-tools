@@ -185,7 +185,8 @@ test('分页进度会同步到后台任务摘要和巡检报告', async () => {
   assert.match(state.storeResults.map((result) => result.lastMessage || '').join('\n'), /并发=3/);
 });
 
-test('识别任务会把批次内成功和失败截图路径传给巡检', async () => {
+test('识别任务不再向巡检传任何截图路径', async () => {
+  // 2026-09-16 用户决定：识别路径不再保存截图，因此巡检选项里不应再出现截图相关字段。
   const state = 创建控制台状态桩();
   const 巡检选项列表 = [];
   const 店铺列表 = [
@@ -194,7 +195,6 @@ test('识别任务会把批次内成功和失败截图路径传给巡检', async
   const service = new ControlCenterTaskService(state, {
     获取启用店铺列表方法: () => 店铺列表,
     创建凭证批次目录方法: () => 'D:\\evidence\\inspection-batch',
-    构建店铺凭证路径方法: ({ 批次目录, 店铺, 结果状态 }) => `${批次目录}\\${店铺.id}-${结果状态}.png`,
     更新店铺结果方法: () => {},
     执行巡检方法: async (选项) => {
       巡检选项列表.push(选项);
@@ -206,8 +206,9 @@ test('识别任务会把批次内成功和失败截图路径传给巡检', async
   await service.currentTaskPromise;
 
   assert.equal(巡检选项列表.length, 1);
-  assert.equal(巡检选项列表[0].截图路径, 'D:\\evidence\\inspection-batch\\store-a-成功.png');
-  assert.equal(巡检选项列表[0].失败截图路径, 'D:\\evidence\\inspection-batch\\store-a-失败.png');
+  assert.equal(巡检选项列表[0].截图路径, undefined);
+  assert.equal(巡检选项列表[0].失败截图路径, undefined);
+  assert.equal(巡检选项列表[0].截图文件名, undefined);
 });
 
 test('待开票发票批量回传会筛选本地订单并刷新订单列表', async () => {

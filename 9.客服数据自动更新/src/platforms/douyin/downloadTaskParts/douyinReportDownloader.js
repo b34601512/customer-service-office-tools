@@ -3,7 +3,6 @@ const { log } = require("../../../engine/logger");
 const { registerDownloadArtifact } = require("../../../reporting/downloadArtifactRegistry");
 const { waitForDownloadArtifact, triggerDownloadAndWait } = require("../../../shared/downloadEventEngine");
 const { resolveExportDateRange } = require("../../../shared/exportDateRange");
-const { captureDownloadEvidence } = require("../../../shared/downloadEvidence");
 const { dismissBlockingPopups } = require("../../../shared/blockingPopupEngine");
 const { DOUYIN_DOWNLOAD_TIMEOUT_MS, DOUYIN_POLL_INTERVAL_MS } = require("./douyinDownloadSettings");
 const {
@@ -93,7 +92,6 @@ async function downloadDouyinReport(onProgress = null, options = {}) {
     reportProgress(onProgress, "接管下载目录", downloadDir);
     await enableDownloadBehavior(page, downloadDir);
     const beforeFiles = snapshotWorkbookArtifacts(downloadDir);
-    await captureDownloadEvidence(page, options, "抖音客服数据下载前");
     const downloadStart = await triggerDownloadAndWait(
       () => waitForDownloadArtifact({
         downloadDir,
@@ -107,7 +105,6 @@ async function downloadDouyinReport(onProgress = null, options = {}) {
     reportProgress(onProgress, "等待文件落盘", "导出已触发，正在等待 Excel 文件");
     const downloadedPath = finalizeDouyinDownloadedPath(downloadStart, resolvedConfig.activeStore, exportRange);
     registerDownloadArtifact({ platformKey: "douyin", resolvedConfig, filePath: downloadedPath, exportRange });
-    await captureDownloadEvidence(page, options, "抖音客服数据下载后");
     reportProgress(onProgress, "登记下载文件", `文件=${downloadedPath}`);
     return downloadedPath;
   } finally {

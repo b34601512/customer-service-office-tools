@@ -33,23 +33,8 @@ function reportTmallDownloadProgress(onProgress, stageText, detail = "") {
   }
 }
 
-function buildTmallDownloadEvidenceLabel(reportKeys, stageText) {
-  // 这个函数只按真实下载源生成一个凭证标签。
-  const reportNameMap = {
-    performance: "业绩指标",
-    response_time: "平均响应时间",
-    three_minute_response_rate: "3分钟响应率",
-    customer_satisfaction: "客户满意度"
-  };
-  const names = [...new Set((Array.isArray(reportKeys) ? reportKeys : [reportKeys])
-    .map((reportKey) => reportNameMap[String(reportKey || "").trim()])
-    .filter(Boolean))];
-  return `天猫${names.join("＋") || "下载"}${stageText}`;
-}
-
 module.exports = {
   waitForTmallDownloadStart,
   setTmallDownloadDirectory,
-  reportTmallDownloadProgress,
-  buildTmallDownloadEvidenceLabel
+  reportTmallDownloadProgress
 };

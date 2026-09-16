@@ -1,13 +1,10 @@
 const fs = require("fs");
 const path = require("path");
-const { waitForChromeDebugPortReady, connectToChrome, disconnectFromChrome } = require("../../engine/chromeSession");
-const { captureDownloadEvidence } = require("../../shared/downloadEvidence");
-const { isScreenshotEvidenceEnabled } = require("../../shared/evidenceSettings");
 const { buildEvidenceFileName, buildEvidenceScopeName } = require("../../shared/evidenceNaming");
 const { createSummaryEvidenceDir } = require("../summaryEvidenceDir");
 
 function writeSummaryFailureTextEvidence(evidenceDir, task, errorMessage, evidenceFiles) {
-  // 这个函数只把一次失败原因写成可回查文本凭证。
+  // 这个函数只把一次失败原因写成可回查文本凭证（不连浏览器、不截图）。
   fs.mkdirSync(evidenceDir, { recursive: true });
   const filePath = path.join(evidenceDir, buildEvidenceFileName({
     fileNamePrefix: buildEvidenceScopeName(task),
@@ -24,44 +21,7 @@ function writeSummaryFailureTextEvidence(evidenceDir, task, errorMessage, eviden
   return filePath;
 }
 
-function pickSummaryEvidencePage(browser) {
-  // 这个函数只选择受控浏览器中的第一个真实业务页面。
-  return browser.contexts()
-    .flatMap((context) => context.pages())
-    .find((page) => page.url?.() && page.url() !== "about:blank") || null;
-}
-
-async function captureSummaryFailureEvidence(input, dependencies = {}) {
-  // 这个函数只按当前浏览器状态采集截图或写入失败文本，不处理自身错误。
-  const { task, evidenceDir, evidenceFiles, errorMessage } = input;
-  const screenshotsEnabled = dependencies.isScreenshotEvidenceEnabled || isScreenshotEvidenceEnabled;
-  if (!screenshotsEnabled()) {
-    // 截图凭证已停用：不连浏览器、不截图，直接落一份纯文本失败原因（文本不会卡住，也不会丢失现场线索）。
-    return writeSummaryFailureTextEvidence(evidenceDir, task, errorMessage, evidenceFiles);
-  }
-  const waitForPort = dependencies.waitForChromeDebugPortReady || waitForChromeDebugPortReady;
-  const connect = dependencies.connectToChrome || connectToChrome;
-  const disconnect = dependencies.disconnectFromChrome || disconnectFromChrome;
-  const capture = dependencies.captureDownloadEvidence || captureDownloadEvidence;
-  if (!(await waitForPort({ timeoutMs: 800, pollIntervalMs: 100 }))) {
-    return writeSummaryFailureTextEvidence(evidenceDir, task, errorMessage, evidenceFiles);
-  }
-  const browser = await connect({ timeoutMs: 3000, portReadyTimeoutMs: 1000 });
-  try {
-    const page = pickSummaryEvidencePage(browser);
-    return page
-      ? await capture(page, {
-          evidenceDir,
-          evidenceFiles,
-          evidenceFileNamePrefix: buildEvidenceScopeName(task)
-        }, "失败现场")
-      : writeSummaryFailureTextEvidence(evidenceDir, task, errorMessage, evidenceFiles);
-  } finally {
-    await disconnect(browser, "批量汇总失败凭证已采集");
-  }
-}
-
-async function ensureSummaryErrorEvidence(task, error, projectRoot, dependencies = {}) {
+async function ensureSummaryErrorEvidence(task, error, projectRoot) {
   // 这个函数只确保原始任务错误绑定一组失败凭证。
   if (Array.isArray(error?.summaryEvidenceFiles) && error.summaryEvidenceFiles.length > 0) {
     return error.summaryEvidenceFiles;
@@ -75,7 +35,7 @@ async function ensureSummaryErrorEvidence(task, error, projectRoot, dependencies
     storeKey: task.storeKey
   });
   const errorMessage = error instanceof Error ? error.message : String(error);
-  await captureSummaryFailureEvidence({ task, evidenceDir, evidenceFiles, errorMessage }, dependencies);
+  writeSummaryFailureTextEvidence(evidenceDir, task, errorMessage, evidenceFiles);
   error.summaryEvidenceFiles = evidenceFiles;
   return evidenceFiles;
 }

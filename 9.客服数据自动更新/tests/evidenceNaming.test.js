@@ -7,7 +7,6 @@ const {
   buildEvidenceFileName
 } = require("../src/shared/evidenceNaming");
 const { createSummaryEvidenceDir } = require("../src/summary/summaryEvidenceDir");
-const { downloadSummarySource } = require("../src/summary/storeSummaryParts/summarySourceDownloader");
 
 const fixedEvidenceDate = new Date(2026, 7, 4, 11, 57, 3, 837);
 const evidenceTask = {
@@ -25,10 +24,10 @@ function testReadableEvidenceNames() {
     buildEvidenceFileName({
       createdAt: fixedEvidenceDate,
       fileNamePrefix: buildEvidenceScopeName(evidenceTask),
-      evidenceLabel: "抖音客服数据下载后",
-      extension: ".png"
+      evidenceLabel: "失败原因",
+      extension: ".txt"
     }),
-    "2026-08-04_11-57-03-837_抖音_dedakj抖音_抖音客服数据下载后.png"
+    "2026-08-04_11-57-03-837_抖音_dedakj抖音_失败原因.txt"
   );
 }
 
@@ -52,34 +51,9 @@ function testReadableEvidenceDirectoryHierarchy() {
   );
 }
 
-async function testEvidencePrefixReachesPlatformDownloader() {
-  let receivedDownloadOptions = null;
-  await downloadSummarySource({
-    task: evidenceTask,
-    sourceGroup: {
-      downloadReportKey: "performance",
-      reportKeys: ["performance"],
-      contexts: [{ resolvedConfig: { activeStore: { metricMappings: [] } } }]
-    },
-    dateRange: { startText: "2026-08-01", endText: "2026-08-02" },
-    evidenceDir: "D:\\凭证",
-    evidenceFiles: [],
-    evidenceFileNamePrefix: "抖音_dedakj抖音",
-    async ensurePlatformWindow() {},
-    downloadFunctionByPlatform: {
-      async douyin(onProgress, downloadOptions) {
-        receivedDownloadOptions = downloadOptions;
-        return "D:\\源文件.xlsx";
-      }
-    }
-  });
-  assert.strictEqual(receivedDownloadOptions.evidenceFileNamePrefix, "抖音_dedakj抖音");
-}
-
 async function main() {
   testReadableEvidenceNames();
   testReadableEvidenceDirectoryHierarchy();
-  await testEvidencePrefixReachesPlatformDownloader();
   console.log("PASS 凭证目录和文件名可直接识别平台、店铺与用途");
 }
 

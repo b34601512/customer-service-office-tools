@@ -2,7 +2,6 @@ const fs = require("fs");
 const path = require("path");
 const { connectToChrome, disconnectFromChrome } = require("../../../engine/chromeSession");
 const { log } = require("../../../engine/logger");
-const { captureDownloadEvidence } = require("../../../shared/downloadEvidence");
 const { registerDownloadArtifact } = require("../../../reporting/downloadArtifactRegistry");
 const { resolveTmallDateRange } = require("../tmallDateRange");
 const {
@@ -14,8 +13,7 @@ const {
 const {
   waitForTmallDownloadStart,
   setTmallDownloadDirectory,
-  reportTmallDownloadProgress,
-  buildTmallDownloadEvidenceLabel
+  reportTmallDownloadProgress
 } = require("./tmallDownloadRuntime");
 const { resolveTmallReportType, prepareTmallReportPage } = require("./tmallReportPreparation");
 const { triggerTmallReportDownload } = require("./tmallDownloadTrigger");
@@ -108,7 +106,6 @@ async function runConnectedTmallDownload(browser, onProgress, options, context, 
     onProgress
   });
   registerDownloadArtifact({ platformKey: "tmall", resolvedConfig, filePath: finalPath, exportRange });
-  await captureDownloadEvidence(page, options, buildTmallDownloadEvidenceLabel(sourceReportKeys, "下载后"));
   return finalPath;
 }
 

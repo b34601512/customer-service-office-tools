@@ -45,14 +45,14 @@ test('店铺浏览器不再长期保存完整持久化用户目录', () => {
   assert.doesNotMatch(巡检源码, /浏览器目录路径/);
 });
 
-test('成功识别路径不再保存全页截图和长页面预览', () => {
-  // 该用例锁住 #88：成功路径只留轻量截图，页面长预览只服务失败诊断。
+test('成功识别路径不再保存任何截图和长页面预览', () => {
+  // 该用例锁住原 #88 并叠加 2026-09-16 决定：识别路径彻底不截图（含轻量截图），页面长预览只服务失败诊断。
   const 巡检源码 = 读取源码文件('src/app/checkInvoiceUrges.js');
   const 扫描源码 = 读取源码文件('src/consumerInvoice/scanConsumerInvoiceUrges.js');
 
-  assert.match(巡检源码, /function 保存轻量截图/);
-  assert.match(巡检源码, /fullPage:\s*false/);
-  assert.doesNotMatch(巡检源码, /fullPage:\s*true/);
+  assert.doesNotMatch(巡检源码, /保存轻量截图/);
+  assert.doesNotMatch(巡检源码, /\.screenshot\(/);
+  assert.doesNotMatch(巡检源码, /fullPage/);
   assert.doesNotMatch(扫描源码, /locator\('body'\)\.innerText\(\)/);
   assert.match(扫描源码, /pagePreview:\s*''/);
 });

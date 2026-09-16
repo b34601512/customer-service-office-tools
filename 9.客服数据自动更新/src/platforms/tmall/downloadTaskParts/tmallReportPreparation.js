@@ -1,6 +1,5 @@
 const appConfig = require("../../../config/appConfig");
 const { log } = require("../../../engine/logger");
-const { captureDownloadEvidence } = require("../../../shared/downloadEvidence");
 const { dismissBlockingPopups } = require("../../../shared/blockingPopupEngine");
 const { waitForTmallLoginReady } = require("../tmallLoginState");
 const { navigatePageToTmallTarget, waitForTmallReportPageReady } = require("../tmallNavigator");
@@ -19,7 +18,7 @@ const {
   waitForTmallCustomerSatisfactionDetailReady
 } = require("../responseTimeReportParts/tmallResponseTimeReportFlow");
 const { waitForTmallPerformanceReportStable } = require("../tmallPerformanceDownloadGuard");
-const { reportTmallDownloadProgress, buildTmallDownloadEvidenceLabel } = require("./tmallDownloadRuntime");
+const { reportTmallDownloadProgress } = require("./tmallDownloadRuntime");
 
 function resolveTmallReportType(reportKey) {
   // 该函数只把报表键转换为下载流程所需的类型信息。
@@ -82,7 +81,6 @@ async function prepareTmallPerformancePage(browser, input) {
   await captureTmallPageCheckpoint(page, `${checkpointPrefix}-目标页加载后`);
   await waitForTmallReportPageReady(page);
   await ensureTmallActiveStore(page, resolvedConfig.activeStore);
-  await captureDownloadEvidence(page, options, buildTmallDownloadEvidenceLabel(sourceReportKeys, "目标页"));
   if (exportRange.ruleNotice) {
     log("主线:提示", "天猫下载", "日期规则", exportRange.ruleNotice);
   }
@@ -103,7 +101,6 @@ async function prepareTmallPerformancePage(browser, input) {
   const currentDateText = String(dateLocatorText).replace(/\s+/g, " ").trim();
   log("主线:完成", "天猫下载", "日期确认", `页面日期文本=${currentDateText || "未读到"}`);
   await captureTmallPageCheckpoint(page, `${checkpointPrefix}-选择日期后`);
-  await captureDownloadEvidence(page, options, buildTmallDownloadEvidenceLabel(sourceReportKeys, "日期已确认"));
   return page;
 }
 

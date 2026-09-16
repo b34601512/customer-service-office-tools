@@ -109,10 +109,7 @@ async function runJdStandardExcelDownloadWithDependencies(
       surface: reportContext.surface,
       resolvedConfig,
       exportRange,
-      onProgress,
-      evidenceDir: options.evidenceDir,
-      evidenceFiles: options.evidenceFiles,
-      evidenceFileNamePrefix: options.evidenceFileNamePrefix
+      onProgress
     });
   } finally {
     try {

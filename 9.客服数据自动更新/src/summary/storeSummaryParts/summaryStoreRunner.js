@@ -1,7 +1,4 @@
-const path = require("path");
 const { log } = require("../../engine/logger");
-const { createSummaryEvidenceDir } = require("../summaryEvidenceDir");
-const { buildEvidenceScopeName } = require("../../shared/evidenceNaming");
 const {
   acquireSummarySource,
   findReusableSummarySourceRecord
@@ -103,14 +100,6 @@ async function runStoreSummary(input) {
   const { task, dateRange, projectConfig } = input;
   const reportContexts = buildSummaryReportContexts(task, dateRange, input.buildResolvedConfig);
   const evidenceFiles = [];
-  const evidenceDir = createSummaryEvidenceDir({
-    projectRoot: projectConfig.__projectRoot || path.resolve(__dirname, "..", "..", ".."),
-    platformLabel: task.platformLabel,
-    platformKey: task.platformKey,
-    storeDisplayName: task.storeDisplayName,
-    storeKey: task.storeKey
-  });
-  const evidenceFileNamePrefix = buildEvidenceScopeName(task);
   const sourceGroups = buildSummarySourceGroups(reportContexts, task, projectConfig);
   const forceRedownloadRequested = input.forceRedownload === true;
   const reusableSourceRecords = forceRedownloadRequested
@@ -149,9 +138,7 @@ async function runStoreSummary(input) {
     sourceGroups,
     reusableSourceRecords,
     forceRedownload: forceStoreSourceRedownload,
-    evidenceFiles,
-    evidenceDir,
-    evidenceFileNamePrefix
+    evidenceFiles
   });
   // 新模型下每次都是全新一轮：即使源文件今天已下载可复用，也必须重新导入到本轮数据明细，不再整店跳过。
   const importResult = await importStoreDataToSummary({

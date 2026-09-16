@@ -16,7 +16,6 @@ const {
 } = require("../jdDownloadArtifacts");
 const { registerDownloadArtifact } = require("../../../reporting/downloadArtifactRegistry");
 const { reportProgress } = require("../downloadTaskParts/jdDownloadProgress");
-const { captureDownloadEvidence } = require("../../../shared/downloadEvidence");
 const { triggerDownloadAndWait } = require("../../../shared/downloadEventEngine");
 
 const JD_EXPORT_BUTTON_TEXTS = ["导出", "导出数据", "导出excel"];
@@ -89,17 +88,9 @@ async function exportJdStandardExcel({
   surface,
   resolvedConfig,
   exportRange,
-  onProgress = null,
-  evidenceDir = "",
-  evidenceFiles = null,
-  evidenceFileNamePrefix = ""
+  onProgress = null
 }) {
   // 这里只负责从已稳定的京东报表页导出一个标准 Excel 文件。
-  const evidenceOptions = {
-    evidenceDir,
-    evidenceFiles,
-    evidenceFileNamePrefix
-  };
   const runDownloadDir = createRunDownloadDir(resolvedConfig.activeStore);
   await enableDownloadBehavior(page, runDownloadDir);
   const beforeFiles = listCurrentRunFileNames(runDownloadDir);
@@ -116,7 +107,6 @@ async function exportJdStandardExcel({
   }
 
   reportProgress(onProgress, "触发导出", "准备点击当前报表页导出按钮");
-  await captureDownloadEvidence(exportPage, evidenceOptions, "京东业绩指标下载前");
   const downloadStart = await triggerDownloadAndWait(
     () => waitForDownloadStart(runDownloadDir, beforeFiles, 60000),
     () => clickLocatorWhenReady(exportButton, "京东导出按钮", { timeoutMs: 5000, downloadCommit: true })
@@ -136,7 +126,6 @@ async function exportJdStandardExcel({
     exportRange,
     onProgress
   });
-  await captureDownloadEvidence(exportPage, evidenceOptions, "京东业绩指标下载后");
   return copiedPath;
 }
 

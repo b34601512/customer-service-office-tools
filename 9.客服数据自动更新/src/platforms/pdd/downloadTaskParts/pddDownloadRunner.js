@@ -3,7 +3,6 @@ const { registerDownloadArtifact } = require("../../../reporting/downloadArtifac
 const { resolveExportDateRange } = require("../../../shared/exportDateRange");
 const { dismissBlockingPopups } = require("../../../shared/blockingPopupEngine");
 const { applyPddDateRange } = require("../pddDateApplier");
-const { capturePddDownloadEvidence } = require("../pddEvidenceCapture");
 const { assertPddStoreIdentityMatches } = require("../pddStoreIdentity");
 const { resolvePddStoreDownloadDir, listPddDownloadFileNames, resolvePddDownloadedPath } = require("./pddDownloadArtifacts");
 const { clickPddDownloadButton } = require("./pddDownloadButton");
@@ -53,15 +52,13 @@ async function runConnectedPddDownload(browser, onProgress, options, context) {
   await setPddDownloadDirectory(page, downloadDir);
   const beforeFiles = listPddDownloadFileNames(downloadDir);
   await dismissPddBlockingPopups(page, onProgress);
-  reportPddDownloadProgress(onProgress, "触发下载表单", `当前页面=${page.url()}，日期=${exportRange.startText} 到 ${exportRange.endText}`);
-  await capturePddDownloadEvidence(page, options, "拼多多业绩指标下载前");
+      reportProgress(onProgress, "触发下载表单", `当前页面=${page.url()}，日期=${exportRange.startText} 到 ${exportRange.endText}`);
   await triggerPddExportAndWaitForAcceptance(page, () => clickPddDownloadButton(page));
   reportPddDownloadProgress(onProgress, "等待文件落盘", "平台已确认导出，正在等待新 Excel 文件");
   const downloadStart = await waitForPddDownloadStart(downloadDir, beforeFiles, PDD_DOWNLOAD_TIMEOUT_MS);
   const downloadedPath = resolvePddDownloadedPath(downloadStart);
   registerDownloadArtifact({ platformKey: "pdd", resolvedConfig, filePath: downloadedPath, exportRange });
   reportPddDownloadProgress(onProgress, "登记下载文件", `文件=${downloadedPath}`);
-  await capturePddDownloadEvidence(page, options, "拼多多业绩指标下载后");
   return downloadedPath;
 }
 

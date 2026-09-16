@@ -2,7 +2,6 @@ const { markExportAttempted } = require("../../../engine/browserAutomationScope"
 const { checkBrowserHumanRequirement } = require("../../../engine/browserHumanGuard");
 const appConfig = require("../../../config/appConfig");
 const { clickVisibleButton } = require("../../../shared/visibleButtonActionEngine");
-const { captureDownloadEvidence } = require("../../../shared/downloadEvidence");
 const { dismissBlockingPopups } = require("../../../shared/blockingPopupEngine");
 const { assertNoTmallSafetyChallenge } = require("../tmallSafetyGuard");
 const { waitForTmallPerformanceReportStable } = require("../tmallPerformanceDownloadGuard");
@@ -10,7 +9,7 @@ const {
   triggerTmallResponseTimeDownload,
   triggerTmallCustomerSatisfactionDownload
 } = require("../responseTimeReportParts/tmallResponseTimeDownloadCenter");
-const { reportTmallDownloadProgress, buildTmallDownloadEvidenceLabel } = require("./tmallDownloadRuntime");
+const { reportTmallDownloadProgress } = require("./tmallDownloadRuntime");
 
 async function clickTmallPerformanceDownload(page) {
   // 该函数只点击当前页面唯一的业绩报表下载按钮。
@@ -53,7 +52,6 @@ async function triggerTmallReportDownload(page, input) {
     reportTmallDownloadProgress(onProgress, "确认下载前结果", "重新确认报表没有加载中");
     await waitForTmallPerformanceReportStable(page, exportRange);
   }
-  await captureDownloadEvidence(page, options, buildTmallDownloadEvidenceLabel(sourceReportKeys, "下载前"));
   await checkBrowserHumanRequirement({ force: true });
   markExportAttempted();
   if (reportType.isCustomerSatisfactionReport) {

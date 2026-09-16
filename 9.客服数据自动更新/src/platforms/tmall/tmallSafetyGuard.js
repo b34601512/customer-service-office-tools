@@ -4,12 +4,11 @@ const { waitForHumanResolution } = require("../../engine/browserHumanGuard");
 const path = require("path");
 const appConfig = require("../../config/appConfig");
 const { log } = require("../../engine/logger");
-const { isScreenshotEvidenceEnabled } = require("../../shared/evidenceSettings");
 
 const refreshedSecurityNoticePages = new WeakSet();
 
 function buildTmallCheckpointPath(checkpointLabel, extension) {
-  // 该函数只生成不会覆盖旧现场的页面凭证路径。
+  // 该函数只生成不会覆盖旧记录的页面核对点路径。
   const capturedAt = new Date().toISOString().replace(/[-:TZ.]/g, "").slice(0, 17);
   const safeLabel = String(checkpointLabel || "天猫页面").replace(/[\\/:*?"<>|\s]+/g, "-");
   const directory = path.join(appConfig.runtime.cache.snapshots.tmall, "checkpoints");
@@ -17,27 +16,17 @@ function buildTmallCheckpointPath(checkpointLabel, extension) {
   return path.join(directory, `${capturedAt}-${safeLabel}.${extension}`);
 }
 
-async function captureTmallPageCheckpoint(page, checkpointLabel) {
-  // 该函数只保存当前页面地址（截图凭证已停用时只留地址，不截图），不扫描或猜测页面元素。
+function captureTmallPageCheckpoint(page, checkpointLabel) {
+  // 该函数只把「当前停在哪个页面」落成 json 文本核对点，不截图、不扫描页面元素。
   const metadataPath = buildTmallCheckpointPath(checkpointLabel, "json");
-  const screenshotPath = metadataPath.replace(/\.json$/i, ".png");
   const pageUrl = typeof page?.url === "function" ? page.url() : "";
   fs.writeFileSync(metadataPath, JSON.stringify({
     capturedAt: new Date().toISOString(),
     checkpoint: String(checkpointLabel || "天猫页面"),
     pageUrl
   }, null, 2), "utf8");
-  if (!isScreenshotEvidenceEnabled()) {
-    // 只留页面地址文本，不再截图：避免全量截图带来的卡死风险与磁盘占用。
-    log("主线:完成", "天猫取证", "页面现场", `阶段=${checkpointLabel}，页面地址=${pageUrl || "未读取到"}（截图凭证已停用）`);
-    return { metadataPath, screenshotPath: "" };
-  }
-  if (typeof page?.screenshot !== "function") {
-    return { metadataPath, screenshotPath: "" };
-  }
-  await page.screenshot({ path: screenshotPath, fullPage: false });
-  log("主线:完成", "天猫取证", "页面现场", `阶段=${checkpointLabel}，截图=${screenshotPath}`);
-  return { metadataPath, screenshotPath };
+  log("主线:完成", "天猫核对点", "页面地址", `阶段=${checkpointLabel}，页面地址=${pageUrl || "未读取到"}`);
+  return metadataPath;
 }
 
 async function hasVisibleTmallText(page, pattern) {
