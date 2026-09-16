@@ -197,7 +197,6 @@ function 创建平台回传CLI动作(options = {}) {
           status: item.status,
           message: item.message,
           invoiceFilePath: item.invoiceFilePath,
-          screenshotPath: item.screenshotPath,
         })
         : null,
       输出进度: ({ store, progress }) => {
@@ -226,14 +225,13 @@ function 创建平台回传CLI动作(options = {}) {
           `申请：${item.invoiceApplyTime || '-'}`,
           `动作：${item.message || '-'}`,
           `文件：${item.invoiceFilePath || '-'}`,
-          `截图：${item.screenshotPath || '-'}`,
           `更新：${item.updatedAt || '-'}`,
         ].join('｜'));
       }
     }
     const summaryLine = `[汇总] ${格式化批量汇总(platformName, report)}`;
     记录工作台日志(context, summaryLine);
-    显示工作台页面(context, `${platformName} · 回传结果`, '逐单文件、截图和动作明细已随执行过程直接显示在页面。', [
+    显示工作台页面(context, `${platformName} · 回传结果`, '逐单文件和动作明细已随执行过程直接显示在页面。', [
       summaryLine,
       '',
       ...构建限量店铺结果行(report.stores, 格式化回传店铺行),

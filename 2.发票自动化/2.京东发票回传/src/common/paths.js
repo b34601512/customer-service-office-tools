@@ -4,7 +4,6 @@ const 项目根目录 = path.resolve(__dirname, '..', '..');
 const 数据目录 = path.join(项目根目录, 'data');
 const 报告目录 = path.join(数据目录, 'reports');
 const 运行目录 = path.join(项目根目录, 'runtime');
-const 截图目录 = path.join(运行目录, 'screenshots');
 const 店铺浏览器目录 = path.join(运行目录, 'store-profiles');
 const 店铺登录态目录 = path.join(数据目录, 'store-auth-states');
 const 店铺快照目录 = path.join(数据目录, 'store-snapshots');
@@ -63,7 +62,6 @@ module.exports = {
   数据目录,
   报告目录,
   运行目录,
-  截图目录,
   店铺浏览器目录,
   店铺登录态目录,
   店铺快照目录,

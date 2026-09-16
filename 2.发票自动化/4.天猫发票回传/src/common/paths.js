@@ -4,7 +4,6 @@ const 项目根目录 = path.resolve(__dirname, '..', '..');
 const 数据目录 = path.join(项目根目录, 'data');
 const 运行目录 = path.join(项目根目录, 'runtime');
 const 店铺浏览器资料目录 = path.join(运行目录, 'store-profiles');
-const 截图目录 = path.join(运行目录, 'screenshots');
 const 天猫导出目录 = path.join(运行目录, 'tmall-exports');
 const 全流程临时目录 = path.join(运行目录, 'full-flow');
 const 店铺配置文件路径 = path.join(数据目录, 'stores.json');
@@ -32,7 +31,6 @@ module.exports = {
   数据目录,
   运行目录,
   店铺浏览器资料目录,
-  截图目录,
   天猫导出目录,
   全流程临时目录,
   店铺配置文件路径,

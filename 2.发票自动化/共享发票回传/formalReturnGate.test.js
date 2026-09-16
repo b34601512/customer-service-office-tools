@@ -52,7 +52,7 @@ test('正式回传闸门逐单持久化进度并返回最终结果', async () =>
         type: 'item',
         status: 'success',
         message: '回传成功',
-        item: { ...orders[0], invoiceFilePath: 'invoice.pdf', screenshotPath: 'proof.png' },
+        item: { ...orders[0], invoiceFilePath: 'invoice.pdf' },
       });
       return { message: '完成' };
     },
@@ -60,7 +60,7 @@ test('正式回传闸门逐单持久化进度并返回最终结果', async () =>
 
   assert.deepEqual(attempts.map((item) => item.status), ['downloading', 'success']);
   assert.equal(result.status, 'success');
-  assert.equal(result.items[0].screenshotPath, 'proof.png');
+  assert.equal(result.items[0].screenshotPath, undefined);
 });
 
 test('没有已登记订单时不执行平台动作', async () => {

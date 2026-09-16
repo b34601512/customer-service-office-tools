@@ -112,7 +112,6 @@ function 创建平台订单状态服务(options = {}) {
       invoiceReturned: true,
       invoiceReturnedAt: now,
       invoiceReturnFilePath: 规范化文本(attempt.invoiceFilePath),
-      invoiceReturnScreenshotPath: 规范化文本(attempt.screenshotPath),
       invoiceReturnMessage: 规范化文本(attempt.message || '发票回传成功。'),
     });
   }

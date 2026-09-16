@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { 数据目录, 运行目录, 下载目录, 截图目录 } = require('./paths');
+const { 数据目录, 运行目录, 下载目录 } = require('./paths');
 
 function 确保目录存在(目录路径) {
   // 这个函数解决写文件前目录不存在导致程序中断的问题。
@@ -9,7 +9,7 @@ function 确保目录存在(目录路径) {
 
 function 初始化运行目录() {
   // 这个函数解决项目启动时基础目录未准备好的问题。
-  [数据目录, 运行目录, 下载目录, 截图目录].forEach(确保目录存在);
+  [数据目录, 运行目录, 下载目录].forEach(确保目录存在);
 }
 
 function 读取JSON文件(文件路径, 默认值) {

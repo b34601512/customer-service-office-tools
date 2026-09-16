@@ -336,7 +336,6 @@ function 渲染订单详情(镜像) {
   行列表.push(`最近消息：${镜像?.lastMessage || "无"}`);
   if (尝试.attemptedAt) 行列表.push(`最近回传时间：${尝试.attemptedAt}`);
   if (尝试.invoiceFilePath) 行列表.push(`发票文件：${尝试.invoiceFilePath}`);
-  if (尝试.screenshotPath) 行列表.push(`截图凭证：${尝试.screenshotPath}`);
   if (订单.rowText) 行列表.push("");
   if (订单.rowText) 行列表.push(`原始行：${订单.rowText}`);
   return 行列表;

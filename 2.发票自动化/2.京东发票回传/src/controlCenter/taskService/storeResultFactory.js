@@ -18,7 +18,6 @@ function 构建失败店铺结果(店铺, 错误) {
     records: [],
     newRecords: [],
     preview: 页面诊断.pagePreview || '',
-    screenshotPath: 页面诊断.screenshotPath || '',
     reportPath: '',
   };
 }
@@ -36,7 +35,6 @@ function 构建等待店铺结果(店铺) {
     records: [],
     newRecords: [],
     preview: '',
-    screenshotPath: '',
     reportPath: '',
   };
 }
@@ -100,7 +98,6 @@ function 构建成功店铺结果(店铺, 巡检结果) {
     records: 巡检结果.records,
     newRecords: 巡检结果.newRecords,
     preview: 巡检结果.pagePreview,
-    screenshotPath: 巡检结果.screenshotPath,
     reportPath: 巡检结果.reportPath || '',
   };
 }

@@ -157,7 +157,6 @@ function 创建空运行目录(分发项目目录) {
   [
     'node',
     'downloads',
-    'screenshots',
     'store-profiles',
     'edge-profile',
   ].forEach((相对目录) => 确保目录(path.join(运行目录, 相对目录)));

@@ -51,7 +51,6 @@ function 构建持久化进度回调(onProgress, 设置订单回传尝试方法)
         status,
         message: String(progress.message || ''),
         invoiceFilePath: String(item.invoiceFilePath || ''),
-        screenshotPath: String(item.screenshotPath || ''),
       });
     }
     if (typeof onProgress === 'function') onProgress(progress);
@@ -195,7 +194,6 @@ function 记录上传成功({ item, group, 上传统计, 设置订单发票回�
     : `订单 ${item.orderNumber} 发票已批量回传到京东后台。`;
   设置订单发票回传成功方法(item.key, {
     invoiceFilePath: item.invoiceFilePath,
-    screenshotPath: item.screenshotPath,
     message: 完成消息,
   });
   const 标识 = 获取上传条目标识(item);
@@ -272,7 +270,6 @@ async function 执行京东上传分组(选项) {
     设置订单发票回传成功方法,
     onProgress,
     需要可见浏览器处理方法 = null,
-    凭证批次目录 = '',
     页面保留模式 = 'close',
   } = 选项;
   const 上传回调 = 构建京东上传回调({
@@ -288,7 +285,6 @@ async function 执行京东上传分组(选项) {
     允许人工登录,
     continueOnItemError: true,
     需要可见浏览器处理方法,
-    凭证批次目录,
     页面保留模式,
     ...上传回调,
   });
@@ -415,7 +411,6 @@ async function 执行发票回传(选项 = {}) {
     回传发票到京东方法 = 回传发票到京东,
     设置订单发票回传成功方法 = 设置订单发票回传成功,
     设置订单回传尝试方法 = 读取默认回传尝试保存方法(),
-    凭证批次目录 = '',
   } = 选项;
   初始化运行目录();
   const { orderNumber, 店铺配置 } = 校验回传输入({ order, store });
@@ -440,7 +435,6 @@ async function 执行发票回传(选项 = {}) {
       orderNumber,
       invoiceFilePath,
       headless,
-      凭证批次目录,
     });
   } catch (error) {
     设置订单回传尝试方法(order.key, {
@@ -476,7 +470,6 @@ async function 执行批量发票回传(选项 = {}) {
     设置订单发票回传成功方法 = 设置订单发票回传成功,
     设置订单回传尝试方法 = 读取默认回传尝试保存方法(),
     onProgress = null,
-    凭证批次目录 = '',
     页面保留模式 = 'close',
   } = 选项;
   初始化运行目录();
@@ -510,7 +503,6 @@ async function 执行批量发票回传(选项 = {}) {
         上传统计,
         设置订单发票回传成功方法,
         onProgress: 持久化进度回调,
-        凭证批次目录,
         页面保留模式,
       });
     } catch (错误) {

@@ -126,7 +126,6 @@ async function 执行巡检(选项 = {}) {
         handledOrderCount: 本地统计.handled,
         totalStoredOrderCount: 本地统计.total,
       },
-      screenshotPath: '',
       records: 页面结果.records,
       newRecords: 新增催票记录,
       orderRecords: 发票信息同步结果.records || 持久化结果.records,

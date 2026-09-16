@@ -124,7 +124,9 @@ test('回传失败或跳过保留发票已登记，成功才自动进入已处�
   setup.repository.转换订单状态('s:1', 工作流状态.发票已登记);
 
   assert.equal(setup.repository.记录订单回传尝试('s:1', { status: 'skipped', message: '发票缺失' }).workflowStatus, 工作流状态.发票已登记);
-  assert.equal(setup.repository.记录订单回传尝试('s:1', { status: 'error', message: '上传失败', screenshotPath: 'D:\\proof\\error.png' }).workflowStatus, 工作流状态.发票已登记);
+  assert.equal(setup.repository.记录订单回传尝试('s:1', { status: 'error', message: '上传失败' }).workflowStatus, 工作流状态.发票已登记);
+  const 失败尝试 = setup.repository.记录订单回传尝试('s:1', { status: 'error', message: '再看一次' }).lastReturnAttempt;
+  assert.equal(失败尝试.screenshotPath, undefined);
   const success = setup.repository.记录订单回传尝试('s:1', { status: 'success', message: '回传成功', invoiceFilePath: 'D:\\invoice\\1.pdf' });
   assert.equal(success.workflowStatus, 工作流状态.已处理);
   assert.equal(success.lastReturnAttempt.status, 'success');

@@ -13,9 +13,6 @@ const {
   记录转列表,
   是平台待开票待回传订单,
 } = require('../../order/jdOrderRecordStore');
-const {
-  创建凭证批次目录,
-} = require('../../common/evidenceService');
 const { 批量单店最大尝试次数, 批量店铺页面保留模式, 批量回传页面保留模式 } = require('./taskConstants');
 const { 是需要自动拉起登录的错误 } = require('./loginError');
 const {
@@ -63,8 +60,6 @@ class ControlCenterTaskService {
       || (是否测试运行 ? () => {} : 更新最近批量摘要);
     this.更新最近单店摘要方法 = 依赖.更新最近单店摘要方法
       || (是否测试运行 ? () => {} : 更新最近单店摘要);
-    this.创建凭证批次目录方法 = 依赖.创建凭证批次目录方法
-      || ((选项) => 是否测试运行 ? '' : 创建凭证批次目录(选项));
     this.读取订单记录方法 = 依赖.读取订单记录方法
       || (是否测试运行 ? () => ({ version: 2, orders: {} }) : 读取订单记录);
     this.记录转列表方法 = 依赖.记录转列表方法 || 记录转列表;
@@ -151,10 +146,6 @@ class ControlCenterTaskService {
       }
 
       const 开始时间 = new Date().toISOString();
-      const 凭证批次目录 = this.创建凭证批次目录方法({
-        执行类型: '发票回传',
-        开始时间,
-      });
       this.#初始化发票回传报告(订单列表);
       this.state.setTask({
         ...(this.state.currentTask || {}),
@@ -168,7 +159,6 @@ class ControlCenterTaskService {
           stores: 配置.stores || [],
           headless: false,
           页面保留模式: 批量回传页面保留模式,
-          凭证批次目录,
           onProgress: (进度) => this.#更新发票回传报告(进度),
         });
         this.state.setOrderRecords(this.记录转列表方法(this.读取订单记录方法()));
@@ -197,7 +187,6 @@ class ControlCenterTaskService {
       statusLabel: 发票回传状态标签[status] || status,
       message,
       invoiceFilePath: String(order?.invoiceFilePath || ''),
-      screenshotPath: String(order?.screenshotPath || order?.invoiceReturnScreenshotPath || ''),
       updatedAt: new Date().toISOString(),
     };
   }

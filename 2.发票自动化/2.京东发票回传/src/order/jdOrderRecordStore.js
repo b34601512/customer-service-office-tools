@@ -331,14 +331,12 @@ function 设置订单发票回传成功(key, result = {}, filePath = 催票订�
     status: 'success',
     message: String(result.message || '发票已回传到京东后台。'),
     invoiceFilePath: String(result.invoiceFilePath || ''),
-    screenshotPath: String(result.screenshotPath || ''),
   });
   const now = new Date().toISOString();
   return repository.更新订单记录(key, {
     invoiceReturned: true,
     invoiceReturnedAt: now,
     invoiceReturnFilePath: String(result.invoiceFilePath || ''),
-    invoiceReturnScreenshotPath: String(result.screenshotPath || ''),
     invoiceReturnMessage: String(result.message || '发票已回传到京东后台。'),
   });
 }

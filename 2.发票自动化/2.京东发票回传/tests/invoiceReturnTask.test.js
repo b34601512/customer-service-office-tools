@@ -118,11 +118,11 @@ test('批量发票回传只处理京东后台待开票未回传订单并按先�
       调用顺序.push(`upload:${店铺配置.id}:${invoiceUploads.map((item) => item.orderNumber).join(',')}`);
       for (const item of invoiceUploads) {
         await onUploadStart(item);
-        await onUploaded({ ...item, screenshotPath: `D:\\screenshots\\${item.orderNumber}.png` });
+        await onUploaded({ ...item });
       }
     },
     设置订单发票回传成功方法: (key, payload) => {
-      调用顺序.push(`save:${key}:${payload.invoiceFilePath}:${payload.screenshotPath}`);
+      调用顺序.push(`save:${key}:${payload.invoiceFilePath}`);
     },
     onProgress: (progress) => 进度记录.push(progress),
   });
@@ -131,9 +131,9 @@ test('批量发票回传只处理京东后台待开票未回传订单并按先�
     'download:1000000000001',
     'download:1000000000002',
     'upload:store-a:1000000000001',
-    'save:store-a:1000000000001:D:\\invoice\\1000000000001.pdf:D:\\screenshots\\1000000000001.png',
+    'save:store-a:1000000000001:D:\\invoice\\1000000000001.pdf',
     'upload:store-b:1000000000002',
-    'save:store-b:1000000000002:D:\\invoice\\1000000000002.pdf:D:\\screenshots\\1000000000002.png',
+    'save:store-b:1000000000002:D:\\invoice\\1000000000002.pdf',
   ]);
   assert.deepEqual(
     进度记录.filter((progress) => progress.type === 'item').map((progress) => `${progress.status}:${progress.item.orderNumber}`),
@@ -208,11 +208,11 @@ test('批量发票回传遇到未开好发票会跳过并继续后续订单', as
       调用顺序.push(`upload:${店铺配置.id}:${invoiceUploads.map((item) => item.orderNumber).join(',')}`);
       for (const item of invoiceUploads) {
         await onUploadStart(item);
-        await onUploaded({ ...item, screenshotPath: `D:\\screenshots\\${item.orderNumber}.png` });
+        await onUploaded({ ...item });
       }
     },
     设置订单发票回传成功方法: (key, payload) => {
-      调用顺序.push(`save:${key}:${payload.invoiceFilePath}:${payload.screenshotPath}`);
+      调用顺序.push(`save:${key}:${payload.invoiceFilePath}`);
     },
     onProgress: (progress) => 进度记录.push(progress),
   });
@@ -222,8 +222,8 @@ test('批量发票回传遇到未开好发票会跳过并继续后续订单', as
     'download:1000000000002',
     'download:1000000000003',
     'upload:store-a:1000000000001,1000000000003',
-    'save:store-a:1000000000001:D:\\invoice\\1000000000001.pdf:D:\\screenshots\\1000000000001.png',
-    'save:store-a:1000000000003:D:\\invoice\\1000000000003.pdf:D:\\screenshots\\1000000000003.png',
+    'save:store-a:1000000000001:D:\\invoice\\1000000000001.pdf',
+    'save:store-a:1000000000003:D:\\invoice\\1000000000003.pdf',
   ]);
   assert.deepEqual(
     进度记录.filter((progress) => progress.type === 'item').map((progress) => `${progress.status}:${progress.item.orderNumber}`),
@@ -367,16 +367,16 @@ test('批量发票回传遇到单张上传失败会继续后续订单', async ()
         });
         if (item.orderNumber === '1000000000002') {
           await onUploadFailed(
-            { ...item, screenshotPath: `D:\\screenshots\\${item.orderNumber}-error.png` },
+            { ...item },
             new Error('京东后台列表一直处于加载中，无法判断发票回传入口。'),
           );
           continue;
         }
-        await onUploaded({ ...item, screenshotPath: `D:\\screenshots\\${item.orderNumber}.png` });
+        await onUploaded({ ...item });
       }
     },
     设置订单发票回传成功方法: (key, payload) => {
-      调用顺序.push(`save:${key}:${payload.invoiceFilePath}:${payload.screenshotPath}`);
+      调用顺序.push(`save:${key}:${payload.invoiceFilePath}`);
     },
     onProgress: (progress) => 进度记录.push(progress),
   });
@@ -386,10 +386,10 @@ test('批量发票回传遇到单张上传失败会继续后续订单', async ()
     'download:1000000000002',
     'download:1000000000003',
     'upload:1000000000001',
-    'save:store-a:1000000000001:D:\\invoice\\1000000000001.pdf:D:\\screenshots\\1000000000001.png',
+    'save:store-a:1000000000001:D:\\invoice\\1000000000001.pdf',
     'upload:1000000000002',
     'upload:1000000000003',
-    'save:store-a:1000000000003:D:\\invoice\\1000000000003.pdf:D:\\screenshots\\1000000000003.png',
+    'save:store-a:1000000000003:D:\\invoice\\1000000000003.pdf',
   ]);
   assert.deepEqual(
     进度记录.filter((progress) => progress.type === 'item').map((progress) => `${progress.status}:${progress.item.orderNumber}`),
@@ -466,7 +466,7 @@ test('批量发票回传后台遇到登录验证才切换可见浏览器', async
         throw new Error('登录态失效，请先在后台里对该店铺执行一次可见登录。');
       }
       for (const item of invoiceUploads) {
-        await onUploaded({ ...item, screenshotPath: `D:\\screenshots\\${item.orderNumber}.png` });
+        await onUploaded({ ...item });
       }
     },
     设置订单发票回传成功方法: () => {},

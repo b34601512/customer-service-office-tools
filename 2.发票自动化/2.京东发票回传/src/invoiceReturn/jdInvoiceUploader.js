@@ -529,7 +529,6 @@ async function 回传发票到京东({
   invoiceFilePath,
   headless = true,
   允许人工登录 = !headless,
-  凭证批次目录 = '',
 }) {
   // 解决：复用京东店铺登录态，打开订单列表并把诺诺下载的发票上传回当前订单。
   await 执行京东回传会话({
@@ -537,7 +536,6 @@ async function 回传发票到京东({
     invoiceUploads: [{ orderNumber, invoiceFilePath }],
     headless,
     允许人工登录,
-    凭证批次目录,
   });
 }
 
@@ -568,7 +566,6 @@ async function 执行京东回传会话({
   onUploadProgress = null,
   onUploaded = null,
   onUploadFailed = null,
-  凭证批次目录 = '',
   页面保留模式 = 'close',
 }) {
   // 解决：同一家京东店铺共用一次登录和浏览器会话；没有文件时也打开并保留页面供核对。

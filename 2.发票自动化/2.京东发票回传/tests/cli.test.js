@@ -7,12 +7,12 @@ function 读取项目文件(相对路径) {
   return fs.readFileSync(path.join(__dirname, '..', 相对路径), 'utf8');
 }
 
-test('CLI首页按1号项目标准只提供统一凭证入口', () => {
+test('CLI首页不再提供已废弃的凭证文件夹入口', () => {
   const text = 读取项目文件('src/cli/startCli.js');
 
-  assert.match(text, /\.\/evidenceViewer/);
-  assert.match(text, /标题: '凭证查看'/);
-  assert.match(text, /编号: '10', 名称: '打开凭证文件夹'/);
+  assert.doesNotMatch(text, /\.\/evidenceViewer/);
+  assert.doesNotMatch(text, /标题: '凭证查看'/);
+  assert.doesNotMatch(text, /打开凭证文件夹/);
   assert.doesNotMatch(text, /查看指定店铺识别凭证|打开全部店铺凭证文件夹|查看指定店铺凭证/);
 });
 
@@ -27,12 +27,9 @@ test('2号原有催票、订单和正式回传入口仍在', () => {
   assert.match(text, /批量回传待开票发票/);
 });
 
-test('CLI凭证查看模块只暴露统一文件夹入口', () => {
-  const evidenceViewer = require('../src/cli/evidenceViewer');
-
-  assert.equal(typeof evidenceViewer.打开凭证目录, 'function');
-  assert.equal(evidenceViewer.获取最近巡检凭证, undefined);
-  assert.equal(evidenceViewer.打开凭证文件, undefined);
+test('CLI凭证查看模块已随截图能力一并删除', () => {
+  assert.equal(fs.existsSync(path.join(__dirname, '..', 'src/cli/evidenceViewer.js')), false);
+  assert.equal(fs.existsSync(path.join(__dirname, '..', 'src/common/evidenceService.js')), false);
 });
 
 test('CLI回传结果页只显示精简结论，逐单凭证写入独立日志', () => {
@@ -47,17 +44,17 @@ test('CLI回传结果页只显示精简结论，逐单凭证写入独立日志',
     报告: {
       summaryMessage: '完成',
       items: [
-        { storeName: 'A店', orderNumber: '1', status: 'success', screenshotPath: 'proof-1.png' },
-        { storeName: 'B店', orderNumber: '2', status: 'skipped', message: '发票缺失', screenshotPath: 'proof-2.png' },
+        { storeName: 'A店', orderNumber: '1', status: 'success' },
+        { storeName: 'B店', orderNumber: '2', status: 'skipped', message: '发票缺失' },
       ],
     },
   });
 
   assert.equal(pages[0], '京东发票回传 · 发票回传结果');
   assert.match(output.join('\n'), /成功 1｜跳过 1｜失败 0/);
-  assert.doesNotMatch(output.join('\n'), /proof-1\.png|proof-2\.png/);
-  assert.match(logs.join('\n'), /proof-1\.png/);
-  assert.match(logs.join('\n'), /proof-2\.png/);
+  assert.doesNotMatch(output.join('\n'), /凭证/);
+  assert.match(logs.join('\n'), /\[订单\] A店｜1｜/);
+  assert.match(logs.join('\n'), /\[订单\] B店｜2｜/);
 });
 
 test('后台任务进度在同一业务页重绘并把记录写入独立日志', () => {

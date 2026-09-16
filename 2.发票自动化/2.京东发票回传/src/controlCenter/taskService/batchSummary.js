@@ -54,7 +54,6 @@ function 构建店铺结果快照(店铺结果 = {}) {
     statusLabel: String(店铺结果.statusLabel || ''),
     lastCheckedAt: String(店铺结果.lastCheckedAt || ''),
     lastMessage: String(店铺结果.lastMessage || ''),
-    screenshotPath: String(店铺结果.screenshotPath || ''),
     scannedRecordCount: 读取结果记录数量(店铺结果, 'records', 'scannedRecordCount'),
     newRecordCount: 读取结果记录数量(店铺结果, 'newRecords', 'newRecordCount'),
     metrics: 店铺结果.metrics || null,

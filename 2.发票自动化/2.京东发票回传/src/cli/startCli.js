@@ -35,10 +35,6 @@ const {
 } = require('../store/storeConfigService');
 const { 读取店铺结果 } = require('../store/storeResultService');
 const { 获取店铺登录态文件路径 } = require('../common/paths');
-const {
-  打开凭证目录,
-  读取最近凭证状态,
-} = require('./evidenceViewer');
 const { 输出首页总览 } = require('./inspectionOverview');
 const {
   读取本地处理阶段,
@@ -241,13 +237,13 @@ async function 查看订单({ 提问器, 输出, 终端 }) {
 
 function 输出发票回传结果({ 输出, 终端 = null, 记录运行日志 = null, 报告 }) {
   if (!报告 || !Array.isArray(报告.items)) return;
-  终端?.显示页面?.(`${菜单标题} · 发票回传结果`, '逐单文件、截图和完整动作明细已随执行过程直接显示在页面。');
+  终端?.显示页面?.(`${菜单标题} · 发票回传结果`, '逐单文件与完整动作明细已随执行过程直接显示在页面。');
   输出(`[回传] ${报告.summaryMessage || '暂无回传结果'}｜共 ${报告.items.length} 条`);
   const 成功数量 = 报告.items.filter((项目) => ['success', 'succeeded'].includes(String(项目.status || '').toLowerCase())).length;
   const 跳过数量 = 报告.items.filter((项目) => ['skip', 'skipped'].includes(String(项目.status || '').toLowerCase())).length;
   输出(`成功 ${成功数量}｜跳过 ${跳过数量}｜失败 ${报告.items.length - 成功数量 - 跳过数量}`);
   报告.items.forEach((项目) => {
-    const 详情 = `[订单] ${项目.storeName || '-'}｜${项目.orderNumber || '-'}｜${项目.statusLabel || 项目.status || '-'}｜${项目.message || '-'}｜凭证：${项目.screenshotPath || '无'}`;
+    const 详情 = `[订单] ${项目.storeName || '-'}｜${项目.orderNumber || '-'}｜${项目.statusLabel || 项目.status || '-'}｜${项目.message || '-'}`;
     if (typeof 记录运行日志 === 'function') 记录运行日志(详情);
   });
   const 需关注项目 = 报告.items.filter((项目) => !['success', 'succeeded'].includes(String(项目.status || '').toLowerCase()));
@@ -341,15 +337,6 @@ async function 打开项目目录({ 输出, 终端 }) {
   输出(终端.主题.成功(`  已打开项目目录：${目录路径}`));
 }
 
-async function 打开凭证文件夹({ 输出, 终端 }) {
-  const 凭证状态 = 读取最近凭证状态();
-  const 凭证目录路径 = await 打开凭证目录();
-  输出(终端.主题.成功(`  已打开凭证文件夹：${凭证目录路径}`));
-  输出(凭证状态.fileCount > 0
-    ? `  最近一轮凭证：${凭证状态.fileCount} 个文件。`
-    : '  [提醒] 最近一轮没有可读取的截图文件，请查看识别失败信息。');
-}
-
 function 创建任务服务() {
   const state = new ControlCenterState(读取店铺结果(), 记录转列表(读取订单记录()));
   return new ControlCenterTaskService(state);
@@ -363,10 +350,7 @@ function 读取本地登录状态(店铺) {
 
 function 格式化最近结果(结果) {
   if (!结果) return '暂无识别记录';
-  const 凭证状态 = 结果.screenshotPath
-    ? (fs.existsSync(结果.screenshotPath) ? '凭证可用' : '凭证缺失')
-    : '无凭证';
-  return `${结果.lastCheckedAt || '时间未知'}｜${结果.lastMessage || 结果.status || '已执行'}｜${凭证状态}`;
+  return `${结果.lastCheckedAt || '时间未知'}｜${结果.lastMessage || 结果.status || '已执行'}`;
 }
 
 async function main() {
@@ -390,9 +374,6 @@ async function main() {
         { 编号: '12', 名称: '导出客服跟进表' },
       ] },
       { 标题: '发票处理', 项目: [{ 编号: '9', 名称: '批量回传待开票发票' }] },
-      { 标题: '凭证查看', 项目: [
-        { 编号: '10', 名称: '打开凭证文件夹' },
-      ] },
       { 标题: '维护与诊断', 项目: [
         { 编号: '13', 名称: '查看性能并归档已处理记录' },
         { 编号: '14', 名称: '分页查看最近运行日志' },
@@ -403,7 +384,7 @@ async function main() {
     页面标题: {
       '1': '当前状态', '2': '店铺配置', '3': '客服名单', '4': '单店识别', '5': '批量识别',
       '6': '订单处理', '7': '手动新增订单', '8': '批量归档', '9': '发票回传',
-      '10': '打开凭证文件夹', '12': '客服跟进表',
+      '12': '客服跟进表',
       '13': '性能与归档', '14': '运行日志', '15': '项目目录', '16': '批量启停店铺',
     },
     菜单动作: {
@@ -416,7 +397,6 @@ async function main() {
       '7': 手动新增订单,
       '8': 批量归档成功订单,
       '9': 批量回传待开票,
-      '10': 打开凭证文件夹,
       '12': 导出客服跟进表,
       '13': 查看性能和清理,
       '14': 查看运行日志,
@@ -453,5 +433,4 @@ module.exports = {
   创建任务进度展示,
   输出发票回传结果,
   查看运行日志,
-  打开凭证文件夹,
 };

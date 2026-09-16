@@ -63,7 +63,6 @@ function 创建正式回传闸门(options = {}) {
           status,
           message: next.message,
           invoiceFilePath: String(item.invoiceFilePath || ''),
-          screenshotPath: String(item.screenshotPath || ''),
         });
       }
     }

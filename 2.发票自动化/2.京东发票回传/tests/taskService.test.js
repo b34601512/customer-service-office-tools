@@ -42,7 +42,6 @@ function 构建成功巡检结果(storeName) {
     records: [],
     newRecords: [],
     pagePreview: `${storeName} preview`,
-    screenshotPath: '',
     reportPath: '',
   };
 }
@@ -74,7 +73,6 @@ test('全部店铺识别时单店失败不会阻断后续店铺', async () => {
           pageTitle: '消费者发票管理',
           pageUrl: 'https://shop.jd.com/jdm/finance/consumerInvoice/cinvoiceOrder',
           pagePreview: '订单编号 发票状态 申请时间 共 5 条',
-          screenshotPath: 'runtime/screenshots/store-b-failure.png',
         };
         throw error;
       }
@@ -96,7 +94,7 @@ test('全部店铺识别时单店失败不会阻断后续店铺', async () => {
   assert.equal(保存结果.filter((result) => result.status === 'error').length, 2);
   const 失败结果 = 保存结果.find((result) => result.status === 'error');
   assert.equal(失败结果.pageUrl, 'https://shop.jd.com/jdm/finance/consumerInvoice/cinvoiceOrder');
-  assert.equal(失败结果.screenshotPath, 'runtime/screenshots/store-b-failure.png');
+  assert.equal(失败结果.screenshotPath, undefined);
   assert.match(失败结果.preview, /订单编号/);
   assert.match(state.currentTask.message, /成功 2\/3，失败 1/);
   assert.match(state.currentTask.message, /京东B店/);
@@ -186,7 +184,8 @@ test('分页进度会同步到后台任务摘要和巡检报告', async () => {
 });
 
 test('识别任务不再向巡检传任何截图路径', async () => {
-  // 2026-09-16 用户决定：识别路径不再保存截图，因此巡检选项里不应再出现截图相关字段。
+  // 2026-09-16 用户决定：识别路径不再保存截图，因此巡检选项里不应再出现截图相关字段，
+  // 也不应再为截图新建任何凭证批次目录。
   const state = 创建控制台状态桩();
   const 巡检选项列表 = [];
   const 店铺列表 = [
@@ -194,7 +193,6 @@ test('识别任务不再向巡检传任何截图路径', async () => {
   ];
   const service = new ControlCenterTaskService(state, {
     获取启用店铺列表方法: () => 店铺列表,
-    创建凭证批次目录方法: () => 'D:\\evidence\\inspection-batch',
     更新店铺结果方法: () => {},
     执行巡检方法: async (选项) => {
       巡检选项列表.push(选项);
@@ -209,6 +207,7 @@ test('识别任务不再向巡检传任何截图路径', async () => {
   assert.equal(巡检选项列表[0].截图路径, undefined);
   assert.equal(巡检选项列表[0].失败截图路径, undefined);
   assert.equal(巡检选项列表[0].截图文件名, undefined);
+  assert.equal(巡检选项列表[0].凭证批次目录, undefined);
 });
 
 test('待开票发票批量回传会筛选本地订单并刷新订单列表', async () => {
@@ -245,7 +244,6 @@ test('待开票发票批量回传会筛选本地订单并刷新订单列表', as
     }),
     读取订单记录方法: () => 订单数据,
     记录转列表方法: (data) => Object.values(data.orders || {}),
-    创建凭证批次目录方法: () => 'D:\\evidence\\invoice-return-batch',
     执行批量发票回传方法: async (选项) => {
       调用记录.push(选项);
       选项.onProgress({
@@ -269,7 +267,6 @@ test('待开票发票批量回传会筛选本地订单并刷新订单列表', as
           storeId: 'store-a',
           storeName: '京东A店',
           orderNumber: '1000000000001',
-          screenshotPath: 'runtime/screenshots/return-success.png',
         },
         updatedAt: new Date().toISOString(),
       });
@@ -299,13 +296,13 @@ test('待开票发票批量回传会筛选本地订单并刷新订单列表', as
   assert.equal(调用记录[0].headless, false);
   assert.equal(调用记录[0].页面保留模式, 批量回传页面保留模式);
   assert.equal(批量回传页面保留模式, 'keep');
-  assert.equal(调用记录[0].凭证批次目录, 'D:\\evidence\\invoice-return-batch');
+  assert.equal(调用记录[0].凭证批次目录, undefined);
   assert.equal(typeof 调用记录[0].onProgress, 'function');
   assert.equal(state.orderRecords.length, 2);
   assert.equal(state.invoiceReturnReport.status, 'success');
   assert.equal(state.invoiceReturnReport.items.length, 2);
   assert.equal(state.invoiceReturnReport.items[0].status, 'success');
-  assert.equal(state.invoiceReturnReport.items[0].screenshotPath, 'runtime/screenshots/return-success.png');
+  assert.equal(state.invoiceReturnReport.items[0].screenshotPath, undefined);
   assert.equal(state.invoiceReturnReport.items[1].status, 'skipped');
   assert.equal(state.invoiceReturnReport.items[1].statusLabel, '已跳过');
   assert.match(state.currentTask.message, /成功 1\/2/);
@@ -330,7 +327,6 @@ test('批量回传任务失败会保留结构化失败状态', async () => {
       },
     }),
     记录转列表方法: (data) => Object.values(data.orders || {}),
-    创建凭证批次目录方法: () => '',
     执行批量发票回传方法: async () => {
       throw new Error('模拟京东页面打开失败');
     },
@@ -359,7 +355,6 @@ test('批量和单店识别分别保存摘要，单店不会覆盖批量总览',
     读取店铺配置方法: () => ({ stores: 店铺列表 }),
     读取订单记录方法: () => ({ orders: {} }),
     记录转列表方法: () => [],
-    创建凭证批次目录方法: () => '',
     更新最近批量摘要方法: (摘要) => 批量摘要列表.push(摘要),
     更新最近单店摘要方法: (摘要) => 单店摘要列表.push(摘要),
     更新店铺结果方法: () => {},

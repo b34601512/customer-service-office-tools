@@ -22,11 +22,11 @@ test('启动清理路径不包含登录资料和旧控制台目录', () => {
 test('启动清理会迁移临时产物但保留店铺资料', async () => {
   const projectRoot = 创建临时项目目录();
   const backupRoot = path.join(projectRoot, 'backup');
-  const screenshotsDir = path.join(projectRoot, 'runtime', 'screenshots');
+  const 导出目录 = path.join(projectRoot, 'runtime', 'pdd-exports');
   const profileDir = path.join(projectRoot, 'runtime', 'store-profiles', 'msedge', 'store-a');
-  fs.mkdirSync(screenshotsDir, { recursive: true });
+  fs.mkdirSync(导出目录, { recursive: true });
   fs.mkdirSync(profileDir, { recursive: true });
-  fs.writeFileSync(path.join(screenshotsDir, 'old.png'), 'image', 'utf8');
+  fs.writeFileSync(path.join(导出目录, 'old.xlsx'), 'sheet', 'utf8');
   fs.writeFileSync(path.join(profileDir, 'state'), 'keep', 'utf8');
 
   const result = await 执行启动自动清理({
@@ -35,7 +35,7 @@ test('启动清理会迁移临时产物但保留店铺资料', async () => {
     now: new Date('2026-07-03T08:09:10'),
   });
 
-  assert.equal(fs.existsSync(screenshotsDir), false);
+  assert.equal(fs.existsSync(导出目录), false);
   assert.equal(fs.existsSync(profileDir), true);
   assert.equal(result.length, 1);
   assert.match(result[0].备份路径, /拼多多发票回传-runtime缓存备份/);

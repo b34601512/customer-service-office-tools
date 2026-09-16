@@ -152,7 +152,6 @@ function 构建干净运行目录(分发目录) {
   const 便携Node目录 = path.join(运行目录, 'node');
   const 当前Node路径 = process.execPath;
 
-  fs.mkdirSync(path.join(运行目录, 'screenshots'), { recursive: true });
   fs.mkdirSync(path.join(运行目录, 'store-profiles'), { recursive: true });
   fs.mkdirSync(path.join(运行目录, 'edge-profile'), { recursive: true });
   fs.mkdirSync(便携Node目录, { recursive: true });

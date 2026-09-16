@@ -49,7 +49,6 @@ test('旧三布尔记录先复制备份再迁移，京东字段、回传证据�
         invoiceStatusText: '待开票',
         invoiceTitle: '测试抬头',
         invoiceReturnFilePath: 'D:\\invoice\\1001.pdf',
-        invoiceReturnScreenshotPath: 'D:\\proof\\1001.png',
         invoiceReturnMessage: '上次失败，可重试',
       },
     },
@@ -70,7 +69,7 @@ test('旧三布尔记录先复制备份再迁移，京东字段、回传证据�
   assert.equal(order.invoiceStatusText, '待开票');
   assert.equal(order.invoiceTitle, '测试抬头');
   assert.equal(order.invoiceReturnFilePath, 'D:\\invoice\\1001.pdf');
-  assert.equal(order.invoiceReturnScreenshotPath, 'D:\\proof\\1001.png');
+  assert.equal(order.invoiceReturnScreenshotPath, undefined);
   assert.equal(data.archivedHandledOrders['京东1店:old'].orderNumber, 'old');
   assert.ok(data.workflowMigration.backupPath);
   assert.equal(fs.existsSync(data.workflowMigration.backupPath), true);
@@ -125,7 +124,6 @@ test('回传失败保留发票已登记，成功保存凭证并自动进入已�
 
   设置订单发票回传成功(key, {
     invoiceFilePath: 'D:\\invoice\\1003.pdf',
-    screenshotPath: 'D:\\proof\\1003.png',
     message: '回传完成',
   }, file);
   const order = 读取订单记录(file).orders[key];
@@ -133,7 +131,7 @@ test('回传失败保留发票已登记，成功保存凭证并自动进入已�
   assert.equal(order.lastReturnAttempt.status, 'success');
   assert.equal(order.invoiceReturned, true);
   assert.equal(order.invoiceReturnFilePath, 'D:\\invoice\\1003.pdf');
-  assert.equal(order.invoiceReturnScreenshotPath, 'D:\\proof\\1003.png');
+  assert.equal(order.invoiceReturnScreenshotPath, undefined);
 });
 
 test('归档仍保留完整京东订单，活动区只留轻量防复活索引', () => {

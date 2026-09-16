@@ -60,11 +60,10 @@ function 校验分发店铺配置不含敏感信息(分发目录) {
 }
 
 function 校验分发运行目录不含登录态(分发目录) {
-  // 解决：客服包只能带空目录，不能携带当前电脑上的浏览器登录态、截图或窗口缓存。
+  // 解决：客服包只能带空目录，不能携带当前电脑上的浏览器登录态或窗口缓存。
   const 需要保持空白的目录 = [
     path.join(分发目录, 'runtime', 'edge-profile'),
     path.join(分发目录, 'runtime', 'store-profiles'),
-    path.join(分发目录, 'runtime', 'screenshots'),
   ];
   const 残留文件列表 = 需要保持空白的目录.flatMap(收集目录文件路径);
 

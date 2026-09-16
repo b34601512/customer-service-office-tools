@@ -102,9 +102,9 @@ test('CLI架构边界：店铺浏览器资料路径定义保留', () => {
   assert.match(文本, /store-profiles/);
 });
 
-test('CLI架构边界：截图路径定义保留', () => {
+test('CLI架构边界：截图路径定义已彻底移除', () => {
   const 文本 = fs.readFileSync(path.join(项目根目录, 'src/common/paths.js'), 'utf8');
-  assert.match(文本, /screenshots/);
+  assert.doesNotMatch(文本, /screenshots/);
 });
 
 test('CLI架构边界：启动清理排除店铺登录资料', () => {
@@ -112,9 +112,9 @@ test('CLI架构边界：启动清理排除店铺登录资料', () => {
   assert.equal(路径列表.some((项目) => 项目.includes(path.join('runtime', 'store-profiles'))), false);
 });
 
-test('CLI架构边界：启动清理继续覆盖截图', () => {
+test('CLI架构边界：启动清理不再覆盖已废弃的截图目录', () => {
   const 路径列表 = 构建启动清理路径列表(path.join(项目根目录, '边界测试'));
-  assert.equal(路径列表.some((项目) => 项目.includes(path.join('runtime', 'screenshots'))), true);
+  assert.equal(路径列表.some((项目) => 项目.includes(path.join('runtime', 'screenshots'))), false);
 });
 
 test('CLI架构边界：启动清理继续覆盖天猫导出', () => {

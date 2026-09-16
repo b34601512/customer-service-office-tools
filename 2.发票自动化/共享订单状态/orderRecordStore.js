@@ -27,7 +27,6 @@ const 人工保留字段列表 = Object.freeze([
   'invoiceReturned',
   'invoiceReturnedAt',
   'invoiceReturnFilePath',
-  'invoiceReturnScreenshotPath',
   'invoiceReturnMessage',
 ]);
 const 回传尝试状态列表 = Object.freeze([
@@ -383,7 +382,6 @@ function 创建订单记录仓库(options = {}) {
           status,
           message: String(attempt.message || ''),
           invoiceFilePath: String(attempt.invoiceFilePath || ''),
-          screenshotPath: String(attempt.screenshotPath || ''),
           attemptedAt: String(attempt.attemptedAt || now),
         },
       };

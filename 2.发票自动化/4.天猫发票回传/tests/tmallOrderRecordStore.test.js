@@ -29,12 +29,12 @@ test('天猫只读同步幂等保留人工字段，成功才进入已处理', ()
   store.设置订单回传尝试(order.key, { status: 'skipped', message: '未找到发票' }, filePath);
   assert.equal(store.读取订单列表(filePath)[0].workflowStatus, 'invoice_registered');
   store.设置订单回传尝试(order.key, {
-    status: 'success', message: '回传完成', invoiceFilePath: '1001.pdf', screenshotPath: '1001.png',
+    status: 'success', message: '回传完成', invoiceFilePath: '1001.pdf',
   }, filePath);
   order = store.读取订单列表(filePath)[0];
   assert.equal(order.workflowStatus, 'handled');
   assert.equal(order.invoiceReturned, true);
-  assert.equal(order.invoiceReturnScreenshotPath, '1001.png');
+  assert.equal(order.invoiceReturnScreenshotPath, undefined);
 });
 
 test('天猫同步会按后台最新列表清理本店旧订单，但不影响其他店铺', () => {
