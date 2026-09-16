@@ -3,7 +3,7 @@ const path = require('path');
 const zlib = require('zlib');
 const { 等待抖音登录完成, 是抖音登录页面 } = require('../browser/douyinAuthenticatedPage');
 const { 打印日志 } = require('../common/logger');
-const { 截图目录, 规范化店铺标识 } = require('../common/paths');
+const { 规范化店铺标识 } = require('../common/paths');
 const { 关闭多余抖音页面 } = require('../browser/douyinBrowserContext');
 const { 确保抖音目标店铺, 解析期望店铺身份, 读取当前抖音店铺身份, 店铺身份是否一致 } = require('../browser/douyinStoreIdentity');
 
@@ -184,7 +184,7 @@ async function 打开抖音待回传发票页面(page, 店铺配置 = {}, 选项
     await 目标页面.goto(抖音待回传发票页面地址, { waitUntil: 'domcontentloaded', timeout: 60_000 });
   }
   await 等待抖音待开票列表加载(目标页面);
-  // 切店可能打开新页；只把最终业务页核验通过的页面交给读取、上传和截图。
+  // 切店可能打开新页；只把最终业务页核验通过的页面交给读取与上传。
   if (!店铺身份是否一致(await 读取当前抖音店铺身份(目标页面), 期望)) {
     throw new Error('抖音待回传页面店铺身份不一致，已停止处理。');
   }
@@ -1111,47 +1111,6 @@ async function 重置抖音待回传列表页面(page) {
   await 等待抖音待开票列表加载(page);
 }
 
-function 格式化截图时间(时间 = new Date()) {
-  // 解决：截图文件名只使用 Windows 安全字符，避免冒号破坏文件路径。
-  const pad = (value) => String(value).padStart(2, '0');
-  return [
-    时间.getFullYear(),
-    pad(时间.getMonth() + 1),
-    pad(时间.getDate()),
-    '-',
-    pad(时间.getHours()),
-    pad(时间.getMinutes()),
-    pad(时间.getSeconds()),
-    '-',
-    String(时间.getMilliseconds()).padStart(3, '0'),
-  ].join('');
-}
-
-function 构建抖音回传截图路径(order = {}, 状态文本 = 'success') {
-  // 解决：每个订单单独生成截图凭证，方便弹窗逐单打开核对。
-  const 店铺标识 = 规范化店铺标识(order.storeId || order.storeName || 'douyin');
-  const 订单号 = String(order.orderNumber || '').replace(/[<>:"/\\|?*\u0000-\u001f]+/g, '-');
-  const 文件名 = `douyin-invoice-return-${店铺标识}-${订单号}-${状态文本}-${格式化截图时间()}.png`;
-  return path.join(截图目录, 文件名);
-}
-
-async function 保存抖音回传截图(page, order, 状态文本) {
-  // 解决：上传结果以抖音页面截图为凭证，截图偶发失败时先重试再暴露。
-  fs.mkdirSync(截图目录, { recursive: true });
-  let 最后错误 = null;
-  for (let count = 0; count < 3; count += 1) {
-    const 截图路径 = 构建抖音回传截图路径(order, 状态文本);
-    try {
-      await page.screenshot({ path: 截图路径, fullPage: true });
-      return 截图路径;
-    } catch (错误) {
-      最后错误 = 错误;
-      await 等待短间隔(500);
-    }
-  }
-  throw new Error(`保存抖音回传截图失败：${最后错误?.message || '未知错误'}`);
-}
-
 async function 采集抖音上传抽屉状态(page) {
   // 解决：上传后保留可审计状态，便于判断是否已经到提交前一步。
   return page.evaluate(() => {
@@ -1182,39 +1141,29 @@ async function 采集抖音上传抽屉状态(page) {
 async function 上传单张抖音发票({ page, order, invoiceFilePath, submit = false, onAction = null } = {}) {
   // 解决：单张回传只做搜索、打开、上传和可选提交，不掺入下载逻辑。
   const 通知动作 = (message) => 通知抖音动作(onAction, message);
-  try {
-    通知动作(`正在搜索抖音订单 ${order.orderNumber}。`);
-    await 搜索抖音回传订单(page, order.orderNumber);
-    通知动作(`正在打开抖音订单 ${order.orderNumber} 的上传发票抽屉。`);
-    await 打开抖音上传发票抽屉(page, order.orderNumber);
-    通知动作('正在上传抖音发票文件。');
-    await 上传抖音发票文件(page, invoiceFilePath);
-    通知动作('正在检查抖音上传信息。');
-    await 确认抖音上传发票无错误(page, '抖音提交前校验失败');
-    const modalState = await 采集抖音上传抽屉状态(page);
-    let screenshotPath = '';
-    if (submit) {
-      通知动作('正在提交抖音发票回传。');
-      const drawer = 定位抖音上传发票抽屉(page);
-      await drawer.locator('button').filter({ hasText: /^提交$/ }).last().click();
-      await 确认抖音提交发票(page);
-      通知动作('正在等待抖音确认回传结果。');
-      await 等待抖音提交回传结果(page, order.orderNumber);
-      通知动作('正在保存抖音回传截图凭证。');
-      screenshotPath = await 保存抖音回传截图(page, order, 'success');
-    }
-    return {
-      invoiceNumber: String(order?.invoiceNumber || '').trim(),
-      invoiceCode: String(order?.invoiceCode || '').trim(),
-      modalState,
-      screenshotPath,
-      submitted: submit === true,
-    };
-  } catch (错误) {
-    const screenshotPath = await 保存抖音回传截图(page, order, 'error').catch(() => '');
-    错误.screenshotPath = screenshotPath;
-    throw 错误;
+  通知动作(`正在搜索抖音订单 ${order.orderNumber}。`);
+  await 搜索抖音回传订单(page, order.orderNumber);
+  通知动作(`正在打开抖音订单 ${order.orderNumber} 的上传发票抽屉。`);
+  await 打开抖音上传发票抽屉(page, order.orderNumber);
+  通知动作('正在上传抖音发票文件。');
+  await 上传抖音发票文件(page, invoiceFilePath);
+  通知动作('正在检查抖音上传信息。');
+  await 确认抖音上传发票无错误(page, '抖音提交前校验失败');
+  const modalState = await 采集抖音上传抽屉状态(page);
+  if (submit) {
+    通知动作('正在提交抖音发票回传。');
+    const drawer = 定位抖音上传发票抽屉(page);
+    await drawer.locator('button').filter({ hasText: /^提交$/ }).last().click();
+    await 确认抖音提交发票(page);
+    通知动作('正在等待抖音确认回传结果。');
+    await 等待抖音提交回传结果(page, order.orderNumber);
   }
+  return {
+    invoiceNumber: String(order?.invoiceNumber || '').trim(),
+    invoiceCode: String(order?.invoiceCode || '').trim(),
+    modalState,
+    submitted: submit === true,
+  };
 }
 
 module.exports = {
@@ -1283,9 +1232,6 @@ module.exports = {
   抖音上传发票抽屉是否打开,
   关闭抖音上传发票抽屉,
   重置抖音待回传列表页面,
-  格式化截图时间,
-  构建抖音回传截图路径,
-  保存抖音回传截图,
   采集抖音上传抽屉状态,
   上传单张抖音发票,
 };

@@ -8,7 +8,6 @@ const {
   是天猫待回传列表文本,
   读取天猫待回传页面状态,
   检测滑块验证,
-  构建天猫回传截图路径,
   提取行内发票类型,
   提取行内发票金额,
   提取行内发票抬头,
@@ -62,16 +61,6 @@ test('滑块验证可以通过文案或组件识别', async () => {
   } finally {
     await browser.close();
   }
-});
-
-test('天猫回传截图路径按店铺和订单生成安全文件名', () => {
-  const screenshotPath = 构建天猫回传截图路径({
-    storeId: 'tmall:store/1',
-    orderNumber: '2701832306020003363',
-  }, 'success');
-
-  assert.match(screenshotPath, /tmall-invoice-return-tmall-store-1-2701832306020003363-success-/);
-  assert.match(screenshotPath, /\.png$/);
 });
 
 test('表格行文本可以提取发票类型、金额和抬头', () => {

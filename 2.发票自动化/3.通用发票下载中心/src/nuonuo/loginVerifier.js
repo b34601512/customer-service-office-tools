@@ -1,5 +1,5 @@
 const fs = require('fs');
-const { 登录态文件路径, 截图目录, 诺诺登录状态文件路径 } = require('../common/paths');
+const { 登录态文件路径, 诺诺登录状态文件路径 } = require('../common/paths');
 const { 初始化运行目录 } = require('../common/fs');
 const { 打印日志 } = require('../common/logger');
 const {
@@ -184,15 +184,13 @@ async function 尝试自动提交无验证码登录(page) {
   return 判断是否已进入工作台(page.url());
 }
 
-async function 构建等待人工登录结果(page, message, screenshotPath) {
+async function 构建等待人工登录结果(page, message) {
   // 这个函数解决命令行菜单能区分“失败”和“等待人工登录”两种不同状态。
   写入诺诺登录状态('checking', '等待人工登录', message);
-  await page.screenshot({ path: screenshotPath, fullPage: false }).catch(() => {});
   return {
     ok: false,
     requiresManualLogin: true,
     message,
-    screenshotPath,
     ...(await 读取页面摘要(page)),
   };
 }
@@ -251,7 +249,6 @@ async function 验证诺诺登录(config, options = {}) {
   const session = 已有会话 || await 创建或复用诺诺浏览器会话({ headless, useSavedAuthState: true });
   const { browser } = session;
   let { context, page } = session;
-  const 截图路径 = path.join(截图目录, 'nuonuo-login-check.png');
   try {
     if (!已有会话) {
       打印日志('诺诺登录', '登录验证', `打开发票系统：${config.targetUrl}`);
@@ -286,7 +283,7 @@ async function 验证诺诺登录(config, options = {}) {
       if (keepBrowserOpenOnManualLogin) {
         待人工登录会话 = session;
         const 原因 = 现有会话校验错误 ? `诺诺登录态真实校验失败：${现有会话校验错误.message}，` : '';
-        return 构建等待人工登录结果(page, `${原因}请在浏览器里完成登录后，再回到命令行菜单执行“检查诺诺登录”。`, 截图路径);
+        return 构建等待人工登录结果(page, `${原因}请在浏览器里完成登录后，再回到命令行菜单执行“检查诺诺登录”。`);
       }
       throw 现有会话校验错误 || new Error('诺诺登录页没有显示密码输入框，不能判定登录成功。');
     }
@@ -298,13 +295,12 @@ async function 验证诺诺登录(config, options = {}) {
 
     if (keepBrowserOpenOnManualLogin) {
       待人工登录会话 = session;
-      return 构建等待人工登录结果(page, '已打开诺诺登录窗口并填入账号密码，请在浏览器里完成验证码或确认后，再回到命令行菜单执行“检查诺诺登录”。', 截图路径);
+      return 构建等待人工登录结果(page, '已打开诺诺登录窗口并填入账号密码，请在浏览器里完成验证码或确认后，再回到命令行菜单执行“检查诺诺登录”。');
     }
 
     throw new Error('诺诺登录页需要先确认隐私政策或图片验证码，当前只完成了账号密码填充，不能判定登录成功。');
   } catch (error) {
     写入诺诺登录状态('error', '失效', error.message);
-    await page.screenshot({ path: 截图路径, fullPage: false }).catch(() => {});
     const 摘要 = await 读取页面摘要(page);
     if (!keepBrowserOpenOnManualLogin) {
       await context.close().catch(() => {});
@@ -315,7 +311,6 @@ async function 验证诺诺登录(config, options = {}) {
     return {
       ok: false,
       message: error.message,
-      screenshotPath: 截图路径,
       ...摘要,
     };
   }

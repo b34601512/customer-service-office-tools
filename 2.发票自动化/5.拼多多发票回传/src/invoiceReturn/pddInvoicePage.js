@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { 等待拼多多登录完成, 是拼多多登录页面 } = require('../browser/pddAuthenticatedPage');
 const { 打印日志 } = require('../common/logger');
-const { 截图目录, 规范化店铺标识 } = require('../common/paths');
+const { 规范化店铺标识 } = require('../common/paths');
 
 const 拼多多待回传发票页面地址 = 'https://mms.pinduoduo.com/invoice/center?quickFilterValue=';
 const 拼多多导出记录页面地址 = 'https://mms.pinduoduo.com/invoice/center/history';
@@ -809,38 +809,6 @@ async function 重置拼多多待回传列表页面(page) {
   await 等待拼多多待开票列表加载(page);
 }
 
-function 格式化截图时间(时间 = new Date()) {
-  // 解决：截图文件名只使用 Windows 安全字符，避免冒号破坏文件路径。
-  const pad = (value) => String(value).padStart(2, '0');
-  return [
-    时间.getFullYear(),
-    pad(时间.getMonth() + 1),
-    pad(时间.getDate()),
-    '-',
-    pad(时间.getHours()),
-    pad(时间.getMinutes()),
-    pad(时间.getSeconds()),
-    '-',
-    String(时间.getMilliseconds()).padStart(3, '0'),
-  ].join('');
-}
-
-function 构建拼多多回传截图路径(order = {}, 状态文本 = 'success') {
-  // 解决：每个订单单独生成截图凭证，方便弹窗逐单打开核对。
-  const 店铺标识 = 规范化店铺标识(order.storeId || order.storeName || 'pdd');
-  const 订单号 = String(order.orderNumber || '').replace(/[<>:"/\\|?*\u0000-\u001f]+/g, '-');
-  const 文件名 = `pdd-invoice-return-${店铺标识}-${订单号}-${状态文本}-${格式化截图时间()}.png`;
-  return path.join(截图目录, 文件名);
-}
-
-async function 保存拼多多回传截图(page, order, 状态文本) {
-  // 解决：上传结果以拼多多页面截图为凭证，前端通过截图接口查看。
-  fs.mkdirSync(截图目录, { recursive: true });
-  const 截图路径 = 构建拼多多回传截图路径(order, 状态文本);
-  await page.screenshot({ path: 截图路径, fullPage: true });
-  return 截图路径;
-}
-
 async function 上传单张拼多多发票({ page, order, invoiceFilePath, invoiceNumber = '', invoiceCode = '', submit = false, onAction = null } = {}) {
   // 解决：单张回传只做搜索、打开、上传、填号和可选确认，不掺入下载逻辑。
   const 通知动作 = (message) => {
@@ -848,41 +816,31 @@ async function 上传单张拼多多发票({ page, order, invoiceFilePath, invoi
   };
   const 发票号码 = String(invoiceNumber || order?.invoiceNumber || '').trim();
   const 发票代码 = String(invoiceCode || order?.invoiceCode || '').trim();
-  try {
-    通知动作(`正在搜索拼多多订单 ${order.orderNumber}。`);
-    await 搜索拼多多回传订单(page, order.orderNumber);
-    通知动作(`正在打开拼多多订单 ${order.orderNumber} 的录入发票弹窗。`);
-    await 打开拼多多录入发票弹窗(page, order.orderNumber);
-    通知动作('正在上传拼多多发票文件。');
-    await 上传拼多多发票文件(page, invoiceFilePath);
-    通知动作('正在填写拼多多发票号码。');
-    await 填写拼多多发票号码(page, 发票号码);
-    if (发票代码) {
-      通知动作('正在填写拼多多发票代码。');
-      await 填写拼多多发票代码(page, 发票代码);
-    }
-    通知动作('正在检查拼多多录入信息。');
-    await 确认拼多多录入发票无错误(page, '拼多多确认前校验失败');
-    let screenshotPath = '';
-    if (submit) {
-      通知动作('正在确认拼多多发票回传。');
-      await 点击拼多多确认回传按钮(page);
-      通知动作('正在等待拼多多确认回传结果。');
-      await 等待拼多多确认回传结果(page, order.orderNumber);
-      通知动作('正在保存拼多多回传截图凭证。');
-      screenshotPath = await 保存拼多多回传截图(page, order, 'success');
-    }
-    return {
-      invoiceNumber: 发票号码,
-      invoiceCode: 发票代码,
-      screenshotPath,
-      submitted: submit === true,
-    };
-  } catch (错误) {
-    const screenshotPath = await 保存拼多多回传截图(page, order, 'error').catch(() => '');
-    错误.screenshotPath = screenshotPath;
-    throw 错误;
+  通知动作(`正在搜索拼多多订单 ${order.orderNumber}。`);
+  await 搜索拼多多回传订单(page, order.orderNumber);
+  通知动作(`正在打开拼多多订单 ${order.orderNumber} 的录入发票弹窗。`);
+  await 打开拼多多录入发票弹窗(page, order.orderNumber);
+  通知动作('正在上传拼多多发票文件。');
+  await 上传拼多多发票文件(page, invoiceFilePath);
+  通知动作('正在填写拼多多发票号码。');
+  await 填写拼多多发票号码(page, 发票号码);
+  if (发票代码) {
+    通知动作('正在填写拼多多发票代码。');
+    await 填写拼多多发票代码(page, 发票代码);
   }
+  通知动作('正在检查拼多多录入信息。');
+  await 确认拼多多录入发票无错误(page, '拼多多确认前校验失败');
+  if (submit) {
+    通知动作('正在确认拼多多发票回传。');
+    await 点击拼多多确认回传按钮(page);
+    通知动作('正在等待拼多多确认回传结果。');
+    await 等待拼多多确认回传结果(page, order.orderNumber);
+  }
+  return {
+    invoiceNumber: 发票号码,
+    invoiceCode: 发票代码,
+    submitted: submit === true,
+  };
 }
 
 module.exports = {
@@ -934,8 +892,5 @@ module.exports = {
   拼多多录入发票弹窗是否打开,
   关闭拼多多录入发票弹窗,
   重置拼多多待回传列表页面,
-  格式化截图时间,
-  构建拼多多回传截图路径,
-  保存拼多多回传截图,
   上传单张拼多多发票,
 };

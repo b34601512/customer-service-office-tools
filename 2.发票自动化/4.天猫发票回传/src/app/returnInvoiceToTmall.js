@@ -11,7 +11,6 @@ const {
   读取当前页待回传订单,
   读取当前页发票订单状态摘要,
   构建天猫无可回传订单错误消息,
-  保存天猫回传截图,
   上传单张天猫发票,
   重置天猫待回传列表页面,
 } = require('../invoiceReturn/tmallInvoicePage');
@@ -124,16 +123,9 @@ function 拼接财务参考到跳过原因(order, message) {
   return financeReference ? `${message}｜${financeReference}。` : message;
 }
 
-async function 保存下载阶段凭证截图(page, order, 状态文本) {
-  // 解决：下载中心没找到发票或下载失败也必须留页面凭证，不能只在上传阶段截图。
-  if (!page) return '';
-  return 保存天猫回传截图(page, order, 状态文本).catch(() => '');
-}
-
 async function 逐单下载天猫发票(orders, 选项 = {}) {
   // 解决：逐单调用下载中心，未开好的订单跳过，已下载的订单进入上传阶段。
   const {
-    page = null,
     批量下载发票方法 = 批量从下载中心下载发票,
     onProgress = null,
     progressIntervalMs = 5000,
@@ -166,21 +158,19 @@ async function 逐单下载天猫发票(orders, 选项 = {}) {
       });
     } catch (错误) {
       if (是发票未找到错误(错误)) {
-        const screenshotPath = await 保存下载阶段凭证截图(page, order, 'skipped');
         通知回传进度(onProgress, {
           type: 'item',
           status: 'skipped',
           message: 拼接财务参考到跳过原因(order, `已跳过：下载中心没有找到可下载发票。${错误.message}`),
-          item: { ...构建回传报告订单(order), screenshotPath },
+          item: 构建回传报告订单(order),
         });
         continue;
       }
-      const screenshotPath = await 保存下载阶段凭证截图(page, order, 'download-error');
       通知回传进度(onProgress, {
         type: 'item',
         status: 'error',
         message: `下载失败：${错误.message}`,
-        item: { ...构建回传报告订单(order), screenshotPath },
+        item: 构建回传报告订单(order),
       });
     }
   }
@@ -238,7 +228,6 @@ async function 上传已下载天猫发票(page, downloads, 选项 = {}) {
           invoiceFilePath: item.invoiceFilePath,
           selectedInvoiceType: uploadResult.targetType,
           invoiceNumber: uploadResult.invoiceNumber,
-          screenshotPath: uploadResult.screenshotPath,
         },
       });
     } catch (错误) {
@@ -246,7 +235,6 @@ async function 上传已下载天猫发票(page, downloads, 选项 = {}) {
         ...item,
         status: 'error',
         errorMessage: 错误.message,
-        screenshotPath: 错误.screenshotPath || '',
       });
       通知回传进度(onProgress, {
         type: 'item',
@@ -255,7 +243,6 @@ async function 上传已下载天猫发票(page, downloads, 选项 = {}) {
         item: {
           ...构建回传报告订单(item),
           invoiceFilePath: item.invoiceFilePath,
-          screenshotPath: 错误.screenshotPath || '',
         },
       });
       if (index < downloads.length - 1) {
@@ -355,7 +342,7 @@ async function 执行天猫发票回传(选项 = {}) {
       exportFilePath,
       items: orders.map(构建回传报告订单),
     });
-    const downloads = await 逐单下载天猫发票(orders, { page, 批量下载发票方法, onProgress });
+    const downloads = await 逐单下载天猫发票(orders, { 批量下载发票方法, onProgress });
     // 下载中心等待时间较长，上传前再次确认浏览器仍活着；若期间被关闭则自动恢复页面。
     page = await 获取回传页面();
     const uploads = await 上传已下载天猫发票(page, downloads, {
@@ -409,7 +396,6 @@ module.exports = {
   构建回传报告订单,
   构建下载中心等待反馈,
   拼接财务参考到跳过原因,
-  保存下载阶段凭证截图,
   执行带持续进度反馈,
   构建阶段进度,
   逐单下载天猫发票,

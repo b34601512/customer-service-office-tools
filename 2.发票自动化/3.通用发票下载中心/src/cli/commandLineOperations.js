@@ -230,9 +230,8 @@ async function 检查诺诺登录({ 命令行提问器, readInvoiceSystemConfig,
 }
 
 function 输出人工登录提示(loginResult, output) {
-  // 这个函数解决人工登录时必须明确告诉用户下一步动作和证据位置的问题。
+  // 这个函数解决人工登录时必须明确告诉用户下一步动作的问题。
   output(`[等待] ${loginResult.message || '请在诺诺窗口完成登录。'}`);
-  if (loginResult.screenshotPath) output(`[证据] 登录截图：${loginResult.screenshotPath}`);
 }
 
 async function 批量下载发票({ 命令行提问器, readInvoiceSystemConfig, batchDownloadInvoices, output }) {

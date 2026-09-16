@@ -45,6 +45,7 @@ test('逐单下载会跳过未开好发票并继续后续订单', async () => {
     page: {
       screenshot: async ({ path }) => {
         screenshotCalls.push(path);
+        throw new Error('2026-09-16 起回传流程不应再截图');
       },
     },
     onProgress: (item) => progress.push(item),
@@ -65,8 +66,8 @@ test('逐单下载会跳过未开好发票并继续后续订单', async () => {
   assert.deepEqual(result.map((item) => item.orderNumber), ['1001', '1003']);
   const skippedProgress = progress.find((item) => item.status === 'skipped' && item.item.orderNumber === '1002');
   assert.ok(skippedProgress);
-  assert.match(skippedProgress.item.screenshotPath, /skipped-/);
-  assert.equal(screenshotCalls.length, 1);
+  assert.equal(skippedProgress.item.screenshotPath, undefined);
+  assert.equal(screenshotCalls.length, 0);
 });
 
 test('逐单下载遇到单个订单异常会标记失败并继续', async () => {
@@ -81,6 +82,7 @@ test('逐单下载遇到单个订单异常会标记失败并继续', async () =>
     page: {
       screenshot: async ({ path }) => {
         screenshotCalls.push(path);
+        throw new Error('2026-09-16 起回传流程不应再截图');
       },
     },
     onProgress: (item) => progress.push(item),
@@ -96,8 +98,8 @@ test('逐单下载遇到单个订单异常会标记失败并继续', async () =>
   assert.deepEqual(result.map((item) => item.orderNumber), ['1001', '1003']);
   const errorProgress = progress.find((item) => item.status === 'error' && item.item.orderNumber === '1002');
   assert.ok(errorProgress);
-  assert.match(errorProgress.item.screenshotPath, /download-error-/);
-  assert.equal(screenshotCalls.length, 1);
+  assert.equal(errorProgress.item.screenshotPath, undefined);
+  assert.equal(screenshotCalls.length, 0);
 });
 
 test('上传阶段每单开始前会重新获取可用天猫页面', async () => {

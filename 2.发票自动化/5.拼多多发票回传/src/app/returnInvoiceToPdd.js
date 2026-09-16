@@ -9,7 +9,6 @@ const {
   打开拼多多待回传发票页面,
   导出拼多多待回传订单,
   读取拼多多导出订单,
-  保存拼多多回传截图,
   上传单张拼多多发票,
   重置拼多多待回传列表页面,
 } = require('../invoiceReturn/pddInvoicePage');
@@ -134,12 +133,6 @@ function 合并下载中心发票字段(order, download) {
   };
 }
 
-async function 保存下载阶段凭证截图(page, order, 状态文本) {
-  // 解决：下载中心没找到发票或下载失败也必须留页面凭证，不能只在上传阶段截图。
-  if (!page) return '';
-  return 保存拼多多回传截图(page, order, 状态文本).catch(() => '');
-}
-
 async function 逐单下载拼多多发票(orders, 选项 = {}) {
   // 解决：逐单调用公共下载中心，未开好的订单跳过，已下载的订单进入上传阶段。
   const {
@@ -177,21 +170,19 @@ async function 逐单下载拼多多发票(orders, 选项 = {}) {
       });
     } catch (错误) {
       if (是发票未找到错误(错误)) {
-        const screenshotPath = await 保存下载阶段凭证截图(page, order, 'skipped');
         通知回传进度(onProgress, {
           type: 'item',
           status: 'skipped',
           message: 拼接财务参考到跳过原因(order, `已跳过：下载中心没有找到可下载发票。${错误.message}`),
-          item: { ...构建回传报告订单(order), screenshotPath },
+          item: 构建回传报告订单(order),
         });
         continue;
       }
-      const screenshotPath = await 保存下载阶段凭证截图(page, order, 'download-error');
       通知回传进度(onProgress, {
         type: 'item',
         status: 'error',
         message: `下载失败：${错误.message}`,
-        item: { ...构建回传报告订单(order), screenshotPath },
+        item: 构建回传报告订单(order),
       });
     }
   }
@@ -241,7 +232,6 @@ async function 上传已下载拼多多发票(page, downloads, 选项 = {}) {
         item: {
           ...构建回传报告订单(item),
           invoiceNumber: uploadResult.invoiceNumber,
-          screenshotPath: uploadResult.screenshotPath,
         },
       });
     } catch (错误) {
@@ -249,7 +239,6 @@ async function 上传已下载拼多多发票(page, downloads, 选项 = {}) {
         ...item,
         status: 'error',
         errorMessage: 错误.message,
-        screenshotPath: 错误.screenshotPath || '',
       });
       通知回传进度(onProgress, {
         type: 'item',
@@ -257,7 +246,6 @@ async function 上传已下载拼多多发票(page, downloads, 选项 = {}) {
         message: `回传失败：${错误.message}`,
         item: {
           ...构建回传报告订单(item),
-          screenshotPath: 错误.screenshotPath || '',
         },
       });
       if (index < downloads.length - 1) {
@@ -372,7 +360,6 @@ module.exports = {
   构建下载中心等待反馈,
   拼接财务参考到跳过原因,
   合并下载中心发票字段,
-  保存下载阶段凭证截图,
   执行带持续进度反馈,
   构建阶段进度,
   逐单下载拼多多发票,

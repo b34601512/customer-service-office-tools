@@ -89,7 +89,7 @@ test('下载结果合并时保留发票号码用于报告兼容', () => {
   assert.equal(merged.invoiceCode, '');
 });
 
-test('下载中心未找到发票时会保存抖音跳过凭证截图', async () => {
+test('下载中心未找到发票时会跳过并继续（不再保存任何截图）', async () => {
   const progressList = [];
   const screenshotPaths = [];
   const orders = [
@@ -106,6 +106,7 @@ test('下载中心未找到发票时会保存抖音跳过凭证截图', async ()
     page: {
       screenshot: async ({ path }) => {
         screenshotPaths.push(path);
+        throw new Error('2026-09-16 起回传流程不应再截图');
       },
     },
     onProgress: (progress) => progressList.push(progress),
@@ -124,12 +125,11 @@ test('下载中心未找到发票时会保存抖音跳过凭证截图', async ()
 
   assert.equal(downloads.length, 1);
   assert.equal(downloads[0].orderNumber, '260620-1');
-  assert.equal(screenshotPaths.length, 1);
-  assert.match(screenshotPaths[0], /douyin-invoice-return-douyin-store-1-260620-2-skipped-/);
-  assert.match(skippedProgress.item.screenshotPath, /douyin-invoice-return-douyin-store-1-260620-2-skipped-/);
+  assert.equal(screenshotPaths.length, 0);
+  assert.equal(skippedProgress.item.screenshotPath, undefined);
 });
 
-test('下载中心异常时会保存抖音失败凭证截图', async () => {
+test('下载中心异常时会标记失败并继续（不再保存任何截图）', async () => {
   const progressList = [];
   const screenshotPaths = [];
   const orders = [
@@ -140,6 +140,7 @@ test('下载中心异常时会保存抖音失败凭证截图', async () => {
     page: {
       screenshot: async ({ path }) => {
         screenshotPaths.push(path);
+        throw new Error('2026-09-16 起回传流程不应再截图');
       },
     },
     onProgress: (progress) => progressList.push(progress),
@@ -151,7 +152,6 @@ test('下载中心异常时会保存抖音失败凭证截图', async () => {
   const errorProgress = progressList.find((progress) => progress.status === 'error');
 
   assert.equal(downloads.length, 0);
-  assert.equal(screenshotPaths.length, 1);
-  assert.match(screenshotPaths[0], /douyin-invoice-return-douyin-store-1-260620-3-download-error-/);
-  assert.match(errorProgress.item.screenshotPath, /douyin-invoice-return-douyin-store-1-260620-3-download-error-/);
+  assert.equal(screenshotPaths.length, 0);
+  assert.equal(errorProgress.item.screenshotPath, undefined);
 });

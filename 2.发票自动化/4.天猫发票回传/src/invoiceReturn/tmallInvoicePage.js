@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { 等待天猫登录完成, 是天猫登录页面 } = require('../browser/tmallAuthenticatedPage');
 const { 打印日志 } = require('../common/logger');
-const { 截图目录, 规范化店铺标识 } = require('../common/paths');
+const { 规范化店铺标识 } = require('../common/paths');
 
 const 天猫待回传发票页面地址 = 'https://myseller.taobao.com/home.htm/merchant-invoice/invoice/compensate#/invoice/compensate';
 const 发票类型列表 = [
@@ -694,39 +694,7 @@ async function 选择天猫发票类型(page, order, 选项 = {}) {
   return { invoiceNumber, targetType };
 }
 
-function 格式化截图时间(时间 = new Date()) {
-  // 解决：截图文件名只使用 Windows 安全字符，避免冒号破坏文件路径。
-  const pad = (value) => String(value).padStart(2, '0');
-  return [
-    时间.getFullYear(),
-    pad(时间.getMonth() + 1),
-    pad(时间.getDate()),
-    '-',
-    pad(时间.getHours()),
-    pad(时间.getMinutes()),
-    pad(时间.getSeconds()),
-    '-',
-    String(时间.getMilliseconds()).padStart(3, '0'),
-  ].join('');
-}
-
-function 构建天猫回传截图路径(order = {}, 状态文本 = 'success') {
-  // 解决：每个订单单独生成截图凭证，方便弹窗逐单打开核对。
-  const 店铺标识 = 规范化店铺标识(order.storeId || order.storeName || 'tmall');
-  const 订单号 = String(order.orderNumber || '').replace(/[<>:"/\\|?*\u0000-\u001f]+/g, '-');
-  const 文件名 = `tmall-invoice-return-${店铺标识}-${订单号}-${状态文本}-${格式化截图时间()}.png`;
-  return path.join(截图目录, 文件名);
-}
-
-async function 保存天猫回传截图(page, order, 状态文本) {
-  // 解决：上传结果以天猫页面截图为凭证，前端通过截图接口查看。
-  fs.mkdirSync(截图目录, { recursive: true });
-  const 截图路径 = 构建天猫回传截图路径(order, 状态文本);
-  await page.screenshot({ path: 截图路径, fullPage: true });
-  return 截图路径;
-}
-
-async function 采集录入抽屉状态(page) {
+function 采集录入抽屉状态(page) {
   // 解决：上传后保留可审计状态，便于判断是否已经到提交前一步。
   return page.evaluate(() => {
     const 可见 = (element) => {
@@ -761,40 +729,30 @@ async function 上传单张天猫发票({ page, order, invoiceFilePath, submit =
   const 通知动作 = (message) => {
     if (typeof onAction === 'function') onAction(message);
   };
-  try {
-    通知动作(`正在搜索订单 ${order.orderNumber}。`);
-    await 搜索天猫回传订单(page, order.orderNumber);
-    通知动作(`正在打开订单 ${order.orderNumber} 的录入发票窗口。`);
-    await 打开录入发票抽屉(page, order.orderNumber);
-    通知动作('正在上传发票文件。');
-    await 上传发票文件(page, invoiceFilePath);
-    通知动作('正在等待天猫识别发票号码。');
-    const invoiceNumber = await 等待已识别发票号码(page);
-    通知动作('已识别发票号码，正在选择发票类型。');
-    const typeResult = await 选择天猫发票类型(page, order, { invoiceNumber });
-    const drawerState = await 采集录入抽屉状态(page);
-    let screenshotPath = '';
-    if (submit) {
-      通知动作('正在检查完成开票前页面错误。');
-      await 确认天猫录入发票无错误(page, '天猫完成开票前校验失败');
-      通知动作('正在点击完成开票。');
-      await page.locator('button').filter({ hasText: /^完成开票$/ }).last().click();
-      通知动作('正在等待天猫确认完成开票结果。');
-      await 等待天猫完成开票结果(page, order.orderNumber);
-      通知动作('正在保存回传截图凭证。');
-      screenshotPath = await 保存天猫回传截图(page, order, 'success');
-    }
-    return {
-      ...typeResult,
-      drawerState,
-      screenshotPath,
-      submitted: submit === true,
-    };
-  } catch (错误) {
-    const screenshotPath = await 保存天猫回传截图(page, order, 'error').catch(() => '');
-    错误.screenshotPath = screenshotPath;
-    throw 错误;
+  通知动作(`正在搜索订单 ${order.orderNumber}。`);
+  await 搜索天猫回传订单(page, order.orderNumber);
+  通知动作(`正在打开订单 ${order.orderNumber} 的录入发票窗口。`);
+  await 打开录入发票抽屉(page, order.orderNumber);
+  通知动作('正在上传发票文件。');
+  await 上传发票文件(page, invoiceFilePath);
+  通知动作('正在等待天猫识别发票号码。');
+  const invoiceNumber = await 等待已识别发票号码(page);
+  通知动作('已识别发票号码，正在选择发票类型。');
+  const typeResult = await 选择天猫发票类型(page, order, { invoiceNumber });
+  const drawerState = await 采集录入抽屉状态(page);
+  if (submit) {
+    通知动作('正在检查完成开票前页面错误。');
+    await 确认天猫录入发票无错误(page, '天猫完成开票前校验失败');
+    通知动作('正在点击完成开票。');
+    await page.locator('button').filter({ hasText: /^完成开票$/ }).last().click();
+    通知动作('正在等待天猫确认完成开票结果。');
+    await 等待天猫完成开票结果(page, order.orderNumber);
   }
+  return {
+    ...typeResult,
+    drawerState,
+    submitted: submit === true,
+  };
 }
 
 module.exports = {
@@ -844,9 +802,6 @@ module.exports = {
   关闭天猫录入发票抽屉,
   重置天猫待回传列表页面,
   选择天猫发票类型,
-  格式化截图时间,
-  构建天猫回传截图路径,
-  保存天猫回传截图,
   采集录入抽屉状态,
   上传单张天猫发票,
 };

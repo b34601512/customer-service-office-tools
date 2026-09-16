@@ -8,8 +8,6 @@ const {
 const { 注册浏览器上下文, 关闭店铺浏览器上下文 } = require('../browser/browserContextHub');
 const { 打开目标页面 } = require('../browser/openTargetPage');
 const { 等待直到 } = require('../browser/dynamicWait');
-const { 截图目录, 规范化店铺标识 } = require('../common/paths');
-const { 规范化凭证名称, 验证凭证文件, 格式化凭证时间 } = require('../common/evidenceService');
 const { 进入消费者发票页面 } = require('../consumerInvoice/enterConsumerInvoicePage');
 const { 归类发票状态 } = require('../consumerInvoice/invoiceApiMapper');
 const { 禁用常见遮挡浮层, 获取顶部全部标签点击点, 读取顶部发票标签状态 } = require('../consumerInvoice/allInvoiceTab');
@@ -356,7 +354,7 @@ async function 等待京东发票识别完成(page) {
   }, {
     timeoutMs: 60_000,
     intervalMs: 500,
-    超时消息: '京东回传弹窗已选择文件，但发票识别结果一直没有填完整。请查看截图确认缺少哪个必填字段。',
+    超时消息: '京东回传弹窗已选择文件，但发票识别结果一直没有填完整。请查看页面确认缺少哪个必填字段。',
   });
 }
 
@@ -559,25 +557,6 @@ function 规范化上传清单(invoiceUploads) {
     });
 }
 
-function 构建回传截图路径(店铺配置, item, 状态文本, 选项 = {}) {
-  // 解决：每张发票单独生成截图凭证路径，方便回传报告逐单打开。
-  const 目标目录 = 选项.凭证批次目录 || 截图目录;
-  const 店铺标识 = 规范化店铺标识(店铺配置.id || 店铺配置.name);
-  const 店铺名称 = 规范化凭证名称(店铺配置.name || 店铺标识, 店铺标识);
-  const 订单号 = String(item.orderNumber || '').replace(/[<>:"/\\|?*\u0000-\u001f]+/g, '-');
-  const 结果状态 = 状态文本 === 'success' ? '成功' : 状态文本 === 'error' ? '失败' : 规范化凭证名称(状态文本, '结果');
-  const 文件名 = `invoice-return-${店铺标识}-${店铺名称}-${订单号}-${格式化凭证时间()}-${结果状态}.png`;
-  return path.join(目标目录, 文件名);
-}
-
-async function 保存回传截图(page, 店铺配置, item, 状态文本, 选项 = {}) {
-  // 解决：上传结果以京东页面截图为凭证，前端通过截图接口查看。
-  const 截图路径 = 构建回传截图路径(店铺配置, item, 状态文本, 选项);
-  fs.mkdirSync(path.dirname(截图路径), { recursive: true });
-  await page.screenshot({ path: 截图路径, fullPage: true });
-  return 验证凭证文件(截图路径);
-}
-
 async function 执行京东回传会话({
   店铺配置,
   invoiceUploads,
@@ -636,11 +615,9 @@ async function 执行京东回传会话({
         }
         if (订单状态.alreadyInvoiced) {
           await 通知上传阶段(onUploadProgress, item, `订单 ${item.orderNumber} 已在京东全部列表显示开票成功，无需重复上传。`, 'already-invoiced');
-          const screenshotPath = await 保存回传截图(page, 店铺配置, item, 'success', { 凭证批次目录 });
           if (typeof onUploaded === 'function') {
             await onUploaded({
               ...item,
-              screenshotPath,
               alreadyInvoiced: true,
               invoiceStatusKind: 订单状态.invoiceStatusKind,
               invoiceBackendRowText: 订单状态.rowText,
@@ -660,19 +637,16 @@ async function 执行京东回传会话({
         });
         await 通知上传阶段(onUploadProgress, item, `正在等待京东确认回传结果：${item.orderNumber}`, 'wait-upload-result');
         await 等待京东回传完成(page, item.orderNumber);
-        await 通知上传阶段(onUploadProgress, item, `正在保存回传截图凭证：${item.orderNumber}`, 'save-evidence');
-        const screenshotPath = await 保存回传截图(page, 店铺配置, item, 'success', { 凭证批次目录 });
         if (typeof onUploaded === 'function') {
-          await onUploaded({ ...item, screenshotPath });
+          await onUploaded({ ...item });
         }
       } catch (错误) {
         if (typeof 需要可见浏览器处理方法 === 'function' && 需要可见浏览器处理方法(错误)) {
           打印日志('发票回传', '京东上传', `需要打开可见浏览器继续处理：${店铺配置.name} ${item.orderNumber}；原因=${错误.message}`);
           throw 错误;
         }
-        const screenshotPath = await 保存回传截图(page, 店铺配置, item, 'error', { 凭证批次目录 });
         if (typeof onUploadFailed === 'function') {
-          await onUploadFailed({ ...item, screenshotPath }, 错误);
+          await onUploadFailed({ ...item }, 错误);
         }
         if (!continueOnItemError) {
           throw 错误;
@@ -710,6 +684,5 @@ module.exports = {
   上传发票文件,
   读取京东回传提交状态,
   等待京东回传完成,
-  构建回传截图路径,
   规范化上传清单,
 };
