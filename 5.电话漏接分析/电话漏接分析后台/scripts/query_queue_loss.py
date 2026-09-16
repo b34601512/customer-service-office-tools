@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 import argparse
+import io
 import json
 import os
 import sys
@@ -21,6 +22,29 @@ from datetime import date, datetime, timedelta
 BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, BACKEND_DIR)
 os.environ.setdefault("PYTHONIOENCODING", "utf-8")
+
+
+class _Tee:
+    """同时写控制台与报告文件，保证查询结果一定有一份落盘产物（不光在屏幕上）。"""
+
+    def __init__(self, handle, stream) -> None:
+        self._handle = handle
+        self._stream = stream
+
+    def write(self, text: str) -> int:
+        self._handle.write(text)
+        return self._stream.write(text)
+
+    def flush(self) -> None:
+        self._handle.flush()
+        try:
+            self._stream.flush()
+        except Exception:  # pylint: disable=broad-except
+            pass
+
+    @property
+    def encoding(self):  # 供 print 等判断编码
+        return getattr(self._stream, "encoding", "utf-8")
 
 
 def parse_dt(text: str):
@@ -82,7 +106,19 @@ def main() -> int:
     parser.add_argument("--date", default="", help="窗口结束日（默认今天）")
     parser.add_argument("--days", type=int, default=2, help="回看天数（默认2=今天+昨天）")
     parser.add_argument("--stage", default="queue", choices=["queue", "all"], help="queue=只看排队阶段")
+    parser.add_argument("--no-report", action="store_true", help="不写报告文件（默认会写 runtime/queue_loss_report_<日期>.txt）")
     args = parser.parse_args()
+
+    # 结果既打屏幕也落盘：报告路径固定按窗口结束日命名，方便次日对比与追溯。
+    report_handle = None
+    _原stdout = sys.stdout
+    if not args.no_report:
+        report_dir = os.path.join(BACKEND_DIR, "runtime")
+        os.makedirs(report_dir, exist_ok=True)
+        report_day = (args.date or date.today().isoformat()).replace("-", "")
+        report_path = os.path.join(report_dir, f"queue_loss_report_{report_day}.txt")
+        report_handle = io.open(report_path, "w", encoding="utf-8")
+        sys.stdout = _Tee(report_handle, _原stdout)
 
     end_date = (
         datetime.strptime(args.date, "%Y-%m-%d").date() if args.date else date.today()
@@ -199,6 +235,13 @@ def main() -> int:
         for record in ivr_loss:
             print(f"  {record['timeText']}｜{record['phone']}｜{record['stage']}｜停留{record['ivr']}秒｜{record['city']}")
         print()
+
+    if report_handle is not None:
+        # 先把 stdout 还原，再关文件，否则收尾这句会写到已关闭的文件上（2026-09-16 实际踩到）。
+        sys.stdout = _原stdout
+        sys.stdout.flush()
+        report_handle.close()
+        print(f"报告已写入：{report_path}")
 
     return 0
 
