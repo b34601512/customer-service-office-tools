@@ -154,3 +154,6 @@ tools/git-secret-store.json.bak
 **/.codex-temporary/test-history/
 **/.codex-temporary/**/*.png
 
+
+# 历史截图凭证备份（体积大，仅本地留存，待用户手动删除）
+历史凭证备份/
