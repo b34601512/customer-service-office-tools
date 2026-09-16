@@ -4,6 +4,7 @@ const { waitForHumanResolution } = require("../../engine/browserHumanGuard");
 const path = require("path");
 const appConfig = require("../../config/appConfig");
 const { log } = require("../../engine/logger");
+const { isScreenshotEvidenceEnabled } = require("../../shared/evidenceSettings");
 
 const refreshedSecurityNoticePages = new WeakSet();
 
@@ -17,18 +18,23 @@ function buildTmallCheckpointPath(checkpointLabel, extension) {
 }
 
 async function captureTmallPageCheckpoint(page, checkpointLabel) {
-  // 该函数只保存当前页面地址和截图，不扫描或猜测页面元素。
-  if (typeof page?.screenshot !== "function") {
-    return null;
-  }
+  // 该函数只保存当前页面地址（截图凭证已停用时只留地址，不截图），不扫描或猜测页面元素。
   const metadataPath = buildTmallCheckpointPath(checkpointLabel, "json");
   const screenshotPath = metadataPath.replace(/\.json$/i, ".png");
-  const pageUrl = typeof page.url === "function" ? page.url() : "";
+  const pageUrl = typeof page?.url === "function" ? page.url() : "";
   fs.writeFileSync(metadataPath, JSON.stringify({
     capturedAt: new Date().toISOString(),
     checkpoint: String(checkpointLabel || "天猫页面"),
     pageUrl
   }, null, 2), "utf8");
+  if (!isScreenshotEvidenceEnabled()) {
+    // 只留页面地址文本，不再截图：避免全量截图带来的卡死风险与磁盘占用。
+    log("主线:完成", "天猫取证", "页面现场", `阶段=${checkpointLabel}，页面地址=${pageUrl || "未读取到"}（截图凭证已停用）`);
+    return { metadataPath, screenshotPath: "" };
+  }
+  if (typeof page?.screenshot !== "function") {
+    return { metadataPath, screenshotPath: "" };
+  }
   await page.screenshot({ path: screenshotPath, fullPage: false });
   log("主线:完成", "天猫取证", "页面现场", `阶段=${checkpointLabel}，截图=${screenshotPath}`);
   return { metadataPath, screenshotPath };

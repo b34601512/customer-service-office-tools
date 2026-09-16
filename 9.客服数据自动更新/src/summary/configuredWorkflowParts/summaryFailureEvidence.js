@@ -2,6 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const { waitForChromeDebugPortReady, connectToChrome, disconnectFromChrome } = require("../../engine/chromeSession");
 const { captureDownloadEvidence } = require("../../shared/downloadEvidence");
+const { isScreenshotEvidenceEnabled } = require("../../shared/evidenceSettings");
 const { buildEvidenceFileName, buildEvidenceScopeName } = require("../../shared/evidenceNaming");
 const { createSummaryEvidenceDir } = require("../summaryEvidenceDir");
 
@@ -33,6 +34,11 @@ function pickSummaryEvidencePage(browser) {
 async function captureSummaryFailureEvidence(input, dependencies = {}) {
   // 这个函数只按当前浏览器状态采集截图或写入失败文本，不处理自身错误。
   const { task, evidenceDir, evidenceFiles, errorMessage } = input;
+  const screenshotsEnabled = dependencies.isScreenshotEvidenceEnabled || isScreenshotEvidenceEnabled;
+  if (!screenshotsEnabled()) {
+    // 截图凭证已停用：不连浏览器、不截图，直接落一份纯文本失败原因（文本不会卡住，也不会丢失现场线索）。
+    return writeSummaryFailureTextEvidence(evidenceDir, task, errorMessage, evidenceFiles);
+  }
   const waitForPort = dependencies.waitForChromeDebugPortReady || waitForChromeDebugPortReady;
   const connect = dependencies.connectToChrome || connectToChrome;
   const disconnect = dependencies.disconnectFromChrome || disconnectFromChrome;

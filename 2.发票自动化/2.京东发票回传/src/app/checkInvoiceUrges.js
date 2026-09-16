@@ -18,6 +18,7 @@ const { 发送桌面通知 } = require('../notify/sendDesktopNotification');
 const { 规范化店铺配置 } = require('../store/storeConfigService');
 const { 记住扫描到的催票订单, 同步扫描到的发票订单信息, 统计订单记录 } = require('../order/jdOrderRecordStore');
 const { 验证凭证文件 } = require('../common/evidenceService');
+const { 是否保存截图凭证 } = require('../common/screenshotEvidenceSettings');
 const { 工作流状态, 工作流状态中文 } = require('../../../共享订单状态/orderWorkflow');
 
 const 客服跟进阶段文案 = 工作流状态中文[工作流状态.处理中];
@@ -46,7 +47,7 @@ async function 捕获失败页面诊断(page, 截图文件名, 指定失败截�
   } catch {}
 
   try {
-    await 保存轻量截图(page, 失败截图路径);
+    诊断.screenshotPath = String(await 保存轻量截图(page, 失败截图路径) || '');
   } catch {
     诊断.screenshotPath = '';
   }
@@ -56,12 +57,17 @@ async function 捕获失败页面诊断(page, 截图文件名, 指定失败截�
 
 async function 保存轻量截图(page, 截图路径) {
   // 解决：只保存当前可见画面作为凭证，避免全页截图制造额外性能压力。
+  // 截图凭证已停用时直接返回空串：不建目录、不截图、不抛错（见 screenshotEvidenceSettings.js）。
+  if (!是否保存截图凭证()) {
+    return '';
+  }
   fs.mkdirSync(path.dirname(截图路径), { recursive: true });
   await page.screenshot({
     path: 截图路径,
     fullPage: false,
   });
   验证凭证文件(截图路径);
+  return 截图路径;
 }
 
 function 附加失败页面诊断(错误, 诊断) {
@@ -130,9 +136,13 @@ async function 执行巡检(选项 = {}) {
       store: 当前店铺,
       invoiceOrders: 页面结果.invoiceOrders,
     });
-    const 当前截图路径 = 截图路径 || path.join(截图目录, 截图文件名);
+    const 当前截图路径 = 是否保存截图凭证()
+      ? (截图路径 || path.join(截图目录, 截图文件名))
+      : '';
 
-    await 保存轻量截图(page, 当前截图路径);
+    if (当前截图路径) {
+      await 保存轻量截图(page, 当前截图路径);
+    }
 
     const 本地统计 = 统计订单记录();
     const 本次结果 = {
@@ -217,4 +227,5 @@ async function 执行巡检(选项 = {}) {
 
 module.exports = {
   执行巡检,
+  保存轻量截图,
 };
