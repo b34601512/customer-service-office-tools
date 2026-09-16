@@ -1,7 +1,8 @@
 // 该文件只负责裁决“这条超时/漏回复提醒该不该自动转接、转给谁”，不依赖页面或接口写入。
 // 口径（2026-09-16 用户确认，已简化到最朴素的一条）：客户消息必须有人回。
-//   1) 原接待还在自己班次的时间窗内 → 不转（他自己的客户自己跟）；
-//   2) 确属不在班 → 运营转售前、售前转售前、售后转售后，绝不跨组；
+//   1) 原接待还在自己班次时间窗内**且已上线** → 不转（他自己的客户自己跟）；
+//      “在班但没上线”同样算没人管（用户 2026-09-16 拍板：“在班，但是没上线当然也算是没人管，直接转给当班在线的人就行”）；
+//   2) 确属没人管 → 运营转售前、售前转售前、售后转售后，绝不跨组；
 //   3) 目标是“当班 + 已上线”的同组客服，不看值班标记/组长/背景色，谁当班在线谁就能接；
 //   4) 当班的人都不可接 → 不转（转了没人回），@主管让他安排。
 const { ASSIGNMENT_STATUS } = require("../shared/currentAssignment");
@@ -14,7 +15,7 @@ const {
 const { resolveExpectedShiftStageForGroup } = require("../onlinePresenceMonitor/onlinePresencePolicy");
 const { resolveOnlinePresenceRow } = require("../onlinePresenceMonitor/onlinePresenceSnapshotStore");
 
-const AUTO_TRANSFER_REMINDER_KINDS = new Set(["timeout", "missedReply"]);
+const AUTO_TRANSFER_REMINDER_KINDS = new Set(["timeout", "missedReply", "shiftHandover"]);
 
 const SHIFT_LABEL_BY_STAGE = Object.freeze({
   early: "早班",
@@ -84,8 +85,19 @@ function resolveTargetStaffGroup(assigneeMember) {
   };
 }
 
+function resolveSourceAvailabilityLabel(offDutyReason) {
+  // 通知文案要说清楚“原接待当时到底怎么了”，不然主管看不出该不该找当事人。
+  if (offDutyReason === "shift_on_duty_but_offline") {
+    return "当时在班但没上线（没开接单开关）";
+  }
+  if (offDutyReason === "shift_on_duty_presence_unknown") {
+    return "当时在班但查不到在线状态";
+  }
+  return "当时不在自己班次内";
+}
+
 function isCurrentAssigneeOnDuty(input) {
-  // 运营不参与排班值班，一律视为不在班；售前/售后看本人班次的时间窗是否覆盖当前时刻。
+  // 运营不参与排班值班，一律视为没人管；售前/售后看本人班次时间窗 + 是否真的上线。
   const { assigneeMember, sourceStaffGroup, scheduleData, config, now } = input;
   if (sourceStaffGroup === "operation") {
     return { onDuty: false, reason: "operation_not_on_duty", shiftLabel: "" };
@@ -102,6 +114,17 @@ function isCurrentAssigneeOnDuty(input) {
   if (!isWithinOwnShiftWindow(config, sourceStaffGroup, shiftLabel, now)) {
     // 早班过早/晚班未到、或已过本人下班时间，都算不在班。
     return { onDuty: false, reason: "outside_own_shift_window", shiftLabel };
+  }
+
+  const currentTime = now instanceof Date ? now : new Date(now || Date.now());
+  const presence = resolveOnlinePresenceRow(staffName, sourceStaffGroup, currentTime.getTime());
+  if (!presence.available) {
+    // 在线状态查不到时不擅自转走客户，宁可维持现状。
+    return { onDuty: true, reason: "shift_on_duty_presence_unknown", shiftLabel };
+  }
+  if (!presence.online) {
+    // 在班但没上线（没开接单开关）＝没人管，客户要转给当班在线的人。
+    return { onDuty: false, reason: "shift_on_duty_but_offline", shiftLabel };
   }
 
   return { onDuty: true, reason: "on_shift_now", shiftLabel };
@@ -273,7 +296,9 @@ function decideTimeoutAutoTransfer(input = {}) {
       sourceStaffGroup,
       targetStaffGroup,
       expectedShiftStage,
-      currentAssigneeShift: dutyState.shiftLabel
+      currentAssigneeShift: dutyState.shiftLabel,
+      // 在班且在线的判定依据，供日志对账（含“在线状态查不到”这种情况）。
+      currentAssigneeOnDutyReason: dutyState.reason
     });
   }
 
@@ -376,6 +401,7 @@ module.exports = {
   listGroupShiftOverview,
   listOnShiftGroupMembers,
   pickOnlineTarget,
+  resolveSourceAvailabilityLabel,
   resolveStaffGroupLabel,
   resolveTargetStaffGroup
 };

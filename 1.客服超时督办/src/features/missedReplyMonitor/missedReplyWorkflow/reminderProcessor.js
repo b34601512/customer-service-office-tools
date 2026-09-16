@@ -22,6 +22,7 @@ const { recordPendingTransferVerification } = require('../../transferMonitor/aut
 const { sendAutoTransferNoticeSafely } = require('../../transferMonitor/autoTransferNotifier');
 const {
   decideTimeoutAutoTransfer,
+  resolveSourceAvailabilityLabel,
   resolveStaffGroupLabel
 } = require('../../timeoutAutoTransfer/timeoutAutoTransferPolicy');
 
@@ -96,7 +97,7 @@ async function attemptTimeoutAutoTransfer(options = {}) {
       TIMEOUT_AUTO_TRANSFER_LOG_MODULE_NAME,
       "跳过自动转接",
       // 跳过也要能审计：记下原接待、所属组、排班班次，方便事后对“为什么没转”对账。
-      `客户=${candidate.customerName}，触发=${candidate.reminderKind || "未知"}，原接待=${decision.currentAssigneeName || formatAssignmentForLog(assignment) || "-"}（${resolveStaffGroupLabel(decision.sourceStaffGroup) || "-"}，班次=${decision.currentAssigneeShift || "-"}，当前应值=${decision.expectedShiftStage || "-"}），原因=${decision.reason}${offlineSuffix}${groupShiftSuffix}`
+      `客户=${candidate.customerName}，触发=${candidate.reminderKind || "未知"}，原接待=${decision.currentAssigneeName || formatAssignmentForLog(assignment) || "-"}（${resolveStaffGroupLabel(decision.sourceStaffGroup) || "-"}，班次=${decision.currentAssigneeShift || "-"}，当前应值=${decision.expectedShiftStage || "-"}，判定=${decision.currentAssigneeOnDutyReason || decision.currentAssigneeOffDutyReason || "-"}），原因=${decision.reason}${offlineSuffix}${groupShiftSuffix}`
     );
     if (decision.requiresAttention) {
       // 有人该接却没人能接时不能让主管蒙在鼓里，和转接失败共用同一套群通知。
@@ -104,6 +105,7 @@ async function attemptTimeoutAutoTransfer(options = {}) {
         outcome: "failed",
         customerName: candidate.customerName,
         sourceStaffName: decision.currentAssigneeName || formatAssignmentForLog(assignment),
+        sourceAvailabilityLabel: resolveSourceAvailabilityLabel(decision.currentAssigneeOffDutyReason),
         reminderKindLabel: resolveReminderKindLabel(candidate.reminderKind),
         reason: decision.reason
       });
@@ -140,6 +142,7 @@ async function attemptTimeoutAutoTransfer(options = {}) {
       customerName: candidate.customerName,
       sourceStaffName: decision.currentAssigneeName,
       targetStaffName: decision.targetStaffName,
+      sourceAvailabilityLabel: resolveSourceAvailabilityLabel(decision.currentAssigneeOffDutyReason),
       reminderKindLabel: resolveReminderKindLabel(candidate.reminderKind),
       reason: "assign_request_failed"
     });
@@ -163,6 +166,7 @@ async function attemptTimeoutAutoTransfer(options = {}) {
       customerName: candidate.customerName,
       sourceStaffName: decision.currentAssigneeName,
       targetStaffName: decision.targetStaffName,
+      sourceAvailabilityLabel: resolveSourceAvailabilityLabel(decision.currentAssigneeOffDutyReason),
       reminderKindLabel: resolveReminderKindLabel(candidate.reminderKind),
       reason: sendResult.reason
     });
@@ -190,6 +194,7 @@ async function attemptTimeoutAutoTransfer(options = {}) {
     targetUserId: decision.targetUserId,
     targetStaffGroup: decision.targetStaffGroup,
     reminderKind: candidate.reminderKind,
+    sourceAvailabilityLabel: resolveSourceAvailabilityLabel(decision.currentAssigneeOffDutyReason),
     socketIndex: sendResult.socketIndex
   });
   return {

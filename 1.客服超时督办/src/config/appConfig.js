@@ -32,6 +32,7 @@ module.exports = {
   loginStatusPath: path.join(userDataDir, "supervisor-login-status.json"),
   transferMonitorStatePath: path.join(runtimeDir, "transfer-monitor", "state.json"),
   missedReplyMonitorStatePath: path.join(runtimeDir, "missed-reply-monitor", "state.json"),
+  autoTransferSweepStatePath: path.join(runtimeDir, "auto-transfer-sweep", "state.json"),
   onlinePresenceStatePath: path.join(runtimeDir, "online-presence-monitor", "state.json"),
   offDutyStatePath: path.join(runtimeDir, "off-duty-close", "state.json"),
   runtimeMaintenanceIntervalMs: 30 * 60 * 1000,

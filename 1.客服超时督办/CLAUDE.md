@@ -17,7 +17,7 @@
 - `src/controlCenter/tui/`：零依赖 ANSI 终端界面，七个页面（总览/客户/日志/配置/企微/资源/报表），复用同一套状态与服务。
 - `src/features/chatMonitorRuntime/`、`transferMonitor/`、`missedReplyMonitor/`：共用完整联系人和成员快照；未回复责任从首条未解决客户消息起算，只有人工实质回复或客户明确表示问题已解决才能结案；客户弱收尾不关闭已有待办，AI 不参与结案。
 - `src/features/shared/currentAssignment.js`：当前接待业务真源，第一依据仍是联系人接口 `assignedTo`；`assignedTo` 清空（如客服结束会话）时，按会话内最后一条人工消息发送人兜底归属为“最后接待客服”（last_handler，见 issue #621），兜不到成员映射才报未分配；渠道账号和历史操作人仍不得补定当前责任。
-- `src/features/timeoutAutoTransfer/`：超时自动转接规则层。核心只有一句话“客户消息必须有人回”：原接待已过自己班次时间（含运营账号一律按不在班）时，按“同组 + 当天当班 + 接单开关开着”挑人转接，不看值班标记/组长/背景色，先当班先上线先接；跨组不转（售前处理不了售后）；当班的人都不可接就不转并@主管。
+- `src/features/timeoutAutoTransfer/`：超时自动转接规则层（`autoTransferSweep.js` 负责每 5 分钟的“交班补判”，兜住提醒发过之后原接待才下班/没上线的客户）。核心只有一句话“客户消息必须有人回”：原接待已过自己班次时间（含运营账号一律按不在班）时，按“同组 + 当天当班 + 接单开关开着”挑人转接，不看值班标记/组长/背景色，先当班先上线先接；跨组不转（售前处理不了售后）；当班的人都不可接就不转并@主管。
 - `src/features/transferMonitor/appSocketFrameProbe.js`：平台把“分配会话”做成 socket.io 事件（`42/client,["assignChat",...]`），没有对应 HTTP 接口；本模块在页面脚本执行前捕获页面自己的 WebSocket，并把事件帧发到聊天命名空间 `/client`。转接结果以联系人快照复核后才算成功（`autoTransferVerificationStore.js`），成功/失败都会发企微群，失败额外@主管（`autoTransferNotifier.js`）。
 - `src/features/onlinePresenceMonitor/`、`offDutyClose/`、`scheduleQuery/`：读取金山排班，检查上班监控（该到班时无人在线提醒）并处理下班监控；下班链路启动后立即检查，默认每 5 分钟复查今天和昨天。
 - `src/features/timeoutPerformance/`：记录企微群发送成功后的首次超时事实，并为 TUI 生成近 30 天或自然月对比。

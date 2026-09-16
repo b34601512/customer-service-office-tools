@@ -22,6 +22,10 @@ const {
 } = require("../transferMonitor/autoTransferNotifier");
 const { recordActiveStaffSnapshot } = require("../timeoutPerformance/timeoutPerformanceLedger");
 const { createDailyScheduleService } = require("../scheduleQuery/dailyScheduleService");
+const {
+  SHIFT_HANDOVER_SWEEP_INTERVAL_MS,
+  runShiftHandoverSweep
+} = require("../timeoutAutoTransfer/autoTransferSweep");
 
 const CHAT_MONITOR_LOG_MODULE_NAME = "聊天监控";
 const AUTO_TRANSFER_LOG_MODULE_NAME = "超时自动转接";
@@ -32,7 +36,9 @@ function createChatMonitorRuntimeState(nowMs = 0) {
     transferRuntimeState: createTransferMonitorRuntimeState(),
     missedReplyRuntimeState: createMissedReplyMonitorRuntimeState(),
     nextTransferScanAtMs: nowMs,
-    nextMissedReplyScanAtMs: nowMs
+    nextMissedReplyScanAtMs: nowMs,
+    // 交班补判单独控节奏：提醒发过之后原接待才下班/没上线的客户，只能靠它补上。
+    nextShiftHandoverSweepAtMs: nowMs
   };
 }
 
@@ -119,6 +125,32 @@ async function runMissedReplyTaskIfDue(page, runtimeState, dueTasks, snapshot, s
   }
 }
 
+async function runShiftHandoverSweepIfDue(page, runtimeState, replyConfig, snapshot, options = {}) {
+  // 用户口径（2026-09-16）：“空档2要加，交接的时候容易出问题”：
+  // 客户在早班还在班时就提醒过、一直没人回，等早班下班后不会再有新提醒，必须在这里补判一次。
+  const nowMs = Date.now();
+  if (nowMs < Number(runtimeState.nextShiftHandoverSweepAtMs || 0)) {
+    return;
+  }
+  runtimeState.nextShiftHandoverSweepAtMs = nowMs + SHIFT_HANDOVER_SWEEP_INTERVAL_MS;
+
+  try {
+    await runShiftHandoverSweep({
+      page,
+      scheduleService: options.scheduleService,
+      memberMapByUserId: snapshot.memberMapByUserId,
+      replyConfig,
+      decisionItemsByChatId: runtimeState.missedReplyRuntimeState.decisionItemsByChatId,
+      now: new Date(nowMs)
+    });
+  } catch (error) {
+    if (isLoginRequiredError(error)) {
+      throw error;
+    }
+    logError("主线:失败", AUTO_TRANSFER_LOG_MODULE_NAME, "交班补判失败", error);
+  }
+}
+
 async function runDueChatMonitorTasks(page, runtimeState, replyConfig, dueTasks, options = {}) {
   // 这里完成一轮共享采集和规则分发，保证联系人数据只读一次。
   const needsSnapshot = dueTasks.transferDue || (dueTasks.missedReplyDue && replyConfig.missedReplyMonitorEnabled);
@@ -133,6 +165,7 @@ async function runDueChatMonitorTasks(page, runtimeState, replyConfig, dueTasks,
 
   await runTransferTaskIfDue(page, runtimeState, dueTasks, snapshot);
   await runMissedReplyTaskIfDue(page, runtimeState, dueTasks, snapshot, options.scheduleService);
+  await runShiftHandoverSweepIfDue(page, runtimeState, replyConfig, snapshot, options);
 }
 
 async function settlePendingAutoTransfers(contacts, options = {}) {
@@ -154,6 +187,7 @@ async function settlePendingAutoTransfers(contacts, options = {}) {
       customerName: item.customerName,
       sourceStaffName: item.sourceStaffName,
       targetStaffName: item.targetStaffName,
+      sourceAvailabilityLabel: item.sourceAvailabilityLabel,
       reminderKindLabel: resolveReminderKindText(item.reminderKind)
     });
   }
@@ -170,6 +204,7 @@ async function settlePendingAutoTransfers(contacts, options = {}) {
       customerName: item.customerName,
       sourceStaffName: item.sourceStaffName,
       targetStaffName: item.targetStaffName,
+      sourceAvailabilityLabel: item.sourceAvailabilityLabel,
       reminderKindLabel: resolveReminderKindText(item.reminderKind),
       reason: item.reason
     });
@@ -219,5 +254,6 @@ module.exports = {
   resolveDueChatMonitorTasks,
   resolveSharedSnapshotPageSize,
   runDueChatMonitorTasks,
+  runShiftHandoverSweepIfDue,
   settlePendingAutoTransfers
 };

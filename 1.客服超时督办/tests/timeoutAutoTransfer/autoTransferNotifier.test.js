@@ -52,6 +52,26 @@ test("转接失败文案把机器原因翻成主管看得懂的中文", () => {
 test("提醒类型文案与主链路一致", () => {
   assert.equal(resolveReminderKindText("missedReply"), "漏回复提醒");
   assert.equal(resolveReminderKindText("timeout"), "首次超时提醒");
+  assert.equal(resolveReminderKindText("shiftHandover"), "交班补判");
+});
+
+test("原接待在班但没上线时，通知要说明是“没上线”而不是“不在班”", () => {
+  const successMessage = buildAutoTransferSuccessMessage({
+    customerName: "客户甲",
+    sourceStaffName: "柯紫婷",
+    targetStaffName: "缪婷婷",
+    sourceAvailabilityLabel: "当时在班但没上线（没开接单开关）"
+  });
+  assert.match(successMessage, /原接待：柯紫婷（当时在班但没上线（没开接单开关））/);
+  assert.match(successMessage, /已转给：缪婷婷（当班且已上线）/);
+
+  const failureMessage = buildAutoTransferFailureMessage({
+    customerName: "客户甲",
+    sourceStaffName: "柯紫婷",
+    sourceAvailabilityLabel: "当时在班但没上线（没开接单开关）",
+    reason: "on_shift_member_offline"
+  });
+  assert.match(failureMessage, /原接待：柯紫婷（当时在班但没上线（没开接单开关））/);
 });
 
 test("失败通知必须@主管，成功通知只留痕不打扰", async () => {

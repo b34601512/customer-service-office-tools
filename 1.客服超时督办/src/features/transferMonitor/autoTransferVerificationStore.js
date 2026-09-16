@@ -13,6 +13,7 @@ function normalizePendingEntry(entry, nowMs) {
     targetUserId: String(entry.targetUserId || "").trim(),
     targetStaffGroup: String(entry.targetStaffGroup || "").trim(),
     reminderKind: String(entry.reminderKind || "").trim(),
+    sourceAvailabilityLabel: String(entry.sourceAvailabilityLabel || "").trim(),
     socketIndex: Number.isInteger(entry.socketIndex) ? entry.socketIndex : -1,
     recordAtMs: nowMs,
     deadlineMs: nowMs + Math.max(5000, Number(entry.timeoutMs) || DEFAULT_TRANSFER_VERIFY_TIMEOUT_MS)

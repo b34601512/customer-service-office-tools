@@ -171,8 +171,12 @@ test("售前值班人不在线时，同班次其他在线的售前也能接", ()
   assert.equal(result.offlineStaffNames.includes("韩欢欢"), true);
 });
 
-test("早晚班重叠期间早班人还在班，不能把他当成不在班", () => {
-  // 售后早班 8:00~16:30、晚班 14:00 到岗；15:00 早班的人仍在上班，客户不能从他手里转走。
+test("早晚班重叠期间早班人还在班且在线，不能把他当成没人管", () => {
+  // 售后早班 8:00~16:30、晚班 14:00 到岗；15:00 早班的人仍在上班（且在线），客户不能从他手里转走。
+  publishPresence({
+    陈燕玲: { staffName: "陈燕玲", staffGroup: "after_sales", autoAssignEnabled: true },
+    缪婷婷: { staffName: "缪婷婷", staffGroup: "after_sales", autoAssignEnabled: true }
+  });
   const result = decide({
     assignment: buildAssignment("after-chen", "after_sales", "陈燕玲"),
     now: new Date(2026, 8, 16, 15, 0)
@@ -396,4 +400,50 @@ test("当班名单按本人班次时间窗取人，且只取同组", () => {
   });
   // 15:00 售后早晚班人都在班（早班 16:30 才下班）。
   assert.deepEqual(overlap.map((item) => item.staffName), ["李守耀", "陈燕玲", "缪婷婷"]);
+});
+
+test("原接待在班但没上线时也算没人管，转给当班在线的人", () => {
+  // 用户口径（2026-09-16）：“在班，但是没上线当然也算是没人管，直接转给当班在线的人就行”。
+  publishPresence({
+    李守耀: { staffName: "李守耀", staffGroup: "after_sales", autoAssignEnabled: true },
+    陈燕玲: { staffName: "陈燕玲", staffGroup: "after_sales", autoAssignEnabled: false }
+  });
+
+  const result = decide({
+    assignment: buildAssignment("after-chen", "after_sales", "陈燕玲")
+  });
+
+  assert.equal(result.shouldTransfer, true);
+  assert.equal(result.targetStaffName, "李守耀");
+  assert.equal(result.currentAssigneeOffDutyReason, "shift_on_duty_but_offline");
+  assert.equal(result.currentAssigneeShift, "早班");
+});
+
+test("售前在班但没上线时同样转给当班在线的售前", () => {
+  publishPresence({
+    韩欢欢: { staffName: "韩欢欢", staffGroup: "pre_sales", transferEnabled: false },
+    叶炳辉: { staffName: "叶炳辉", staffGroup: "pre_sales", transferEnabled: true }
+  });
+
+  const result = decide({
+    assignment: buildAssignment("pre-han", "pre_sales", "韩欢欢")
+  });
+
+  assert.equal(result.shouldTransfer, true);
+  assert.equal(result.targetStaffName, "叶炳辉");
+  assert.equal(result.currentAssigneeOffDutyReason, "shift_on_duty_but_offline");
+});
+
+test("原接待在线状态查不到时不擅自转走客户", () => {
+  publishPresence({
+    缪婷婷: { staffName: "缪婷婷", staffGroup: "after_sales", autoAssignEnabled: true }
+  });
+
+  const result = decide({
+    assignment: buildAssignment("after-chen", "after_sales", "陈燕玲")
+  });
+
+  assert.equal(result.shouldTransfer, false);
+  assert.equal(result.reason, "current_assignee_on_duty");
+  assert.equal(result.currentAssigneeOnDutyReason, "shift_on_duty_presence_unknown");
 });

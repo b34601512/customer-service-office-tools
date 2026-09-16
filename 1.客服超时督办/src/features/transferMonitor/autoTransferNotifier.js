@@ -26,14 +26,26 @@ function resolveFailureReasonText(reason) {
 
 function resolveReminderKindText(reminderKind) {
   // 提醒类型只用于通知文案，和主链路的中文口径保持一致。
-  return String(reminderKind || "").trim() === "missedReply" ? "漏回复提醒" : "首次超时提醒";
+  const normalizedKind = String(reminderKind || "").trim();
+  if (normalizedKind === "missedReply") {
+    return "漏回复提醒";
+  }
+  if (normalizedKind === "shiftHandover") {
+    return "交班补判";
+  }
+  return "首次超时提醒";
+}
+
+function resolveSourceAvailabilityText(label) {
+  // 原接待当时的状态：不在班 / 在班但没上线，通知里要说清楚。
+  return String(label || "").trim() || "当时不在自己班次内";
 }
 
 function buildAutoTransferSuccessMessage(input) {
   return [
     "【超时自动转接】客户已改派",
     `客户：${input.customerName || "未命名客户"}`,
-    `原接待：${input.sourceStaffName || "未知"}（当时不在自己班次内）`,
+    `原接待：${input.sourceStaffName || "未知"}（${resolveSourceAvailabilityText(input.sourceAvailabilityLabel)}）`,
     `已转给：${input.targetStaffName || "未知"}（当班且已上线）`,
     `触发：${input.reminderKindLabel || "超时提醒"}`
   ].join("\n");
@@ -43,7 +55,7 @@ function buildAutoTransferFailureMessage(input) {
   return [
     "【超时自动转接失败】请主管介入",
     `客户：${input.customerName || "未命名客户"}`,
-    `原接待：${input.sourceStaffName || "未知"}（当时不在自己班次内）`,
+    `原接待：${input.sourceStaffName || "未知"}（${resolveSourceAvailabilityText(input.sourceAvailabilityLabel)}）`,
     `触发：${input.reminderKindLabel || "超时提醒"}`,
     `原因：${resolveFailureReasonText(input.reason)}`
   ].join("\n");
@@ -131,6 +143,7 @@ module.exports = {
   buildAutoTransferSuccessMessage,
   resolveFailureReasonText,
   resolveReminderKindText,
+  resolveSourceAvailabilityText,
   sendAutoTransferNotice,
   sendAutoTransferNoticeSafely
 };
