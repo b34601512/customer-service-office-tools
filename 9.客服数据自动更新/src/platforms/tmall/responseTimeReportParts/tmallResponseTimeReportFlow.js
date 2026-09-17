@@ -15,6 +15,9 @@ const {
 } = require("./tmallResponseTimePageElements");
 const { waitForTmallResponseTimeLoginReady } = require("./tmallResponseTimeLogin");
 
+/** 报表表头卡住时最多再试几次（有界，防死循环） */
+const 报表最大尝试次数 = 2;
+
 async function waitForTmallServiceExperienceReady(page, timeoutMs = appConfig.tmall.connectTimeoutMs) {
   // 这里等待服务体验分析页内部的平均响应时间入口出现。
   const deadline = Date.now() + timeoutMs;
@@ -105,17 +108,65 @@ function buildResponseTimeClickOptions(options = {}) {
 
 async function prepareTmallResponseTimeExportPage(page, options = {}) {
   // 这里收口真实业务路径：千牛入口 -> 服务体验分析 -> 旺旺人工平响时长。
+  // 2026-09-17 增：表头一直停在“加载中…”（接口彽发失败）时，回到入口重走一次（有界，防死循环）。
   const timeoutMs = options.timeoutMs || appConfig.tmall.connectTimeoutMs;
   await waitForTmallResponseTimeLoginReady(page, timeoutMs, options);
   await clickTmallServiceExperienceAnalysis(page, options);
   await waitForTmallServiceExperienceReady(page, timeoutMs);
-  await clickTmallAverageResponseTimeEntry(page, options);
-  await waitForTmallAverageResponseTimeReady(page, timeoutMs);
+  await 带重试地打开平均响应时间报表({
+    打开一次: async () => {
+      await clickTmallAverageResponseTimeEntry(page, options);
+      await waitForTmallAverageResponseTimeReady(page, timeoutMs);
+    },
+    回到入口: () => 回到千牛入口并重进服务体验分析(page, options, timeoutMs),
+    最大尝试次数: Number(options.报表尝试次数) || 报表最大尝试次数,
+  });
+}
+
+/** 报表表头卡住时的回归路径：重新打开入口地址（拿不到就刷新）再走一遍服务体验分析 */
+async function 回到千牛入口并重进服务体验分析(page, options, timeoutMs) {
+  const entranceUrl = String(options.entranceUrl || "").trim();
+  if (entranceUrl) {
+    log("主线:重试", "天猫平均响应时间", "报表加载重试", `重新打开入口地址=${entranceUrl}`);
+    await page.goto(entranceUrl, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+  } else {
+    log("主线:重试", "天猫平均响应时间", "报表加载重试", "未拿到入口地址，改为刷新当前页面");
+    await page.reload({ waitUntil: "domcontentloaded", timeout: timeoutMs });
+  }
+  await waitForTmallResponseTimeLoginReady(page, timeoutMs, options);
+  await clickTmallServiceExperienceAnalysis(page, options);
+  await waitForTmallServiceExperienceReady(page, timeoutMs);
+}
+
+/** 有界重试：最多试 最大尝试次数 次，每次失败后先跑一次「回到入口」 */
+async function 带重试地打开平均响应时间报表({ 打开一次, 回到入口, 最大尝试次数 = 报表最大尝试次数 }) {
+  // 尝试次数必须有限且为正整数，非法值一律回落默认值，避免退化成死循环
+  const 次数 = Number(最大尝试次数) > 0 ? Math.floor(Number(最大尝试次数)) : 报表最大尝试次数;
+  let 最后一次错误 = null;
+  for (let 尝试 = 1; 尝试 <= 次数; 尝试 += 1) {
+    try {
+      await 打开一次();
+      if (尝试 > 1) log("主线:完成", "天猫平均响应时间", "报表加载重试", `第 ${尝试} 次尝试已就绪`);
+      return;
+    } catch (错误) {
+      最后一次错误 = 错误;
+      if (尝试 >= 次数) break;
+      log(
+        "主线:重试",
+        "天猫平均响应时间",
+        "报表加载重试",
+        `第 ${尝试} 次未就绪，准备回到入口重试：${错误 && 错误.message ? 错误.message : 错误}`
+      );
+      await 回到入口();
+    }
+  }
+  throw 最后一次错误 instanceof Error ? 最后一次错误 : new Error(String(最后一次错误 || "平均响应时间报表未就绪"));
 }
 
 module.exports = {
   buildResponseTimeClickOptions,
   clickTmallResponseTimeExport,
   waitForTmallCustomerSatisfactionDetailReady,
-  prepareTmallResponseTimeExportPage
+  prepareTmallResponseTimeExportPage,
+  带重试地打开平均响应时间报表
 };

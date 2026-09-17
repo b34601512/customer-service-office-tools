@@ -52,7 +52,7 @@ async function runConnectedPddDownload(browser, onProgress, options, context) {
   await setPddDownloadDirectory(page, downloadDir);
   const beforeFiles = listPddDownloadFileNames(downloadDir);
   await dismissPddBlockingPopups(page, onProgress);
-      reportProgress(onProgress, "触发下载表单", `当前页面=${page.url()}，日期=${exportRange.startText} 到 ${exportRange.endText}`);
+  reportPddDownloadProgress(onProgress, "触发下载表单", `当前页面=${page.url()}，日期=${exportRange.startText} 到 ${exportRange.endText}`);
   await triggerPddExportAndWaitForAcceptance(page, () => clickPddDownloadButton(page));
   reportPddDownloadProgress(onProgress, "等待文件落盘", "平台已确认导出，正在等待新 Excel 文件");
   const downloadStart = await waitForPddDownloadStart(downloadDir, beforeFiles, PDD_DOWNLOAD_TIMEOUT_MS);
