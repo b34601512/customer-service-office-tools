@@ -146,3 +146,16 @@ test('overlay.textOverride 只改展示文本、不动聊天记录原文', async
   assert.ok(!html.includes('现在是涨价了哦'), '原文不应再出现在页面上');
   assert.strictEqual(chat.messages[1].text, '现在是涨价了哦', '聊天记录原文不能被修改');
 });
+
+test('selfCheck：全是挑错时提醒「至少 1 处正面解析」；有一处做对了就 ok', async () => {
+  const allBad = JSON.parse(JSON.stringify(review)); // 默认 3 个解析全挂 bad
+  const r1 = await renderCourseware(chat, allBad);
+  const warnItem = runSelfCheck(r1.html, { review: allBad, report: r1.report, chat }).find((x) => x.text.includes('至少 1 处'));
+  assert.strictEqual(warnItem.status, 'warn', '全是挑错应给 warn（不阻断）');
+
+  const withPraise = JSON.parse(JSON.stringify(review));
+  withPraise.overlays[0] = { i: 1, insight: 'r1' }; // 第 1 个解析改成正面（不挂 bad）
+  const r2 = await renderCourseware(chat, withPraise);
+  const okItem = runSelfCheck(r2.html, { review: withPraise, report: r2.report, chat }).find((x) => x.text.includes('至少 1 处'));
+  assert.strictEqual(okItem.status, 'ok', '有正面解析应为 ok');
+});
