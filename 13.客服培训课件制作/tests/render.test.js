@@ -178,3 +178,16 @@ test('selfCheck：解析提前引用“后面的对话原话”给 warn（就地
   const item2 = runSelfCheck(r2.html, { review: ok, report: r2.report, chat }).find((x) => x.text.includes('到它为止'));
   assert.strictEqual(item2.status, 'ok', item2.text);
 });
+
+test('selfCheck：把“您好”这类开场短句当缺点时给 warn（客服抢响应时间，不算缺点）', async () => {
+  const rv = JSON.parse(JSON.stringify(review));
+  rv.insights.r1 = '<details class="insight" id="r1"><summary><span class="sum-main">解析1</span></summary><div class="insight-body"><div class="compare"><div class="col bad"><div class="col-label">✖</div><p>您好</p><div class="why">只回了两个字</div></div><div class="col good"><p>好的 <b class="closer">您现在下单，我给您备注好～</b></p></div></div></div></details>';
+  const r1 = await renderCourseware(chat, rv);
+  const item = runSelfCheck(r1.html, { review: rv, report: r1.report, chat }).find((x) => x.text.includes('开场短句'));
+  assert.strictEqual(item.status, 'warn', item.text);
+
+  const ok = JSON.parse(JSON.stringify(review)); // 默认 bad 栏是实质回复，不该报
+  const r2 = await renderCourseware(chat, ok);
+  const item2 = runSelfCheck(r2.html, { review: ok, report: r2.report, chat }).find((x) => x.text.includes('开场短句'));
+  assert.strictEqual(item2.status, 'ok', item2.text);
+});

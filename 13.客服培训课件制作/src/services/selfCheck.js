@@ -92,6 +92,17 @@ function runSelfCheck(html, { review, report, chat }) {
   add(futureRefs.length === 0 ? 'ok' : 'warn',
     `解析只讲“到它为止”的内容（提前引用后面对话 ${futureRefs.length} 处${futureRefs.length ? '：' + [...new Set(futureRefs)].slice(0, 2).join(' / ') : ''}）`);
 
+  // 15) 别把“先回一句短话抢响应时间”当缺点（2026-09-17 用户：客服为了响应时间先发“您好”）
+  const greetingOnly = [];
+  for (const [id, raw] of Object.entries(review.insights || {})) {
+    const q = String(raw).match(/<div class="col bad">[\s\S]*?<p>([\s\S]*?)<\/p>/);
+    if (!q) continue;
+    const quote = q[1].replace(/<[^>]*>/g, '').replace(/[\s！!~～。，,.、]/g, '');
+    if (quote.length <= 6 && /^(您好|你好|您们好|亲|亲亲|在的|在呢|在吗|来了|稍等|好的|嗯嗯)$/.test(quote)) greetingOnly.push(`解析 ${id}（“${quote}”）`);
+  }
+  add(greetingOnly.length === 0 ? 'ok' : 'warn',
+    `开场短句不算缺点（疑似把问候当问题 ${greetingOnly.length} 处${greetingOnly.length ? '：' + greetingOnly.slice(0, 2).join(' / ') : ''}）`);
+
   return items;
 }
 
