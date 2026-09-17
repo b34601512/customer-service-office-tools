@@ -160,3 +160,21 @@ test('selfCheck：正面解析只报个数，不给 warn（不逼着硬夸）', 
   assert.strictEqual(item2.status, 'ok');
   assert.ok(/正面解析 1 \/ 解析总数 2/.test(item2.text), item2.text);
 });
+
+test('selfCheck：解析提前引用“后面的对话原话”给 warn（就地视角，别事后诸葛亮）', async () => {
+  const rv = JSON.parse(JSON.stringify(review));
+  // r1 挂在第 1 条（下标 0），却引用了后面第 3 条客户说的“可以给您优惠80元”
+  rv.overlays = [{ i: 0, insight: 'r1' }, { i: 2, note: '价格敏感' }];
+  rv.insights.r1 = '<details class="insight" id="r1"><summary><span class="sum-main">解析1</span></summary><div class="insight-body"><div class="arrow-note">后来客服回“可以给您优惠80元”，客户才留下。</div></div></details>';
+  const r1 = await renderCourseware(chat, rv);
+  const item = runSelfCheck(r1.html, { review: rv, report: r1.report, chat }).find((x) => x.text.includes('到它为止'));
+  assert.strictEqual(item.status, 'warn', item.text);
+
+  // 只讲本位置以内内容的解析 → ok
+  const ok = JSON.parse(JSON.stringify(review));
+  ok.overlays = [{ i: 1, insight: 'r1' }];
+  ok.insights.r1 = ok.insights.r1.replace('解析1', '解析1');
+  const r2 = await renderCourseware(chat, ok);
+  const item2 = runSelfCheck(r2.html, { review: ok, report: r2.report, chat }).find((x) => x.text.includes('到它为止'));
+  assert.strictEqual(item2.status, 'ok', item2.text);
+});

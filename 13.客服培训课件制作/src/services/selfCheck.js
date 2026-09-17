@@ -75,6 +75,23 @@ function runSelfCheck(html, { review, report, chat }) {
   const positiveCount = insightIds.filter((id) => !badIds.has(id)).length;
   add('ok', `正面解析 ${positiveCount} / 解析总数 ${insightIds.length}（有真实可夸的就鼓励，没有不硬夸）`);
 
+  // 14) 解析只讲“到它为止”的内容（就地视角）—— 不能提前引用后面才发生的对话（2026-09-17 用户要求）
+  const norm = (v) => String(v || '').replace(/<[^>]*>/g, ' ')
+    .replace(/[\s，。！？、；：（）()【】“”"'·~～]/g, '');
+  const futureRefs = [];
+  if (chat && Array.isArray(chat.messages)) {
+    for (const o of review.overlays || []) {
+      if (!o.insight || !(review.insights || {})[o.insight]) continue;
+      const text = norm(review.insights[o.insight]);
+      for (let j = o.i + 1; j < chat.messages.length; j++) {
+        const later = norm(chat.messages[j].text);
+        if (later.length >= 4 && text.includes(later)) futureRefs.push(`解析 ${o.insight} 引用了第 ${j + 1} 条后面对话的原话`);
+      }
+    }
+  }
+  add(futureRefs.length === 0 ? 'ok' : 'warn',
+    `解析只讲“到它为止”的内容（提前引用后面对话 ${futureRefs.length} 处${futureRefs.length ? '：' + [...new Set(futureRefs)].slice(0, 2).join(' / ') : ''}）`);
+
   return items;
 }
 
