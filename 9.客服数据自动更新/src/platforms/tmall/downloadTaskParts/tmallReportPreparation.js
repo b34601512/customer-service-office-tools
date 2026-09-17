@@ -59,8 +59,7 @@ async function prepareTmallServiceQualityPage(browser, input) {
   } else {
     reportTmallDownloadProgress(onProgress, "进入服务体验分析", "准备点击服务体验分析，再打开旺旺人工平响时长");
     await prepareTmallResponseTimeExportPage(page, {
-      storeConfig: resolvedConfig.activeStore,
-      entranceUrl
+      storeConfig: resolvedConfig.activeStore
     });
   }
   return page;
