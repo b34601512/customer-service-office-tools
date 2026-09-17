@@ -103,6 +103,18 @@ function runSelfCheck(html, { review, report, chat }) {
   add(greetingOnly.length === 0 ? 'ok' : 'warn',
     `开场短句不算缺点（疑似把问候当问题 ${greetingOnly.length} 处${greetingOnly.length ? '：' + greetingOnly.slice(0, 2).join(' / ') : ''}）`);
 
+  // 16) 到手价以主图为准：建议话术里不能用“以…价格为准”敷衍（黎经理 2026-09-17 口径）
+  const vaguePrice = [];
+  for (const [id, raw] of Object.entries(review.insights || {})) {
+    const g = String(raw).match(/<div class="col good">[\s\S]*?<p>([\s\S]*?)<\/p>/);
+    if (!g) continue;
+    const said = g[1].replace(/<[^>]*>/g, '');
+    const hit = said.match(/以[^。；，]{0,8}价格为准/);
+    if (hit) vaguePrice.push(`解析 ${id}（“${hit[0]}”）`);
+  }
+  add(vaguePrice.length === 0 ? 'ok' : 'warn',
+    `建议话术不用“以价格为准”敷衍（到手价按主图讲 ${vaguePrice.length} 处${vaguePrice.length ? '：' + vaguePrice.slice(0, 2).join(' / ') : ''}）`);
+
   return items;
 }
 

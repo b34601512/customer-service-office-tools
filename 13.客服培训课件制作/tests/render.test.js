@@ -191,3 +191,16 @@ test('selfCheck：把“您好”这类开场短句当缺点时给 warn（客服
   const item2 = runSelfCheck(r2.html, { review: ok, report: r2.report, chat }).find((x) => x.text.includes('开场短句'));
   assert.strictEqual(item2.status, 'ok', item2.text);
 });
+
+test('selfCheck：建议话术用“以价格为准”敷衍时给 warn（到手价按主图讲，黎经理口径）', async () => {
+  const bad = JSON.parse(JSON.stringify(review));
+  bad.insights.r1 = '<details class="insight" id="r1"><summary><span class="sum-main">解析1</span></summary><div class="insight-body"><div class="compare"><div class="col bad"><p>这个到手价多少钱</p><div class="why">没答</div></div><div class="col good"><p>具体以手机下单价格为准 <b class="closer">您今天下单，我给您备注好～</b></p></div></div></div></details>';
+  const r1 = await renderCourseware(chat, bad);
+  const item = runSelfCheck(r1.html, { review: bad, report: r1.report, chat }).find((x) => x.text.includes('以价格为准'));
+  assert.strictEqual(item.status, 'warn', item.text);
+
+  const ok = JSON.parse(JSON.stringify(review));
+  const r2 = await renderCourseware(chat, ok);
+  const item2 = runSelfCheck(r2.html, { review: ok, report: r2.report, chat }).find((x) => x.text.includes('以价格为准'));
+  assert.strictEqual(item2.status, 'ok', item2.text);
+});
