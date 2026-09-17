@@ -47,12 +47,14 @@ function renderMessage(msg, overlay, insightHtml, imgMap) {
   const who = isSys ? `🔔 ${msg.label || '系统消息'}` : isCus ? '客户' : '客服';
   const noteBadge = overlay && overlay.note ? `<div class="note-mark">${esc(overlay.note)}</div>` : '';
   const badBadge = overlay && overlay.bad ? `<div class="key-mark"><span class="key-flag">◆ 可优化回复</span></div>` : '';
+  // textOverride：只改展示文本（脱敏/去跟踪参数等），聊天记录原文不变
+  const shownText = overlay && typeof overlay.textOverride === 'string' ? overlay.textOverride : msg.text;
   let bubble;
   if (msg.img && imgMap[msg.img]) {
     const data = imgMap[msg.img].data;
-    bubble = `<div class="bubble bubble-img">${esc(msg.text)}<img src="${data}" alt="图片" onclick="this.classList.toggle('zoom')"/></div>`;
+    bubble = `<div class="bubble bubble-img">${esc(shownText)}<img src="${data}" alt="图片" onclick="this.classList.toggle('zoom')"/></div>`;
   } else {
-    bubble = `<div class="bubble">${esc(msg.text)}</div>`;
+    bubble = `<div class="bubble">${esc(shownText)}</div>`;
   }
   let html = `<div class="msg ${cls}">
     <div class="msg-body">

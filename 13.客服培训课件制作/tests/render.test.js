@@ -137,3 +137,12 @@ test('定稿版式（美化版）关键样式还在：白底解析卡/绿色按�
   assert.ok(/\.insight\{/.test(html), '解析卡样式要还在');
   assert.ok(!/class="header"/.test(html), '不能把废弃的顶部大标题加回来');
 });
+
+test('overlay.textOverride 只改展示文本、不动聊天记录原文', async () => {
+  const rv = JSON.parse(JSON.stringify(review));
+  rv.overlays = [{ i: 1, textOverride: 'https://item.jd.com/100035703597.html' }];
+  const { html } = await renderCourseware(chat, rv);
+  assert.ok(html.includes('https://item.jd.com/100035703597.html'), '改写后的文本要渲染');
+  assert.ok(!html.includes('现在是涨价了哦'), '原文不应再出现在页面上');
+  assert.strictEqual(chat.messages[1].text, '现在是涨价了哦', '聊天记录原文不能被修改');
+});
