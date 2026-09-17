@@ -43,7 +43,9 @@ function runSelfCheck(html, { review, report, chat }) {
 
   // 9) 机器人自动回复/系统消息必须全部画出来
   // 漏画它们会把“机器人已答完、客服只发了个表情”误判成“客服不答问题”，冤枉客服
-  const sysExpected = ((chat && chat.messages) || []).filter((m) => m.role === 'system').length;
+  const sysExpected = ((report && report.systemCount) !== undefined)
+    ? report.systemCount
+    : ((chat && chat.messages) || []).filter((m) => m.role === 'system').length;
   const sysActual = (html.match(/class="msg from-sys"/g) || []).length;
   if (sysExpected > 0) {
     add(sysActual === sysExpected ? 'ok' : 'fail', `机器人/系统消息全部渲染（期望 ${sysExpected}，实际 ${sysActual}）`);

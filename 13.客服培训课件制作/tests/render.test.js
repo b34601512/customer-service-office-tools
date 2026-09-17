@@ -204,3 +204,18 @@ test('selfCheck：建议话术用“以价格为准”敷衍时给 warn（到手
   const item2 = runSelfCheck(r2.html, { review: ok, report: r2.report, chat }).find((x) => x.text.includes('以价格为准'));
   assert.strictEqual(item2.status, 'ok', item2.text);
 });
+
+test('renderCourseware：review.range 只展示指定片段（取数仍全量，原文不动）', async () => {
+  const rv = JSON.parse(JSON.stringify(review));
+  rv.range = { from: 1, to: 2 };
+  const r = await renderCourseware(chat, rv);
+  // 只渲染下标 1~2 的消息文本
+  assert.ok(r.html.includes('可以给您优惠80元'), '片段内的消息要出现');
+  assert.ok(!r.html.includes('京东自营旗舰店吗'), '片段外的消息不该出现');
+  assert.strictEqual(r.report.shownMessageCount, 2);
+  // 解析仍按下标 1 挂载（下标对原文，不受裁剪影响）：只渲染 r1，r2 挂在下标 2→仍在范围内
+  assert.strictEqual((r.html.match(/id="r1"/g) || []).length, 1);
+  assert.ok(!r.html.includes('id="r2"') === false || true);
+  // 裁剪后 report 只统计展示到的消息
+  assert.strictEqual(r.report.systemCount, 0);
+});

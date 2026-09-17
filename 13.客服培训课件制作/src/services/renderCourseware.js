@@ -82,7 +82,17 @@ async function renderCourseware(chat, review) {
     else imageFailures.push({ url, error: r.error });
   }
 
-  const chatArea = chat.messages.map((msg, i) => {
+  // range：只展示聊天记录的一段（取数仍是全量口径；只裁展示，不动原文）。
+  // 写法："range": {"from": 36, "to": 44}（下标对原始 messages，含头含尾）
+  const range = review.range && Number.isInteger(review.range.from) && Number.isInteger(review.range.to)
+    ? { from: Math.max(0, review.range.from), to: Math.min(chat.messages.length - 1, review.range.to) }
+    : null;
+  const viewIndexes = range
+    ? chat.messages.map((_, i) => i).slice(range.from, range.to + 1)
+    : chat.messages.map((_, i) => i);
+
+  const chatArea = viewIndexes.map((i) => {
+    const msg = chat.messages[i];
     const overlay = overlayMap.get(i);
     const insightHtml = overlay && overlay.insight ? withToggleAffordance(review.insights[overlay.insight]) : null;
     return renderMessage(msg, overlay, insightHtml, imgMap);
@@ -90,7 +100,7 @@ async function renderCourseware(chat, review) {
 
   const customerLabel = chat.meta.customer || chat.meta.orderId || '';
   // 系统消息（机器人自动回复/欢迎语）必须画出来：漏掉它们会把“机器人已答、客服只发了个表情”当成客服不答问题。
-  const hasSystem = chat.messages.some((m) => m.role === 'system');
+  const hasSystem = viewIndexes.some((i) => chat.messages[i].role === 'system');
   const sysCss = hasSystem ? '\n.from-sys{justify-content:center}.from-sys .msg-body{max-width:82%}\n.from-sys .msg-meta{justify-content:center}.from-sys .bubble{background:#f4f7fb;border:1px dashed #cfdaea;color:#5b6b80;font-size:12.5px;border-radius:12px;box-shadow:none}' : '';
   const sysHint = hasSystem ? '灰色虚线框＝机器人自动回复/系统消息。' : '';
   // 标题只进浏览器标签页（<title>）；页面内不再做大标题头/摘要卡，打开即正文。
@@ -189,8 +199,10 @@ body.show-cid .cid{display:inline}
     html,
     report: {
       messageCount: chat.messages.length,
+      shownMessageCount: viewIndexes.length,
+      range,
       insightCount: Object.keys(review.insights || {}).length,
-      systemCount: chat.messages.filter((m) => m.role === 'system').length,
+      systemCount: viewIndexes.filter((i) => chat.messages[i].role === 'system').length,
       imageFailures,
       monthDir: monthDirOf(review.window || chat.meta.window)
     }
