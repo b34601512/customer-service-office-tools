@@ -3,6 +3,12 @@
 等价于 TUI：菜单7 下载完成后的「1 呼入」+「3 呼损」两张原始表的只读筛选查询。
 只读取最近一次下载落地的 result.json，不重新下载、不修改任何数据。
 
+口径（用户 2026-09-17 定稿）：
+    - 需要安排回访的 = **只看排队阶段呼损**（排队没等到人工就挂了）。
+    - IVR 阶段单独看：只有**同一客户在窗口内呼入 ≥10 次**才需要关注
+      （怀疑客户不知道怎么按数字键转人工，反复打都进不去人工）。
+      「呼入次数」= 呼入表（已接通）行数 + 呼损表（未接通）行数，按呼入时间去重。
+
 用法：
     python scripts/query_queue_loss.py                 # 今天 + 昨天
     python scripts/query_queue_loss.py --date 2026-09-15
@@ -107,6 +113,8 @@ def main() -> int:
     parser.add_argument("--days", type=int, default=2, help="回看天数（默认2=今天+昨天）")
     parser.add_argument("--stage", default="queue", choices=["queue", "all"], help="queue=只看排队阶段")
     parser.add_argument("--no-report", action="store_true", help="不写报告文件（默认会写 runtime/queue_loss_report_<日期>.txt）")
+    parser.add_argument("--ivr-threshold", type=int, default=10,
+                        help="IVR 呼损客户需要关注的呼入次数门槛（默认 10，含 10）")
     args = parser.parse_args()
 
     # 结果既打屏幕也落盘：报告路径固定按窗口结束日命名，方便次日对比与追溯。
@@ -183,6 +191,15 @@ def main() -> int:
         )
     window_loss.sort(key=lambda item: item["time"])
 
+    # 该号码在窗口内的「呼入次数」：已接通的（呼入表）+ 没接通的（呼损表），同一时间去重
+    attempts_by_phone: dict[str, set] = defaultdict(set)
+    for row in inbound_rows:
+        when = parse_dt(row.get("呼入时间"))
+        if when and start_dt <= when <= end_dt:
+            attempts_by_phone[str(row.get("主叫号码") or "").strip()].add(when)
+    for record in window_loss:
+        attempts_by_phone[record["phone"]].add(record["time"])
+
     queue_loss = [r for r in window_loss if r["isQueue"]] if args.stage == "queue" else window_loss
     ivr_loss = [r for r in window_loss if not r["isQueue"]]
 
@@ -230,11 +247,38 @@ def main() -> int:
 
     if ivr_loss:
         print("-" * 72)
-        print(f"同窗口 IVR/其他阶段呼损（{len(ivr_loss)} 条，仅参考，不算排队呼损）")
+        print(f"同窗口 IVR/其他阶段呼损（{len(ivr_loss)} 条，不算排队呼损）")
         print("-" * 72)
         for record in ivr_loss:
-            print(f"  {record['timeText']}｜{record['phone']}｜{record['stage']}｜停留{record['ivr']}秒｜{record['city']}")
+            次数 = len(attempts_by_phone.get(record["phone"], ()))
+            标记 = " ⚠需关注" if 次数 >= args.ivr_threshold else ""
+            print(
+                f"  {record['timeText']}｜{record['phone']}｜{record['stage']}｜停留{record['ivr']}秒｜"
+                f"{record['city']}｜窗口内呼入{次数}次{标记}"
+            )
         print()
+
+    # IVR 例外规则：同一客户呼入次数达到门槛才需要人工关注（怀疑不会按数字键转人工）
+    ivr_focus: dict[str, list] = {}
+    for record in ivr_loss:
+        次数 = len(attempts_by_phone.get(record["phone"], ()))
+        if 次数 >= args.ivr_threshold:
+            ivr_focus.setdefault(record["phone"], []).append({"record": record, "count": 次数})
+    最高次数 = max((len(attempts_by_phone.get(r["phone"], ())) for r in ivr_loss), default=0)
+    print("-" * 72)
+    print(f"IVR 呼损里需要关注的客户（窗口内呼入 ≥{args.ivr_threshold} 次）：{len(ivr_focus)} 个")
+    print("-" * 72)
+    if not ivr_focus:
+        print(f"（无：窗口内 IVR 呼损客户的呼入次数都低于 {args.ivr_threshold} 次，最高 {最高次数} 次）")
+    for phone, items in ivr_focus.items():
+        记录 = items[0]["record"]
+        print(
+            f"  {phone}｜窗口内呼入 {items[0]['count']} 次｜最近一次呼损 {记录['timeText']}｜"
+            f"{记录['stage']} 停留{记录['ivr']}秒｜{记录['city']}｜"
+            f"处理状态:{记录['handleStatus'] or '未处理'}"
+            f"（可能是不知道怎么按数字键转人工）"
+        )
+    print()
 
     if report_handle is not None:
         # 先把 stdout 还原，再关文件，否则收尾这句会写到已关闭的文件上（2026-09-16 实际踩到）。
