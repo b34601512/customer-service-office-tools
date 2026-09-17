@@ -117,6 +117,27 @@ function runSelfCheck(html, { review, report, chat }) {
   add(vaguePrice.length === 0 ? 'ok' : 'warn',
     `建议话术不用“以价格为准”敷衍（到手价按主图讲 ${vaguePrice.length} 处${vaguePrice.length ? '：' + vaguePrice.slice(0, 2).join(' / ') : ''}）`);
 
+  // 17) 每个解析只允许说一句话（2026-09-17 用户要求：强迫模型只说最重要的重点）
+  // 计数范围：why（为什么不行）+ arrow-note（要点）+ tips（小贴士）——合起来只能一句。
+  // 不计入：<summary> 标题、col bad 里的客服原话、col good 里的建议话术（脚本不算解说）。
+  const longInsights = [];
+  const splitSentences = (text) => String(text || '')
+    .replace(/\s+/g, ' ')
+    .split(/[。！？!?…~～]/)
+    .map((x) => x.trim())
+    .filter((x) => x.length >= 2);
+  for (const [id, raw] of Object.entries(review.insights || {})) {
+    const commentary = String(raw)
+      .replace(/<summary>[\s\S]*?<\/summary>/g, ' ')
+      .replace(/<div class="col (?:bad|good)">[\s\S]*?<p>[\s\S]*?<\/p>/g, ' ')
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/&nbsp;/g, ' ');
+    const n = splitSentences(commentary).length;
+    if (n > 1) longInsights.push(`解析 ${id}（${n} 句）`);
+  }
+  add(longInsights.length === 0 ? 'ok' : 'warn',
+    `解析解说只允许一句话（超出 ${longInsights.length} 处${longInsights.length ? '：' + longInsights.slice(0, 2).join(' / ') : ''}）`);
+
   return items;
 }
 
