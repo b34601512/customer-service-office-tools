@@ -14,7 +14,13 @@
 工作目录：`D:\桌面\办公软件\13.客服培训课件制作\`（所有命令在此目录跑）。
 
 ```bash
-# 京东抓取（需已登录京东后台 + Chrome 调试端口；端口/页面标题匹配见 runtime/config/config.json，本项目实测 9223）
+# 京东抓取（需已登录京东后台 + Chrome 调试端口；端口/页面标题匹配见 runtime/config/config.json）
+# ⚠ 先看登录的是哪家店：13号 默认 profile = 京东6店/自营（runtime/browser-profile-jd6，端口 9223）
+#   京3（德迩杰官方旗舰店/POP，客服账号 DEDAKJ器械店--小黛）= 另一个独立 profile：
+#     runtime/browser-profile-jd3，端口 9224，先开 https://jdcs.jd.com/index.action?pid=70208233091 登录（滑块/短信叫人过），
+#     再开 https://shop.jd.com/jdm/kefu/kf-manage-lite/#/UtilsSetting/ChatLog 取数，命令加 --port 9224
+# ⚠ 顾客ID 别照截图抄：截图里 jd_xxx 很容易看错（实例 2026-09-17：jd_7zsrgjfbmdqscxv 被读成 …qdscyv，查成“暂无数据”）；
+#   要在后台列表里核对（放大截图 / 让用户复制）再取数
 node src/cli.js fetch:full <顾客ID>                       # 【课件取数用这个】抓全量（含机器人自动回复），列出会话与 sid
 node src/cli.js fetch:full <顾客ID> --save <sid> [--tag 主题]  # 保存该会话为聊天记录（含系统/自动回复消息）
 node src/cli.js fetch:list --start 2026-08-05            # 旧口径列表（不含机器人）：只用于找 sid/日期，做课件别用它取内容
