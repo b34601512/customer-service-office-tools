@@ -117,6 +117,21 @@ function runSelfCheck(html, { review, report, chat }) {
   add(vaguePrice.length === 0 ? 'ok' : 'warn',
     `建议话术不用“以价格为准”敷衍（到手价按主图讲 ${vaguePrice.length} 处${vaguePrice.length ? '：' + vaguePrice.slice(0, 2).join(' / ') : ''}）`);
 
+  // 17) 篇幅：只报数、不判定（用户 2026-09-17：课件是给人读的，读累就不看了；但不卡死字数，由模型自己把握）
+  const lenOf = (v) => String(v || '').replace(/&nbsp;/g, ' ').replace(/\s+/g, '').length;
+  let maxNoteLen = 0;
+  let maxScriptLen = 0;
+  for (const raw of Object.values(review.insights || {})) {
+    const commentary = String(raw)
+      .replace(/<summary>[\s\S]*?<\/summary>/g, ' ')
+      .replace(/<div class="col (?:bad|good)">[\s\S]*?<p>[\s\S]*?<\/p>/g, ' ')
+      .replace(/<[^>]*>/g, ' ');
+    maxNoteLen = Math.max(maxNoteLen, lenOf(commentary));
+    const script = String(raw).match(/<div class="col good">[\s\S]*?<p>([\s\S]*?)<\/p>/);
+    if (script) maxScriptLen = Math.max(maxScriptLen, lenOf(script[1].replace(/<[^>]*>/g, '')));
+  }
+  add('ok', `解析篇幅参考（只报数、不判定：人是会读累的，自己把握）：解说最多 ${maxNoteLen} 字${maxScriptLen ? `／建议话术最多 ${maxScriptLen} 字` : ''}`);
+
 
   return items;
 }
