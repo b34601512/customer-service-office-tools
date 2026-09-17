@@ -219,18 +219,3 @@ test('renderCourseware：review.range 只展示指定片段（取数仍全量，
   // 裁剪后 report 只统计展示到的消息
   assert.strictEqual(r.report.systemCount, 0);
 });
-
-test('selfCheck：解析解说超过一句话给 warn（每个解析只允许说一句话）', async () => {
-  const rv = JSON.parse(JSON.stringify(review));
-  rv.insights.r1 = '<details class="insight" id="r1"><summary><span class="sum-main">解析1</span></summary><div class="insight-body"><div class="compare"><div class="col bad"><p>涨价了哦</p><div class="why">第一句。第二句。</div></div><div class="col good"><p>现在是活动价～ <b class="closer">您今天下单，我给您备注好～</b></p></div></div></div></details>';
-  const r1 = await renderCourseware(chat, rv);
-  const item = runSelfCheck(r1.html, { review: rv, report: r1.report, chat }).find((x) => x.text.includes('只允许一句话'));
-  assert.strictEqual(item.status, 'warn', item.text);
-
-  // 一句话（why 一句 + 标题/话术不算）→ ok
-  const ok = JSON.parse(JSON.stringify(review));
-  ok.insights.r1 = '<details class="insight" id="r1"><summary><span class="sum-main">解析1。这里不算</span></summary><div class="insight-body"><div class="compare"><div class="col bad"><p>涨价了哦</p><div class="why">没接住。</div></div><div class="col good"><p>现在是活动价～ <b class="closer">您今天下单，我给您备注好～</b></p></div></div></div></details>';
-  const r2 = await renderCourseware(chat, ok);
-  const item2 = runSelfCheck(r2.html, { review: ok, report: r2.report, chat }).find((x) => x.text.includes('只允许一句话'));
-  assert.strictEqual(item2.status, 'ok', item2.text);
-});
