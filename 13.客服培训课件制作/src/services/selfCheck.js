@@ -69,12 +69,11 @@ function runSelfCheck(html, { review, report, chat }) {
   add(!hasGoodCol || closerCount > 0 ? 'ok' : 'warn', `逼单收尾句已高亮（closer ${closerCount} 处）`);
 
   // 13) 尽量发现做得好的地方并鼓励（2026-09-17 用户要求）
-  // 解析不要全是挑错：至少留 1 处“做对了”的正面解析（不挂 bad），学员才知道标准长什么样
+  // 引导，不是硬指标：只报个数，不给 warn（免得为了消灭提醒去硬夸、尬夸，用户明确不要）
   const insightIds = Object.keys(review.insights || {});
   const badIds = new Set((review.overlays || []).filter((o) => o.bad && o.insight).map((o) => o.insight));
   const positiveCount = insightIds.filter((id) => !badIds.has(id)).length;
-  add(insightIds.length === 0 || positiveCount > 0 ? 'ok' : 'warn',
-    `至少 1 处“做对了”的正面解析（正面 ${positiveCount} / 解析 ${insightIds.length}${positiveCount ? '' : ' → 全是挑错，找一处做得好的并鼓励'}）`);
+  add('ok', `正面解析 ${positiveCount} / 解析总数 ${insightIds.length}（有真实可夸的就鼓励，没有不硬夸）`);
 
   return items;
 }

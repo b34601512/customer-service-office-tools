@@ -147,15 +147,16 @@ test('overlay.textOverride 只改展示文本、不动聊天记录原文', async
   assert.strictEqual(chat.messages[1].text, '现在是涨价了哦', '聊天记录原文不能被修改');
 });
 
-test('selfCheck：全是挑错时提醒「至少 1 处正面解析」；有一处做对了就 ok', async () => {
-  const allBad = JSON.parse(JSON.stringify(review)); // 默认 3 个解析全挂 bad
+test('selfCheck：正面解析只报个数，不给 warn（不逼着硬夸）', async () => {
+  const allBad = JSON.parse(JSON.stringify(review)); // 默认 3 个解析全挂 bad、没有做对的
   const r1 = await renderCourseware(chat, allBad);
-  const warnItem = runSelfCheck(r1.html, { review: allBad, report: r1.report, chat }).find((x) => x.text.includes('至少 1 处'));
-  assert.strictEqual(warnItem.status, 'warn', '全是挑错应给 warn（不阻断）');
+  const item = runSelfCheck(r1.html, { review: allBad, report: r1.report, chat }).find((x) => x.text.includes('正面解析'));
+  assert.strictEqual(item.status, 'ok', '全是挑错也只报个数，不给 warn（免得硬夸）');
 
   const withPraise = JSON.parse(JSON.stringify(review));
-  withPraise.overlays[0] = { i: 1, insight: 'r1' }; // 第 1 个解析改成正面（不挂 bad）
+  withPraise.overlays[0] = { i: 1, insight: 'r1' }; // 有真实可夸的：第 1 个解析改成正面
   const r2 = await renderCourseware(chat, withPraise);
-  const okItem = runSelfCheck(r2.html, { review: withPraise, report: r2.report, chat }).find((x) => x.text.includes('至少 1 处'));
-  assert.strictEqual(okItem.status, 'ok', '有正面解析应为 ok');
+  const item2 = runSelfCheck(r2.html, { review: withPraise, report: r2.report, chat }).find((x) => x.text.includes('正面解析'));
+  assert.strictEqual(item2.status, 'ok');
+  assert.ok(/正面解析 1 \/ 解析总数 2/.test(item2.text), item2.text);
 });
