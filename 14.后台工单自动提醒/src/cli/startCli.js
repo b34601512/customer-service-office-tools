@@ -12,12 +12,9 @@ const { runSelectMenu } = require("./tuiSelect");
 function printHelp() {
   console.log(`
 14号后台工单自动提醒 —— 命令用法
-  node src/cli/startCli.js once                立即巡检一轮（发真实提醒）
-  node src/cli/startCli.js once --dry-run      巡检一轮但只演练不发送
-  node src/cli/startCli.js run                 启动常驻监控（窗口保持打开，发现新工单发企微）
-  node src/cli/startCli.js run --dry-run       常驻但只演练不发送（真发前验证用）
+  node src/cli/startCli.js once                立即巡检一轮（发现新工单就发提醒）
+  node src/cli/startCli.js run                 启动常驻监控（窗口保持打开）
   node src/cli/startCli.js login <店铺key>     拉起该店铺的可见浏览器，人工登录后保持登录态
-  node src/cli/startCli.js test-notify         向企微群发送一条测试提醒
   node src/cli/startCli.js status              查看各提醒源最近一次计数与登录状态
   node src/cli/startCli.js duty                查看今日值班/当前在班与底色（验证金山排班读取）
   node src/cli/startCli.js menu                进入交互菜单
@@ -62,14 +59,12 @@ async function renderDuty() {
 // 菜单：方向键 TUI（1 号那种风格）——↑↓选择、数字键直达、回车执行；
 // 非交互环境（管道/被脚本调用）自动回退到输入式菜单，保证自动化仍能跑。
 const 菜单项 = [
-  { key: "1", label: "立即巡检一轮（真发）", action: "once" },
-  { key: "2", label: "启动常驻监控（真发企微）", action: "run" },
-  { key: "3", label: "停止常驻监控", action: "stop" },
-  { key: "8", label: "演练常驻监控（只判断不发送）", action: "dryRun" },
-  { key: "4", label: "登录辅助（输入店铺key）", action: "login" },
-  { key: "5", label: "查看状态", action: "status" },
-  { key: "6", label: "发送一条测试提醒", action: "testNotify" },
-  { key: "7", label: "今日值班 / 在班@名单", action: "duty" },
+  { key: "1", label: "启动常驻监控", action: "run" },
+  { key: "2", label: "停止常驻监控", action: "stop" },
+  { key: "3", label: "立即巡检一轮", action: "once" },
+  { key: "4", label: "查看状态", action: "status" },
+  { key: "5", label: "登录辅助（输入店铺key）", action: "login" },
+  { key: "6", label: "今日值班 / 在班@名单", action: "duty" },
   { key: "0", label: "退出", action: "quit" }
 ];
 
@@ -99,7 +94,7 @@ async function runMenu() {
         action = "quit";
       }
     } else {
-      const answer = (await ask("\n[1]巡检 [2]常驻监控(真发) [3]停止 [8]演练常驻 [4]登录 [5]状态 [6]测试提醒 [7]值班 [0]退出\n请选择: ")).trim();
+      const answer = (await ask("\n[1]启动常驻监控 [2]停止 [3]立即巡检一轮 [4]状态 [5]登录 [6]今日值班 [0]退出\n请选择: ")).trim();
       const 命中 = 菜单项.find((item) => item.key === answer);
       action = 命中 ? 命中.action : "";
     }
@@ -107,15 +102,14 @@ async function runMenu() {
     if (action === "once") {
       const r = await monitorOnce().catch((e) => (log("菜单", "巡检", "失败", e.message), null));
       if (r) console.log(`完成：事件 ${r.events.length} 个，发送成功 ${r.sent.filter((s) => s.ok).length} 条。`);
-    } else if (action === "run" || action === "dryRun") {
+    } else if (action === "run") {
       if (loop) { console.log("常驻监控已在运行。"); continue; }
-      const dryRun = action === "dryRun";
       // 窗口保持打开：一个店一个窗口、每轮复用；停监控不关窗口（浏览器窗口要关就手动关）。
       loop = startMonitorLoop((err, result) => {
         if (err) console.log(`本轮异常：${err.message}`);
-        else console.log(`本轮完成：事件 ${result.events.length} 个${dryRun ? "（演练，未发送）" : ""}。`);
-      }, { dryRun, keepBrowsersOpen: true });
-      console.log(dryRun ? "已启动常驻监控（演练：只判断不发送）。" : "已启动常驻监控（发现新工单会真发企微）。");
+        else console.log(`本轮完成：事件 ${result.events.length} 个。`);
+      }, { keepBrowsersOpen: true });
+      console.log("已启动常驻监控（窗口保持打开，发现新工单会发提醒）。");
     } else if (action === "stop") {
       if (loop) { loop.stop(); loop = null; } else console.log("当前没有运行中的常驻监控。");
     } else if (action === "login") {
@@ -131,10 +125,6 @@ async function runMenu() {
       }
     } else if (action === "status") {
       renderStatus();
-    } else if (action === "testNotify") {
-      const config = loadConfig();
-      await sendWecomText(config.wecom.webhookUrl, config.wecom.webhookName, "【测试】14号工单提醒链路正常，收到请忽略。");
-      console.log("测试消息已发送。");
     } else if (action === "duty") {
       await renderDuty();
     } else if (action === "quit") {
@@ -149,7 +139,7 @@ async function runMenu() {
 async function main() {
   const [, , command, ...rest] = process.argv;
   if (command === "once") {
-    const r = await monitorOnce({ dryRun: rest.includes("--dry-run") });
+    const r = await monitorOnce();
     // 输出格式在纯函数里（src/cli/formatOnceResult.js）：文案字段是 messages（数组，一单一消息）。
     for (const line of formatOnceResult(r)) {
       console.log(line);
@@ -157,16 +147,10 @@ async function main() {
     return;
   }
   if (command === "run") {
-    const dryRun = rest.includes("--dry-run");
     const loop = startMonitorLoop((err) => err && console.log(`本轮异常：${err.message}`), {
-      dryRun,
       keepBrowsersOpen: true
     });
-    console.log(
-      dryRun
-        ? "已进入常驻监控·演练模式（只判断、不发送）。浏览器窗口保持打开，Ctrl+C 只停程序、不关窗口。"
-        : "已进入常驻监控（发现新工单会发企微）。浏览器窗口保持打开，Ctrl+C 只停程序、不关窗口。"
-    );
+    console.log("已进入常驻监控（窗口保持打开，发现新工单会发提醒）。Ctrl+C 只停程序、不关窗口。");
     process.on("SIGINT", () => { loop.stop(); process.exit(0); });
     return;
   }
@@ -177,12 +161,6 @@ async function main() {
     await new Promise((resolve) => rl.question("", resolve));
     rl.close();
     await assist.close();
-    return;
-  }
-  if (command === "test-notify") {
-    const config = loadConfig();
-    await sendWecomText(config.wecom.webhookUrl, config.wecom.webhookName, "【测试】14号工单提醒链路正常，收到请忽略。");
-    console.log("测试消息已发送。");
     return;
   }
   if (command === "menu") { runMenu(); return; }

@@ -24,7 +24,7 @@ test("输入式菜单：选状态再退出，程序必须自己结束（不残�
     输出 += chunk.toString("utf8");
   });
 
-  child.stdin.write("5\n"); // 状态（只读本地）
+  child.stdin.write("4\n"); // 查看状态（只读本地）
   setTimeout(() => child.stdin.write("0\n"), 1500); // 退出
 
   const 结果 = await new Promise((resolve) => {

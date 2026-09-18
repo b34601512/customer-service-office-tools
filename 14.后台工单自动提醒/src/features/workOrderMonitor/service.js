@@ -28,7 +28,7 @@ function saveMonitorState(state) {
   writeJsonAtomic(appConfig.monitorStatePath, state);
 }
 
-// 执行一轮完整巡检。dryRun=true 时只判定不发送不改基线（供测试与预览）。
+// 执行一轮完整巡检：判定 → 有人值班就 @ 上 → 发企微 → 发成功才推进基线。
 // probeStoreImpl/sendTextImpl 仅依赖注入点：测试/AI 可传假实现跑同一条真实链路（#2705）。
 async function monitorOnce(options = {}) {
   const config = options.configOverride || loadConfig();
@@ -85,7 +85,7 @@ async function monitorOnce(options = {}) {
     merchantPendingRepeatMinutes: config.monitor.merchantPendingRepeatMinutes,
     alertOnFirstRun: config.monitor.alertOnFirstRun !== false
   }, new Date());
-  // 注意：这里不立即落盘。dryRun 绝不改基线；真实运行要等发送结果确定后再写，避免演练吞事件、发送失败丢提醒。
+  // 注意：这里不立即落盘。要等发送结果确定后再写，避免"发送失败却把基线推进"导致漏提醒。
 
   const failedSourceIds = new Set();
   const sent = [];
@@ -99,13 +99,6 @@ async function monitorOnce(options = {}) {
     // 一单一消息：事件可能展开成多条，逐条发送。
     const messages = buildAlertMessages(event, mentionPlan);
     const mentions = Array.from(new Set([...(event.meta.mentionedMobileList || []), ...(mentionPlan ? mentionPlan.mobiles : [])]));
-    if (options.dryRun) {
-      for (const content of messages) {
-        log("巡检", event.sourceId, "事件(演练不发送)", content.replace(/\n/g, " ⏎ "));
-      }
-      sent.push({ event, messages, ok: true, dryRun: true });
-      continue;
-    }
     try {
       for (const content of messages) {
         await sendTextImpl(config.wecom.webhookUrl, config.wecom.webhookName || "工单提醒群", content, mentions);
@@ -120,27 +113,25 @@ async function monitorOnce(options = {}) {
     }
   }
 
-  if (!options.dryRun) {
-    for (const id of failedSourceIds) {
-      if (prevSnapshot.sources[id]) {
-        state.sources[id] = prevSnapshot.sources[id];
-      } else {
-        delete state.sources[id];
-      }
+  // 发送失败的源回滚到本轮前状态（本轮不推进它的基线）；下轮计数仍高于旧基线会重新触发，提醒不丢。
+  for (const id of failedSourceIds) {
+    if (prevSnapshot.sources[id]) {
+      state.sources[id] = prevSnapshot.sources[id];
+    } else {
+      delete state.sources[id];
     }
-    saveMonitorState(state);
   }
+  saveMonitorState(state);
 
   return { events, sent, observations };
 }
 
-// options.dryRun=true：只判定不发送（演练常驻，供真发前验证）。
+// 常驻监控：先用/拉起各店窗口，然后每轮跑一次完整巡检（发现新工单就发提醒）。
 // options.keepBrowsersOpen（默认 true）：店铺窗口留着不关，每轮复用；stop() 只停程序、不关窗口。
 // options.monitorOnceImpl / options.sessionPool：依赖注入点，测试用假实现跑同一条链路。
 function startMonitorLoop(onRoundDone, options = {}) {
   const config = loadConfig();
   const intervalMs = (Number(config.monitor.intervalMinutes) || 5) * 60000;
-  const dryRun = options.dryRun === true;
   const keepBrowsersOpen = options.keepBrowsersOpen !== false;
   const monitorOnceImpl = options.monitorOnceImpl || monitorOnce;
   const pool = options.sessionPool || (keepBrowsersOpen ? createStoreBrowserPool(options.poolOptions) : null);
@@ -149,7 +140,7 @@ function startMonitorLoop(onRoundDone, options = {}) {
     "监控",
     "常驻",
     "启动",
-    `间隔=${config.monitor.intervalMinutes}分钟 dryRun=${dryRun} 窗口保持=${keepBrowsersOpen}`
+    `间隔=${config.monitor.intervalMinutes}分钟 窗口保持=${keepBrowsersOpen}`
   );
 
   // 预热：先把每个店铺的窗口拉起来（人也能看到页面），之后每轮复用同一个窗口。
@@ -171,7 +162,7 @@ function startMonitorLoop(onRoundDone, options = {}) {
   const runOnceSafely = async () => {
     if (!running) return;
     try {
-      const result = await monitorOnceImpl({ dryRun, sessionPool: pool });
+      const result = await monitorOnceImpl({ sessionPool: pool });
       if (onRoundDone) onRoundDone(null, result);
     } catch (error) {
       log("监控", "常驻", "本轮异常", error.message);

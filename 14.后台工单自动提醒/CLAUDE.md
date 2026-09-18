@@ -73,18 +73,16 @@
 npm install
 # 1) 先为每个店铺完成一次登录（会打开浏览器，人工登录京麦后回车关闭）
 node src/cli/startCli.js login jd1
-# 2) 巡检一轮（--dry-run 只演练不发消息）
-node src/cli/startCli.js once --dry-run
-# 3) 常驻监控 / 交互菜单 / 链路自测
-node src/cli/startCli.js run --dry-run   # 常驻但只演练不发送（真发前验证用）
+# 2) 巡检一轮（发现新工单就发提醒）
+node src/cli/startCli.js once
+# 3) 常驻监控 / 交互菜单 / 值班查询
 node src/cli/startCli.js run             # 常驻监控：窗口保持打开，发现新工单发企微
+  # 注：这是真项目，没有演练/测试入口（dry-run、test-notify 已删，tests/noTestModeGuard.test.js 锁死不许加回）
 node src/cli/startCli.js menu
-node src/cli/startCli.js test-notify
-node src/cli/startCli.js duty    # 验证金山排班读取：今日售后班次/底色/当前在班/@名单
+node src/cli/startCli.js duty    # 看金山排班：今日售后班次/底色/当前在班/@名单
 npm test
 ```
 
-入口统一为 `启动监控.bat`（唯一 bat：回车=`run` 真发、`d`=`run --dry-run` 演练、`m`=`menu`；老的菜单 bat 已并入删除）。
 窗口生命周期实测（2026-09-18）：正常退出、单进程强杀都**不关窗口**；只有整棵进程树被杀才会连带窗口，
 下次启动自动重开（登录态在 profile 里，不会丢）。
 

@@ -8,7 +8,7 @@ const { resolveKey, createSelectMenu } = require("../src/cli/tuiSelect");
 const 菜单 = [
   { key: "1", label: "立即巡检一轮", action: "once" },
   { key: "2", label: "启动常驻监控", action: "run" },
-  { key: "8", label: "演练常驻监控", action: "dryRun" },
+  { key: "4", label: "查看状态", action: "status" },
   { key: "0", label: "退出", action: "quit" }
 ];
 
@@ -40,7 +40,7 @@ test("↑↓ 移动会绕回，回车执行当前项", () => {
 
 test("数字键直达：按一下就执行，不用再按回车", () => {
   const menu = 造菜单();
-  assert.deepStrictEqual(menu.handleKey("8"), { action: "dryRun" });
+  assert.deepStrictEqual(menu.handleKey("4"), { action: "status" });
   assert.strictEqual(menu.index, 2, "直达后高亮要跟着走");
   assert.deepStrictEqual(menu.handleKey("0"), { action: "quit" });
   assert.strictEqual(menu.handleKey("9"), null, "没有对应选项的数字不许瞎触发");
@@ -146,8 +146,8 @@ test("终端层：进备用屏+隐藏光标+开 raw，方向键移动后回车�
 test("终端层：数字键直达；Ctrl+C 返回 quit；非交互环境返回 null 让调用方回退", async () => {
   const tty = makeFakeTty();
   const promise = runSelectMenu({ title: "14号", items: 菜单, stdin: tty.stdin, stdout: tty.stdout });
-  tty.按键("8");
-  assert.strictEqual(await promise, "dryRun", "数字键要直达对应动作");
+  tty.按键("4");
+  assert.strictEqual(await promise, "status", "数字键要直达对应动作");
 
   const tty2 = makeFakeTty();
   const promise2 = runSelectMenu({ title: "14号", items: 菜单, stdin: tty2.stdin, stdout: tty2.stdout });

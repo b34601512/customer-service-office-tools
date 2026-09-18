@@ -29,7 +29,7 @@ function resolveKey(buffer) {
   return null;
 }
 
-// items: [{ key: "2", label: "启动常驻监控（真发企微）", action: "run" }]
+// items: [{ key: "1", label: "启动常驻监控", action: "run" }]
 // handleKey 返回 { action } 表示要执行；返回 null 表示只是移动光标；"cancelled" 表示用户退出。
 function createSelectMenu(options) {
   const items = options.items || [];

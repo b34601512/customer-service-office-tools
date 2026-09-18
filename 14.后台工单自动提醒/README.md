@@ -13,15 +13,14 @@
 1. `npm install`
 2. 复制 `project-config/platform-config.example.json` 为 `platform-config.json`，填企微机器人与店铺。
 3. 双击「启动监控.bat」（**唯一入口**）→ 进**方向键菜单**（↑↓ 选择、数字键直达、回车执行，风格同 1 号控制台）：
-   `[2]` 启动常驻监控（真发）、`[8]` 演练常驻、`[3]` 停止、`[4]` 登录辅助、`[5]` 状态、`[0]` 退出。各店浏览器窗口会一直开着，别关。命令行等价：
+   `[1]` 启动常驻监控、`[2]` 停止、`[3]` 立即巡检一轮、`[4]` 查看状态、`[5]` 登录辅助、`[6]` 今日值班、`[0]` 退出。各店浏览器窗口会一直开着，别关。
+   （**这是真项目，没有演练/测试入口**：dry-run、测试提醒已彻底删除，`tests/noTestModeGuard.test.js` 锁死不许加回。）
 
 ```powershell
 node src/cli/startCli.js login jd1          ; 首次为店铺登录一次（弹浏览器人工登录）
-node src/cli/startCli.js once --dry-run     ; 巡检一轮，演练不发消息
-node src/cli/startCli.js run --dry-run      ; 常驻但只演练不发送（真发前验证用）
-node src/cli/startCli.js run                ; 常驻监控（发现新工单发企微）
-node src/cli/startCli.js duty               ; 验证今日值班/底色/当前在班@名单
-node src/cli/startCli.js test-notify        ; 验证企微链路
+node src/cli/startCli.js once               ; 巡检一轮（发现新工单就发提醒）
+node src/cli/startCli.js run                ; 常驻监控（窗口保持打开）
+node src/cli/startCli.js duty               ; 看今日值班/底色/当前在班@名单
 npm test
 ```
 

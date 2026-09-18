@@ -74,25 +74,6 @@ test("真实链路：发送失败→基线回滚，下一轮重新触发不丢�
   assert.strictEqual(loadMonitorState().sources["jd/s1/wo"].counts["平台协同工单"], 5);
 });
 
-test("真实链路：dryRun 不发送也不改基线", async () => {
-  const before = fs.readFileSync(path.join(home, "state", "monitor-state.json"), "utf8");
-  const r = await monitorOnce({
-    dryRun: true,
-    configOverride: makeConfig(),
-    probeStoreImpl: probe({ "平台协同工单": 9 }),
-    sendTextImpl: async () => { throw new Error("演练不该发送"); }
-  });
-  assert.strictEqual(r.events.length, 1);
-  assert.strictEqual(fs.readFileSync(path.join(home, "state", "monitor-state.json"), "utf8"), before);
-  // 清理：dryRun 没动基线，随后非演练轮也不会因此多发（9 未观测为基线，计数仍 5）
-  const r2 = await monitorOnce({
-    configOverride: makeConfig(),
-    probeStoreImpl: probe({ "平台协同工单": 5 }),
-    sendTextImpl: async () => {}
-  });
-  assert.strictEqual(r2.events.length, 0);
-});
-
 test("真实链路：登录失效→真实发送 login_required", async () => {
   const sent = [];
   const r = await monitorOnce({
