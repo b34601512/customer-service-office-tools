@@ -115,8 +115,15 @@ async function prepareTmallResponseTimeExportPage(page, options = {}) {
   try {
     await waitForTmallAverageResponseTimeReady(page, timeoutMs);
   } catch (错误) {
-    // 只试一次：把现场信息（当前地址 + 原始报错）一次性写进日志，便于事后定位而不是靠重试
-    const 当前地址 = (await page.url?.().catch(() => "")) || "";
+    // 只试一次：把现场信息（当前地址 + 原始报错）一次性写进日志，便于事后定位而不是靠重试。
+    // 注意：`page.url()` 是同步返回字符串，过去写成 `page.url().catch(...)` 会抛
+    // “page.url(...).catch is not a function”，把真正的失败原因盖掉（2026-09-18 实际踩到）。
+    let 当前地址 = "";
+    try {
+      当前地址 = String(page.url() || "");
+    } catch (读地址错误) {
+      当前地址 = `<读当前地址失败：${读地址错误 && 读地址错误.message ? 读地址错误.message : 读地址错误}>`;
+    }
     log(
       "主线:失败",
       "天猫平均响应时间",

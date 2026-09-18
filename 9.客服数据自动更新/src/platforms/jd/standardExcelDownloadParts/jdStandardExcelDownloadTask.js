@@ -112,10 +112,30 @@ async function runJdStandardExcelDownloadWithDependencies(
       onProgress
     });
   } finally {
+    // 收尾阶段绝对不允许盖住真实失败原因：
+    // 2026-09-18 实际踩到：京东 1店/3店 导出后 60 秒没落盘（真错误是“60 秒内没检测到新文件”），
+    // 但 finally 里“恢复人工下载目录”抛了 newCDPSession … closed，把真原因整个换掉，
+    // 日志只剩 CDP 错误，现场就丢了。所以这里：收尾出错只大声记日志，不打断结论。
     try {
       await restoreJdManualDownloadDir(page, configuredDownloadDir, activeDependencies);
+    } catch (恢复错误) {
+      log(
+        "主线:失败",
+        "京东下载",
+        "恢复人工下载目录失败",
+        `不影响本次下载结论，仅记录（可能是页面/浏览器已关闭）：${恢复错误 && 恢复错误.message ? 恢复错误.message : 恢复错误}`
+      );
     } finally {
-      await activeDependencies.disconnectFromChrome(browser, "京东标准 Excel 下载流程已结束，主动断开调试连接");
+      try {
+        await activeDependencies.disconnectFromChrome(browser, "京东标准 Excel 下载流程已结束，主动断开调试连接");
+      } catch (断开错误) {
+        log(
+          "主线:失败",
+          "京东下载",
+          "断开调试连接失败",
+          `不影响本次下载结论，仅记录：${断开错误 && 断开错误.message ? 断开错误.message : 断开错误}`
+        );
+      }
     }
   }
 }
@@ -126,5 +146,7 @@ async function runJdStandardExcelDownload(resolvedConfig, downloadPlan, onProgre
 }
 
 module.exports = {
-  runJdStandardExcelDownload
+  runJdStandardExcelDownload,
+  // 带依赖注入的入口：测试用它锁死“收尾出错不许盖住真实失败原因”（2026-09-18 实战踩到）。
+  runJdStandardExcelDownloadWithDependencies
 };
