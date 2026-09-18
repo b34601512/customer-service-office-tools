@@ -72,7 +72,10 @@ function buildSentFrameRecorder() {
     frames,
     record: {
       url: "wss://zan-mh.xiaoshunai.com/socket.io/?token=secret",
-      outboundFrames: ["0{\"sid\":\"x\"}", "40"],
+      // 真实探针的记法：命名空间跟着连接帧永久记住，最近帧只是排障用（可能被心跳挤满）。
+      outboundFrames: ["0{\"sid\":\"x\"}", "40/client?token=secret,"],
+      seenSocketIoNamespaces: ["client"],
+      rootNamespaceSeen: false,
       lastInboundFrame: "",
       socket: {
         readyState: 1,
@@ -134,7 +137,8 @@ test("运营超时应该通过页面 socket 发出 assignChat 事件并登记待
 
   assert.equal(result.status, "sent");
   assert.equal(recorder.frames.length, 1);
-  assert.equal(recorder.frames[0], "42[\"assignChat\",{\"chatId\":\"chat-1\",\"groupId\":\"group\",\"assigneeId\":\"pre-ye\"}]");
+  // 转接必须带 /client 前缀（2026-09-18 山韵摄影事故：不带前缀的帧平台直接丢弃）。
+  assert.equal(recorder.frames[0], "42/client,[\"assignChat\",{\"chatId\":\"chat-1\",\"groupId\":\"group\",\"assigneeId\":\"pre-ye\"}]");
 
   const pendingList = listPendingTransferVerifications();
   assert.equal(pendingList.length, 1);
@@ -222,6 +226,54 @@ test("页面没有可用 socket 时按失败处理并通知主管", async () => 
   assert.equal(listPendingTransferVerifications().length, 0);
   assert.equal(sentBodies.length, 1);
   assert.match(sentBodies[0].text.content, /页面没有可用的 socket 连接/);
+});
+
+test("页面 socket 的命名空间还没暴露时绝不发无名帧，按失败处理并通知主管", async () => {
+  publishOnlinePresenceSnapshot({
+    rowsByStaffName: {
+      叶炳辉: { staffName: "叶炳辉", staffGroup: "pre_sales", transferEnabled: true }
+    }
+  });
+  const sentFrames = [];
+  const page = buildPageWithSocket([
+    {
+      url: "wss://zan-mh.xiaoshunai.com/socket.io/?token=secret",
+      // 只见过引擎心跳，没有任何 socket.io 帧 → 不知道命名空间。
+      outboundFrames: ["3", "3"],
+      seenSocketIoNamespaces: [],
+      rootNamespaceSeen: false,
+      lastInboundFrame: "",
+      socket: { readyState: 1, send(frame) { sentFrames.push(frame); } }
+    }
+  ]);
+  const sentBodies = [];
+  global.fetch = async (url, options) => {
+    sentBodies.push(JSON.parse(options.body));
+    return {
+      ok: true,
+      status: 200,
+      async json() {
+        return { errcode: 0, errmsg: "ok" };
+      }
+    };
+  };
+
+  const result = await attemptTimeoutAutoTransfer({
+    page,
+    scheduleService: { readDailyShiftMap: async () => buildScheduleData() },
+    candidate: { chatId: "chat-5", reminderKind: "timeout", customerName: "客户戊" },
+    assignment,
+    memberMapByUserId,
+    replyConfig: config,
+    now: new Date(2026, 8, 16, 10, 0)
+  });
+
+  assert.equal(result.status, "failed");
+  assert.equal(result.reason, "chat_namespace_unknown");
+  assert.equal(sentFrames.length, 0);
+  assert.equal(listPendingTransferVerifications().length, 0);
+  assert.equal(sentBodies.length, 1);
+  assert.match(sentBodies[0].text.content, /超时自动转接失败/);
 });
 
 test("自动转接开关关闭时不应该读排班也不发通知", async () => {

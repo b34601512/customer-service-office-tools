@@ -201,7 +201,9 @@ function buildSweepPage(frames) {
         __customerServiceAppSockets: [
           {
             url: "wss://zan-mh.xiaoshunai.com/socket.io/?token=secret",
-            outboundFrames: ["0{\"sid\":\"x\"}", "40"],
+            outboundFrames: ["0{\"sid\":\"x\"}", "40/client?token=secret,"],
+            seenSocketIoNamespaces: ["client"],
+            rootNamespaceSeen: false,
             lastInboundFrame: "",
             socket: {
               readyState: 1,
@@ -251,7 +253,7 @@ test("交班补判：原接待已下班时补发转接指令并记账本", async
   assert.equal(result.status, "done");
   assert.equal(result.handledCount, 1);
   assert.deepEqual(frames, [
-    "42[\"assignChat\",{\"chatId\":\"chat-handover\",\"groupId\":\"group\",\"assigneeId\":\"after-miao\"}]"
+    "42/client,[\"assignChat\",{\"chatId\":\"chat-handover\",\"groupId\":\"group\",\"assigneeId\":\"after-miao\"}]"
   ]);
   assert.equal(listPendingTransferVerifications().length, 1);
   const attempt = readAutoTransferSweepAttempt("chat-handover");

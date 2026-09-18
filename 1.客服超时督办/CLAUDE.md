@@ -19,6 +19,7 @@
 - `src/features/shared/currentAssignment.js`：当前接待业务真源，第一依据仍是联系人接口 `assignedTo`；`assignedTo` 清空（如客服结束会话）时，按会话内最后一条人工消息发送人兜底归属为“最后接待客服”（last_handler，见 issue #621），兜不到成员映射才报未分配；渠道账号和历史操作人仍不得补定当前责任。
 - `src/features/timeoutAutoTransfer/`：超时自动转接规则层（`autoTransferSweep.js` 负责每 5 分钟的“交班补判”，兜住提醒发过之后原接待才下班/没上线的客户）。核心只有一句话“客户消息必须有人回”：原接待已过自己班次时间（含运营账号一律按不在班）时，按“同组 + 当天当班 + 接单开关开着”挑人转接，不看值班标记/组长/背景色，先当班先上线先接；跨组不转（售前处理不了售后）；当班的人都不可接就不转并@主管。
 - `src/features/transferMonitor/appSocketFrameProbe.js`：平台把“分配会话”做成 socket.io 事件（`42/client,["assignChat",...]`），没有对应 HTTP 接口；本模块在页面脚本执行前捕获页面自己的 WebSocket，并把事件帧发到聊天命名空间 `/client`。转接结果以联系人快照复核后才算成功（`autoTransferVerificationStore.js`），成功/失败都会发企微群，失败额外@主管（`autoTransferNotifier.js`）。
+  **命名空间口径（2026-09-18 复盘后唯一正确写法）**：连接/事件帧一出现就把该 socket 的命名空间**永久记住**（`seenSocketIoNamespaces`，去重、不随排障用的 40 帧环形缓冲淘汰），发送前缀只认这份记忆；**认不出命名空间时拒绝发送**（`chat_namespace_unknown`→@主管），绝不许退回无名帧——不带前缀的帧会发到根命名空间并被平台静默丢弃（表现为“指令发出去了但平台没改派”，2026-09-18 山韵摄影事故的根因）。
 - `src/features/onlinePresenceMonitor/`、`offDutyClose/`、`scheduleQuery/`：读取金山排班，检查上班监控（该到班时无人在线提醒）并处理下班监控；下班链路启动后立即检查，默认每 5 分钟复查今天和昨天。
 - `src/features/timeoutPerformance/`：记录企微群发送成功后的首次超时事实，并为 TUI 生成近 30 天或自然月对比。
 - `src/features/supervision/`：保存最近过程记录，供首页摘要和排障使用，不参与绩效统计。
