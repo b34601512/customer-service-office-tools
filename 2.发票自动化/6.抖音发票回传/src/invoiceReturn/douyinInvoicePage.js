@@ -3,7 +3,7 @@ const path = require('path');
 const zlib = require('zlib');
 const { 等待抖音登录完成, 是抖音登录页面 } = require('../browser/douyinAuthenticatedPage');
 const { 打印日志 } = require('../common/logger');
-const { 规范化店铺标识 } = require('../common/paths');
+const { 规范化店铺标识, 运行目录 } = require('../common/paths');
 const { 关闭多余抖音页面 } = require('../browser/douyinBrowserContext');
 const { 确保抖音目标店铺, 解析期望店铺身份, 读取当前抖音店铺身份, 店铺身份是否一致 } = require('../browser/douyinStoreIdentity');
 
@@ -554,6 +554,64 @@ function 选择本次抖音导出记录(candidates = [], startedAt = null) {
   return matched || candidates[0];
 }
 
+function 捕获抖音下载(context, 选项 = {}) {
+  // 解决（2026-09-18 抖音店铺5 连续两次失败后查明）：
+  // 抖音的「下载报表」可能由**弹窗页面**承载下载，而我们过去只盯主页面等 download；
+  // 那个承载页面一旦被抖音自己关掉，后续 `download.saveAs` 就报
+  // “Target page, context or browser has been closed”。
+  // 所以改成在 **context 级**捕获（谁发起的下载都算），并在拿到下载对象后**立刻落盘**。
+  const 超时毫秒 = Math.max(1000, Number(选项.超时毫秒) || 60_000);
+  return new Promise((完成, 失败) => {
+    let 已收尾 = false;
+    const 收尾 = () => {
+      已收尾 = true;
+      clearTimeout(定时器);
+      context.off('download', 处理下载);
+      context.off('close', 处理上下文关闭);
+    };
+    const 处理下载 = (download) => {
+      if (已收尾) return;
+      收尾();
+      完成(download);
+    };
+    const 处理上下文关闭 = () => {
+      if (已收尾) return;
+      收尾();
+      失败(new Error('抖音下载：浏览器上下文在下载开始前就被关闭了。'));
+    };
+    const 定时器 = setTimeout(() => {
+      if (已收尾) return;
+      收尾();
+      失败(new Error(`抖音下载：${Math.round(超时毫秒 / 1000)} 秒内没有捕获到下载事件。`));
+    }, 超时毫秒);
+    context.on('download', 处理下载);
+    context.on('close', 处理上下文关闭);
+  });
+}
+
+function 读取抖音下载现场(download, page) {
+  // 解决：落盘失败时必须留下现场（文件名/来源地址/当前页面列表），而不是只剩一句英文报错。
+  let 文件名 = '';
+  let 来源地址 = '';
+  let 页面列表 = '';
+  try {
+    文件名 = String(download?.suggestedFilename?.() || '');
+  } catch (_错误) {
+    文件名 = '<读取文件名失败>';
+  }
+  try {
+    来源地址 = String(download?.url?.() || '');
+  } catch (错误) {
+    来源地址 = `<读取来源地址失败：${错误 && 错误.message ? 错误.message : 错误}>`;
+  }
+  try {
+    页面列表 = (page?.context?.().pages?.() || []).map((条目) => 条目.url()).join(' | ');
+  } catch (错误) {
+    页面列表 = `<读取页面列表失败：${错误 && 错误.message ? 错误.message : 错误}>`;
+  }
+  return { 文件名, 来源地址, 页面列表: 页面列表 || '空' };
+}
+
 async function 点击抖音记录行下载按钮(page, rowText) {
   // 解决：下载按钮限制在目标记录行内，避免页面上多个下载按钮点错。
   const 标准文本 = String(rowText || '').trim();
@@ -566,7 +624,8 @@ async function 点击抖音记录行下载按钮(page, rowText) {
   if (await 元素是否禁用(下载按钮)) {
     throw new Error('抖音导出订单失败：目标导出记录的下载报表按钮不可用。');
   }
-  const downloadPromise = page.waitForEvent('download', { timeout: 60_000 });
+  // 2026-09-18：下载监听从“页面级”换成“上下文级”，避免下载由弹窗承载时漏接或绑错页面。
+  const downloadPromise = 捕获抖音下载(page.context());
   downloadPromise.catch(() => {});
   await 关闭抖音非业务浮层(page);
   await 触发抖音按钮DOM点击(下载按钮, '下载报表');
@@ -595,6 +654,48 @@ async function 等待并点击抖音下载报表(page, 选项 = {}) {
   throw new Error('抖音导出订单失败：导出记录页没有等到可下载报表。');
 }
 
+function 记录抖音落盘失败现场(现场文本) {
+  // 解决（2026-09-18）：控制台/监控输出会被截断，失败现场必须单独落文件才可追溯。
+  try {
+    const 文件 = path.join(运行目录, 'douyin-download-failures.log');
+    fs.appendFileSync(文件, `[${new Date().toISOString()}] ${现场文本}
+`);
+    return 文件;
+  } catch (_错误) {
+    return '';
+  }
+}
+
+async function 直取抖音下载字节(download, 目标路径, 选项 = {}) {
+  // 解决（2026-09-18）：浏览器原生 `download.saveAs` 依赖“承载下载的页面/上下文还活着”，
+  // 抖音的弹窗页可能在事件送达前就自己关了（实测：即使拿到 download 就立即 saveAs 也会报
+  // “Target page, context or browser has been closed”）。
+  // 这里换一条**不依赖页面存活**的路：用 context.request（自带登录 cookie）取同一份报表字节。
+  // 注意：这不是“重复请求平台数据”，取的就是刚生成的那一份报表 URL。
+  const { context = null } = 选项;
+  let 地址 = '';
+  try {
+    地址 = String(download?.url?.() || '');
+  } catch (错误) {
+    return { ok: false, 原因: `取不到下载地址：${错误 && 错误.message ? 错误.message : 错误}` };
+  }
+  if (!地址) return { ok: false, 原因: '取不到下载地址（download.url() 为空）' };
+  const 取数上下文 = context || null;
+  if (!取数上下文 || typeof 取数上下文.request?.get !== 'function') {
+    return { ok: false, 原因: '浏览器上下文已不可用，无法直取字节' };
+  }
+  try {
+    const 响应 = await 取数上下文.request.get(地址, { timeout: 60_000 });
+    if (!响应.ok()) return { ok: false, 原因: `直取字节失败：HTTP ${响应.status()}` };
+    const 字节 = await 响应.body();
+    if (!字节 || !字节.length) return { ok: false, 原因: '直取字节失败：响应为空' };
+    fs.writeFileSync(目标路径, 字节);
+    return { ok: true, 字节数: 字节.length };
+  } catch (错误) {
+    return { ok: false, 原因: `直取字节失败：${错误 && 错误.message ? 错误.message : 错误}` };
+  }
+}
+
 async function 下载最新抖音导出报表(page, outputDirectory, 选项 = {}) {
   // 解决：从导出记录页下载最新报表，并落盘到本项目运行目录。
   const { onAction = null, startedAt = null } = 选项;
@@ -604,9 +705,29 @@ async function 下载最新抖音导出报表(page, outputDirectory, 选项 = {}
   通知抖音动作(onAction, '正在等待抖音报表生成。');
   const download = await 等待并点击抖音下载报表(page, { startedAt, onAction });
   const exportFilePath = path.join(outputDirectory, 生成导出文件名(download.suggestedFilename()));
+  // 2026-09-18：拿到 download 后**立刻**落盘，中间不插任何 await/日志，尽量不给“承载页面被关掉”留窗口。
+  let 原生落盘错误 = null;
+  try {
+    await download.saveAs(exportFilePath);
+  } catch (保存错误) {
+    原生落盘错误 = 保存错误 && 保存错误.message ? 保存错误.message : String(保存错误);
+  }
+  if (原生落盘错误) {
+    // 不重复请求平台数据：只把刚生成的这一份报表换条路取回来（HTTP 直取，不依赖页面存活）。
+    const 直取 = await 直取抖音下载字节(download, exportFilePath, { context: page.context() });
+    if (!直取.ok) {
+      const 现场 = 读取抖音下载现场(download, page);
+      const 失败说明 =
+        `抖音导出订单失败：下载报表落盘失败（文件名=${现场.文件名 || '未知'}，来源地址=${现场.来源地址 || '未知'}，` +
+        `当前页面列表=${现场.页面列表}）：浏览器原生落盘报“${原生落盘错误}”；${直取.原因}`;
+      记录抖音落盘失败现场(失败说明);
+      通知抖音动作(onAction, `抖音报表落盘失败（未自动重试）：${原生落盘错误}`);
+      throw new Error(失败说明);
+    }
+    通知抖音动作(onAction, `浏览器原生落盘失败（${原生落盘错误}），已改用直取字节保存（${直取.字节数} 字节）。`);
+  }
   通知抖音动作(onAction, '正在保存抖音导出报表。');
-  await download.saveAs(exportFilePath);
-  const failure = await download.failure();
+  const failure = await download.failure().catch(() => null);
   if (failure) throw new Error(`抖音导出订单失败：${failure}`);
   return exportFilePath;
 }
@@ -1181,6 +1302,10 @@ module.exports = {
   打开抖音待回传发票页面,
   等待抖音待开票列表加载,
   生成导出文件名,
+  捕获抖音下载,
+  读取抖音下载现场,
+  直取抖音下载字节,
+  记录抖音落盘失败现场,
   元素是否禁用,
   触发抖音按钮DOM点击,
   读取当前页待回传订单,
