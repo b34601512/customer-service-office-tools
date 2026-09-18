@@ -216,6 +216,31 @@ test("同样都命中聊天命名空间时，取帧最多的那条", async () =>
   ]);
 });
 
+test('反向断言：判定只认“记住的命名空间”，不再回去扫最近 40 帧', async () => {
+  // 造一个"探针没记住、但最近帧里恰好有连接帧"的 record：
+  // 旧实现会从这个连接帧猜到 /client 并发出去；新实现必须当成"不知道命名空间"而拒发。
+  const sentFrames = [];
+  const records = [
+    {
+      url: "wss://zan-mh.xiaoshunai.com/socket.io/?token=secret",
+      outboundFrames: ["40/client?token=secret,", "42/client,[\"markAsRead\",{}]"],
+      seenSocketIoNamespaces: [],
+      rootNamespaceSeen: false,
+      lastInboundFrame: "",
+      socket: { readyState: 1, send(frame) { sentFrames.push(frame); } }
+    }
+  ];
+
+  const result = await sendAppSocketEvent(buildFakePage(records), {
+    eventName: "assignChat",
+    payload: { chatId: "c" }
+  });
+
+  assert.equal(result.ok, false);
+  assert.equal(result.reason, "chat_namespace_unknown");
+  assert.deepEqual(sentFrames, []);
+});
+
 test("页面没有可用 socket 时返回可读原因，不抛无关异常", async () => {
   const { records } = buildProbedRecords([{ outbound: [CLIENT_CONNECT_FRAME] }]);
   records[0].socket.readyState = 3;
