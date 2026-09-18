@@ -22,7 +22,11 @@ function parseArgs(argv) {
   return args;
 }
 
-function readCredentials(storeKey) {
+function readCredentials(storeKey, storeConfig) {
+  // 优先用 22号 本店配置里的账号密码（project-config/stores.json 不入库）
+  if (storeConfig && storeConfig.username && storeConfig.password) {
+    return { username: storeConfig.username, password: storeConfig.password, source: '22号 stores.json' };
+  }
   const candidates = [
     path.join(PROJECT_ROOT, "..", "12.店铺指标数据自动更新", "project-config", "platform-config.json"),
     path.join(PROJECT_ROOT, "..", "9.客服数据自动更新", "project-config", "platform-config.json")
@@ -51,7 +55,7 @@ async function detectHumanCheck(page) {
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   const store = resolveStore({ platform: "jd", store: args.store });
-  const credentials = readCredentials(args.store);
+  const credentials = readCredentials(args.store, store);
   if (!credentials) throw new Error(`没在 12号/9号 的 platform-config.json 里找到 ${args.store} 的账号密码`);
   log("京东登录", "开始", `${args.store}（${store.name}）`, `账号 ${credentials.username}（来自 ${credentials.source}）`);
 
