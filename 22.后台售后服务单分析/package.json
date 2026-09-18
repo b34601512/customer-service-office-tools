@@ -5,7 +5,8 @@
   "description": "后台售后服务单分析：检查漏处理的售后服务单（只读检查，不做业务动作）",
   "main": "src/tools/probe-page.js",
   "scripts": {
-    "probe": "node src/tools/probe-page.js"
+    "probe": "node src/tools/probe-page.js",
+    "test": "node --test"
   },
   "dependencies": {
     "playwright-core": "^1.62.1"
