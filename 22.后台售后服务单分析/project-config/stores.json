@@ -7,7 +7,7 @@
       "stores": [
         {
           "key": "tmall1",
-          "name": "新大洲旗舰店",
+          "name": "德达旗舰店",
           "account": "小黛",
           "profileDir": "runtime/state/browser-profiles/tmall/tmall1",
           "port": 9421,
@@ -23,7 +23,7 @@
         },
         {
           "key": "tmall6",
-          "name": "天猫6店",
+          "name": "德迩杰旗舰店",
           "account": "小黛",
           "profileDir": "runtime/state/browser-profiles/tmall/tmall6",
           "port": 9423,
