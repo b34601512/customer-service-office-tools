@@ -6,6 +6,7 @@ const { resolveDuty, buildMentionPlan } = require("../features/dutySchedule/duty
 const { loadConfig } = require("../config/projectConfigService");
 const { sendWecomText } = require("../integrations/wecomRobot");
 const { log } = require("../engine/logger");
+const { formatOnceResult } = require("./formatOnceResult");
 
 function printHelp() {
   console.log(`
@@ -108,11 +109,10 @@ async function main() {
   const [, , command, ...rest] = process.argv;
   if (command === "once") {
     const r = await monitorOnce({ dryRun: rest.includes("--dry-run") });
-    for (const item of r.sent) {
-      console.log(`--- ${item.event.sourceId} [${item.event.type}] ${item.ok ? (item.dryRun ? "演练" : "已发送") : "发送失败：" + item.error}`);
-      console.log(item.content);
+    // 输出格式在纯函数里（src/cli/formatOnceResult.js）：文案字段是 messages（数组，一单一消息）。
+    for (const line of formatOnceResult(r)) {
+      console.log(line);
     }
-    if (r.sent.length === 0) console.log("本轮没有需要提醒的变化。");
     return;
   }
   if (command === "run") {
