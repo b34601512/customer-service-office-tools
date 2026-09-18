@@ -18,6 +18,10 @@
 
 ## 4. 模块结构（UI 与业务分离，遵循 SoftTalk#2705）
 
+> 界面层：`src/cli/tuiSelect.js` = 方向键选择菜单（渲染 + 按键状态机，零依赖，风格对齐 1 号控制台：
+> 标题栏 / `›` 反色当前项 / 数字键直达 / 页脚按键提示 / 备用屏）。业务动作仍由 `startCli.js` 调同一套 service 真源；
+> 界面占屏期间用 `logger.setConsoleEnabled(false)` 静音控制台（日志照旧落盘）。非 TTY 自动回退输入式菜单。
+
 > 常驻形态（2026-09-18 落地）：`src/engine/storeBrowserPool.js` = 一个店铺一个浏览器窗口，**窗口一直开着**、
 > 每轮复用；端口从 `baseDebugPort=9411` 起一店一个，登记在 `runtime/state/browser-ports.json`（重启后按它附着回原窗口）。
 > `chromeSession.portUsesProfileDir` 确认"端口上那个窗口是不是这家店的"才附着：读 Win32 进程命令行比对 `--user-data-dir`，

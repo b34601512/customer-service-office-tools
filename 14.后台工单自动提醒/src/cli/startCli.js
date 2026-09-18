@@ -5,8 +5,9 @@ const { loginAssist } = require("../features/workOrderMonitor/loginAssist");
 const { resolveDuty, buildMentionPlan } = require("../features/dutySchedule/dutyService");
 const { loadConfig } = require("../config/projectConfigService");
 const { sendWecomText } = require("../integrations/wecomRobot");
-const { log } = require("../engine/logger");
+const { log, setConsoleEnabled } = require("../engine/logger");
 const { formatOnceResult } = require("./formatOnceResult");
+const { runSelectMenu } = require("./tuiSelect");
 
 function printHelp() {
   console.log(`
@@ -58,33 +59,67 @@ async function renderDuty() {
   console.log(`手机号：${plan.mobiles.join("、") || "无"}`);
 }
 
+// 菜单：方向键 TUI（1 号那种风格）——↑↓选择、数字键直达、回车执行；
+// 非交互环境（管道/被脚本调用）自动回退到输入式菜单，保证自动化仍能跑。
+const 菜单项 = [
+  { key: "1", label: "立即巡检一轮（真发）", action: "once" },
+  { key: "2", label: "启动常驻监控（真发企微）", action: "run" },
+  { key: "3", label: "停止常驻监控", action: "stop" },
+  { key: "8", label: "演练常驻监控（只判断不发送）", action: "dryRun" },
+  { key: "4", label: "登录辅助（输入店铺key）", action: "login" },
+  { key: "5", label: "查看状态", action: "status" },
+  { key: "6", label: "发送一条测试提醒", action: "testNotify" },
+  { key: "7", label: "今日值班 / 在班@名单", action: "duty" },
+  { key: "0", label: "退出", action: "quit" }
+];
+
 async function runMenu() {
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
   const ask = (q) => new Promise((resolve) => rl.question(q, resolve));
-  console.log("=== 14号后台工单自动提醒 ===");
+  const 可交互 = Boolean(process.stdin.isTTY && process.stdout.isTTY);
   let loop = null;
+
   while (true) {
-    const answer = (await ask(`
-[1] 立即巡检一轮          [2] 启动常驻监控（真发企微）
-[3] 停止常驻监控          [8] 演练常驻监控（只判断不发送）
-[4] 登录辅助(输入店铺key)  [5] 状态  [6] 发送测试提醒  [7] 今日值班  [0] 退出
-请选择: `)).trim();
-    if (answer === "1") {
+    let action;
+    if (可交互) {
+      // 按方向键选。界面占屏期间把控制台日志静音（日志照旧写 run.log），退出界面后恢复。
+      setConsoleEnabled(false);
+      action = await runSelectMenu({
+        title: "14号 后台工单自动提醒",
+        items: 菜单项,
+        footerNotes: [
+          loop ? "常驻监控：运行中（浏览器窗口保持打开）" : "常驻监控：未启动",
+          "常驻日志：runtime/logs/run.log（本界面显示期间控制台不刷日志）"
+        ]
+      });
+      setConsoleEnabled(true);
+      if (action === null) {
+        // 理论上进不到（上方已判 TTY）：退回输入式，不静默。
+        console.log("当前环境不支持方向键菜单，请用输入式：例 node src/cli/startCli.js status");
+        action = "quit";
+      }
+    } else {
+      const answer = (await ask("\n[1]巡检 [2]常驻监控(真发) [3]停止 [8]演练常驻 [4]登录 [5]状态 [6]测试提醒 [7]值班 [0]退出\n请选择: ")).trim();
+      const 命中 = 菜单项.find((item) => item.key === answer);
+      action = 命中 ? 命中.action : "";
+    }
+
+    if (action === "once") {
       const r = await monitorOnce().catch((e) => (log("菜单", "巡检", "失败", e.message), null));
       if (r) console.log(`完成：事件 ${r.events.length} 个，发送成功 ${r.sent.filter((s) => s.ok).length} 条。`);
-    } else if (answer === "2" || answer === "8") {
+    } else if (action === "run" || action === "dryRun") {
       if (loop) { console.log("常驻监控已在运行。"); continue; }
-      const dryRun = answer === "8";
+      const dryRun = action === "dryRun";
       // 窗口保持打开：一个店一个窗口、每轮复用；停监控不关窗口（浏览器窗口要关就手动关）。
       loop = startMonitorLoop((err, result) => {
         if (err) console.log(`本轮异常：${err.message}`);
         else console.log(`本轮完成：事件 ${result.events.length} 个${dryRun ? "（演练，未发送）" : ""}。`);
       }, { dryRun, keepBrowsersOpen: true });
       console.log(dryRun ? "已启动常驻监控（演练：只判断不发送）。" : "已启动常驻监控（发现新工单会真发企微）。");
-    } else if (answer === "3") {
+    } else if (action === "stop") {
       if (loop) { loop.stop(); loop = null; } else console.log("当前没有运行中的常驻监控。");
-    } else if (answer === "4") {
-      const key = (await ask("店铺key（如 jingxi1）: ")).trim();
+    } else if (action === "login") {
+      const key = (await ask("店铺key（如 jingxi2）: ")).trim();
       try {
         const assist = await loginAssist(key);
         console.log(`已为「${assist.store.displayName}」打开浏览器，请在窗口中完成登录（账号：${assist.store.username}）。`);
@@ -94,18 +129,19 @@ async function runMenu() {
       } catch (error) {
         console.log(`登录辅助失败：${error.message}`);
       }
-    } else if (answer === "5") {
+    } else if (action === "status") {
       renderStatus();
-    } else if (answer === "6") {
+    } else if (action === "testNotify") {
       const config = loadConfig();
       await sendWecomText(config.wecom.webhookUrl, config.wecom.webhookName, "【测试】14号工单提醒链路正常，收到请忽略。");
       console.log("测试消息已发送。");
-    } else if (answer === "7") {
+    } else if (action === "duty") {
       await renderDuty();
-    } else if (answer === "0") {
+    } else if (action === "quit") {
       if (loop) loop.stop();
       rl.close();
-      return;
+      // 常驻窗口的 CDP 连接（保持窗口用的）会让事件循环继续挂着，必须显式退出，否则窗口卡住不退。
+      process.exit(0);
     }
   }
 }
