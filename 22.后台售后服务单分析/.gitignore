@@ -6,3 +6,4 @@ node_modules/
 project-config/kdocs-airscript.json
 # 企微通知配置（含 webhook key 与手机号）不入库
 project-config/wecom-notify.json
+project-config/stores.json

@@ -1,5 +1,5 @@
 {
-  "_说明": "店铺清单：一个店铺 = 一个浏览器 profile 目录 + 一个固定调试端口。要加店铺就照抄一条（登录状态留在 profile 里，窗口不关就一直有效）。",
+  "_说明": "店铺清单：一个店铺 = 一个浏览器 profile 目录 + 一个固定调试端口。要加店铺就照抄一条（登录状态留在 profile 里，窗口不关就一直有效）。 ｜ 这是入库的脱敏模板：真实账号密码请放在不入库的 stores.json（同目录，文件名去掉 .example）。",
   "platforms": {
     "tmall": {
       "label": "天猫",
@@ -41,6 +41,22 @@
           "account": "小黛",
           "profileDir": "runtime/state/browser-profiles/jd/jd1",
           "port": 9424,
+          "enabled": true
+        },
+        {
+          "key": "jd3",
+          "name": "DEDAKJ器械店",
+          "account": "小黛",
+          "profileDir": "runtime/state/browser-profiles/jd/jd3",
+          "port": 9425,
+          "enabled": true
+        },
+        {
+          "key": "jd2",
+          "name": "DEDAKJ旗舰店",
+          "account": "小黛",
+          "profileDir": "runtime/state/browser-profiles/jd/jd2",
+          "port": 9426,
           "enabled": true
         }
       ]
