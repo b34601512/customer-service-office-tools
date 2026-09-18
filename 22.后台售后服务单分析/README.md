@@ -45,3 +45,16 @@ node src/tools/probe-page.js --platform tmall --store tmall1 --attach --seconds 
 
 ## 现在处于什么阶段
 见 `断点记录.md`（≤40 行）与 `经验/`。
+
+## 与用户配合的约定（粘贴类，用户 2026-09-18 明确）
+
+金山 AirScript 这类**只能由用户手动粘贴**的地方，不要再让用户自己打开文件复制——
+**模型直接把文件内容塞进剪贴板**，用户只要「Ctrl+V」：
+
+```bash
+node src/tools/put-clipboard.js kdocs-scripts/AirScript-只读查询订单号.md --show
+```
+
+- 实现：PowerShell `[IO.File]::ReadAllText(path, UTF8)` → `Set-Clipboard`，并**回读校验长度**（防中文乱码、防截断）。
+- **粘贴通道会吃掉等号序列**（实测：`===`→`=`、`==`→消失、`>=` 可能变 `>` 而静默漏数据）：
+  交给用户粘贴的脚本里**不许出现等号比较**，由 `tests/airScriptPasteSafety.test.js` 锁死（`npm test`）。
