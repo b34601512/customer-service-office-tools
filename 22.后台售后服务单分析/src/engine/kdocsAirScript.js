@@ -19,9 +19,6 @@ function readAirScriptConfig() {
     throw new Error(`缺少金山脚本配置：${path.relative(projectPath(), CONFIG_PATH)}（内容：{"webhookUrl":"...","apiToken":"..."}，不入库）`);
   }
   const config = JSON.parse(fs.readFileSync(CONFIG_PATH, "utf8"));
-  if (!config.webhookUrl) {
-    throw new Error("金山脚本配置缺少 webhookUrl。");
-  }
   if (!config.apiToken) {
     // 2026-09-18 实测：同一金山账号下的 AirScript-Token 可跨脚本使用（拿 12号 的令牌调本文档的同步 webhook 返回 HTTP 200），
     // 所以本地缺令牌时沿用 12号 那份；以后若失效，把令牌直接填进 project-config/kdocs-airscript.json 即可。
@@ -39,15 +36,26 @@ function readAirScriptConfig() {
   return config;
 }
 
+function resolveWebhook(scriptName, config) {
+  const entry = config.scripts && config.scripts[scriptName] ? config.scripts[scriptName] : null;
+  if (entry && entry.webhookUrl) return entry.webhookUrl;
+  // 旧结构（只有一个顶层 webhookUrl）当作默认脚本 "query" 处理，保持向后兼容
+  if (scriptName === "query" && config.webhookUrl) return config.webhookUrl;
+  const available = Object.keys(config.scripts || {}).join(", ") || "(空)";
+  throw new Error(`配置里没有脚本「${scriptName}」的 webhook（现有：${available}）——把该脚本的同步地址填进 project-config/kdocs-airscript.json 的 scripts.<名字>.webhookUrl`);
+}
+
 async function runAirScript(contextArguments, options = {}) {
   const config = options.config || readAirScriptConfig();
+  const scriptName = options.script || "query";
+  const webhookUrl = options.webhookUrl || resolveWebhook(scriptName, config);
   const timeoutMs = options.timeoutMilliseconds || 180000;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   let response = null;
   let text = "";
   try {
-    response = await fetch(config.webhookUrl, {
+    response = await fetch(webhookUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json", "AirScript-Token": config.apiToken },
       body: JSON.stringify({ Context: { argv: contextArguments } }),
@@ -84,4 +92,4 @@ async function runAirScript(contextArguments, options = {}) {
   }
 }
 
-module.exports = { runAirScript, readAirScriptConfig, CONFIG_PATH };
+module.exports = { runAirScript, readAirScriptConfig, resolveWebhook, CONFIG_PATH };
