@@ -73,6 +73,8 @@ node src/tools/put-clipboard.js kdocs-scripts/AirScript-只读查询订单号.md
 | 天猫详情批量探针 | `node src/tools/tmall-refund-probe.js --store tmall1 --ids-file x.txt` | 每单新标签页（SPA 复用标签不响应，实测坑） |
 | 京东售后+纠纷概览 | `node src/tools/jd-aftersale-overview.js --store jd1` | 即将超时/待处理=0 即无漏；纠纷列出待商家处理/执行的单及剩余时间 |
 | 京东自动登录 | `node src/tools/jd-login.js --store jd1` | 凭据运行时读 12号/9号；登录按钮 `button.password__submit` |
+| 拼多多售后概览 | `node src/tools/pdd-aftersale-overview.js --store pdd02` | 「24小时内将逾期订单数」=0 即无漏；投诉预警>0 要处理 |
+| 拼多多自动登录 | `node src/tools/pdd-login.js --store pdd02` | 默认扫码页 → 先点「账号登录」；凭据读 22号→12号→9号 |
 | 手动跑（双击） | `启动每日检查.bat` | 输出到 `runtime/logs/每日检查.log` |
 | 定时跑 | Windows 计划任务 **「22号-售后退款每天检查」** 每天 09:10 执行 `定时检查.bat` | 2026-09-18 建，已试跑通过 |
 
