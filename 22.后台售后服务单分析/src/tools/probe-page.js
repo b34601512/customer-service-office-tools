@@ -129,6 +129,7 @@ async function main() {
     evalResult = await page.evaluate((code) => {
       try { return JSON.stringify(eval(code)); } catch (error) { return `ERR: ${error.message}`; }
     }, args.eval).catch((error) => `ERR: ${error.message}`);
+    fs.writeFileSync(path.join(outDir, "eval.txt"), String(evalResult ?? ""), "utf8");
     log("探针", "eval", String(evalResult).slice(0, 300));
   }
 
@@ -140,7 +141,7 @@ async function main() {
     return {
       url: location.href,
       title: document.title,
-      text: text.slice(0, 20000),
+      text,
       counts: {
         tableRows: document.querySelectorAll("table tr").length,
         trWithLinks: document.querySelectorAll("tr a").length,
@@ -173,14 +174,16 @@ async function main() {
     "",
     `- table tr：${snapshot.counts?.tableRows ?? "-"}；tr 内链接：${snapshot.counts?.trWithLinks ?? "-"}；li：${snapshot.counts?.listItems ?? "-"}；a：${snapshot.counts?.links ?? "-"}；iframe：${snapshot.counts?.iframes ?? "-"}`,
     "",
-    "## 页面文本（前 20000 字）",
+    "## 页面文本（前 20000 字；全文见 page.txt）",
     "",
     "```",
-    snapshot.text || "(空)",
+    (snapshot.text || "(空)").slice(0, 20000),
     "```",
     ""
   ];
   fs.writeFileSync(path.join(outDir, "summary.md"), lines.join("\n"), "utf8");
+  // 全文落盘不截断（列表页数据都在文本里，截断会漏条目——2026-09-18 踩过）
+  fs.writeFileSync(path.join(outDir, "page.txt"), String(snapshot.text || ""), "utf8");
   fs.writeFileSync(path.join(outDir, "page-url.txt"), String(snapshot.url || page.url()), "utf8");
   fs.writeFileSync(path.join(outDir, "requests.txt"), requests.join("\n"), "utf8");
   fs.writeFileSync(path.join(outDir, "page.html"), await page.content().catch(() => ""), "utf8");

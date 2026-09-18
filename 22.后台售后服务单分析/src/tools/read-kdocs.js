@@ -6,11 +6,12 @@
 //   node src/tools/read-kdocs.js --url "https://www.kdocs.cn/l/ccj1mhG3wLy6" --list
 //   node src/tools/read-kdocs.js --url "..." --sheet "退货退款表" --head 5
 //   node src/tools/read-kdocs.js --url "..." --sheet "退货退款表" --grep "5127667812586099609"
-//   node src/tools/read-kdocs.js --url "..." --sheet "退货退款表" --out runtime/kdocs/退货退款表.json
+//   node src/tools/read-kdocs.js --url "..." --all --grep "5127667812586099609"     # 跨全部工作表搜（推荐）
+//   node src/tools/read-kdocs.js --url "..." --all --out "runtime/kdocs/{sheet}.json"      # 全表导出
 //   node src/tools/read-kdocs.js --url "..." --sheet "退货退款表" --headed      # 出问题时可见窗口排查
 const fs = require("fs");
 const path = require("path");
-const { listSheets, readSheet } = require("../engine/kdocs");
+const { listSheets, readSheet, readSheets } = require("../engine/kdocs");
 const { projectPath } = require("../config/stores");
 const { log } = require("../engine/log");
 
@@ -24,6 +25,7 @@ function parseArgs(argv) {
     const key = token.slice(2);
     if (key === "list") { args.list = true; continue; }
     if (key === "headed") { args.headless = false; continue; }
+    if (key === "all") { args.all = true; continue; }
     const value = argv[index + 1];
     index += 1;
     if (key === "url") args.url = value;
@@ -52,6 +54,44 @@ async function main() {
     const names = await listSheets(args.url, { headless: args.headless });
     console.log(`\n  工作表（${names.length} 个）：`);
     for (const name of names) console.log(`    · ${name}`);
+    console.log("");
+    process.exit(0);
+  }
+
+  // --all：一次会话读全部工作表，并（可选）跨表搜关键字——WPS 自带搜索是跨表的，
+  // 只查一个工作表会漏（2026-09-18 实例：订单 5127667812586099609 不在退货退款表，但用户能搜到）。
+  if (args.all) {
+    const names = args.sheet ? [args.sheet] : await listSheets(args.url, { headless: args.headless });
+    log("金山", "全表读取", `${names.length} 个工作表`);
+    const all = await readSheets(args.url, names, { headless: args.headless });
+    const summary = [];
+    for (const name of names) {
+      const item = all[name] || {};
+      const matrix = (item.matrix || []).map((row) => (Array.isArray(row) ? row.map(cellText) : []));
+      summary.push({ sheet: name, rowCount: item.rowCount ?? 0, columnCount: item.columnCount ?? 0, error: item.error || "" });
+      if (args.out) {
+        const outPath = projectPath(args.out.replace("{sheet}", name));
+        fs.mkdirSync(path.dirname(outPath), { recursive: true });
+        fs.writeFileSync(outPath, JSON.stringify({ sheetName: name, matrix }, null, 2), "utf8");
+      }
+      if (args.grep) {
+        const hits = [];
+        matrix.forEach((row, index) => {
+          const raw = row.join(" ");
+          if (raw.includes(args.grep)) hits.push({ rowNumber: index + 1, raw });
+        });
+        if (hits.length) {
+          console.log(`\n  ★ 工作表「${name}」命中 ${hits.length} 行：`);
+          for (const hit of hits.slice(0, 8)) console.log(`    第 ${hit.rowNumber} 行：${hit.raw.slice(0, 260)}`);
+        }
+      }
+    }
+    console.log("\n  各表规模：");
+    for (const item of summary) console.log(`    · ${item.sheet}：${item.rowCount} 行 × ${item.columnCount} 列${item.error ? `（${item.error}）` : ""}`);
+    if (args.grep) {
+      const total = summary.reduce((sum, item) => sum + item.rowCount, 0);
+      console.log(`\n  已跨 ${summary.length} 个表（共 ${total} 行）搜「${args.grep}」完毕。`);
+    }
     console.log("");
     process.exit(0);
   }

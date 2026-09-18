@@ -2,3 +2,5 @@
 runtime/
 node_modules/
 *.log
+# 金山脚本令牌（webhook + AirScript-Token）不入库
+project-config/kdocs-airscript.json

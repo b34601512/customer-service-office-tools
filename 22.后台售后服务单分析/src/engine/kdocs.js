@@ -145,4 +145,61 @@ async function readSheet(documentUrl, sheetName, options = {}) {
   }, { target: sheetName, colors: withColors }));
 }
 
-module.exports = { listSheets, readSheet, resolveBrowserPath };
+// 一次会话里读多个工作表（比逐表重开浏览器快很多）：返回 { 表名: { matrix, rowCount, columnCount, backgroundMatrix } }
+async function readSheets(documentUrl, sheetNames, options = {}) {
+  const { withColors = false } = options;
+  return withWorkbook(documentUrl, options, async (page) => {
+    const result = {};
+    for (const name of sheetNames) {
+      result[name] = await page.evaluate(async ({ target, colors }) => {
+        const worksheets = window.APP.workbook.getWorksheets();
+        const sheet = worksheets.getItemByName(target);
+        if (!sheet) return { error: `没有工作表「${target}」` };
+        if (typeof sheet.activate === "function") await sheet.activate();
+        await sheet.loadSheetData();
+        const deadline = Date.now() + 30000;
+        let live = null;
+        let usedRange = null;
+        while (Date.now() < deadline) {
+          live = worksheets.getItemByName(target);
+          const candidate = live && typeof live.getUsedRange === "function" ? live.getUsedRange() : null;
+          if (candidate && typeof candidate.getRangeContents === "function") { usedRange = candidate; break; }
+          await new Promise((resolve) => setTimeout(resolve, 300));
+        }
+        if (!usedRange) return { error: `工作表「${target}」已是用区域未就绪` };
+        const contents = await usedRange.getRangeContents();
+        const matrix = contents && contents.result && contents.result.Values;
+        if (!Array.isArray(matrix)) return { error: `工作表「${target}」无有效内容` };
+
+        let backgroundMatrix = null;
+        if (colors) {
+          try {
+            const entry = Array.isArray(usedRange._ranges) ? usedRange._ranges[0] : null;
+            const rowOffset = Number(entry?.rowFrom || 0);
+            const columnOffset = Number(entry?.colFrom || 0);
+            const toHex = (value) => {
+              if (typeof value === "number" && Number.isFinite(value)) return `#${((value >>> 0) & 0xffffff).toString(16).padStart(6, "0").toUpperCase()}`;
+              const text = String(value || "").trim().toUpperCase();
+              return /^#?[0-9A-F]{6}$/.test(text) ? `#${text.replace(/^#/, "")}` : "";
+            };
+            backgroundMatrix = matrix.map((row, rowIndex) => (Array.isArray(row) ? row : []).map((_cell, columnIndex) => {
+              const appliedXf = live.getAppliedXf(rowOffset + rowIndex, columnOffset + columnIndex);
+              const fill = appliedXf && typeof appliedXf.getFill === "function" ? appliedXf.getFill() : null;
+              if (!fill || typeof fill.getBack !== "function") return "";
+              const fillType = typeof fill.getType === "function" ? String(fill.getType() || "").toLowerCase() : "";
+              if (fillType.includes("none")) return "";
+              const back = fill.getBack();
+              return toHex(back && typeof back.getRGB === "function" ? back.getRGB() : "");
+            }));
+          } catch (error) {
+            backgroundMatrix = null;
+          }
+        }
+        return { matrix, backgroundMatrix, rowCount: matrix.length, columnCount: Math.max(...matrix.map((row) => (Array.isArray(row) ? row.length : 0)), 0) };
+      }, { target: name, colors: withColors });
+    }
+    return result;
+  });
+}
+
+module.exports = { listSheets, readSheet, readSheets, resolveBrowserPath };
