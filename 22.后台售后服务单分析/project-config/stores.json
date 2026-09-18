@@ -20,6 +20,14 @@
           "profileDir": "runtime/state/browser-profiles/tmall/tmall2",
           "port": 9422,
           "enabled": true
+        },
+        {
+          "key": "tmall6",
+          "name": "天猫6店",
+          "account": "小黛",
+          "profileDir": "runtime/state/browser-profiles/tmall/tmall6",
+          "port": 9423,
+          "enabled": true
         }
       ]
     }

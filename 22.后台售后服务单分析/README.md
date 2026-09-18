@@ -67,6 +67,10 @@ node src/tools/put-clipboard.js kdocs-scripts/AirScript-只读查询订单号.md
 | 该 @ 谁 | `node src/tools/who-is-on-duty.js [--at 14:30] [--json]` | 排班表匿名只读；14:00 前李守耀优先/否则早班，14:00 后晚班 |
 | 发企微群 | `node src/tools/send-wecom-notice.js --file <文本> --at 缪婷婷 [--send]` | **默认预演**；--send 才真发；≤2048 字节 |
 | 每日一条命令 | `node scripts/dailyCheck.js [--days 7] [--send]` | 扫表→筛→去重→出清单→算通知对象；**默认不发** |
+| 天猫后台概览（判漏快筛） | `node src/tools/tmall-refund-overview.js --store tmall1 [--probe-pending]` | 8 秒读出「24小时内待处理」等 10 项；**=0 即没有签收超 24h 未处理的单** |
+| 天猫全部店铺一起扫 | `node scripts/checkTmallAllStores.js` | 遍历所有 tmall 店出汇总表（实测 3 店均无漏） |
+| 天猫自动登录 | `node src/tools/tmall-login.js --store tmall2` | 账号密码运行时从 9号/12号 读；遇滑块/验证码停下叫人 |
+| 天猫详情批量探针 | `node src/tools/tmall-refund-probe.js --store tmall1 --ids-file x.txt` | 每单新标签页（SPA 复用标签不响应，实测坑） |
 | 手动跑（双击） | `启动每日检查.bat` | 输出到 `runtime/logs/每日检查.log` |
 | 定时跑 | Windows 计划任务 **「22号-售后退款每天检查」** 每天 09:10 执行 `定时检查.bat` | 2026-09-18 建，已试跑通过 |
 
