@@ -294,6 +294,12 @@ test("命名空间三态判定：命中优先、否则回落、再否则未知",
     source: "unknown"
   });
   assert.equal(planAppSocketEventTarget([]).reason, "no_open_app_socket");
+  // 判定结果可能被整包打进日志，URL 里的 token 不许带出来。
+  const planWithTokenUrl = planAppSocketEventTarget([
+    { index: 0, url: "wss://host/socket.io/?token=secret", readyState: 1, outboundFrameCount: 3, seenSocketIoNamespaces: ["client"] }
+  ]);
+  assert.equal(planWithTokenUrl.socketUrl, "wss://host/socket.io/");
+  assert.equal(planWithTokenUrl.namespacePrefix, "/client,");
   assert.deepEqual(CHAT_NAMESPACE_PREFERENCE, ["client"]);
 });
 

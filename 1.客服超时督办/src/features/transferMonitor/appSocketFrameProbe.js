@@ -199,7 +199,7 @@ function planAppSocketEventTarget(candidates, options = {}) {
   return {
     ok: true,
     socketIndex: target.item.index,
-    socketUrl: target.item.url,
+    socketUrl: sanitizeSocketUrl(target.item.url),
     namespacePrefix: target.resolution.namespacePrefix,
     namespace: target.resolution.namespace,
     namespaceSource: target.resolution.source
