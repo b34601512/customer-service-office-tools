@@ -1,4 +1,4 @@
-// 金山《2026年【湖南怀化售后】对接表》只读筛选脚本（未退款行）　版本 2026-09-18.1
+// 金山《2026年【湖南怀化售后】对接表》只读筛选脚本（未退款行）　版本 2026-09-18.2
 //
 // 用途：**反向检查**——退款表里有记录（客户货已退回/已登记），但「退款状态」列没填「已退款」，
 //   说明客服还没处理 → 列为待提醒。**只读**：只读 Range(...).Value2，不写入、不保存、不激活。
@@ -12,16 +12,22 @@
 //   statusColumnIndex 退款状态所在列（0 起，默认 22 ＝ W 列）
 //   orderColumnIndex  订单号所在列（0 起，默认 10 ＝ K 列；空则该行视为无记录）
 //   okStatusText      视为“已处理”的状态文字（默认「已退款」，含该文字即跳过）
+//   startRow          从第几行开始扫（默认 1；表里的行按登记日期升序，**最近的记录在表尾**，
+//                     所以查“近期未退款”请传大一点的 startRow，例如 40000，既快又准）
 //   maxRows/limit     扫描上限 / 最多返回多少行样例（默认 50000 / 200）
+//
+// 实操提醒（2026-09-18 实测）：整表 46501 行有记录，其中「退款状态」没填“已退款”的有 14877 行，
+//   但绝大多数是 2025 年初的历史遗留（状态空白或随手填了“1”）——**必须配合登记日期一起判断**，
+//   否则会把一年前的老单全提醒一遍。样例里已带 date（登记日期，列0）供调用方按时间过滤。
 // 返回：{ scriptVersion, sheetName, summary:{ scannedRows, rowsWithOrder, statusCounts, pendingCount }, samples:[...] }
 //
 // 与查询脚本相同的两条硬约束（实测）：**传对象不传数组**；**末行必须 return main()**。
 // 等号比较一律不用（粘贴通道会吃等号序列，见 tests/airScriptPasteSafety.test.js）。
 
-var scriptVersion = '2026-09-18.1'
+var scriptVersion = '2026-09-18.2'
 var CHUNK_ROWS = 2000
 var COLUMN_LIMIT = 'AH'
-var DEFAULTS = { sheetName: '退货退款表', statusColumnIndex: 22, orderColumnIndex: 10, okStatusText: '已退款', maxRows: 50000, limit: 200 }
+var DEFAULTS = { sheetName: '退货退款表', statusColumnIndex: 22, orderColumnIndex: 10, okStatusText: '已退款', startRow: 1, maxRows: 50000, limit: 200 }
 
 function toText(value) {
   if (!value) return ''
@@ -51,6 +57,7 @@ function parseArgument(rawArgument) {
   }
   options.statusColumnIndex = Number(options.statusColumnIndex)
   options.orderColumnIndex = Number(options.orderColumnIndex)
+  options.startRow = Number(options.startRow)
   options.maxRows = Number(options.maxRows)
   options.limit = Number(options.limit)
   return options
@@ -65,7 +72,7 @@ function main() {
   var rowsWithOrder = 0
   var pendingCount = 0
 
-  var start = 1
+  var start = options.startRow
   while (start - options.maxRows < 1) {
     var end = start + CHUNK_ROWS - 1
     if (end > options.maxRows) end = options.maxRows
@@ -92,14 +99,18 @@ function main() {
             if (samples.length - options.limit < 0) {
               samples.push({
                 row: start + rowIndex,
+                date: toText(row[0]),
                 platform: toText(row[6]),
                 internalId: toText(row[7]),
                 customer: toText(row[8]),
                 orderId: orderText,
-                productId: toText(row[9]),
                 applyReason: toText(row[11]),
+                returnTracking: toText(row[16]),
+                shouldRefund: toText(row[17]),
+                agent: toText(row[19]),
                 status: statusKey,
-                refundAmount: toText(row[25]),
+                handler: toText(row[23]),
+                actualRefund: toText(row[25]),
                 refundTime: toText(row[26])
               })
             }
