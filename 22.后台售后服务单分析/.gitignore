@@ -4,3 +4,5 @@ node_modules/
 *.log
 # 金山脚本令牌（webhook + AirScript-Token）不入库
 project-config/kdocs-airscript.json
+# 企微通知配置（含 webhook key 与手机号）不入库
+project-config/wecom-notify.json
