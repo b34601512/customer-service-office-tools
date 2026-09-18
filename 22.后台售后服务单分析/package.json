@@ -1,0 +1,13 @@
+{
+  "name": "after-sales-order-check",
+  "version": "0.1.0",
+  "private": true,
+  "description": "后台售后服务单分析：检查漏处理的售后服务单（只读检查，不做业务动作）",
+  "main": "src/tools/probe-page.js",
+  "scripts": {
+    "probe": "node src/tools/probe-page.js"
+  },
+  "dependencies": {
+    "playwright-core": "^1.62.1"
+  }
+}

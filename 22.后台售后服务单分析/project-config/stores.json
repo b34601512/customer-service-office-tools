@@ -1,0 +1,27 @@
+{
+  "_说明": "店铺清单：一个店铺 = 一个浏览器 profile 目录 + 一个固定调试端口。要加店铺就照抄一条（登录状态留在 profile 里，窗口不关就一直有效）。",
+  "platforms": {
+    "tmall": {
+      "label": "天猫",
+      "backendUrl": "https://qn.taobao.com/home.htm/trade-platform/refund-list",
+      "stores": [
+        {
+          "key": "tmall1",
+          "name": "新大洲旗舰店",
+          "account": "小黛",
+          "profileDir": "runtime/state/browser-profiles/tmall/tmall1",
+          "port": 9421,
+          "enabled": true
+        },
+        {
+          "key": "tmall2",
+          "name": "DEDAKJ旗舰店",
+          "account": "小黛",
+          "profileDir": "runtime/state/browser-profiles/tmall/tmall2",
+          "port": 9422,
+          "enabled": true
+        }
+      ]
+    }
+  }
+}
