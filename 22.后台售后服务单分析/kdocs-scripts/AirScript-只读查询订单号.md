@@ -1,4 +1,4 @@
-// 金山《2026年【湖南怀化售后】对接表》只读查询脚本　版本 2026-09-18.6
+// 金山《2026年【湖南怀化售后】对接表》只读查询脚本　版本 2026-09-18.7
 //
 // 用途：给 AI（22号 后台售后服务单分析）查订单号 / 关键字——在整份文档的**所有工作表**里查找，只返回命中行。
 //   **只读**：只调用 Range(...).Value2 读取，不调用保存 / 新增 / 清空 / 激活，也不给任何属性赋值。
@@ -23,7 +23,7 @@
 //       可选：{"sheets":["退货退款表","异常件"]} 只查指定表（快）；默认全部工作表。
 // 返回：{ scriptVersion, keywords, checkedSheets, scannedRows, sheetDetails[], matchCount, matches[] }
 
-var scriptVersion = '2026-09-18.6'
+var scriptVersion = '2026-09-18.7'
 var MAX_MATCHES = 40
 var COLUMN_LIMIT = 'AH'   // 读到第 34 列，与「退货退款表」最大列对齐
 var CHUNK_ROWS = 2000
@@ -133,19 +133,49 @@ function buildTargets(allNames, requestedSheets) {
   return targets
 }
 
-function main() {
-  var argv = (Context && Context.argv) ? Context.argv : []
-  var firstArgument = argv[0]
-  var options = (firstArgument && firstArgument.keywords) ? firstArgument : { keywords: argv }
+function parseArgument(rawArgument) {
+  // 平台把 Context.argv 传成数组 / 对象 / JSON 字符串都遇到过，这里一律试一遍，并在返回值里回传原文形态用于诊断。
+  var preview = ''
+  try {
+    preview = String(rawArgument).slice(0, 300)
+  } catch (errorPreview) {
+    preview = '[无法转字符串]'
+  }
+  var argumentType = String(typeof rawArgument)
+  try {
+    if (rawArgument && rawArgument.length) argumentType = argumentType + ' / 长度' + String(rawArgument.length)
+  } catch (errorType) {
+    argumentType = argumentType + ' / 无长度'
+  }
+
+  var payload = rawArgument
+  if (contains(typeof payload, 'string')) {
+    try {
+      payload = JSON.parse(String(payload))
+    } catch (errorParse) {
+      payload = null
+    }
+  }
+  var bag = payload
+  if (bag instanceof Array) bag = bag[0]
+  if (!bag || !bag.keywords) bag = { keywords: [] }
+
   var keywords = []
-  var rawKeywords = options.keywords ? options.keywords : []
+  var rawKeywords = bag.keywords ? bag.keywords : []
+  if (contains(typeof rawKeywords, 'string')) rawKeywords = [rawKeywords]
   for (var keywordIndex = 0; keywordIndex - rawKeywords.length < 0; keywordIndex += 1) {
     var keywordText = toText(rawKeywords[keywordIndex])
     if (keywordText.length < MIN_KEYWORD_LENGTH) continue
     keywords.push(keywordText)
   }
-  var maxRows = options.maxRows ? Number(options.maxRows) : DEFAULT_MAX_ROWS
-  var targets = buildTargets(collectSheetNames(), options.sheets)
+  return { keywords: keywords, sheets: bag.sheets, maxRows: bag.maxRows, preview: preview, argumentType: argumentType }
+}
+
+function main() {
+  var parsedArgument = parseArgument((Context && Context.argv) ? Context.argv : null)
+  var keywords = parsedArgument.keywords
+  var maxRows = parsedArgument.maxRows ? Number(parsedArgument.maxRows) : DEFAULT_MAX_ROWS
+  var targets = buildTargets(collectSheetNames(), parsedArgument.sheets)
 
   var matches = []
   var details = []
@@ -170,6 +200,8 @@ function main() {
 
   return {
     scriptVersion: scriptVersion,
+    argumentType: parsedArgument.argumentType,
+    argumentPreview: parsedArgument.preview,
     keywords: keywords,
     checkedSheets: details.length,
     scannedRows: scannedRows,
