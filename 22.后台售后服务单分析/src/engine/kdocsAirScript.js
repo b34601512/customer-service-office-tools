@@ -74,7 +74,7 @@ async function runAirScript(contextArguments, options = {}) {
   }
   const raw = payload.data ? payload.data.result : payload.result;
   if (raw === undefined || raw === null || raw === "[Undefined]") {
-    throw new Error("金山脚本没有返回结果（确认脚本已保存且结尾有返回值）。");
+    throw new Error("金山脚本没有返回结果：确认脚本已保存，且**最后一行是 return main()**（只写 main() 平台拿不到返回值，2026-09-18 实测）。");
   }
   if (typeof raw === "object") return raw;
   try {

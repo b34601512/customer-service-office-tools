@@ -1,4 +1,4 @@
-// 金山《2026年【湖南怀化售后】对接表》只读查询脚本　版本 2026-09-18.5
+// 金山《2026年【湖南怀化售后】对接表》只读查询脚本　版本 2026-09-18.6
 //
 // 用途：给 AI（22号 后台售后服务单分析）查订单号 / 关键字——在整份文档的**所有工作表**里查找，只返回命中行。
 //   **只读**：只调用 Range(...).Value2 读取，不调用保存 / 新增 / 清空 / 激活，也不给任何属性赋值。
@@ -23,7 +23,7 @@
 //       可选：{"sheets":["退货退款表","异常件"]} 只查指定表（快）；默认全部工作表。
 // 返回：{ scriptVersion, keywords, checkedSheets, scannedRows, sheetDetails[], matchCount, matches[] }
 
-var scriptVersion = '2026-09-18.5'
+var scriptVersion = '2026-09-18.6'
 var MAX_MATCHES = 40
 var COLUMN_LIMIT = 'AH'   // 读到第 34 列，与「退货退款表」最大列对齐
 var CHUNK_ROWS = 2000
@@ -179,4 +179,4 @@ function main() {
   }
 }
 
-main()
+return main()
