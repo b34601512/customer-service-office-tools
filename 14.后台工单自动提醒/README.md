@@ -12,7 +12,7 @@
 
 1. `npm install`
 2. 复制 `project-config/platform-config.example.json` 为 `platform-config.json`，填企微机器人与店铺。
-3. 双击「启动监控.bat」开始常驻监控（各店浏览器窗口会一直开着，别关），或命令行：
+3. 双击「启动监控.bat」（**唯一入口**，已合并老的菜单 bat）：回车=常驻监控（真发）、`d`=演练常驻、`m`=登录/状态/自测菜单。各店浏览器窗口会一直开着，别关。命令行等价：
 
 ```powershell
 node src/cli/startCli.js login jd1          ; 首次为店铺登录一次（弹浏览器人工登录）
