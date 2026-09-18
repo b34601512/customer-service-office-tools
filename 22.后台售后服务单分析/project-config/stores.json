@@ -30,6 +30,20 @@
           "enabled": true
         }
       ]
+    },
+    "jd": {
+      "label": "天猫",
+      "backendUrl": "https://shop.jd.com/",
+      "stores": [
+        {
+          "key": "jd1",
+          "name": "德达官方旗舰店",
+          "account": "小黛",
+          "profileDir": "runtime/state/browser-profiles/jd/jd1",
+          "port": 9424,
+          "enabled": true
+        }
+      ]
     }
   }
 }
