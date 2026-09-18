@@ -171,31 +171,56 @@ async function findOnlyExplicitCloseTarget(popup, options) {
   throw buildPopupFailure(options.platformName, "未找到唯一明确关闭入口");
 }
 
-async function isPopupStillInPage(popupElementHandle) {
-  // 该函数只判断弹层元素是否仍连在页面且仍有可见区域；句柄已失效一律视为已消失。
-  return Boolean(
-    await popupElementHandle
-      .evaluate((element) => Boolean(element && element.isConnected && element.getClientRects().length > 0))
-      .catch(() => false)
-  );
+async function readPopupPresence(popupElementHandle) {
+  // 该函数只读取弹层是否仍连在页面且**真的可见**（含 computed style 判断）。
+  // 2026-09-18 京东3店实跑教训：只看 isConnected + getClientRects 会把“正在淡出/隐藏”的弹层
+  // 误判成“仍然存在”，于是关闭点击失败被当成整店失败；这里与弹层签名使用同一套可见性口径。
+  return await popupElementHandle
+    .evaluate((element) => {
+      if (!element || !element.isConnected) {
+        return { connected: false, visible: false };
+      }
+      const style = window.getComputedStyle(element);
+      const rect = element.getBoundingClientRect();
+      return {
+        connected: true,
+        visible: style.display !== "none" && style.visibility !== "hidden" && rect.width > 0 && rect.height > 0
+      };
+    })
+    .catch(() => ({ connected: false, visible: false }));
 }
 
-async function clickExplicitCloseTarget(closeTarget, popupElementHandle, platformName) {
-  // 该函数只点击唯一明确关闭入口；若点击期间弹层已自行消失，按“关闭目标已达成”返回 false。
-  // 常见弹窗规律：关闭按钮带动画/继交层，Playwright 判定元素不稳定而超时，
-  // 实际弹层已经消失；这种情形不能当作整店失败。
+async function clickExplicitCloseTarget(closeTarget, popupElementHandle, context = {}) {
+  // 该函数只点击唯一明确关闭入口；若点击期间弹层已自行消失或已推进到下一层，按“关闭目标已达成”返回 false。
+  // 常见弹窗规律：关闭按钮带动画/继交层，Playwright 判定元素不稳定而超时，实际弹层已经消失；
+  // 这种情形不能当作整店失败。
   try {
     await closeTarget.click({ timeout: 5000 });
     return true;
   } catch (clickError) {
-    if (await isPopupStillInPage(popupElementHandle)) {
-      throw clickError;
+    const platformName = context.platformName;
+    const 现场 = await readPopupPresence(popupElementHandle);
+    if (现场.connected && 现场.visible) {
+      // 弹层还在：再给它一次“自己走完”的机会（关到一半淡出 / 切到下一层是常见规律），
+      // 等它推进后仍然算关闭成功；真的一动不动才暴露原始点击失败，绝不猜点。
+      try {
+        await waitForPopupTransition(context.surface, popupElementHandle, context.originalSignature, context.options);
+        log(
+          "主线:完成",
+          "弹窗治理",
+          "关闭点击未完成但弹层已推进",
+          `平台=${platformName}，原弹层已消失或进入下一层，按已关闭继续`
+        );
+        return false;
+      } catch (_未推进) {
+        throw clickError;
+      }
     }
     log(
       "主线:完成",
       "弹窗治理",
       "弹层已自行消失",
-      `平台=${platformName}，关闭点击未完成但弹层已不在页面中，按已关闭继续`
+      `平台=${platformName}，关闭点击未完成但弹层已隐藏/移除，按已关闭继续`
     );
     return false;
   }
@@ -230,7 +255,12 @@ async function dismissBlockingPopups(surface, options = {}) {
     let clicked = true;
     try {
       const originalSignature = await readPopupSignature(popupElementHandle);
-      clicked = await clickExplicitCloseTarget(closeTarget, popupElementHandle, platformName);
+      clicked = await clickExplicitCloseTarget(closeTarget, popupElementHandle, {
+        platformName,
+        surface,
+        originalSignature,
+        options: resolvedOptions
+      });
       if (clicked) {
         await waitForPopupTransition(surface, popupElementHandle, originalSignature, resolvedOptions);
       }
