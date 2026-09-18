@@ -5,7 +5,7 @@
 const appConfig = require("../config/appConfig");
 const { readJson, writeJsonAtomic } = require("./fileSystem");
 const { log } = require("./logger");
-const { isPortFree, openStoreBrowser, resolveStoreProfileDir } = require("./chromeSession");
+const { isPortFree, openStoreBrowser, probeDebugPort, portUsesProfileDir, resolveStoreProfileDir } = require("./chromeSession");
 
 function keyOf(platformKey, storeKey) {
   return `${platformKey}/${storeKey}`;
@@ -35,10 +35,26 @@ async function resolveStorePort(registry, key) {
   throw new Error(`店铺 ${key} 找不到可用调试端口（${appConfig.baseDebugPort} 起 20 个都被占用）。`);
 }
 
-// openImpl / probeDebugPortImpl 仅作依赖注入点：测试可用假实现跑同一条链路。
+// openImpl / probePortImpl / profileMatcherImpl 仅作依赖注入点：测试可用假实现跑同一条链路。
 function createStoreBrowserPool(options = {}) {
   const openImpl = options.openImpl || openStoreBrowser;
+  const probePortImpl = options.probePortImpl || probeDebugPort;
+  const profileMatcherImpl = options.profileMatcherImpl || portUsesProfileDir;
   const sessions = new Map();
+
+  // 先按登记表找，再扫一段端口：只要哪个活端口的 Chrome 用的是本店 profile，就用它。
+  // 这样登记表串位（比如其中一家曾改用过别的端口）也不会误开新窗口、更不会误杀别人的窗口。
+  async function findLivePortForStore(profileDir, registry, key) {
+    const 候选 = new Set();
+    if (Number.isFinite(registry[key])) 候选.add(registry[key]);
+    for (const value of Object.values(registry)) if (Number.isFinite(value)) 候选.add(value);
+    for (let offset = 0; offset < 20; offset += 1) 候选.add(appConfig.baseDebugPort + offset);
+    for (const port of 候选) {
+      if (!(await probePortImpl(port))) continue; // 端口上没有活浏览器 → 快速跳过
+      if (profileMatcherImpl(port, profileDir)) return port;
+    }
+    return null;
+  }
 
   async function ensure(platformKey, store) {
     const key = keyOf(platformKey, store.key);
@@ -50,16 +66,18 @@ function createStoreBrowserPool(options = {}) {
       sessions.delete(key);
     }
     const registry = loadPortRegistry();
-    const port = await resolveStorePort(registry, key);
     const profileDir = resolveStoreProfileDir(platformKey, store.key);
+    // 窗口还开着就直接附着；没开才新拉起（新拉起优先用登记表里的端口，顺延后写回）。
+    const livePort = await findLivePortForStore(profileDir, registry, key);
     const session = await openImpl({
       profileDir,
       targetUrl: store.sources[0] && store.sources[0].url,
       keepOpen: true,
-      reusePort: port
+      reusePort: livePort,
+      debugPort: livePort ? null : await resolveStorePort(registry, key),
+      profileMatcherImpl
     });
-    if (session.port && session.port !== port) {
-      // 附着失败走新拉起时端口可能顺延，把真实端口写回登记表，下次才能附着。
+    if (session.port && session.port !== registry[key]) {
       registry[key] = session.port;
       savePortRegistry(registry);
     }

@@ -65,18 +65,22 @@ async function runMenu() {
   let loop = null;
   while (true) {
     const answer = (await ask(`
-[1] 立即巡检一轮  [2] 启动常驻监控  [3] 停止常驻监控
+[1] 立即巡检一轮          [2] 启动常驻监控（真发企微）
+[3] 停止常驻监控          [8] 演练常驻监控（只判断不发送）
 [4] 登录辅助(输入店铺key)  [5] 状态  [6] 发送测试提醒  [7] 今日值班  [0] 退出
 请选择: `)).trim();
     if (answer === "1") {
       const r = await monitorOnce().catch((e) => (log("菜单", "巡检", "失败", e.message), null));
       if (r) console.log(`完成：事件 ${r.events.length} 个，发送成功 ${r.sent.filter((s) => s.ok).length} 条。`);
-    } else if (answer === "2") {
+    } else if (answer === "2" || answer === "8") {
       if (loop) { console.log("常驻监控已在运行。"); continue; }
+      const dryRun = answer === "8";
+      // 窗口保持打开：一个店一个窗口、每轮复用；停监控不关窗口（浏览器窗口要关就手动关）。
       loop = startMonitorLoop((err, result) => {
         if (err) console.log(`本轮异常：${err.message}`);
-        else console.log(`本轮完成：事件 ${result.events.length} 个。`);
-      });
+        else console.log(`本轮完成：事件 ${result.events.length} 个${dryRun ? "（演练，未发送）" : ""}。`);
+      }, { dryRun, keepBrowsersOpen: true });
+      console.log(dryRun ? "已启动常驻监控（演练：只判断不发送）。" : "已启动常驻监控（发现新工单会真发企微）。");
     } else if (answer === "3") {
       if (loop) { loop.stop(); loop = null; } else console.log("当前没有运行中的常驻监控。");
     } else if (answer === "4") {

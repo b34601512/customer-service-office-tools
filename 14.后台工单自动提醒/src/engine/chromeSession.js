@@ -53,19 +53,28 @@ async function probeDebugPort(port) {
   }
 }
 
-// 附着前先确认端口上那个浏览器用的就是这个店铺的 profile（避免接错店、错店读数）。
-// 身份真源用 CDP 的 Browser.getBrowserCommandLine 里的 --user-data-dir。
-async function browserUsesProfile(browser, profileDir) {
+// 判断某调试端口上的 Chrome 用的是不是指定 profile（身份真源）。
+// 两个坑都避开了：
+// 1) 不用 CDP 的 Browser.getBrowserCommandLine（它要求启动带 --enable-automation，而我们故意不带）；
+// 2) 不让中文路径经 PowerShell→Node 往返（PowerShell 按 GBK 输出、Node 按 UTF-8 解会成乱码导致永远不等）——
+//    比对放在 PowerShell 里做，只回 MATCH/NO（纯 ASCII）。期望值经环境变量传入，绕开引号转义。
+function portUsesProfileDir(port, profileDir) {
+  const script = [
+    "$exp = $env:WO_EXPECT_DIR",
+    "$hit = Get-CimInstance Win32_Process -Filter \"Name='chrome.exe'\" |",
+    `  Where-Object { $_.CommandLine -match '--remote-debugging-port=${port}(\\s|$)' } |`,
+    "  Where-Object { $_.CommandLine -match '--user-data-dir=\"?([^\"]+?)\"?(?:\\s|$)' -and $matches[1].TrimEnd([char]92) -ieq $exp.TrimEnd([char]92) } |",
+    "  Select-Object -First 1",
+    "if ($hit) { 'MATCH' } else { 'NO' }"
+  ].join("\n");
   try {
-    const session = await browser.newBrowserCDPSession();
-    const info = await session.send("Browser.getBrowserCommandLine");
-    await session.detach().catch(() => {});
-    const args = (info && info.arguments) || [];
-    const flag = args.find((item) => String(item).startsWith("--user-data-dir="));
-    if (!flag) return false;
-    const actual = flag.slice("--user-data-dir=".length).replace(/[\\/]+$/, "").replace(/\\/g, "/").toLowerCase();
-    const expected = String(profileDir).replace(/[\\/]+$/, "").replace(/\\/g, "/").toLowerCase();
-    return actual === expected;
+    const out = execFileSync("powershell.exe", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", script], {
+      encoding: "utf8",
+      timeout: 20000,
+      windowsHide: true,
+      env: { ...process.env, WO_EXPECT_DIR: String(profileDir) }
+    });
+    return String(out).trim() === "MATCH";
   } catch (error) {
     return false;
   }
@@ -95,7 +104,7 @@ function killChromeHoldingProfile(profileDir) {
 // 附着一个已经开着、且用的正是本店铺 profile 的受控 Chrome（常驻监控复用同一个窗口，不重启、不动登录态）。
 // 失败都返 null，由调用方决定是否新拉起；不在这里猜。
 async function attachStoreBrowser(options) {
-  const { profileDir, port } = options;
+  const { profileDir, port, profileMatcherImpl } = options;
   const info = await probeDebugPort(port);
   if (!info) return null;
   let browser = null;
@@ -109,7 +118,8 @@ async function attachStoreBrowser(options) {
     await browser.close().catch(() => {});
     return null;
   }
-  if (!(await browserUsesProfile(browser, profileDir))) {
+  // 端口上那个窗口必须真的是本店铺的 profile，否则不接（避免接错店、错店读数）。
+  if (!(profileMatcherImpl || portUsesProfileDir)(port, profileDir)) {
     log("浏览器", "会话", "端口上不是本店铺 profile，不附着", `port=${port} profile=${path.basename(profileDir)}`);
     await browser.close().catch(() => {});
     return null;
@@ -201,4 +211,4 @@ async function openStoreBrowser(options) {
   };
 }
 
-module.exports = { openStoreBrowser, attachStoreBrowser, probeDebugPort, isPortFree, resolveStoreProfileDir };
+module.exports = { openStoreBrowser, attachStoreBrowser, probeDebugPort, isPortFree, resolveStoreProfileDir, portUsesProfileDir };

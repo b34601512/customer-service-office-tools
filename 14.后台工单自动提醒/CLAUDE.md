@@ -20,7 +20,9 @@
 
 > 常驻形态（2026-09-18 落地）：`src/engine/storeBrowserPool.js` = 一个店铺一个浏览器窗口，**窗口一直开着**、
 > 每轮复用；端口从 `baseDebugPort=9411` 起一店一个，登记在 `runtime/state/browser-ports.json`（重启后按它附着回原窗口）。
-> `chromeSession.attachStoreBrowser` 用 CDP 的 `Browser.getBrowserCommandLine` 校验 `--user-data-dir`，确认"是这家店的窗口"才附着；
+> `chromeSession.portUsesProfileDir` 确认"端口上那个窗口是不是这家店的"才附着：读 Win32 进程命令行比对 `--user-data-dir`，
+> **比对放在 PowerShell 里做、只回 MATCH/NO**（中文路径经 PowerShell→Node 往返会变乱码，实测踩过；也不用 CDP 的
+> `Browser.getBrowserCommandLine`——它要求启动带 `--enable-automation`）。找不到登记端口时会扫一段端口把本店窗口找回来（防登记表串位）。
 > 附着/复用的会话 `close()` **只断开引用、不关窗口、不杀进程**；只有"窗口被人关掉/崩了"才重新拉起（工具自身故障，不属于平台数据重试）。
 
 - `src/config/appConfig.js`：路径与常量。
