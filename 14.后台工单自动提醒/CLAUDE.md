@@ -18,9 +18,13 @@
 
 ## 4. 模块结构（UI 与业务分离，遵循 SoftTalk#2705）
 
-> 界面层：`src/cli/tuiSelect.js` = 方向键选择菜单（渲染 + 按键状态机，零依赖，风格对齐 1 号控制台：
-> 标题栏 / `›` 反色当前项 / 数字键直达 / 页脚按键提示 / 备用屏）。业务动作仍由 `startCli.js` 调同一套 service 真源；
-> 界面占屏期间用 `logger.setConsoleEnabled(false)` 静音控制台（日志照旧落盘）。非 TTY 自动回退输入式菜单。
+> 界面层：`src/cli/tuiSelect.js` = **方向键常驻界面**（渲染 + 按键状态机 + 每秒原地重绘，零依赖，风格对齐 1 号控制台：
+> 标题栏 / `›` 反色当前项 / 数字键直达 / 页脚按键提示 / 备用屏只进一次、光标归位后原地重绘，所以不闪回首页）。
+> 状态行与**新鲜度血条**在 `src/cli/menuStatus.js`（纯函数）：满格＝刚抓到新数据、每秒掉一点、流干＝到点重抓并回满。
+> 业务动作仍由 `startCli.js` 的 `handleMenuAction` 调同一套 service 真源；界面占屏期间用 `logger.setConsoleEnabled(false)`
+> 静音控制台（日志照旧落盘）。stdin 不是终端时自动回退输入式菜单（管道/脚本仍可跑）。
+> 常驻调度：`startMonitorLoop` 用"上一轮抓到新数据后 + 间隔"的自调度（不是 setInterval），并返回 `getStatus()`
+> 供界面显示 running/roundInProgress/lastRoundAt/nextRoundAt/lastSummary/lastError。
 
 > 常驻形态（2026-09-18 落地）：`src/engine/storeBrowserPool.js` = 一个店铺一个浏览器窗口，**窗口一直开着**、
 > 每轮复用；端口从 `baseDebugPort=9411` 起一店一个，登记在 `runtime/state/browser-ports.json`（重启后按它附着回原窗口）。

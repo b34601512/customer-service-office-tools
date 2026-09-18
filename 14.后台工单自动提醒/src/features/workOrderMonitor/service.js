@@ -127,21 +127,44 @@ async function monitorOnce(options = {}) {
 }
 
 // 常驻监控：先用/拉起各店窗口，然后每轮跑一次完整巡检（发现新工单就发提醒）。
+// 调度：**上一轮抓到新数据后再排下一轮**（不是 setInterval），这样界面上的"新鲜度血条"流干＝该抓下一轮，语义对得上。
 // options.keepBrowsersOpen（默认 true）：店铺窗口留着不关，每轮复用；stop() 只停程序、不关窗口。
 // options.monitorOnceImpl / options.sessionPool：依赖注入点，测试用假实现跑同一条链路。
+// 返回 { stop(), getStatus() }：getStatus 供界面显示（运行中/本轮是否在抓/上次抓到时间/下一轮时刻/本轮摘要/错误）。
 function startMonitorLoop(onRoundDone, options = {}) {
   const config = loadConfig();
-  const intervalMs = (Number(config.monitor.intervalMinutes) || 5) * 60000;
+  const intervalMs = (Number(config.monitor.intervalMinutes) || 10) * 60000;
   const keepBrowsersOpen = options.keepBrowsersOpen !== false;
   const monitorOnceImpl = options.monitorOnceImpl || monitorOnce;
   const pool = options.sessionPool || (keepBrowsersOpen ? createStoreBrowserPool(options.poolOptions) : null);
   let running = true;
-  log(
-    "监控",
-    "常驻",
-    "启动",
-    `间隔=${config.monitor.intervalMinutes}分钟 窗口保持=${keepBrowsersOpen}`
-  );
+  let timer = null;
+  const 状态 = {
+    running: true,
+    intervalMs,
+    startedAt: Date.now(),
+    warmupDone: false,
+    roundInProgress: false,
+    lastRoundAt: null,
+    lastRoundMs: null,
+    lastError: null,
+    lastSummary: null,
+    nextRoundAt: null
+  };
+  log("监控", "常驻", "启动", `间隔=${Math.round(intervalMs / 60000)}分钟 窗口保持=${keepBrowsersOpen}`);
+
+  // 本轮抓到什么：界面只用这几个数（详细计数在状态文件里）。
+  const 小结本轮 = (result) => {
+    const observations = (result && result.observations) || {};
+    const 源 = Object.keys(observations);
+    const 店铺 = new Set(源.map((id) => id.split("/").slice(0, 2).join("/")));
+    return {
+      storeCount: 店铺.size,
+      sourceCount: 源.length,
+      eventCount: ((result && result.events) || []).length,
+      sentOkCount: ((result && result.sent) || []).filter((item) => item.ok).length
+    };
+  };
 
   // 预热：先把每个店铺的窗口拉起来（人也能看到页面），之后每轮复用同一个窗口。
   const warmupBrowsers = async () => {
@@ -159,26 +182,54 @@ function startMonitorLoop(onRoundDone, options = {}) {
     }
   };
 
+  // 下一轮排在上次"抓到新数据"之后量：血条流干的那一刻正好是下一轮开始。
+  const 排下一轮 = () => {
+    if (!running) return;
+    const 基准 = 状态.lastRoundAt || Date.now();
+    状态.nextRoundAt = 基准 + intervalMs;
+    timer = setTimeout(runOnceSafely, Math.max(0, 状态.nextRoundAt - Date.now()));
+  };
+
   const runOnceSafely = async () => {
     if (!running) return;
+    timer = null;
+    状态.roundInProgress = true;
     try {
       const result = await monitorOnceImpl({ sessionPool: pool });
+      状态.lastRoundAt = Date.now();
+      状态.lastError = null;
+      状态.lastSummary = 小结本轮(result);
       if (onRoundDone) onRoundDone(null, result);
     } catch (error) {
+      状态.lastError = error.message;
       log("监控", "常驻", "本轮异常", error.message);
       if (onRoundDone) onRoundDone(error);
+    } finally {
+      状态.roundInProgress = false;
+      排下一轮();
     }
   };
 
   // 先预热窗口再跑第一轮：不然第一轮的窗口是探测过程里临时开的。
-  warmupBrowsers().then(runOnceSafely);
-  const timer = setInterval(runOnceSafely, intervalMs);
+  warmupBrowsers()
+    .catch((error) => log("监控", "常驻", "窗口预热异常", error.message))
+    .then(() => {
+      状态.warmupDone = true;
+      runOnceSafely();
+    });
+
   return {
     stop() {
       running = false;
-      clearInterval(timer);
+      状态.running = false;
+      状态.nextRoundAt = null;
+      if (timer) clearTimeout(timer);
+      timer = null;
       if (pool) pool.detachAll();
       log("监控", "常驻", "已停止", keepBrowsersOpen ? "浏览器窗口保持打开" : "浏览器窗口已释放");
+    },
+    getStatus() {
+      return { ...状态 };
     }
   };
 }

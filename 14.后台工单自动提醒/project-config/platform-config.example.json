@@ -32,7 +32,7 @@
     }
   },
   "monitor": {
-    "intervalMinutes": 5,
+    "intervalMinutes": 10,
     "pageLoadTimeoutSeconds": 45,
     "loginAlertThrottleMinutes": 60,
     "repeatReminderMinutes": 0,

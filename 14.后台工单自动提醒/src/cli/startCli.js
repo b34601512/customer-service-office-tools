@@ -4,10 +4,10 @@ const { monitorOnce, startMonitorLoop, loadMonitorState } = require("../features
 const { loginAssist } = require("../features/workOrderMonitor/loginAssist");
 const { resolveDuty, buildMentionPlan } = require("../features/dutySchedule/dutyService");
 const { loadConfig } = require("../config/projectConfigService");
-const { sendWecomText } = require("../integrations/wecomRobot");
 const { log, setConsoleEnabled } = require("../engine/logger");
 const { formatOnceResult } = require("./formatOnceResult");
-const { runSelectMenu } = require("./tuiSelect");
+const { runLiveMenu } = require("./tuiSelect");
+const { buildStatusLines } = require("./menuStatus");
 
 function printHelp() {
   console.log(`
@@ -21,42 +21,128 @@ function printHelp() {
 不带参数且有终端时默认进入菜单。`);
 }
 
-function renderStatus() {
+function buildStatusText() {
   const state = loadMonitorState();
   const rows = Object.entries(state.sources || {});
   if (rows.length === 0) {
-    console.log("还没有巡检记录，先运行 once。");
-    return;
+    return "还没有巡检记录，先按 3 巡检一轮。";
   }
+  const 行 = [];
   for (const [id, src] of rows) {
     const counts = src.counts ? JSON.stringify(src.counts) : "无数据";
-    console.log(`${id}  状态=${src.status}  计数=${counts}`);
+    行.push(`${id}  状态=${src.status}  计数=${counts}`);
   }
-  console.log(`最近一轮巡检时间：${state.lastRoundAt ? new Date(state.lastRoundAt).toLocaleString() : "无"}`);
+  行.push(`最近一轮巡检时间：${state.lastRoundAt ? new Date(state.lastRoundAt).toLocaleString() : "无"}`);
+  return 行.join("\n");
 }
 
-async function renderDuty() {
+async function buildDutyText() {
   const config = loadConfig();
   const now = new Date();
   const result = await resolveDuty(config, now);
   if (!result.ok) {
-    console.log(`排班读取失败：${result.error}`);
-    return;
+    return `排班读取失败：${result.error}`;
   }
-  console.log(`今日（${now.getMonth() + 1}月${now.getDate()}日）${config.duty.group}值班：`);
+  const 行 = [`今日（${now.getMonth() + 1}月${now.getDate()}日）${config.duty.group}值班：`];
   for (const item of result.todayStaff) {
-    console.log(`  ${item.name}  ${item.shift}  底色：${item.colorName || "无"}${item.colorRgb ? `（${item.colorRgb}）` : ""}`);
+    行.push(`  ${item.name}  ${item.shift}  底色：${item.colorName || "无"}${item.colorRgb ? `（${item.colorRgb}）` : ""}`);
+  }
+  行.push("按规则应@（组长在班就@组长；其他人看底色标记）：");
+  for (const item of result.atStaff) {
+    行.push(`  ${item.name}（${item.reason}）`);
   }
   const plan = buildMentionPlan(config, result);
-  console.log(`按规则应@（组长在班就@组长；其他人看底色标记）：`);
-  for (const item of result.atStaff) {
-    console.log(`  ${item.name}（${item.reason}）`);
-  }
-  console.log(`最终@名单（含主管）：${plan.atNames.join("、") || "无"}`);
-  console.log(`手机号：${plan.mobiles.join("、") || "无"}`);
+  行.push(`最终@名单（含主管）：${plan.atNames.join("、") || "无"}`);
+  行.push(`手机号：${plan.mobiles.join("、") || "无"}`);
+  return 行.join("\n");
 }
 
-// 菜单：方向键 TUI（1 号那种风格）——↑↓选择、数字键直达、回车执行；
+// 常驻监控句柄 + 界面要读的状态（running/是否在抓/上次抓到时间/下一轮时刻/本轮摘要/错误）。
+// 只做状态与启停，业务判定全在 service。
+function createMenuController(note) {
+  let loop = null;
+  let 最近消息 = "";
+  return {
+    setMessage(文本) {
+      最近消息 = 文本;
+    },
+    getStatus() {
+      const 基础 = {
+        running: false,
+        intervalMs: (Number(loadConfig().monitor.intervalMinutes) || 10) * 60000,
+        warmupDone: true,
+        roundInProgress: false,
+        lastRoundAt: null,
+        nextRoundAt: null,
+        lastSummary: null,
+        lastError: null,
+        lastMessage: 最近消息
+      };
+      if (!loop) return 基础;
+      return { ...基础, ...loop.getStatus(), lastMessage: 最近消息 };
+    },
+    start() {
+      if (loop) return "常驻监控已在运行。";
+      loop = startMonitorLoop((err, result) => {
+        note(
+          err
+            ? `本轮异常：${err.message}`
+            : `本轮完成：事件 ${result.events.length} 个，发送 ${result.sent.filter((item) => item.ok).length} 条。`
+        );
+      }, { keepBrowsersOpen: true });
+      return "已启动常驻监控（窗口保持打开，发现新工单会发提醒）。";
+    },
+    stop() {
+      if (!loop) return "当前没有运行中的常驻监控。";
+      loop.stop();
+      loop = null;
+      return "已停止常驻监控（浏览器窗口留着）。";
+    },
+    dispose() {
+      if (loop) loop.stop();
+      loop = null;
+    }
+  };
+}
+
+// 菜单动作 → 业务调用。界面层（TUI/输入式）只提供 io.ask / io.showText / io.note，逻辑只有这一份。
+async function handleMenuAction(action, ctl, io) {
+  if (action === "quit") return "quit";
+  if (action === "run") {
+    io.note(ctl.start());
+    return;
+  }
+  if (action === "stop") {
+    io.note(ctl.stop());
+    return;
+  }
+  if (action === "once") {
+    const r = await monitorOnce().catch((error) => (log("菜单", "巡检", "失败", error.message), null));
+    if (r) io.note(`完成：事件 ${r.events.length} 个，发送成功 ${r.sent.filter((item) => item.ok).length} 条。`);
+    return;
+  }
+  if (action === "status") {
+    await io.showText(buildStatusText());
+    return;
+  }
+  if (action === "duty") {
+    await io.showText(await buildDutyText());
+    return;
+  }
+  if (action === "login") {
+    const key = (await io.ask("店铺key（如 jingxi2）: ")).trim();
+    try {
+      const assist = await loginAssist(key);
+      io.note(`已为「${assist.store.displayName}」打开浏览器（账号：${assist.store.username}），请在窗口里完成登录。`);
+      await io.ask("登录完成后按回车关闭浏览器（登录态已保存在店铺 profile）……");
+      await assist.close();
+    } catch (error) {
+      io.note(`登录辅助失败：${error.message}`);
+    }
+  }
+}
+
+// 菜单：方向键常驻界面（1 号那种风格）——↑↓选择、数字键直达、回车执行，界面每秒原地重绘。
 // 非交互环境（管道/被脚本调用）自动回退到输入式菜单，保证自动化仍能跑。
 const 菜单项 = [
   { key: "1", label: "启动常驻监控", action: "run" },
@@ -69,70 +155,47 @@ const 菜单项 = [
 ];
 
 async function runMenu() {
+  const 可交互 = Boolean(process.stdin.isTTY);
+  let ctl = null;
+  const note = (文本) => {
+    ctl.setMessage(文本);
+    log("菜单", "操作", 文本);
+  };
+  ctl = createMenuController(note);
+
+  if (可交互) {
+    // 界面占屏期间把控制台日志静音（日志照旧写 run.log），退出界面后恢复。
+    setConsoleEnabled(false);
+    await runLiveMenu({
+      title: "14号 后台工单自动提醒",
+      items: 菜单项,
+      statusLines: () => buildStatusLines(ctl.getStatus(), Date.now()),
+      footerNotes: [
+        "血条＝数据新鲜度：满格＝刚抓到新数据；流干＝到点自动重抓并回满",
+        "详细日志：runtime/logs/run.log"
+      ],
+      dispatch: (action, frameIo) =>
+        handleMenuAction(action, ctl, { note, ask: frameIo.ask, showText: frameIo.showText })
+    });
+    setConsoleEnabled(true);
+    ctl.dispose();
+    // 常驻窗口的 CDP 连接（保持窗口用的）会让事件循环继续挂着，必须显式退出，否则窗口卡住不退。
+    process.exit(0);
+  }
+
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
   const ask = (q) => new Promise((resolve) => rl.question(q, resolve));
-  const 可交互 = Boolean(process.stdin.isTTY && process.stdout.isTTY);
-  let loop = null;
-
-  while (true) {
-    let action;
-    if (可交互) {
-      // 按方向键选。界面占屏期间把控制台日志静音（日志照旧写 run.log），退出界面后恢复。
-      setConsoleEnabled(false);
-      action = await runSelectMenu({
-        title: "14号 后台工单自动提醒",
-        items: 菜单项,
-        footerNotes: [
-          loop ? "常驻监控：运行中（浏览器窗口保持打开）" : "常驻监控：未启动",
-          "常驻日志：runtime/logs/run.log（本界面显示期间控制台不刷日志）"
-        ]
-      });
-      setConsoleEnabled(true);
-      if (action === null) {
-        // 理论上进不到（上方已判 TTY）：退回输入式，不静默。
-        console.log("当前环境不支持方向键菜单，请用输入式：例 node src/cli/startCli.js status");
-        action = "quit";
-      }
-    } else {
+  const io = { note, ask, showText: async (文本) => console.log(文本) };
+  try {
+    while (true) {
       const answer = (await ask("\n[1]启动常驻监控 [2]停止 [3]立即巡检一轮 [4]状态 [5]登录 [6]今日值班 [0]退出\n请选择: ")).trim();
       const 命中 = 菜单项.find((item) => item.key === answer);
-      action = 命中 ? 命中.action : "";
+      if (!命中) continue;
+      if ((await handleMenuAction(命中.action, ctl, io)) === "quit") break;
     }
-
-    if (action === "once") {
-      const r = await monitorOnce().catch((e) => (log("菜单", "巡检", "失败", e.message), null));
-      if (r) console.log(`完成：事件 ${r.events.length} 个，发送成功 ${r.sent.filter((s) => s.ok).length} 条。`);
-    } else if (action === "run") {
-      if (loop) { console.log("常驻监控已在运行。"); continue; }
-      // 窗口保持打开：一个店一个窗口、每轮复用；停监控不关窗口（浏览器窗口要关就手动关）。
-      loop = startMonitorLoop((err, result) => {
-        if (err) console.log(`本轮异常：${err.message}`);
-        else console.log(`本轮完成：事件 ${result.events.length} 个。`);
-      }, { keepBrowsersOpen: true });
-      console.log("已启动常驻监控（窗口保持打开，发现新工单会发提醒）。");
-    } else if (action === "stop") {
-      if (loop) { loop.stop(); loop = null; } else console.log("当前没有运行中的常驻监控。");
-    } else if (action === "login") {
-      const key = (await ask("店铺key（如 jingxi2）: ")).trim();
-      try {
-        const assist = await loginAssist(key);
-        console.log(`已为「${assist.store.displayName}」打开浏览器，请在窗口中完成登录（账号：${assist.store.username}）。`);
-        console.log("登录完成后回到本窗口按回车关闭浏览器（登录态已保存在店铺 profile）。");
-        await ask("");
-        await assist.close();
-      } catch (error) {
-        console.log(`登录辅助失败：${error.message}`);
-      }
-    } else if (action === "status") {
-      renderStatus();
-    } else if (action === "duty") {
-      await renderDuty();
-    } else if (action === "quit") {
-      if (loop) loop.stop();
-      rl.close();
-      // 常驻窗口的 CDP 连接（保持窗口用的）会让事件循环继续挂着，必须显式退出，否则窗口卡住不退。
-      process.exit(0);
-    }
+  } finally {
+    rl.close();
+    ctl.dispose();
   }
 }
 
@@ -164,8 +227,8 @@ async function main() {
     return;
   }
   if (command === "menu") { runMenu(); return; }
-  if (command === "status") { renderStatus(); return; }
-  if (command === "duty") { await renderDuty(); return; }
+  if (command === "status") { console.log(buildStatusText()); return; }
+  if (command === "duty") { console.log(await buildDutyText()); return; }
   if (command === "help" || command === "--help") { printHelp(); return; }
   if (!command && process.stdin.isTTY) { runMenu(); return; }
   printHelp();
