@@ -22,6 +22,7 @@ function parseArgs(argv) {
     const token = argv[index];
     if (token === "--limit") { args.limit = Number(argv[index + 1]); index += 1; continue; }
     if (token === "--max-rows") { args.maxRows = Number(argv[index + 1]); index += 1; continue; }
+    if (token === "--start-row") { args.startRow = Number(argv[index + 1]); index += 1; continue; }
     if (token === "--sheet") { args.sheetName = argv[index + 1]; index += 1; continue; }
     if (token === "--status-column") { args.statusColumnIndex = Number(argv[index + 1]); index += 1; continue; }
     if (token === "--order-column") { args.orderColumnIndex = Number(argv[index + 1]); index += 1; continue; }
@@ -34,6 +35,7 @@ function parseArgs(argv) {
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   const options = { limit: args.limit, maxRows: args.maxRows };
+  if (args.startRow !== undefined) options.startRow = args.startRow;
   if (args.sheetName) options.sheetName = args.sheetName;
   if (args.statusColumnIndex !== undefined) options.statusColumnIndex = args.statusColumnIndex;
   if (args.orderColumnIndex !== undefined) options.orderColumnIndex = args.orderColumnIndex;
