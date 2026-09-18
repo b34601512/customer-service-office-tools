@@ -42,6 +42,35 @@ function isPortFree(port) {
   });
 }
 
+// 探测某个调试端口上是否已有我们拉起的浏览器（常驻模式要附着复用，不能重启窗口）。
+async function probeDebugPort(port) {
+  try {
+    const res = await fetch(`http://127.0.0.1:${port}/json/version`);
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (error) {
+    return null;
+  }
+}
+
+// 附着前先确认端口上那个浏览器用的就是这个店铺的 profile（避免接错店、错店读数）。
+// 身份真源用 CDP 的 Browser.getBrowserCommandLine 里的 --user-data-dir。
+async function browserUsesProfile(browser, profileDir) {
+  try {
+    const session = await browser.newBrowserCDPSession();
+    const info = await session.send("Browser.getBrowserCommandLine");
+    await session.detach().catch(() => {});
+    const args = (info && info.arguments) || [];
+    const flag = args.find((item) => String(item).startsWith("--user-data-dir="));
+    if (!flag) return false;
+    const actual = flag.slice("--user-data-dir=".length).replace(/[\\/]+$/, "").replace(/\\/g, "/").toLowerCase();
+    const expected = String(profileDir).replace(/[\\/]+$/, "").replace(/\\/g, "/").toLowerCase();
+    return actual === expected;
+  } catch (error) {
+    return false;
+  }
+}
+
 async function acquireDebugPort(preferredPort) {
   let port = preferredPort;
   for (let offset = 0; offset < 20; offset += 1) {
@@ -63,10 +92,52 @@ function killChromeHoldingProfile(profileDir) {
   }
 }
 
-// 拉起带店铺 profile 的受控 Chrome 并返回 { browser, context, close }。
-// keepVisible=true 用于人工登录辅助；监控轮询默认也可见（京东对 headless 风险高，先保守）。
+// 附着一个已经开着、且用的正是本店铺 profile 的受控 Chrome（常驻监控复用同一个窗口，不重启、不动登录态）。
+// 失败都返 null，由调用方决定是否新拉起；不在这里猜。
+async function attachStoreBrowser(options) {
+  const { profileDir, port } = options;
+  const info = await probeDebugPort(port);
+  if (!info) return null;
+  let browser = null;
+  try {
+    browser = await chromium.connectOverCDP(`http://127.0.0.1:${port}`);
+  } catch (error) {
+    return null;
+  }
+  const context = browser.contexts()[0];
+  if (!context) {
+    await browser.close().catch(() => {});
+    return null;
+  }
+  if (!(await browserUsesProfile(browser, profileDir))) {
+    log("浏览器", "会话", "端口上不是本店铺 profile，不附着", `port=${port} profile=${path.basename(profileDir)}`);
+    await browser.close().catch(() => {});
+    return null;
+  }
+  log("浏览器", "会话", "已附着实控Chrome（窗口保持打开）", `port=${port} profile=${path.basename(profileDir)}`);
+  let closed = false;
+  return {
+    browser,
+    context,
+    port,
+    attached: true,
+    async close() {
+      // 常驻窗口不关：只断开本次引用，不关窗口、不杀进程。
+      closed = true;
+    },
+    isClosed() { return closed; }
+  };
+}
+
+// 拉起带店铺 profile 的受控 Chrome 并返回 { browser, context, port, close }。
+// keepOpen=true 是常驻监控用：窗口一直留着（登录态也一直留着），close() 只断开引用、不杀窗口；
+// 进程退出时也不杀（下次启动会先尝试附着同一个端口）。默认 false = 单轮巡检的开关行为。
 async function openStoreBrowser(options) {
-  const { profileDir, targetUrl, debugPort } = options;
+  const { profileDir, targetUrl, debugPort, keepOpen = false, reusePort = null } = options;
+  if (reusePort) {
+    const attached = await attachStoreBrowser({ profileDir, port: reusePort });
+    if (attached) return attached;
+  }
   ensureDir(profileDir);
   killChromeHoldingProfile(profileDir);
   fs.rmSync(path.join(profileDir, "SingletonLock"), { force: true });
@@ -104,19 +175,30 @@ async function openStoreBrowser(options) {
   const browser = await chromium.connectOverCDP(`http://127.0.0.1:${port}`);
   const context = browser.contexts()[0];
   log("浏览器", "会话", "已连接受控Chrome", `pid=${child.pid} port=${port} profile=${path.basename(profileDir)}`);
+  if (keepOpen) {
+    // 常驻模式：退出进程也不杀这个窗口，下次启动靠端口附着复用。
+    liveChildren.delete(child);
+  }
 
   let closed = false;
   return {
     browser,
     context,
+    port,
+    attached: false,
     async close() {
       if (closed) return;
       closed = true;
+      if (keepOpen) {
+        log("浏览器", "会话", "窗口保持打开（常驻模式不关）", `port=${port} profile=${path.basename(profileDir)}`);
+        return;
+      }
       await browser.close().catch(() => {});
       liveChildren.delete(child);
       try { process.kill(child.pid); } catch (error) { /* 已退出 */ }
-    }
+    },
+    isClosed() { return closed; }
   };
 }
 
-module.exports = { openStoreBrowser, resolveStoreProfileDir };
+module.exports = { openStoreBrowser, attachStoreBrowser, probeDebugPort, isPortFree, resolveStoreProfileDir };

@@ -13,7 +13,8 @@ function printHelp() {
 14号后台工单自动提醒 —— 命令用法
   node src/cli/startCli.js once                立即巡检一轮（发真实提醒）
   node src/cli/startCli.js once --dry-run      巡检一轮但只演练不发送
-  node src/cli/startCli.js run                 启动常驻监控（按配置间隔轮询）
+  node src/cli/startCli.js run                 启动常驻监控（窗口保持打开，发现新工单发企微）
+  node src/cli/startCli.js run --dry-run       常驻但只演练不发送（真发前验证用）
   node src/cli/startCli.js login <店铺key>     拉起该店铺的可见浏览器，人工登录后保持登录态
   node src/cli/startCli.js test-notify         向企微群发送一条测试提醒
   node src/cli/startCli.js status              查看各提醒源最近一次计数与登录状态
@@ -116,7 +117,16 @@ async function main() {
     return;
   }
   if (command === "run") {
-    const loop = startMonitorLoop((err) => err && console.log(`本轮异常：${err.message}`));
+    const dryRun = rest.includes("--dry-run");
+    const loop = startMonitorLoop((err) => err && console.log(`本轮异常：${err.message}`), {
+      dryRun,
+      keepBrowsersOpen: true
+    });
+    console.log(
+      dryRun
+        ? "已进入常驻监控·演练模式（只判断、不发送）。浏览器窗口保持打开，Ctrl+C 只停程序、不关窗口。"
+        : "已进入常驻监控（发现新工单会发企微）。浏览器窗口保持打开，Ctrl+C 只停程序、不关窗口。"
+    );
     process.on("SIGINT", () => { loop.stop(); process.exit(0); });
     return;
   }

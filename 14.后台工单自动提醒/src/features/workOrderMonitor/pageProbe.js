@@ -142,9 +142,12 @@ function sameCounts(a, b) {
 }
 
 // 一轮探测同一店铺的所有提醒源，共用一个浏览器，减少启动开销。
-async function probeStore(platformKey, store, pageLoadTimeoutMs) {
+// options.session：常驻监控传进来的已有窗口（复用，用完不关）；不传就是单轮自开自关。
+async function probeStore(platformKey, store, pageLoadTimeoutMs, options = {}) {
+  const reuse = options.session;
+  const owned = !reuse;
   const profileDir = resolveStoreProfileDir(platformKey, store.key);
-  const session = await openStoreBrowser({
+  const session = reuse || await openStoreBrowser({
     profileDir,
     targetUrl: store.sources[0] && store.sources[0].url
   });
@@ -164,7 +167,7 @@ async function probeStore(platformKey, store, pageLoadTimeoutMs) {
     }
     return results;
   } finally {
-    await session.close();
+    if (owned) await session.close();
   }
 }
 

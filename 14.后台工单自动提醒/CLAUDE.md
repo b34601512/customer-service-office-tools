@@ -18,6 +18,11 @@
 
 ## 4. 模块结构（UI 与业务分离，遵循 SoftTalk#2705）
 
+> 常驻形态（2026-09-18 落地）：`src/engine/storeBrowserPool.js` = 一个店铺一个浏览器窗口，**窗口一直开着**、
+> 每轮复用；端口从 `baseDebugPort=9411` 起一店一个，登记在 `runtime/state/browser-ports.json`（重启后按它附着回原窗口）。
+> `chromeSession.attachStoreBrowser` 用 CDP 的 `Browser.getBrowserCommandLine` 校验 `--user-data-dir`，确认"是这家店的窗口"才附着；
+> 附着/复用的会话 `close()` **只断开引用、不关窗口、不杀进程**；只有"窗口被人关掉/崩了"才重新拉起（工具自身故障，不属于平台数据重试）。
+
 - `src/config/appConfig.js`：路径与常量。
 - `src/config/projectConfigService.js`：配置加载/校验/遍历真源。
 - `src/engine/`：`chromeSession.js`（按店铺 profile 拉起/连接/关闭受控 Chrome）、`logger.js`、`fileSystem.js`。
@@ -64,13 +69,18 @@ npm install
 node src/cli/startCli.js login jd1
 # 2) 巡检一轮（--dry-run 只演练不发消息）
 node src/cli/startCli.js once --dry-run
-# 3) 常驻监控（Ctrl+C 退出）/ 交互菜单 / 链路自测
-node src/cli/startCli.js run
+# 3) 常驻监控 / 交互菜单 / 链路自测
+node src/cli/startCli.js run --dry-run   # 常驻但只演练不发送（真发前验证用）
+node src/cli/startCli.js run             # 常驻监控：窗口保持打开，发现新工单发企微
 node src/cli/startCli.js menu
 node src/cli/startCli.js test-notify
 node src/cli/startCli.js duty    # 验证金山排班读取：今日售后班次/底色/当前在班/@名单
 npm test
 ```
+
+双击 `启动监控.bat` 与 `node src/cli/startCli.js run` 等价。
+窗口生命周期实测（2026-09-18）：正常退出、单进程强杀都**不关窗口**；只有整棵进程树被杀才会连带窗口，
+下次启动自动重开（登录态在 profile 里，不会丢）。
 
 ## 7. 配置说明
 

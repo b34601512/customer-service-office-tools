@@ -19,6 +19,8 @@ module.exports = {
   monitorStatePath: path.join(runtimeDir, "state", "monitor-state.json"),
   alertLedgerPath: path.join(runtimeDir, "state", "alert-ledger.jsonl"),
   browserProfilesRoot: path.join(runtimeDir, "state", "browser-profiles"),
+  // 常驻监控的「店铺 → 调试端口」登记表：重启后据此附着回同一个窗口，不重复开窗。
+  browserPortsPath: path.join(runtimeDir, "state", "browser-ports.json"),
   projectConfigPath: process.env.WORK_ORDER_CONFIG || path.join(projectRoot, "project-config", "platform-config.json"),
   exampleConfigPath: path.join(projectRoot, "project-config", "platform-config.example.json"),
   chromeCandidates: CHROME_CANDIDATES,

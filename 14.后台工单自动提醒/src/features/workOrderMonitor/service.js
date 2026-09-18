@@ -7,6 +7,7 @@ const { readJson, writeJsonAtomic, appendJsonl } = require("../../engine/fileSys
 const { log } = require("../../engine/logger");
 const { sendWecomText } = require("../../integrations/wecomRobot");
 const { probeStore } = require("./pageProbe");
+const { createStoreBrowserPool } = require("../../engine/storeBrowserPool");
 const { evaluateRound, STATUS } = require("./alertPolicy");
 const { buildAlertMessages } = require("./messageText");
 const { resolveDuty, buildMentionPlan } = require("../dutySchedule/dutyService");
@@ -50,7 +51,9 @@ async function monitorOnce(options = {}) {
     for (const store of stores) {
       let results = {};
       try {
-        results = await probeStoreImpl(platformKey, store, timeoutMs);
+        // 常驻模式：先用/拉起本店窗口（一个店一个窗口，窗口不关），再把同一个窗口交给探测复用。
+        const session = options.sessionPool ? await options.sessionPool.ensure(platformKey, store) : null;
+        results = await probeStoreImpl(platformKey, store, timeoutMs, session ? { session } : {});
       } catch (error) {
         // 单店失败隔离（#624 边界）：记为页面异常，不阻塞其他店铺。
         log("巡检", store.displayName, "店铺探测失败", error.message);
@@ -131,16 +134,44 @@ async function monitorOnce(options = {}) {
   return { events, sent, observations };
 }
 
-function startMonitorLoop(onRoundDone) {
+// options.dryRun=true：只判定不发送（演练常驻，供真发前验证）。
+// options.keepBrowsersOpen（默认 true）：店铺窗口留着不关，每轮复用；stop() 只停程序、不关窗口。
+// options.monitorOnceImpl / options.sessionPool：依赖注入点，测试用假实现跑同一条链路。
+function startMonitorLoop(onRoundDone, options = {}) {
   const config = loadConfig();
   const intervalMs = (Number(config.monitor.intervalMinutes) || 5) * 60000;
+  const dryRun = options.dryRun === true;
+  const keepBrowsersOpen = options.keepBrowsersOpen !== false;
+  const monitorOnceImpl = options.monitorOnceImpl || monitorOnce;
+  const pool = options.sessionPool || (keepBrowsersOpen ? createStoreBrowserPool(options.poolOptions) : null);
   let running = true;
-  log("监控", "常驻", "启动", `间隔=${config.monitor.intervalMinutes}分钟`);
+  log(
+    "监控",
+    "常驻",
+    "启动",
+    `间隔=${config.monitor.intervalMinutes}分钟 dryRun=${dryRun} 窗口保持=${keepBrowsersOpen}`
+  );
+
+  // 预热：先把每个店铺的窗口拉起来（人也能看到页面），之后每轮复用同一个窗口。
+  const warmupBrowsers = async () => {
+    if (!pool) return;
+    const seen = new Set();
+    for (const item of iterateEnabledSources(config)) {
+      const key = `${item.platformKey}/${item.store.key}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      try {
+        await pool.ensure(item.platformKey, item.store);
+      } catch (error) {
+        log("监控", "常驻", "窗口预热失败", `${item.store.displayName}：${error.message}`);
+      }
+    }
+  };
 
   const runOnceSafely = async () => {
     if (!running) return;
     try {
-      const result = await monitorOnce();
+      const result = await monitorOnceImpl({ dryRun, sessionPool: pool });
       if (onRoundDone) onRoundDone(null, result);
     } catch (error) {
       log("监控", "常驻", "本轮异常", error.message);
@@ -148,13 +179,15 @@ function startMonitorLoop(onRoundDone) {
     }
   };
 
-  runOnceSafely();
+  // 先预热窗口再跑第一轮：不然第一轮的窗口是探测过程里临时开的。
+  warmupBrowsers().then(runOnceSafely);
   const timer = setInterval(runOnceSafely, intervalMs);
   return {
     stop() {
       running = false;
       clearInterval(timer);
-      log("监控", "常驻", "已停止");
+      if (pool) pool.detachAll();
+      log("监控", "常驻", "已停止", keepBrowsersOpen ? "浏览器窗口保持打开" : "浏览器窗口已释放");
     }
   };
 }

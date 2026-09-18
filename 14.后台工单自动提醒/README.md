@@ -12,13 +12,23 @@
 
 1. `npm install`
 2. 复制 `project-config/platform-config.example.json` 为 `platform-config.json`，填企微机器人与店铺。
-3. 双击「启动工单提醒.bat」进菜单，或命令行：
+3. 双击「启动监控.bat」开始常驻监控（各店浏览器窗口会一直开着，别关），或命令行：
 
 ```powershell
 node src/cli/startCli.js login jd1          ; 首次为店铺登录一次（弹浏览器人工登录）
 node src/cli/startCli.js once --dry-run     ; 巡检一轮，演练不发消息
-node src/cli/startCli.js run                ; 常驻监控
+node src/cli/startCli.js run --dry-run      ; 常驻但只演练不发送（真发前验证用）
+node src/cli/startCli.js run                ; 常驻监控（发现新工单发企微）
 node src/cli/startCli.js duty               ; 验证今日值班/底色/当前在班@名单
 node src/cli/startCli.js test-notify        ; 验证企微链路
 npm test
 ```
+
+## 常驻监控的几个事实（2026-09-18 落地）
+
+- **窗口一直开着**：每个启用店铺一个 Chrome 窗口（端口从 9411 起、一店一个，登记在 `runtime/state/browser-ports.json`），
+  每轮复用同一个窗口，不再"每轮开关"。窗口在，登录态就在；人工关掉窗口/崩了会自动重开。
+- **Ctrl+C（退出程序）不会关窗口**：正常退出与强杀单个进程，窗口都留着；
+  只有"整棵进程树被杀"（任务管理器结束进程树或托管工具强制停止）会连带窗口，下次启动自动重开且登录态不丢。
+- **没登录也不静默**：登录失效会照常发企微提醒（文案里写清"请重新登录京麦"）。
+- 观察项：配置里写了、但页面上找不到的页签，本轮会不计该类且**不打日志**（等再遇到一次就补显式告警，见断点记录）。
