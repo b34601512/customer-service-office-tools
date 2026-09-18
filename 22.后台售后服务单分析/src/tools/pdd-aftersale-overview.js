@@ -62,6 +62,19 @@ async function main() {
     if (remain.length) { result.nearestRemainMinutes = Math.min(...remain); result.remainSamples = remain.slice(0, 6); }
     log("拼多多概览", "读取完成",
       `24h将逾期=${result.risk["24小时内将逾期订单数"]} 投诉预警=${result.filters["投诉预警"]} 待商家处理=${result.filters["待商家处理"]}`);
+    // 首页兜底：列表页读不到（有的店被「售后设置」引导拦截，实测 pdd03）→ 改读首页卡片
+    if (Object.values(result.risk).every((value) => value === null)) {
+      result.needHomeFallback = true;
+      await page.goto("https://mms.pinduoduo.com/home", { waitUntil: "domcontentloaded", timeout: 45000 }).catch(() => {});
+      await page.waitForTimeout(12000);
+      const homeText = await page.evaluate(() => document.body.innerText.replace(/\s+/g, " "));
+      result.home = {};
+      for (const label of ["售后过期预警", "退款/售后", "待处理工单", "即将逾期发货"]) {
+        const matched = homeText.match(new RegExp(`${label}\s*(\d+)`));
+        result.home[label] = matched ? Number(matched[1]) : null;
+      }
+      log("拼多多概览", "列表页不可用→已读首页卡片", Object.entries(result.home).map(([k, v]) => `${k}=${v}`).join(" "));
+    }
   } finally {
     await page.close().catch(() => {});
   }
