@@ -58,3 +58,21 @@ node src/tools/put-clipboard.js kdocs-scripts/AirScript-只读查询订单号.md
 - 实现：PowerShell `[IO.File]::ReadAllText(path, UTF8)` → `Set-Clipboard`，并**回读校验长度**（防中文乱码、防截断）。
 - **粘贴通道会吃掉等号序列**（实测：`===`→`=`、`==`→消失、`>=` 可能变 `>` 而静默漏数据）：
   交给用户粘贴的脚本里**不许出现等号比较**，由 `tests/airScriptPasteSafety.test.js` 锁死（`npm test`）。
+
+## 工具台账（2026-09-18 沉淀，可直接复用）
+
+| 用途 | 命令 | 备注 |
+|---|---|---|
+| 扫表取候选行 | `node src/tools/kdocs-filter.js --start-row 43000 --limit 3000 --out runtime/kdocs/x.json` | 走金山 AirScript 服务端只读；表尾才是最近记录 |
+| 该 @ 谁 | `node src/tools/who-is-on-duty.js [--at 14:30] [--json]` | 排班表匿名只读；14:00 前李守耀优先/否则早班，14:00 后晚班 |
+| 发企微群 | `node src/tools/send-wecom-notice.js --file <文本> --at 缪婷婷 [--send]` | **默认预演**；--send 才真发；≤2048 字节 |
+| 每日一条命令 | `node scripts/dailyCheck.js [--days 7] [--send]` | 扫表→筛→去重→出清单→算通知对象；**默认不发** |
+| 手动跑（双击） | `启动每日检查.bat` | 输出到 `runtime/logs/每日检查.log` |
+| 定时跑 | Windows 计划任务 **「22号-售后退款每天检查」** 每天 09:10 执行 `定时检查.bat` | 2026-09-18 建，已试跑通过 |
+
+**核心模块**（以后新需求直接复用，不要重写）：
+- `src/features/refundCheck/refundCheckCore.js`：`selectPendingRefunds()` 口径（近 N 天 + 应退>0 + 状态不含已退款 + 按订单号去重）、
+  `parseRecordDate()`（**同时认文本「2025/1/8」和 Excel 序列号 46247**）、`buildNoticeText()`。
+- `src/engine/kdocsAirScript.js`：多脚本配置（`scripts.<名字>.webhookUrl`）+ token 回退。
+
+**判据/踩坑记录**：见 `经验/反向检查-该退未退.md`（口径、列索引、重复行、日期形态）、`经验/金山对接表-只读读取.md`（脚本组织原则）。
