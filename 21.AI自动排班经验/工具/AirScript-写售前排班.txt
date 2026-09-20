@@ -60,10 +60,12 @@ function checksumOf(text) {
 
 function readRowValues(sheet, address, dayCount) {
   const values = sheet.Range(address).Value2
-  if (!values || values.length !== 1 || values[0].length !== dayCount) {
+  // 单行区域有的环境返回 1×N 二维数组，有的返回平铺数组，两种都兼容
+  const row = values && Array.isArray(values[0]) ? values[0] : values
+  if (!row || row.length !== dayCount) {
     throw new Error('回读区域形状不对：' + address)
   }
-  return values[0]
+  return row
 }
 
 function main() {
@@ -125,13 +127,14 @@ function main() {
     throw new Error('A1 标题与工作表不匹配：' + title)
   }
   const dayHeaderAddress = 'C2:' + lastDayColumn + '2'
-  const dayHeader = sheet.Range(dayHeaderAddress).Value2
-  if (!dayHeader || dayHeader.length !== 1 || dayHeader[0].length !== dayCount) {
+  const dayHeaderRaw = sheet.Range(dayHeaderAddress).Value2
+  const dayHeader = dayHeaderRaw && Array.isArray(dayHeaderRaw[0]) ? dayHeaderRaw[0] : dayHeaderRaw
+  if (!dayHeader || dayHeader.length !== dayCount) {
     throw new Error('日期表头区域形状不对：' + dayHeaderAddress)
   }
   for (let dayIndex = 0; dayIndex < dayCount; dayIndex += 1) {
-    if (Number(dayHeader[0][dayIndex]) !== dayIndex + 1) {
-      throw new Error('日期表头第 ' + (dayIndex + 1) + ' 格不是 ' + (dayIndex + 1) + '：' + cellText(dayHeader[0][dayIndex]))
+    if (Number(dayHeader[dayIndex]) !== dayIndex + 1) {
+      throw new Error('日期表头第 ' + (dayIndex + 1) + ' 格不是 ' + (dayIndex + 1) + '：' + cellText(dayHeader[dayIndex]))
     }
   }
 
