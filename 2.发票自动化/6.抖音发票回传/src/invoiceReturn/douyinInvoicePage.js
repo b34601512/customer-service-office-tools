@@ -5,6 +5,7 @@ const { 等待抖音登录完成, 是抖音登录页面 } = require('../browser/
 const { 打印日志 } = require('../common/logger');
 const { 规范化店铺标识, 运行目录 } = require('../common/paths');
 const { 关闭多余抖音页面 } = require('../browser/douyinBrowserContext');
+const { 限时等待 } = require('../browser/dynamicWait');
 const { 确保抖音目标店铺, 解析期望店铺身份, 读取当前抖音店铺身份, 店铺身份是否一致 } = require('../browser/douyinStoreIdentity');
 
 const 抖音待回传发票页面地址 = 'https://fxg.jinritemai.com/ffa/morder/receipt/list';
@@ -76,10 +77,12 @@ function 读取抖音待开票页面状态(url, text) {
   return 'loading';
 }
 
-async function 关闭抖音非业务浮层(page) {
+async function 关闭抖音非业务浮层(page, 选项 = {}) {
   // 解决：消息、客服等悬浮层可能拦截业务按钮，关键点击前先禁用指针事件。
-  await page.keyboard.press('Escape').catch(() => {});
-  return page.evaluate(() => {
+  // 解决（2026-09-20 静默卡死）：键盘与页面求值都加墙钟上限，渲染进程无响应时不再把整个等待循环挂死。
+  const { 按键超时毫秒 = 5000, 求值超时毫秒 = 10_000 } = 选项;
+  await 限时等待(page.keyboard.press('Escape'), { 超时毫秒: 按键超时毫秒, 说明: '抖音页面按键 Escape' }).catch(() => {});
+  return 限时等待(page.evaluate(() => {
     const 目标选择器列表 = [
       '#umd_kits_home_entry',
       '[class*="im-web"]',
@@ -100,15 +103,16 @@ async function 关闭抖音非业务浮层(page) {
       });
     }
     return 处理结果列表;
-  }).catch(() => []);
+  }), { 超时毫秒: 求值超时毫秒, 说明: '抖音页面关闭浮层求值' }).catch(() => []);
 }
 
-async function 检测抖音滑块验证(page) {
+async function 检测抖音滑块验证(page, 选项 = {}) {
   // 解决：滑块未完成时列表数据接口不返回数据，必须停下等人工完成；只统计可见验证组件，避免残留隐藏 DOM 误判。
+  const { 求值超时毫秒 = 10_000 } = 选项;
   try {
     const text = await 读取页面正文(page).catch(() => '');
     if (滑块验证特征列表.some((特征) => text.includes(特征))) return true;
-    return await page.locator(滑块组件选择器).evaluateAll((elements) => elements.some((element) => {
+    return await 限时等待(page.locator(滑块组件选择器).evaluateAll((elements) => elements.some((element) => {
       const style = window.getComputedStyle(element);
       const rect = element.getBoundingClientRect();
       return style.display !== 'none'
@@ -116,7 +120,7 @@ async function 检测抖音滑块验证(page) {
         && Number(style.opacity || '1') > 0.01
         && rect.width > 0
         && rect.height > 0;
-    })).catch(() => false);
+    })), { 超时毫秒: 求值超时毫秒, 说明: '抖音页面滑块检测求值' }).catch(() => false);
   } catch { return false; }
 }
 
@@ -1381,6 +1385,7 @@ module.exports = {
   是抖音无待开票订单错误,
   读取抖音待开票页面状态,
   关闭抖音非业务浮层,
+  检测抖音滑块验证,
   等待抖音待开票列表或登录页,
   打开抖音待回传发票页面,
   等待抖音待开票列表加载,

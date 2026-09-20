@@ -11,6 +11,9 @@ const { 抖音默认后台地址 } = require('./douyinBusinessUrl');
 
 const 浏览器进程名列表 = ['msedge.exe', 'chrome.exe', 'chromium.exe'];
 const 已打开浏览器上下文 = new Map();
+// 2026-09-20：抖音报表页会自行关闭，若它是最后一个页签，整个 Edge 窗口会退出（非正常退出→cookie 未落盘），
+// 下一次启动就直接回到登录页（用户当天被迫重收 3 次短信）。每个上下文保留一个常驻空白页保住窗口。
+const 常驻保活页集合 = new WeakSet();
 
 function 上下文是否可用(context) {
   // 解决：复用已打开的持久化浏览器，避免同一资料目录重复启动导致锁冲突。
@@ -157,6 +160,29 @@ function 准备抖音账号浏览器资料目录(资料目录, 选项 = {}) {
   迁移浏览器会话恢复文件(资料目录, 选项);
 }
 
+async function 确保常驻保活页(context) {
+  // 解决：保活页不请求任何平台数据，只用来保住浏览器窗口（最后一个业务页自关时不至于整个 Edge 退出）。
+  // 优先直接标记现有空白页，避免多出一个多余页签。
+  const 现有页面列表 = typeof context.pages === 'function' ? context.pages() : [];
+  const 已标记保活页 = 现有页面列表.find((page) => 常驻保活页集合.has(page) && !页面已关闭(page));
+  if (已标记保活页) return 已标记保活页;
+  const 可复用空白页 = 现有页面列表.find((page) => !页面已关闭(page)
+    && (!读取页面地址(page) || 读取页面地址(page) === 'about:blank'));
+  if (可复用空白页) {
+    常驻保活页集合.add(可复用空白页);
+    return 可复用空白页;
+  }
+  const page = await context.newPage();
+  常驻保活页集合.add(page);
+  await page.goto('about:blank', { timeout: 10_000 }).catch(() => {});
+  return page;
+}
+
+function 是常驻保活页(page) {
+  // 解决：收敛页签时不许关掉保活页，否则又会回到“最后一页关闭→浏览器退出”。
+  return 常驻保活页集合.has(page);
+}
+
 async function 创建抖音账号浏览器上下文(店铺配置, 选项 = {}) {
   // 解决：使用持久化真实浏览器资料目录，同一资料目录在进程内复用已打开的浏览器，避免锁冲突；平时不自动关闭。
   const { headless = false } = 选项;
@@ -181,6 +207,9 @@ async function 创建抖音账号浏览器上下文(店铺配置, 选项 = {}) {
   已打开浏览器上下文.set(资料目录, context);
   const 清理缓存 = () => 已打开浏览器上下文.delete(资料目录);
   if (typeof context.once === 'function') context.once('close', 清理缓存);
+  await 确保常驻保活页(context).catch((错误) => {
+    打印日志('抖音登录', '浏览器', `常驻保活页创建失败（不阻断主流程）：${错误 && 错误.message ? 错误.message : 错误}`);
+  });
   return context;
 }
 
@@ -234,8 +263,11 @@ function 是抖音目标或登录页面(url, targetUrl = 抖音默认后台地�
 }
 
 async function 关闭多余抖音页面(页面列表, 保留页面) {
-  // 解决：同一上下文可能残留多余页签，打开抖音前收敛成一个业务页签。
-  const 多余页面列表 = 页面列表.filter((page) => page && page !== 保留页面 && !页面已关闭(page));
+  // 解决：同一上下文可能残留多余页签，打开抖音前收敛成一个业务页签；常驻保活页不参与关闭。
+  const 多余页面列表 = 页面列表.filter((page) => page
+    && page !== 保留页面
+    && !页面已关闭(page)
+    && !是常驻保活页(page));
   for (const page of 多余页面列表) {
     await page.close({ runBeforeUnload: false });
   }
@@ -265,7 +297,9 @@ async function 等待抖音页签稳定(context, targetUrl, 选项 = {}) {
   let page = await 获取唯一抖音页面(context, targetUrl);
   while (Date.now() <= deadline) {
     page = await 获取唯一抖音页面(context, targetUrl);
-    const 活动页面数 = context.pages().filter((item) => item && !页面已关闭(item)).length;
+    const 活动页面数 = context.pages().filter((item) => item
+      && !页面已关闭(item)
+      && !是常驻保活页(item)).length;
     if (活动页面数 <= 1) {
       连续稳定次数 += 1;
       if (连续稳定次数 >= 2) return page;
@@ -309,6 +343,8 @@ module.exports = {
   是抖音登录页面,
   是抖音目标或登录页面,
   关闭多余抖音页面,
+  确保常驻保活页,
+  是常驻保活页,
   获取唯一抖音页面,
   等待抖音页签稳定,
   获取或打开抖音页面,

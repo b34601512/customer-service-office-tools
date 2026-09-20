@@ -35,6 +35,27 @@ async function 等待直到(page, 检查函数, 选项 = {}) {
   throw new Error(超时消息);
 }
 
+async function 限时等待(承诺, 选项 = {}) {
+  // 解决（2026-09-20 静默卡死实锤）：Playwright 的 evaluate/evaluateAll/keyboard 等调用在渲染进程无响应时
+  // 永远不会返回；写在循环条件里的超时判断也救不了“循环体本身卡住”（既没输出也没报错）。
+  // 这类调用一律用墙钟上限兜住，超时就抛错留现场。
+  const { 超时毫秒 = 15_000, 说明 = '受限调用' } = 选项;
+  let 计时器 = null;
+  const 超时承诺 = new Promise((_, reject) => {
+    计时器 = setTimeout(
+      () => reject(new Error(`${说明}超过墙钟上限 ${超时毫秒} 毫秒仍未返回，按卡死处理。`)),
+      超时毫秒,
+    );
+    if (typeof 计时器.unref === 'function') 计时器.unref();
+  });
+  try {
+    return await Promise.race([Promise.resolve(承诺), 超时承诺]);
+  } finally {
+    if (计时器) clearTimeout(计时器);
+  }
+}
+
 module.exports = {
   等待直到,
+  限时等待,
 };
