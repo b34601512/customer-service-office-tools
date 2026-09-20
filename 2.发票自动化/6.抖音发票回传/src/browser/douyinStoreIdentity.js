@@ -103,9 +103,24 @@ async function 读取当前抖音店铺ID(page, shopHeader, timeoutMs = 10000) {
   throw new Error(`读取抖音当前店铺 ID 失败：顶部店铺信息识别到 ${ids.length} 个有效店铺 ID。`);
 }
 
-async function 点击切店入口(page) {
-  const entry = await 确保店铺菜单打开不处理弹窗(page);
-  await entry.click({ timeout: 5000, noWaitAfter: true });
+async function 点击切店入口(page, 选项 = {}) {
+  // 解决：切店弹层会“动画中/刚收起”导致一次扫描到的入口在点击时已失效（Playwright: element is not stable → not visible）。
+  // 因此每次尝试都重新解析入口，失败就重开店铺菜单再试，而不是把一次性扫描到的元素直接点到底。
+  const 最大尝试次数 = Math.max(1, Number(选项.最大尝试次数) || 3);
+  let 最近错误 = null;
+  for (let 尝试 = 1; 尝试 <= 最大尝试次数; 尝试 += 1) {
+    try {
+      const entry = await 确保店铺菜单打开不处理弹窗(page);
+      await entry.click({ timeout: 5000, noWaitAfter: true });
+      return;
+    } catch (error) {
+      最近错误 = error;
+      const 首行 = String(error?.message || error).split('\n')[0];
+      打印日志('抖音登录', '切店', `第 ${尝试}/${最大尝试次数} 次点击「切换组织/店铺」未成功：${首行}；重新解析切店入口`);
+      await page.waitForTimeout(500);
+    }
+  }
+  throw 最近错误 || new Error('抖音切店入口点击失败：多次尝试后仍未成功。');
 }
 
 async function 读取当前抖音店铺身份(page) {
