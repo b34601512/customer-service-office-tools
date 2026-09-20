@@ -135,3 +135,68 @@ test("抖音下载：落盘不允许再出现“只靠 saveAs 一次、失败就
   assert.match(段落, /直取抖音下载字节/, "必须保留“直取字节”这条路，不能退回只靠 saveAs");
   assert.match(段落, /已改用直取字节保存/, "换路成功要有日志说明（便于日后统计发生率）");
 });
+
+// 2026-09-20 实锤：报表下载先走 HTTP `/order/invoice/download?task_id=...`（content-type application/download），
+// 页面随后转成 blob 下载，并在 ~4 秒后自行关闭（page close → context close），saveAs 与 blob 直取双双失效。
+// 修法：点击下载前就挂 context 级响应监听，响应一到就读字节；落盘不再依赖页面/blob 存活。本组测试锁死该行为。
+test("抖音下载：报表响应按导出地址与 content-type 识别，不误收任务列表 JSON", () => {
+  const { 是不是抖音报表响应 } = require("../src/invoiceReturn/douyinInvoicePage");
+  assert.equal(是不是抖音报表响应("https://fxg.jinritemai.com/order/invoice/download?task_id=1", ""), true);
+  assert.equal(是不是抖音报表响应("https://example.test/some-file", "application/download"), true);
+  assert.equal(
+    是不是抖音报表响应("https://example.test/x.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
+    true
+  );
+  assert.equal(
+    是不是抖音报表响应("https://fxg.jinritemai.com/order/invoice/get_export_task_list?page=0", "application/json; charset=utf-8"),
+    false,
+    "导出任务列表 JSON 不能被当成报表"
+  );
+});
+
+test("抖音下载：响应到达时就要抓住字节，并可按导出任务号挑选", async () => {
+  const { 捕获抖音报表响应, 选取本次报表字节 } = require("../src/invoiceReturn/douyinInvoicePage");
+  const 假上下文 = new EventEmitter();
+  const 报表字节 = Buffer.from("PK-fake-xlsx-bytes");
+  const 捕获 = 捕获抖音报表响应(假上下文);
+
+  假上下文.emit("response", {
+    url: () => "https://fxg.jinritemai.com/order/invoice/get_export_task_list?page=0",
+    headers: () => ({ "content-type": "application/json; charset=utf-8" }),
+    body: async () => Buffer.from("[]")
+  });
+  假上下文.emit("response", {
+    url: () => "https://fxg.jinritemai.com/order/invoice/download?task_id=7687426398369202484&__token=x",
+    headers: () => ({ "content-type": "application/download" }),
+    body: async () => 报表字节
+  });
+  await 捕获.等待读取结束();
+
+  const 命中列表 = 捕获.取命中列表();
+  assert.equal(命中列表.length, 1, "只有真正的报表响应能被收下");
+  assert.deepEqual(命中列表[0].字节, 报表字节, "响应到达时就要把字节读进内存");
+  捕获.停止();
+  assert.equal(假上下文.listenerCount("response"), 0, "收尾必须摘掉监听");
+
+  const 选中 = 选取本次报表字节(
+    命中列表,
+    { suggestedFilename: () => "2026-09-20-order_invoice_export_task_id_7687426398369202484.xlsx" },
+    0
+  );
+  assert.equal(选中, 命中列表[0], "必须按导出任务号精确挑中本次报表");
+  assert.equal(选取本次报表字节([], { suggestedFilename: () => "x.xlsx" }), null, "没有命中时必须返回 null，交给后备路径");
+});
+
+test("抖音下载：落盘失败必须优先用同一次下载的响应字节，响应没有才退回 blob 直取", () => {
+  const 起点 = 源码.indexOf("async function 下载最新抖音导出报表");
+  const 段落 = 源码.slice(起点, 源码.indexOf("async function 导出抖音待回传订单", 起点));
+  const 挂监听位置 = 段落.indexOf("捕获抖音报表响应(page.context())");
+  const 点击位置 = 段落.indexOf("等待并点击抖音下载报表");
+  const 响应命中位置 = 段落.indexOf("选取本次报表字节");
+  const 直取位置 = 段落.indexOf("直取抖音下载字节");
+  assert.ok(挂监听位置 > 0, "必须在下载动作前挂报表响应监听");
+  assert.ok(挂监听位置 < 点击位置, "监听必须先于点击下载（页面几秒后就自关，晚了抓不到）");
+  assert.ok(响应命中位置 > 0 && 响应命中位置 < 直取位置, "必须先尝试响应字节，再退回 blob 直取");
+  assert.match(段落, /fs\.writeFileSync\(exportFilePath, 响应命中\.字节\)/, "命中响应时必须真的把字节写盘");
+  assert.match(段落, /响应捕获\.停止\(\)/, "收尾必须停掉响应捕获，不留泄漏监听");
+});

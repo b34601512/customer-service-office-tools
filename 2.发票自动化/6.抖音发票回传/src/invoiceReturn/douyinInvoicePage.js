@@ -696,6 +696,76 @@ async function 直取抖音下载字节(download, 目标路径, 选项 = {}) {
   }
 }
 
+const 抖音报表下载地址特征 = /\/order\/invoice\/download\b/;
+
+function 是不是抖音报表响应(url, contentType) {
+  // 解决（2026-09-20 实锤）：只认「同一次导出」的报表下载响应（/order/invoice/download 或 xlsx 类 content-type），
+  // 不把导出任务列表等 JSON 当报表。
+  if (抖音报表下载地址特征.test(String(url || ''))) return true;
+  return /xlsx|spreadsheet|application\/download/i.test(String(contentType || ''));
+}
+
+function 从导出文件名取任务号(fileName) {
+  const matched = String(fileName || '').match(/task_id_(\d+)/i) || String(fileName || '').match(/(\d{12,})/);
+  return matched ? matched[1] : '';
+}
+
+function 从下载地址取任务号(url) {
+  try {
+    return String(new URL(String(url || '')).searchParams.get('task_id') || '').trim();
+  } catch (_错误) {
+    return '';
+  }
+}
+
+function 捕获抖音报表响应(context, 选项 = {}) {
+  // 解决（2026-09-20）：抖音报表先由页面请求 `/order/invoice/download?task_id=...`（content-type application/download），
+  // 再转成 blob 下载；承载页面几秒后自行关闭，blob 随之失效（saveAs 与 context.request 都会报 context closed）。
+  // 所以必须在点击下载前就挂 context 级响应监听，**响应一到就把字节读进内存**，落盘不再依赖页面/blob 存活。
+  // 注意：这不是“重复请求平台数据”，用的就是本次下载本身的那一份响应体。
+  const { 开始时间 = Date.now() } = 选项;
+  const 命中列表 = [];
+  const 读取中 = [];
+  const 处理响应 = (response) => {
+    try {
+      const url = String(response.url?.() || '');
+      let contentType = '';
+      try { contentType = String(response.headers?.()?.['content-type'] || ''); } catch (_错误) { contentType = ''; }
+      if (!是不是抖音报表响应(url, contentType)) return;
+      读取中.push(
+        response.body()
+          .then((字节) => {
+            if (!字节 || !字节.length) return;
+            命中列表.push({ url, 字节, 时间: Date.now() });
+          })
+          .catch(() => {}),
+      );
+    } catch (_错误) {
+      // 单条响应读失败不影响后续；落盘阶段会按实际情况报错留现场。
+    }
+  };
+  context.on('response', 处理响应);
+  return {
+    开始时间,
+    等待读取结束: () => Promise.allSettled(读取中),
+    取命中列表: () => 命中列表.slice(),
+    停止: () => context.off('response', 处理响应),
+  };
+}
+
+function 选取本次报表字节(命中列表, download, 开始时间 = 0) {
+  // 解决：优先按导出任务号精确匹配；取不到任务号时退回「开始时间之后最后一条」。
+  let fileName = '';
+  try { fileName = String(download?.suggestedFilename?.() || ''); } catch (_错误) { fileName = ''; }
+  const 任务号 = 从导出文件名取任务号(fileName);
+  if (任务号) {
+    const 精确命中 = [...命中列表].reverse().find((item) => 从下载地址取任务号(item.url) === 任务号);
+    if (精确命中) return 精确命中;
+  }
+  const 时间命中 = [...命中列表].reverse().find((item) => !开始时间 || item.时间 >= 开始时间);
+  return 时间命中 || 命中列表[命中列表.length - 1] || null;
+}
+
 async function 下载最新抖音导出报表(page, outputDirectory, 选项 = {}) {
   // 解决：从导出记录页下载最新报表，并落盘到本项目运行目录。
   const { onAction = null, startedAt = null } = 选项;
@@ -703,33 +773,46 @@ async function 下载最新抖音导出报表(page, outputDirectory, 选项 = {}
   通知抖音动作(onAction, '正在打开抖音导出记录页。');
   await 打开抖音导出记录页(page);
   通知抖音动作(onAction, '正在等待抖音报表生成。');
-  const download = await 等待并点击抖音下载报表(page, { startedAt, onAction });
-  const exportFilePath = path.join(outputDirectory, 生成导出文件名(download.suggestedFilename()));
-  // 2026-09-18：拿到 download 后**立刻**落盘，中间不插任何 await/日志，尽量不给“承载页面被关掉”留窗口。
-  let 原生落盘错误 = null;
+  // 2026-09-20：点击下载前先挂响应监听，抢在承载页面自关之前把报表字节读进内存。
+  const 响应捕获 = 捕获抖音报表响应(page.context());
   try {
-    await download.saveAs(exportFilePath);
-  } catch (保存错误) {
-    原生落盘错误 = 保存错误 && 保存错误.message ? 保存错误.message : String(保存错误);
-  }
-  if (原生落盘错误) {
-    // 不重复请求平台数据：只把刚生成的这一份报表换条路取回来（HTTP 直取，不依赖页面存活）。
-    const 直取 = await 直取抖音下载字节(download, exportFilePath, { context: page.context() });
-    if (!直取.ok) {
-      const 现场 = 读取抖音下载现场(download, page);
-      const 失败说明 =
-        `抖音导出订单失败：下载报表落盘失败（文件名=${现场.文件名 || '未知'}，来源地址=${现场.来源地址 || '未知'}，` +
-        `当前页面列表=${现场.页面列表}）：浏览器原生落盘报“${原生落盘错误}”；${直取.原因}`;
-      记录抖音落盘失败现场(失败说明);
-      通知抖音动作(onAction, `抖音报表落盘失败（未自动重试）：${原生落盘错误}`);
-      throw new Error(失败说明);
+    const download = await 等待并点击抖音下载报表(page, { startedAt, onAction });
+    const exportFilePath = path.join(outputDirectory, 生成导出文件名(download.suggestedFilename()));
+    // 2026-09-18：拿到 download 后**立刻**落盘，中间不插任何 await/日志，尽量不给“承载页面被关掉”留窗口。
+    let 原生落盘错误 = null;
+    try {
+      await download.saveAs(exportFilePath);
+    } catch (保存错误) {
+      原生落盘错误 = 保存错误 && 保存错误.message ? 保存错误.message : String(保存错误);
     }
-    通知抖音动作(onAction, `浏览器原生落盘失败（${原生落盘错误}），已改用直取字节保存（${直取.字节数} 字节）。`);
+    if (原生落盘错误) {
+      // 不重复请求平台数据：先用「同一次下载已经到手的响应字节」落盘（页面/blob 没了也有效），再退到 blob 直取。
+      await 响应捕获.等待读取结束();
+      const 响应命中 = 选取本次报表字节(响应捕获.取命中列表(), download, 响应捕获.开始时间);
+      if (响应命中) {
+        fs.writeFileSync(exportFilePath, 响应命中.字节);
+        通知抖音动作(onAction, `浏览器原生落盘失败（${原生落盘错误}），已改用同一次下载的响应字节保存（${响应命中.字节.length} 字节）。`);
+      } else {
+        const 直取 = await 直取抖音下载字节(download, exportFilePath, { context: page.context() });
+        if (!直取.ok) {
+          const 现场 = 读取抖音下载现场(download, page);
+          const 失败说明 =
+            `抖音导出订单失败：下载报表落盘失败（文件名=${现场.文件名 || '未知'}，来源地址=${现场.来源地址 || '未知'}，` +
+            `当前页面列表=${现场.页面列表}）：浏览器原生落盘报“${原生落盘错误}”；${直取.原因}`;
+          记录抖音落盘失败现场(失败说明);
+          通知抖音动作(onAction, `抖音报表落盘失败（未自动重试）：${原生落盘错误}`);
+          throw new Error(失败说明);
+        }
+        通知抖音动作(onAction, `浏览器原生落盘失败（${原生落盘错误}），已改用直取字节保存（${直取.字节数} 字节）。`);
+      }
+    }
+    通知抖音动作(onAction, '正在保存抖音导出报表。');
+    const failure = await download.failure().catch(() => null);
+    if (failure) throw new Error(`抖音导出订单失败：${failure}`);
+    return exportFilePath;
+  } finally {
+    响应捕获.停止();
   }
-  通知抖音动作(onAction, '正在保存抖音导出报表。');
-  const failure = await download.failure().catch(() => null);
-  if (failure) throw new Error(`抖音导出订单失败：${failure}`);
-  return exportFilePath;
 }
 
 async function 导出抖音待回传订单(page, outputDirectory, 选项 = {}) {
@@ -1303,6 +1386,11 @@ module.exports = {
   等待抖音待开票列表加载,
   生成导出文件名,
   捕获抖音下载,
+  捕获抖音报表响应,
+  是不是抖音报表响应,
+  从导出文件名取任务号,
+  从下载地址取任务号,
+  选取本次报表字节,
   读取抖音下载现场,
   直取抖音下载字节,
   记录抖音落盘失败现场,
