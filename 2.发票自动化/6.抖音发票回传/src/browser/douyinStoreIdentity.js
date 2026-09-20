@@ -1,7 +1,66 @@
+const fs = require('fs');
+const path = require('path');
 const { 打印日志 } = require('../common/logger');
+const { 运行目录 } = require('../common/paths');
+const { 限时等待 } = require('./dynamicWait');
 
 const 轮询间隔毫秒 = 1000;
 const 切店超时毫秒 = 120000;
+
+// 2026-09-20 issues/009：店铺身份读取失败的真因未知，不许猜选择器，先把成功/失败两种 DOM 各留一份现场。
+// 每个进程最多写一次（成功样本一份、失败现场一份），分析完即删，不累积垃圾。
+const 身份现场状态 = { 已写成功样本: false, 已写失败现场: false };
+
+async function 采集店铺身份现场(page, 错误) {
+  const 现场 = {
+    记录时间: new Date().toISOString(),
+    错误: String((错误 && 错误.message) || 错误 || ''),
+    页面地址: typeof page?.url === 'function' ? page.url() : '',
+    页签信息: [],
+  };
+  try {
+    const 上下文 = typeof page?.context === 'function' ? page.context() : null;
+    const 页面列表 = 上下文 && typeof 上下文.pages === 'function' ? 上下文.pages() : [];
+    现场.页签数 = 页面列表.length;
+    现场.页签信息 = 页面列表.map((item) => {
+      try { return item.url(); } catch (_错误) { return '读取失败'; }
+    });
+  } catch (_错误) { 现场.页签数 = '读取失败'; }
+  try {
+    const 头部 = page.locator('.headerShopName').first();
+    现场.头部 = await 限时等待(头部.evaluate((element) => ({
+      可见: !!element.offsetParent,
+      文本: String(element.innerText || '').replace(/\s+/g, ' ').slice(0, 300),
+      mask节点数: element.querySelectorAll('[data-bytereplay-mask="true"]').length,
+      label列表: [...element.querySelectorAll('[label]')].slice(0, 20).map((el) => `${el.getAttribute('label')}=${el.getAttribute('value')}`),
+      外部HTML: String(element.outerHTML || '').slice(0, 20000),
+    })), { 超时毫秒: 5000, 说明: '抖音店铺头部求值' });
+  } catch (错误2) {
+    现场.头部 = `读取失败：${(错误2 && 错误2.message) || 错误2}`;
+  }
+  return 现场;
+}
+
+function 写身份现场文件(文件名, 现场) {
+  try {
+    fs.mkdirSync(运行目录, { recursive: true });
+    fs.writeFileSync(path.join(运行目录, 文件名), JSON.stringify(现场, null, 2), 'utf8');
+  } catch (_错误) {
+    // 现场落盘本身不许影响主流程。
+  }
+}
+
+async function 记录店铺身份成功样本(page) {
+  if (身份现场状态.已写成功样本) return;
+  身份现场状态.已写成功样本 = true;
+  写身份现场文件('douyin-store-identity-ok.json', await 采集店铺身份现场(page, null));
+}
+
+async function 记录店铺身份失败现场(page, 错误) {
+  if (身份现场状态.已写失败现场) return;
+  身份现场状态.已写失败现场 = true;
+  写身份现场文件('douyin-store-identity-fail.json', await 采集店铺身份现场(page, 错误));
+}
 
 // 解决：从隔壁项目 12.店铺指标数据自动更新 照抄成熟切店方案，适配本项目持久化浏览器模型。
 function 规范化抖音店铺名(value) {
@@ -123,12 +182,20 @@ async function 点击切店入口(page, 选项 = {}) {
   throw 最近错误 || new Error('抖音切店入口点击失败：多次尝试后仍未成功。');
 }
 
-async function 读取当前抖音店铺身份(page) {
+async function 读取当前抖音店铺身份(page, 选项 = {}) {
+  // 解决（issues/009）：轮询读取时必须能用更短的超时，否则多页签/多轮询时一层层叠加成大卡顿。
+  const { 头部等待毫秒 = 15000, 编号等待毫秒 = 10000, 记录现场 = true } = 选项;
   const shopHeader = page.locator('.headerShopName').first();
-  await shopHeader.waitFor({ state: 'visible', timeout: 15000 });
-  const storeName = await 读取抖音店铺名(shopHeader);
-  const storeId = await 读取当前抖音店铺ID(page, shopHeader);
-  return { storeId, storeName };
+  try {
+    await shopHeader.waitFor({ state: 'visible', timeout: 头部等待毫秒 });
+    const storeName = await 读取抖音店铺名(shopHeader);
+    const storeId = await 读取当前抖音店铺ID(page, shopHeader, 编号等待毫秒);
+    await 记录店铺身份成功样本(page);
+    return { storeId, storeName };
+  } catch (错误) {
+    if (记录现场) await 记录店铺身份失败现场(page, 错误);
+    throw 错误;
+  }
 }
 
 async function 查找精确店铺选项(page, 期望) {
@@ -163,10 +230,12 @@ async function 等待目标店铺(originPage, 期望, timeoutMs) {
   let last = null;
   while (Date.now() <= deadline) {
     for (const p of originPage.context().pages()) {
+      // 解决（issues/009）：内层逐页循环也要看截止时间，否则页签一多单轮就拖出几分钟。
+      if (Date.now() > deadline) break;
       const header = p.locator('.headerShopName').first();
       if ((await header.count()) === 0 || !await header.isVisible().catch(() => false)) continue;
       try {
-        last = await 读取当前抖音店铺身份(p);
+        last = await 读取当前抖音店铺身份(p, { 头部等待毫秒: 5000, 编号等待毫秒: 5000, 记录现场: true });
         if (店铺身份是否一致(last, 期望)) return { page: p, identity: last };
       } catch (_e) {}
     }
