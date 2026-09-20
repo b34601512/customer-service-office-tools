@@ -110,6 +110,8 @@ followup_state.json
 latest_download_result.json
 *.txt
 !requirements.txt
+# 21 号在线写入用的 AirScript 模板属于源码，要备份（其余 .txt 仍不入库）
+!21.AI自动排班经验/工具/AirScript-写售前排班.txt
 
 # 业务数据和导出文件不属于源码备份
 data/

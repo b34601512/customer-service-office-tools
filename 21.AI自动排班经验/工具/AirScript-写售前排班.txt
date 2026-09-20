@@ -1,0 +1,216 @@
+// AirScript 共享脚本：写排班表的「售前每日班次」（只写售前 5 人名单内的行；写后回读校验并保存）
+// 版本：2026-09-20.1
+//
+// 配套工具：21.AI自动排班经验/工具/写在线排班表.cjs（通过同步 webhook + AirScript-Token 调用本脚本）
+// 参考实现：9.客服数据自动更新/src/kdocsSync/（同一套「文档共享脚本 + sync_task」机制）
+//
+// 调用参数（Context.argv）：
+//   {
+//     operationType: 'write_seller_schedule',
+//     requiredScriptVersion: '2026-09-20.1',
+//     sheetName: '2026年10月',          // 只写这一张月表
+//     dayCount: 31,                     // 天数（28~31；决定写到哪一列）
+//     employees: [                      // 只允许下面 expectedSellerNames 里的名字
+//       { name: '韩欢欢', shifts: ['早', '早', '', ... 共 dayCount 个] },
+//       ...
+//     ]
+//   }
+// 班次取值：'早' / '晚' / ''（'休' 会被归一成 ''，表里休息就是空白格）。
+// 本脚本只写：目标月表里售前 5 人所在行的 C..(dayCount 对应列)，不改底色、不改其他行/表。
+
+const scriptVersion = '2026-09-20.1'
+const expectedOperationType = 'write_seller_schedule'
+const expectedSellerNames = ['韩欢欢', '麦诺谦', '叶炳辉', '徐佳楠', '刘秀文']
+const minDayCount = 28
+const maxDayCount = 31
+
+function errorText(error) {
+  return String(error && error.message ? error.message : error).slice(0, 500)
+}
+
+function cellText(value) {
+  return value === null || value === undefined ? '' : String(value)
+}
+
+function columnLetter(columnNumber) {
+  let number = Number(columnNumber)
+  let text = ''
+  while (number > 0) {
+    const remainder = (number - 1) % 26
+    text = String.fromCharCode(65 + remainder) + text
+    number = Math.floor((number - 1) / 26)
+  }
+  return text
+}
+
+function normalizeShift(value) {
+  const text = cellText(value).trim()
+  if (text === '休') return ''
+  if (text === '早' || text === '晚' || text === '') return text
+  throw new Error('班次只能是 早/晚/休/空，收到：' + text)
+}
+
+function checksumOf(text) {
+  let hash = 5381
+  for (let index = 0; index < text.length; index += 1) {
+    hash = ((hash * 33) ^ text.charCodeAt(index)) >>> 0
+  }
+  return ('00000000' + hash.toString(16)).slice(-8)
+}
+
+function readRowValues(sheet, address, dayCount) {
+  const values = sheet.Range(address).Value2
+  if (!values || values.length !== 1 || values[0].length !== dayCount) {
+    throw new Error('回读区域形状不对：' + address)
+  }
+  return values[0]
+}
+
+function main() {
+  if (typeof Context === 'undefined' || Context === null || !Context.argv) {
+    throw new Error('缺少 Context.argv，必须由 webhook 调用并传入参数。')
+  }
+  const argv = Context.argv
+  if (argv.operationType !== expectedOperationType) {
+    throw new Error('operationType 不匹配：' + cellText(argv.operationType))
+  }
+  if (String(argv.requiredScriptVersion || '') !== scriptVersion) {
+    throw new Error('脚本版本不匹配：在线 ' + scriptVersion + '，调用方要求 ' + cellText(argv.requiredScriptVersion))
+  }
+
+  const sheetName = cellText(argv.sheetName).trim()
+  if (!/^\d{4}年\d{1,2}月$/.test(sheetName)) {
+    throw new Error('sheetName 必须是「YYYY年M月」形式：' + sheetName)
+  }
+  const dayCount = Number(argv.dayCount)
+  if (dayCount !== Math.floor(dayCount) || dayCount < minDayCount || dayCount > maxDayCount) {
+    throw new Error('dayCount 必须是 ' + minDayCount + '~' + maxDayCount + ' 的整数：' + cellText(argv.dayCount))
+  }
+  const lastDayColumn = columnLetter(2 + dayCount) // C=第3列=1号
+
+  const employees = Array.isArray(argv.employees) ? argv.employees : []
+  if (employees.length === 0) throw new Error('employees 为空。')
+  const normalizedEmployees = []
+  const seenNames = {}
+  for (let index = 0; index < employees.length; index += 1) {
+    const employee = employees[index] || {}
+    const name = cellText(employee.name).trim()
+    if (expectedSellerNames.indexOf(name) < 0) {
+      throw new Error('不在售前名单内，拒绝写入：' + name)
+    }
+    if (seenNames[name]) throw new Error('员工重复：' + name)
+    seenNames[name] = true
+    const shifts = Array.isArray(employee.shifts) ? employee.shifts : []
+    if (shifts.length !== dayCount) {
+      throw new Error(name + ' 的班次数量应为 ' + dayCount + '，实际 ' + shifts.length)
+    }
+    const normalizedShifts = []
+    for (let dayIndex = 0; dayIndex < dayCount; dayIndex += 1) {
+      normalizedShifts.push(normalizeShift(shifts[dayIndex]))
+    }
+    normalizedEmployees.push({ name: name, shifts: normalizedShifts })
+  }
+
+  let sheet = null
+  try {
+    sheet = Application.Worksheets.Item(sheetName)
+  } catch (error) {
+    throw new Error('找不到工作表「' + sheetName + '」：' + errorText(error))
+  }
+  if (!sheet) throw new Error('找不到工作表「' + sheetName + '」。')
+
+  // 表头自检：标题含月份、日期行 C..(dayCount 列) = 1..dayCount
+  const title = cellText(sheet.Range('A1').Value2)
+  if (title.indexOf(sheetName) < 0) {
+    throw new Error('A1 标题与工作表不匹配：' + title)
+  }
+  const dayHeaderAddress = 'C2:' + lastDayColumn + '2'
+  const dayHeader = sheet.Range(dayHeaderAddress).Value2
+  if (!dayHeader || dayHeader.length !== 1 || dayHeader[0].length !== dayCount) {
+    throw new Error('日期表头区域形状不对：' + dayHeaderAddress)
+  }
+  for (let dayIndex = 0; dayIndex < dayCount; dayIndex += 1) {
+    if (Number(dayHeader[0][dayIndex]) !== dayIndex + 1) {
+      throw new Error('日期表头第 ' + (dayIndex + 1) + ' 格不是 ' + (dayIndex + 1) + '：' + cellText(dayHeader[0][dayIndex]))
+    }
+  }
+
+  // 按 B 列姓名定位行（只认名单里的名字）
+  const rowByName = {}
+  for (let row = 1; row <= 30; row += 1) {
+    const name = cellText(sheet.Range('B' + row).Value2).trim()
+    if (name && expectedSellerNames.indexOf(name) >= 0) rowByName[name] = row
+  }
+  const targets = []
+  for (let index = 0; index < normalizedEmployees.length; index += 1) {
+    const employee = normalizedEmployees[index]
+    const row = rowByName[employee.name]
+    if (!row) throw new Error('B 列找不到售前姓名：' + employee.name)
+    targets.push({
+      name: employee.name,
+      row: row,
+      shifts: employee.shifts,
+      address: 'C' + row + ':' + lastDayColumn + row
+    })
+  }
+
+  // 写入：逐人只写自己那一行的 C..lastDayColumn
+  for (let index = 0; index < targets.length; index += 1) {
+    sheet.Range(targets[index].address).Value2 = [targets[index].shifts]
+  }
+
+  // 保存前回读
+  const mismatches = []
+  for (let index = 0; index < targets.length; index += 1) {
+    const target = targets[index]
+    const actualValues = readRowValues(sheet, target.address, dayCount)
+    for (let dayIndex = 0; dayIndex < dayCount; dayIndex += 1) {
+      const actual = cellText(actualValues[dayIndex])
+      const expected = target.shifts[dayIndex]
+      if (actual !== expected) {
+        mismatches.push(target.name + ' 第 ' + (dayIndex + 1) + ' 天：期望「' + expected + '」实际「' + actual + '」')
+      }
+    }
+  }
+  if (mismatches.length > 0) {
+    throw new Error('保存前回读不一致：' + mismatches.slice(0, 10).join('；'))
+  }
+
+  Application.ActiveWorkbook.Save()
+
+  // 保存后再回读（确认真的落盘）
+  const savedMismatches = []
+  for (let index = 0; index < targets.length; index += 1) {
+    const target = targets[index]
+    const actualValues = readRowValues(sheet, target.address, dayCount)
+    for (let dayIndex = 0; dayIndex < dayCount; dayIndex += 1) {
+      if (cellText(actualValues[dayIndex]) !== target.shifts[dayIndex]) {
+        savedMismatches.push(target.name + ' 第 ' + (dayIndex + 1) + ' 天保存后不一致')
+      }
+    }
+  }
+  if (savedMismatches.length > 0) {
+    throw new Error('保存后回读不一致：' + savedMismatches.slice(0, 10).join('；'))
+  }
+
+  const checksumText = sheetName + '|' + normalizedEmployees.map(function (employee) {
+    return employee.name + ':' + employee.shifts.join(',')
+  }).join(';')
+
+  return {
+    scriptVersion: scriptVersion,
+    operationType: expectedOperationType,
+    sheetName: sheetName,
+    dayCount: dayCount,
+    writtenEmployees: targets.map(function (target) {
+      return { name: target.name, row: target.row, address: target.address }
+    }),
+    writtenCellCount: targets.length * dayCount,
+    readBackMatched: true,
+    savedReadBackMatched: true,
+    saveCompleted: true,
+    payloadChecksum: checksumOf(checksumText)
+  }
+}
+
+return main()
