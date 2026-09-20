@@ -326,9 +326,16 @@ def check_coverage(cur, report, lead):
             cnt = {code: sum(1 for e in members if e["shifts"][d] == code) for code in ("早", "晚")}
             rest = sum(1 for e in members if e["shifts"][d] == "")
             if group == "售前":
-                if cnt["早"] != 2 or cnt["晚"] != 2 or rest != 1:
+                if cnt["早"] == 2 and cnt["晚"] == 2 and rest == 1:
+                    pass  # 常规：2 早 2 晚 1 休
+                elif (cnt["晚"] == 1 and cnt["早"] >= 2 and rest >= 1
+                      and cnt["早"] + cnt["晚"] + rest == len(members)):
+                    # 特殊情况：晚班 1 人（晚上咨询比白天少，主管 2026-09-20 拍板）
+                    report.add("一 在岗覆盖", "warn",
+                               f"售前 d{d}: 早{cnt['早']} 晚1 休{rest}（特殊情况：晚班只 1 人——晚上咨询少，需说明）")
+                else:
                     report.add("一 在岗覆盖", "error",
-                               f"售前 d{d}: 早{cnt['早']} 晚{cnt['晚']} 休{rest}（应为 2/2/1）")
+                               f"售前 d{d}: 早{cnt['早']} 晚{cnt['晚']} 休{rest}（应为 2/2/1；特殊可 1 晚）")
             else:
                 if cnt["早"] < 2:
                     report.add("一 在岗覆盖", "error", f"售后 d{d}: 早{cnt['早']}（保底 2 早）")
