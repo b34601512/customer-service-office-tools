@@ -1,9 +1,8 @@
 #!/usr/bin/env node
 // 抖音「待商家处理」售后单：逐单读【订单备注】，**没备注的 = 客服还没处理 → 提醒清单**。
 //
-// 用户口径（2026-09-21 拍板）：
-//   没备注 ≡ 还没处理 → 要提醒；有备注 ≡ 客服处理过 → 不提醒。
-//（比"看倒计时"更贴业务：售后的处理动作客服会写进订单备注，如「88 已通知拦截」。）
+// 注意：**判断不由程序做**（用户 2026-09-21 明确）：客服备注可能是「88」这种标记、也可能写得乱七八糟，
+// 关键词匹配会误判；本工具只负责**把每单的备注原文抓下来**，由模型逐条语义阅读后决定谁要提醒。
 //
 // 覆盖范围：待商家审核的 6 个筛选（未发货退款/已发货退款/退货退款/换货/补寄/维修）。
 // 在途（退货待收货/待退货）不属"待商家处理"，不查。
@@ -105,14 +104,13 @@ async function main() {
   const seen = new Set();
   const unique = all.filter((row) => (seen.has(row.orderId) ? false : (seen.add(row.orderId), true)));
   const detail = await context.newPage();
-  const result = { store: args.store, name: store.name, port, checkedAt: new Date().toISOString(), total: unique.length, needRemind: [], handled: [] };
+  const result = { store: args.store, name: store.name, port, checkedAt: new Date().toISOString(), total: unique.length, pending: [] };
   try {
     for (const row of unique) {
       const { ok, remark } = await readRemark(detail, row.aftersaleId);
       const item = { ...row, remark, ok };
-      if (ok && remark) result.handled.push(item);
-      else result.needRemind.push(item);
-      log("抖音待办", "读备注", `${row.orderId} → ${ok ? (remark ? `已处理「${remark.slice(0, 24)}」` : "**没备注**") : "读取失败"}`);
+      result.pending.push(item);
+      log("抖音待办", "读备注", `${row.orderId} → 「${remark || "（空）"}」`);
     }
   } finally {
     await detail.close().catch(() => {});
@@ -122,21 +120,15 @@ async function main() {
   fs.mkdirSync(path.dirname(outFile), { recursive: true });
   fs.writeFileSync(outFile, JSON.stringify(result, null, 2), "utf8");
 
-  console.log(`\n  ${store.name}（${args.store}）待商家处理售后 ${result.total} 单：`);
-  if (result.needRemind.length === 0) {
-    console.log("  ✓ 全部有备注 → 客服都处理过了，无需提醒");
-  } else {
-    console.log(`\n  ⚠ 没备注（= 还没处理）${result.needRemind.length} 单：`);
-    for (const item of result.needRemind) {
-      console.log(`    · ${item.filter} ｜ 订单 ${item.orderId}（售后 ${item.aftersaleId}）¥${item.money} ｜ ${item.reason} ｜ ${item.appliedAt}${item.remain ? ` ｜ 剩 ${item.remain}` : ""}`);
-    }
-  }
-  if (result.handled.length) {
-    console.log(`\n  ✓ 有备注（已处理）${result.handled.length} 单：`);
-    for (const item of result.handled) console.log(`    · 订单 ${item.orderId} → 「${item.remark.slice(0, 40)}」`);
+  console.log(`\n  ${store.name}（${args.store}）待商家处理售后 ${result.total} 单（备注原文，判断由模型语义阅读）：`);
+  if (result.total === 0) console.log("  ✓ 没有待商家处理的单");
+  for (const item of result.pending) {
+    console.log(`\n    【${item.filter}】订单 ${item.orderId}（售后 ${item.aftersaleId}）`);
+    console.log(`      金额 ¥${item.money} ｜ 原因 ${item.reason} ｜ 申请 ${item.appliedAt}${item.remain ? ` ｜ 剩 ${item.remain}` : ""}`);
+    console.log(`      备注原文：「${item.remark || "（空）"}」${item.ok ? "" : "  ⚠ 详情读取失败"}`);
   }
   console.log(`\n  落盘：${path.relative(projectPath(), outFile)}`);
-  console.log(`  发群前必须先问用户（红线）。\n`);
+  console.log(`  ⚠ 本工具不做判断；发群前必须先问用户（红线）。\n`);
   process.exit(0);
 }
 
