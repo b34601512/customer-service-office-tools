@@ -1,0 +1,9 @@
+{
+  "name": "jd-nav-faq-optimize",
+  "version": "0.1.0",
+  "private": true,
+  "description": "进店咨询导航问答优化：抓取各平台店铺的进店导航/常见问题及点击数据",
+  "dependencies": {
+    "playwright-core": "^1.40.0"
+  }
+}
