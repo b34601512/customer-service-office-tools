@@ -8,7 +8,7 @@
 
 | 平台 | 入口路径 | 有点击数据？ | 状态 |
 |---|---|---|---|
-| **京东** | `xi.jd.com/kf-manage-lite` → 欢迎语 → **常见问题库** | ✅ 近7日点击量 | **已通**（jd1 实测 2026-09-21） |
+| **京东** | `xi.jd.com/kf-manage-lite` → 欢迎语 → **常见问题库** | ✅ 近7日点击量 | **jd1 已优化**（7→10 条）；jd3 数据已采 |
 | 天猫 | 待探索 | ? | ⬜ |
 | 拼多多 | 待探索 | ? | ⬜ |
 | 抖音 | 待探索 | ? | ⬜ |
@@ -19,6 +19,8 @@
 ```bash
 node src/tools/jd-faq-overview.js --store jd1 --port 9424        # 抓常见问题 + 近7日点击量
 node src/tools/jd-faq-overview.js --store jd1 --port 9424 --json # 输出 JSON
+node src/tools/jd-faq-apply.js --config config/jd1-目标配置.json --port 9424           # dry-run 看计划
+node src/tools/jd-faq-apply.js --config config/jd1-目标配置.json --port 9424 --apply   # 真改后台（幂等）
 ```
 
 ## 经验
