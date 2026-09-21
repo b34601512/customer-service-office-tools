@@ -75,6 +75,8 @@ node src/tools/put-clipboard.js kdocs-scripts/AirScript-只读查询订单号.md
 | 京东自动登录 | `node src/tools/jd-login.js --store jd1` | 凭据运行时读 12号/9号；登录按钮 `button.password__submit` |
 | 拼多多售后概览 | `node src/tools/pdd-aftersale-overview.js --store pdd02` | 「24小时内将逾期订单数」=0 即无漏；投诉预警>0 要处理 |
 | 拼多多自动登录 | `node src/tools/pdd-login.js --store pdd02` | 默认扫码页 → 先点「账号登录」；凭据读 22号→12号→9号 |
+| 抖店售后概览 | `node src/tools/douyin-aftersale-overview.js --store douyin3` | 「临期待处理/投诉至监管/仲裁」全 0 即无临近超时 |
+| 抖店登录 | 窗口开 `fxg.jinritemai.com/login/common`；手机号自动填（stores.json 的 loginPhone），用户只输验证码 | 别点 open.douyin.com 的 OAuth 授权 |
 | 手动跑（双击） | `启动每日检查.bat` | 输出到 `runtime/logs/每日检查.log` |
 | 定时跑 | Windows 计划任务 **「22号-售后退款每天检查」** 每天 09:10 执行 `定时检查.bat` | 2026-09-18 建，已试跑通过 |
 
