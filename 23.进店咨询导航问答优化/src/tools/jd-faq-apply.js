@@ -117,7 +117,43 @@ async function clickConfirm(page) {
   const cfg = JSON.parse(fs.readFileSync(path.resolve(cfgPath), "utf8"));
   console.log(`  目标配置：${cfgPath}`);
   console.log(`  保留/改 ${cfg.keep.length} 条 ｜ 删 ${cfg.delete.length} 条 ｜ 新增 ${cfg.add.length} 条 → 终态 ${cfg.keep.length + cfg.add.length} 条`);
-  if (!APPLY) { console.log("\n  （dry-run：不连浏览器、不改后台。加 --apply 才真改）"); process.exit(0); }
+  const dumpTo = argOf("dump-config");
+  if (!APPLY && !dumpTo) { console.log("\n  （dry-run：不连浏览器、不改后台。加 --apply 才真改）"); process.exit(0); }
+
+  // --dump-config <file>：逐条点「编辑」把当前后台配置导出成同格式 JSON（keep 填满，delete/add 空）
+  if (dumpTo) {
+    const b = await chromium.connectOverCDP(`http://127.0.0.1:${port}`);
+    const ctx = b.contexts()[0];
+    const pg = ctx.pages().find((x) => /xi\.jd\.com/.test(x.url())) || ctx.pages()[0];
+    await pg.bringToFront().catch(() => {});
+    await gotoFaq(pg);
+    const count = await pg.evaluate(() => [...document.querySelectorAll("div,span,a,button,li")].filter((e) => /^编辑$/.test((e.textContent || "").trim()) && e.offsetWidth).length);
+    console.log(`  发现 ${count} 个编辑按钮，逐条读取…`);
+    const pairs = [];
+    for (let i = 0; i < count; i++) {
+      const ok = await pg.evaluate((idx) => {
+        const btns = [...document.querySelectorAll("div,span,a,button,li")].filter((e) => /^编辑$/.test((e.textContent || "").trim()) && e.offsetWidth);
+        if (!btns[idx]) return false;
+        btns[idx].click();
+        return true;
+      }, i);
+      if (!ok) break;
+      await pg.waitForTimeout(4000);
+      const pair = await pg.evaluate(() => {
+        const t = [...document.querySelectorAll("textarea")].filter((e) => e.offsetWidth)[0];
+        const c = [...document.querySelectorAll("[contenteditable=true]")].filter((e) => e.offsetWidth)[0];
+        return { question: String(t?.value || "").trim(), reply: String(c?.innerText || "").trim() };
+      });
+      if (pair.question) pairs.push(pair);
+      await pg.keyboard.press("Escape").catch(() => {});
+      await pg.evaluate(() => { const b = [...document.querySelectorAll("div,span,a,button,li")].filter((e) => /^取消$/.test((e.textContent || "").trim()) && e.offsetWidth); if (b.length) b[b.length - 1].click(); });
+      await pg.waitForTimeout(2500);
+    }
+    fs.writeFileSync(path.resolve(dumpTo), JSON.stringify({ store: argOf("store", "jd1"), note: "导出当前配置", keep: pairs, delete: [], add: [] }, null, 2), "utf8");
+    console.log(`  ✓ 已导出 ${pairs.length} 条到 ${dumpTo}`);
+    pairs.forEach((x, i) => console.log(`    ${i + 1}. ${x.question}  （回复 ${x.reply.length} 字）`));
+    if (!APPLY) process.exit(0);
+  }
 
   const browser = await chromium.connectOverCDP(`http://127.0.0.1:${port}`);
   const context = browser.contexts()[0];
@@ -133,10 +169,10 @@ async function clickConfirm(page) {
 
   // ① 改：keep 里问题已存在的，覆盖回复
   for (const item of cfg.keep) {
-    const exists = (await readList(page)).some((r) => r.includes(item.question.split("？")[0].slice(0, 8)));
-    if (!exists) { console.log(`\n  ⏭ 跳过改（列表里没有相近问题）：${item.question}`); continue; }
-    // 用旧文本定位：加水那条（问题前缀"制氧机需要加水吗"）
-    const oldQ = item.question.startsWith("制氧机需要加水吗") ? "制氧机需要加水吗？" : item.question;
+    const exists = (await readList(page)).some((r) => r.includes((item.from || item.question).split("？")[0].slice(0, 8)));
+    if (!exists) { console.log(`\n  ⏭ 跳过改（列表里没有相近问题）：${item.from || item.question}`); continue; }
+    // 定位用 from（旧文本，可选）；不传则用新问题文本
+    const oldQ = item.from || item.question;
     const clicked = await clickRowAction(page, oldQ, "编辑");
     if (!clicked) { await fail(`找不到「编辑」按钮：${oldQ}`); }
     await sleep(4500);
