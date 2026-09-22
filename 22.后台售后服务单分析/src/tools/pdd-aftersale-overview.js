@@ -20,6 +20,36 @@ const LIST_URL = "https://mms.pinduoduo.com/aftersales/aftersale_list";
 const RISK_LABELS = ["24小时内将逾期订单数", "24小时内待商家举证", "24小时内平台同意退款", "24小时内将逾期工单数"];
 const FILTER_LABELS = ["投诉预警", "待处理即将逾期", "待商家处理", "待举证即将逾期", "待商家举证", "买家催处理", "待买家处理", "退货待处理"];
 
+// 纯解析函数（可单测）。2026-09-22 根因修复：下面三个正则原来写成正则字面量里的 `\\s` / `\\d`，
+// 那代表“反斜杠+字母”本身，永远匹配不到真实页面文本——实测落盘的 nearestRemainMinutes /
+// complaintWarningText 恒为 undefined（页面明明有“0天23时3分45秒未处理”），首页兜底卡片也全 null。
+// 反向断言见 tests/pddOverviewParseMustMatchRealText.test.js。
+function 解析计数(text, label, { 带单 = false } = {}) {
+  const matched = text.match(new RegExp(`${label}\\s*(\\d+)${带单 ? "\\s*单" : ""}`));
+  return matched ? Number(matched[1]) : null;
+}
+
+function 解析投诉预警原文(text) {
+  const matched = String(text || "").match(/有\s*(\d+)\s*笔售后单存在投诉风险[^。]*/);
+  return matched ? matched[0].slice(0, 120) : "";
+}
+
+// 页面里所有“X天X时X分X秒未处理”倒计时，换算成分钟（越小越急）
+function 解析倒计时分钟列表(text) {
+  return Array.from(String(text || "").matchAll(/(\d+)\s*天\s*(\d+)\s*时\s*(\d+)\s*分\s*(\d+)\s*秒未处理/g))
+    .map((m) => Number(m[1]) * 1440 + Number(m[2]) * 60 + Number(m[3]) + Number(m[4]) / 60);
+}
+
+// 列表页被「售后设置」拦住时改读后台首页卡片（实测 pdd03）
+function 解析首页卡片(text, labels = ["售后过期预警", "退款/售后", "待处理工单", "即将逾期发货"]) {
+  const out = {};
+  for (const label of labels) {
+    const matched = String(text || "").match(new RegExp(`${label}\\s*(\\d+)`));
+    out[label] = matched ? Number(matched[1]) : null;
+  }
+  return out;
+}
+
 function parseArgs(argv) {
   const args = { store: "pdd02" };
   for (let index = 0; index < argv.length; index += 1) {
@@ -45,20 +75,13 @@ async function main() {
     await page.waitForFunction(() => /24小时内将逾期订单数|待商家处理/.test(document.body.innerText), { timeout: 40000 }).catch(() => {});
     await page.waitForTimeout(8000);
     const text = await page.evaluate(() => document.body.innerText.replace(/\s+/g, " "));
-    for (const label of RISK_LABELS) {
-      const matched = text.match(new RegExp(`${label}\\s*(\\d+)\\s*单`));
-      result.risk[label] = matched ? Number(matched[1]) : null;
-    }
-    for (const label of FILTER_LABELS) {
-      const matched = text.match(new RegExp(`${label}\\s*(\\d+)`));
-      result.filters[label] = matched ? Number(matched[1]) : null;
-    }
+    for (const label of RISK_LABELS) result.risk[label] = 解析计数(text, label, { 带单: true });
+    for (const label of FILTER_LABELS) result.filters[label] = 解析计数(text, label);
     // 投诉预警原文（通常是「有N笔售后单存在投诉风险」）
-    const warn = text.match(/有\\s*(\\d+)\\s*笔售后单存在投诉风险[^。]*/);
-    if (warn) result.complaintWarningText = warn[0].slice(0, 120);
+    const warnText = 解析投诉预警原文(text);
+    if (warnText) result.complaintWarningText = warnText;
     // 列表里最紧的倒计时（越小越急）
-    const remain = Array.from(text.matchAll(/(\\d+)\\s*天\\s*(\\d+)\\s*时\\s*(\\d+)\\s*分\\s*(\\d+)\\s*秒未处理/g))
-      .map((m) => Number(m[1]) * 1440 + Number(m[2]) * 60 + Number(m[3]) + Number(m[4]) / 60);
+    const remain = 解析倒计时分钟列表(text);
     if (remain.length) { result.nearestRemainMinutes = Math.min(...remain); result.remainSamples = remain.slice(0, 6); }
     log("拼多多概览", "读取完成",
       `24h将逾期=${result.risk["24小时内将逾期订单数"]} 投诉预警=${result.filters["投诉预警"]} 待商家处理=${result.filters["待商家处理"]}`);
@@ -68,11 +91,7 @@ async function main() {
       await page.goto("https://mms.pinduoduo.com/home", { waitUntil: "domcontentloaded", timeout: 45000 }).catch(() => {});
       await page.waitForTimeout(12000);
       const homeText = await page.evaluate(() => document.body.innerText.replace(/\s+/g, " "));
-      result.home = {};
-      for (const label of ["售后过期预警", "退款/售后", "待处理工单", "即将逾期发货"]) {
-        const matched = homeText.match(new RegExp(`${label}\s*(\d+)`));
-        result.home[label] = matched ? Number(matched[1]) : null;
-      }
+      result.home = 解析首页卡片(homeText);
       log("拼多多概览", "列表页不可用→已读首页卡片", Object.entries(result.home).map(([k, v]) => `${k}=${v}`).join(" "));
     }
   } finally {
@@ -96,8 +115,12 @@ async function main() {
   process.exit(0);
 }
 
-main().catch((error) => {
-  log("拼多多概览", "失败", error.message);
-  console.error(`\n  失败：${error.message}\n`);
-  process.exit(1);
-});
+if (require.main === module) {
+  main().catch((error) => {
+    log("拼多多概览", "失败", error.message);
+    console.error(`\n  失败：${error.message}\n`);
+    process.exit(1);
+  });
+}
+
+module.exports = { 解析计数, 解析投诉预警原文, 解析倒计时分钟列表, 解析首页卡片, RISK_LABELS, FILTER_LABELS };
