@@ -57,6 +57,7 @@ async function main() {
     await page.goto(LIST_URL, { waitUntil: "domcontentloaded", timeout: 40000 });
     await page.waitForFunction(() => /24小时内待处理|售后单查询/.test(document.body.innerText), { timeout: 30000 }).catch(() => {});
     await page.waitForTimeout(2500);
+    result.pageUrl = page.url();
     let text = await page.evaluate(() => document.body.innerText);
     for (const label of STAT_LABELS) result.stats[label] = pickNumber(text, label);
     result.stats["退款处理时长(h)"] = (text.match(/退款处理时长[^0-9]{0,8}([\d.]+)/) || [])[1] || null;
@@ -78,6 +79,14 @@ async function main() {
   const outFile = projectPath(args.out || `runtime/tmall/概览-${new Date().toISOString().slice(0, 10)}.json`);
   fs.mkdirSync(path.dirname(outFile), { recursive: true });
   fs.writeFileSync(outFile, JSON.stringify(result, null, 2), "utf8");
+  // 根因修复（2026-09-22 实测）：页面没渲染出统计标签（多为登录态失效跳到 loginmyseller）时，
+  // 以前会静默写一串 null 并以退出码 0 结束，上游把它当“读到了”并得出「✓ 无漏」的假结论。
+  // 现在：读不到关键标签 = 读取失败，必须非 0 退出，绝不给结论。
+  if (result.stats["24小时内待处理"] === null) {
+    log("天猫概览", "失败", `页面未读到「24小时内待处理」标签，按失败处理不给结论｜当前地址 ${result.pageUrl || "未知"}`);
+    console.error(`\n  失败：读不到统计标签（页面没渲染「24小时内待处理」）。当前地址：${result.pageUrl || "未知"}｜常见原因：登录态失效跳登录页、弹窗遮挡。\n`);
+    process.exit(1);
+  }
   console.log(`\n  ${result.stats["24小时内待处理"] === 0 ? "✓ 24小时内待处理 = 0（没有签收超 24h 没处理的单）" : `⚠ 24小时内待处理 = ${result.stats["24小时内待处理"]}（要去后台看是哪些单）`}`);
   console.log(`  统计：${Object.entries(result.stats).map(([key, value]) => `${key} ${value}`).join(" ｜ ")}`);
   console.log(`  落盘：${path.relative(projectPath(), outFile)}\n`);
