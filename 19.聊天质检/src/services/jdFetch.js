@@ -47,35 +47,47 @@ function pickCandidates(pages, titleMatch) {
     .sort((a, b) => b.score - a.score);
 }
 
-/** 在指定页面上下文执行 JS 表达式（awaitPromise），返回 byValue 结果 */
-async function evaluateOnPage(page, expression, { timeoutMs = 60000 } = {}) {
-  const ws = new WebSocket(page.webSocketDebuggerUrl);
-  await new Promise((resolve, reject) => {
-    ws.addEventListener('open', resolve, { once: true });
-    ws.addEventListener('error', () => reject(new Error('WebSocket 打开失败')), { once: true });
-  });
-  const timer = setTimeout(() => ws.close(), timeoutMs);
+/** 在指定页面上下文执行 JS 表达式（awaitPromise），返回 byValue 结果。
+ * 超时或调试连接关闭必须显式 reject——历史上 ws.close() 后 pending Promise 永不 settle，
+ * 事件循环排空导致进程静默退出 0（无输出无报错），违反「禁止静默等待」铁律。 */
+async function evaluateOnPage(page, expression, { timeoutMs = 60000, createSocket } = {}) {
+  const connect = createSocket || ((url) => new WebSocket(url));
+  const ws = connect(page.webSocketDebuggerUrl);
+  let timer = null;
   try {
     const result = await new Promise((resolve, reject) => {
+      let settled = false;
+      const settle = (fn, value) => { if (!settled) { settled = true; fn(value); } };
+      timer = setTimeout(() => {
+        // 先 settle 再 close：若 close 同步派发 close 事件，避免错误信息被“连接被关闭”覆盖
+        settle(reject, new Error(`页面执行超时（>${timeoutMs}ms）：页内脚本没有返回。`
+          + '常见原因是浏览器窗口最小化或标签页在后台被浏览器节流，页内 JS 被冻结不执行；'
+          + '请把浏览器窗口还原并置于前台后重试。'));
+        try { ws.close(); } catch { /* 关闭失败不影响报错 */ }
+      }, timeoutMs);
+      ws.addEventListener('open', () => {
+        ws.send(JSON.stringify({
+          id: 1,
+          method: 'Runtime.evaluate',
+          params: { expression, awaitPromise: true, returnByValue: true, timeout: timeoutMs }
+        }));
+      });
+      ws.addEventListener('error', () => settle(reject, new Error('调试连接错误，无法在页面内执行脚本')));
+      ws.addEventListener('close', () => settle(reject, new Error('调试连接在返回结果前被关闭')));
       ws.addEventListener('message', (ev) => {
         let msg;
         try { msg = JSON.parse(ev.data); } catch { return; }
         if (msg.id !== 1) return;
-        if (msg.error) reject(new Error(msg.error.message));
+        if (msg.error) settle(reject, new Error(msg.error.message));
         else if (msg.result && msg.result.exceptionDetails) {
-          reject(new Error(msg.result.exceptionDetails.exception?.description || msg.result.exceptionDetails.text));
-        } else resolve(msg.result);
+          settle(reject, new Error(msg.result.exceptionDetails.exception?.description || msg.result.exceptionDetails.text));
+        } else settle(resolve, msg.result);
       });
-      ws.send(JSON.stringify({
-        id: 1,
-        method: 'Runtime.evaluate',
-        params: { expression, awaitPromise: true, returnByValue: true, timeout: timeoutMs }
-      }));
     });
     return result.result?.value;
   } finally {
-    clearTimeout(timer);
-    ws.close();
+    if (timer) clearTimeout(timer);
+    try { ws.close(); } catch { /* 已关闭 */ }
   }
 }
 
