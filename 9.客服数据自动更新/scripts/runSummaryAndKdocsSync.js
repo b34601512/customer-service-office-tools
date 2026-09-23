@@ -29,6 +29,7 @@ const { initializeProjectConfigForStartup } = require('../src/config/projectConf
 const { runConfiguredSummaryTask } = require('../src/cli/cliSummaryTask');
 const { syncDataDetailToKdocs } = require('../src/kdocsSync/syncDataDetailToKdocs');
 const { updateKdocsPivotEndDateFilter } = require('../src/kdocsSync/updateKdocsPivotEndDateFilter');
+const { assertSummaryCompleteBeforeKdocsSync } = require('../src/kdocsSync/summaryResultGuard');
 
 function 输出(标题, 内容) {
   console.log(`\n---------- ${标题} ----------`);
@@ -67,6 +68,7 @@ async function main() {
     失败: summaryResult?.errorCount,
     跳过: summaryResult?.skippedCount,
   });
+  assertSummaryCompleteBeforeKdocsSync(summaryResult);
 
   // 第二步：金山菜单 → 一键同步明细（本地“数据明细”全量覆盖在线同名表并回读核对）。
   输出('步骤2/3 金山文档·一键同步明细');

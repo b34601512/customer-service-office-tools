@@ -1,4 +1,5 @@
 const { requireHeadedBrowser } = require("../../../engine/browserAutomationScope");
+const { DOUYIN_SHOP_HEADER_SELECTOR } = require("./douyinStoreIdentity");
 // 该文件只负责识别抖音登录失效、打开真实登录页并等待人工登录恢复。
 const {
   DOUYIN_LOGIN_RECOVERY_TIMEOUT_MS,
@@ -64,7 +65,7 @@ function listDouyinBrowserPages(browser) {
 
 async function isDouyinMerchantHomePage(page) {
   // 只有商家首页真实店铺头部可见，才能证明当前会话已登录。
-  const shopHeader = page.locator(".headerShopName").first();
+  const shopHeader = page.locator(DOUYIN_SHOP_HEADER_SELECTOR).first();
   if ((await shopHeader.count()) === 0) {
     return false;
   }
@@ -106,7 +107,7 @@ async function waitForDouyinLoginRecovery(browser, loginPage, options = {}) {
 async function ensureDouyinMerchantSession(browser, page, reportProgress, options = {}) {
   // 先进入商家首页；失效时停在真实登录页，恢复后返回带店铺头部的页面。
   await gotoDouyinMerchantHome(page, options);
-  const shopHeader = page.locator(".headerShopName").first();
+  const shopHeader = page.locator(DOUYIN_SHOP_HEADER_SELECTOR).first();
   if (!await isDouyinLoginRequired(page) && (await shopHeader.count()) > 0 && await shopHeader.isVisible().catch(() => false)) {
     return page;
   }

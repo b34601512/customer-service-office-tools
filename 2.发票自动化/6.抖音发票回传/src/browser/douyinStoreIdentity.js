@@ -6,6 +6,7 @@ const { 限时等待 } = require('./dynamicWait');
 
 const 轮询间隔毫秒 = 1000;
 const 切店超时毫秒 = 120000;
+const 抖音店铺头部选择器 = '[class*="headerShopName"]';
 
 // 2026-09-20 issues/009：店铺身份读取失败的真因未知，不许猜选择器，先把成功/失败两种 DOM 各留一份现场。
 // 每个进程最多写一次（成功样本一份、失败现场一份），分析完即删，不累积垃圾。
@@ -27,7 +28,7 @@ async function 采集店铺身份现场(page, 错误) {
     });
   } catch (_错误) { 现场.页签数 = '读取失败'; }
   try {
-    const 头部 = page.locator('.headerShopName').first();
+    const 头部 = page.locator(抖音店铺头部选择器).first();
     现场.头部 = await 限时等待(头部.evaluate((element) => ({
       可见: !!element.offsetParent,
       文本: String(element.innerText || '').replace(/\s+/g, ' ').slice(0, 300),
@@ -88,7 +89,7 @@ function 店铺身份是否一致(实际, 期望) {
 }
 
 async function 读取抖音店铺名(shopHeader) {
-  const candidates = shopHeader.locator(':scope > [data-bytereplay-mask="true"]');
+  const candidates = shopHeader.locator(':scope [class*="userName"][data-bytereplay-mask="true"]');
   const visible = [];
   for (let i = 0; i < await candidates.count(); i += 1) {
     const c = candidates.nth(i);
@@ -128,7 +129,7 @@ async function 确保店铺菜单打开不处理弹窗(page, existingShopHeader 
   const visible = await 查找可见切店入口(page);
   if (visible.length === 1) return visible[0];
   if (visible.length > 1) throw new Error(`抖音切店入口不唯一：识别到 ${visible.length} 个可见“切换组织/店铺”。`);
-  const shopHeader = existingShopHeader || page.locator('.headerShopName').first();
+  const shopHeader = existingShopHeader || page.locator(抖音店铺头部选择器).first();
   await shopHeader.waitFor({ state: 'visible', timeout: 15000 });
   await shopHeader.click({ timeout: 5000 });
   return 等待唯一可见切店入口(page);
@@ -185,7 +186,7 @@ async function 点击切店入口(page, 选项 = {}) {
 async function 读取当前抖音店铺身份(page, 选项 = {}) {
   // 解决（issues/009）：轮询读取时必须能用更短的超时，否则多页签/多轮询时一层层叠加成大卡顿。
   const { 头部等待毫秒 = 15000, 编号等待毫秒 = 10000, 记录现场 = true } = 选项;
-  const shopHeader = page.locator('.headerShopName').first();
+  const shopHeader = page.locator(抖音店铺头部选择器).first();
   try {
     await shopHeader.waitFor({ state: 'visible', timeout: 头部等待毫秒 });
     const storeName = await 读取抖音店铺名(shopHeader);
@@ -232,7 +233,7 @@ async function 等待目标店铺(originPage, 期望, timeoutMs) {
     for (const p of originPage.context().pages()) {
       // 解决（issues/009）：内层逐页循环也要看截止时间，否则页签一多单轮就拖出几分钟。
       if (Date.now() > deadline) break;
-      const header = p.locator('.headerShopName').first();
+      const header = p.locator(抖音店铺头部选择器).first();
       if ((await header.count()) === 0 || !await header.isVisible().catch(() => false)) continue;
       try {
         last = await 读取当前抖音店铺身份(p, { 头部等待毫秒: 5000, 编号等待毫秒: 5000, 记录现场: true });
@@ -266,6 +267,7 @@ async function 确保抖音目标店铺(page, 店铺配置, 报告进度, 选项
 }
 
 module.exports = {
+  抖音店铺头部选择器,
   规范化抖音店铺名,
   解析期望店铺身份,
   店铺身份是否一致,

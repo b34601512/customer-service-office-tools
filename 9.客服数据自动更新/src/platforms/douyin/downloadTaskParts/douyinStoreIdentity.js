@@ -3,6 +3,7 @@ const {
   DOUYIN_POLL_INTERVAL_MS,
   DOUYIN_STORE_ID_READ_TIMEOUT_MS
 } = require("./douyinDownloadSettings");
+const DOUYIN_SHOP_HEADER_SELECTOR = '[class*="headerShopName"]';
 
 function normalizeDouyinStoreName(value) {
   return String(value || "").replace(/\s+/g, "").trim().toLowerCase();
@@ -25,8 +26,8 @@ function isDouyinStoreIdentityMatched(actualIdentity, expectedIdentity) {
 }
 
 async function readDouyinStoreName(shopHeader) {
-  // 实采：弹层展开后 headerShopName 会混入整层菜单文本，纯店名位于带脱敏标记的直接子节点。
-  const storeNameCandidates = shopHeader.locator(':scope > [data-bytereplay-mask="true"]');
+  // 店名节点嵌在 CSS 模块头部中；只读取唯一可见的店名节点。
+  const storeNameCandidates = shopHeader.locator(':scope [class*="userName"][data-bytereplay-mask="true"]');
   const visibleStoreNameCandidates = [];
   for (let index = 0; index < await storeNameCandidates.count(); index += 1) {
     const candidate = storeNameCandidates.nth(index);
@@ -46,7 +47,7 @@ async function readDouyinStoreName(shopHeader) {
 
 async function readCurrentDouyinStoreName(page) {
   // 该函数只读取当前页面顶部纯店名，不改变页面菜单状态。
-  const shopHeader = page.locator(".headerShopName").first();
+  const shopHeader = page.locator(DOUYIN_SHOP_HEADER_SELECTOR).first();
   await shopHeader.waitFor({ state: "visible", timeout: 15000 });
   return readDouyinStoreName(shopHeader);
 }
@@ -93,6 +94,7 @@ async function collectCurrentDouyinStoreIdentityFromOpenMenu(page) {
 }
 
 module.exports = {
+  DOUYIN_SHOP_HEADER_SELECTOR,
   normalizeDouyinStoreName,
   resolveExpectedDouyinStoreIdentity,
   isDouyinStoreIdentityMatched,

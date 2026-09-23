@@ -14,6 +14,8 @@ const { waitForDownloadArtifactState } = require('../src/shared/downloadEventEng
 const { requestChromeCloseOverCDP } = require('../src/engine/chromeSessionParts/chromeHeadlessCloser');
 const { readCurrentTmallShopName } = require('../src/platforms/tmall/storeSwitcherParts/tmallCurrentShopReader');
 const { ensureDouyinStoreMenuOpen } = require('../src/platforms/douyin/downloadTaskParts/douyinStoreMenu');
+const { isDouyinMerchantHomePage } = require('../src/platforms/douyin/downloadTaskParts/douyinLoginRecovery');
+const { readCurrentDouyinStoreName } = require('../src/platforms/douyin/downloadTaskParts/douyinStoreIdentity');
 
 const chromeOptions = process.env.CHROME_BIN ? { executablePath: process.env.CHROME_BIN } : { channel: 'chrome' };
 const base = 'https://kf.jd.com/fixture';
@@ -94,6 +96,13 @@ test('Tmall shop reader waits for the canonical header after login hydration', a
       }, 350);
     </script>`);
   assert.equal(await readCurrentTmallShopName(page, 3000), '天猫2店');
+});
+test('Douyin CSS-module header proves login and exposes the nested store name', async t => {
+  const storeName = 'DEDAKJ医疗器械旗舰店';
+  const html = '<div class="index_headerShopName__2wP1V"><div class="index_shopDetails__3w143"><div class="index_shopTitle__2ZwwM"><div class="index_userName__16Isl" data-bytereplay-mask="true" title="' + storeName + '">' + storeName + '</div></div></div></div>';
+  const { page } = await fixture(t, html);
+  assert.equal(await isDouyinMerchantHomePage(page), true);
+  assert.equal(await readCurrentDouyinStoreName(page), storeName);
 });
 test('Douyin store menu retries the same safe header after login hydration', async t => {
   const { page } = await fixture(t, `<div class="headerShopName"><span data-bytereplay-mask="true">DEDAKJ医疗器械旗舰店</span></div>

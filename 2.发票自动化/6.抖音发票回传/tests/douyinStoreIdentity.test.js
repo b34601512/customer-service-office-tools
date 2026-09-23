@@ -23,7 +23,7 @@ function 创建店铺身份页面({ initialIds = [], revealedIds = [] } = {}) {
       ids = [...revealedIds];
     },
     locator: (selector) => {
-      if (selector === ':scope > [data-bytereplay-mask="true"]') {
+      if (selector === ':scope [class*="userName"][data-bytereplay-mask="true"]') {
         return 创建列表([{
           isVisible: async () => true,
           innerText: async () => '目标旗舰店',
@@ -37,7 +37,7 @@ function 创建店铺身份页面({ initialIds = [], revealedIds = [] } = {}) {
   };
   const page = {
     locator: (selector) => {
-      if (selector === '.headerShopName') return { first: () => header };
+      if (selector === '[class*="headerShopName"]') return { first: () => header };
       if (selector === 'button:has-text("我知道了")') {
         return { first: () => ({ click: async () => {} }) };
       }
@@ -97,7 +97,7 @@ function 创建切店入口页面({ 初始可见 = true, 每次点击都失败 =
   const page = {
     getByText: () => entries,
     locator: (selector) => {
-      if (selector === '.headerShopName') return { first: () => header };
+      if (selector === '[class*="headerShopName"]') return { first: () => header };
       throw new Error(`未预期的页面选择器：${selector}`);
     },
     waitForTimeout: async () => {},

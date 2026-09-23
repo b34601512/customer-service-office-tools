@@ -29,6 +29,7 @@ const { initializeProjectConfigForStartup } = require('../src/config/projectConf
 const { runConfiguredSummaryTask } = require('../src/cli/cliSummaryTask');
 const { syncDataDetailToKdocs } = require('../src/kdocsSync/syncDataDetailToKdocs');
 const { updateKdocsPivotEndDateFilter } = require('../src/kdocsSync/updateKdocsPivotEndDateFilter');
+const { assertSummaryCompleteBeforeKdocsSync } = require('../src/kdocsSync/summaryResultGuard');
 
 const 待补店铺 = process.argv.slice(2).filter((arg) => arg && !arg.startsWith("-"));
 if (待补店铺.length === 0) {
@@ -54,6 +55,7 @@ async function main() {
   输出('步骤1/3 补齐失败店铺', { 任务: 待补店铺 });
   const summaryResult = await runConfiguredSummaryTask({ selectedSummaryTaskIds: 待补店铺 });
   输出('步骤1 结束', { 详情: summaryResult?.detail });
+  assertSummaryCompleteBeforeKdocsSync(summaryResult);
 
   输出('步骤2/3 金山文档·一键同步明细');
   const syncResult = await syncDataDetailToKdocs({ projectConfig: readProjectConfig() });

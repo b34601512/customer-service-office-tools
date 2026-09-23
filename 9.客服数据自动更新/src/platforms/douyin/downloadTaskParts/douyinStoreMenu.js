@@ -1,5 +1,6 @@
 // 该文件只负责读取和改变抖音店铺菜单状态，不负责解析店铺身份。
 const { DOUYIN_POLL_INTERVAL_MS } = require("./douyinDownloadSettings");
+const { DOUYIN_SHOP_HEADER_SELECTOR } = require("./douyinStoreIdentity");
 const { runAfterDismissingBlockingPopups } = require("../../../shared/blockingPopupEngine");
 const { log } = require("../../../engine/logger");
 const {
@@ -58,7 +59,7 @@ async function ensureDouyinStoreMenuOpenWithoutPopupHandling(page, existingShopH
     throw new Error(`抖音切店入口不唯一：识别到 ${initialEntries.length} 个可见“切换组织/店铺”。`);
   }
 
-  const shopHeader = existingShopHeader || page.locator(".headerShopName").first();
+  const shopHeader = existingShopHeader || page.locator(DOUYIN_SHOP_HEADER_SELECTOR).first();
   await shopHeader.waitFor({ state: "visible", timeout: 15000 });
 
   const deadline = Date.now() + 12000;

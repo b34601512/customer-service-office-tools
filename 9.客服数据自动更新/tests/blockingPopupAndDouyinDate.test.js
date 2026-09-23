@@ -319,7 +319,7 @@ async function testDouyinStoreNameIgnoresExpandedPopoverText() {
   };
   const expandedShopHeader = {
     locator(selector) {
-      assert.strictEqual(selector, ':scope > [data-bytereplay-mask="true"]');
+      assert.strictEqual(selector, ':scope [class*="userName"][data-bytereplay-mask="true"]');
       return pureStoreNameLocator;
     },
     async innerText() {
@@ -363,7 +363,7 @@ class FakeDouyinStorePage {
     };
     this.shopHeader = {
       locator: (selector) => {
-        assert.strictEqual(selector, ':scope > [data-bytereplay-mask="true"]');
+        assert.strictEqual(selector, ':scope [class*="userName"][data-bytereplay-mask="true"]');
         return this.storeNameLocator;
       },
       waitFor: async () => {},
@@ -383,7 +383,7 @@ class FakeDouyinStorePage {
   }
 
   locator(selector) {
-    if (selector === ".headerShopName") {
+    if (selector === '[class*="headerShopName"]') {
       return { first: () => this.shopHeader };
     }
     if (selector === "body") {

@@ -10,6 +10,8 @@ const { 读取当前抖音店铺身份, 等待目标店铺 } = require("../src/b
 
 function 造头部(店名 = "德达医疗康养器械旗舰店", 店铺ID = "162329841") {
   const 头部 = {
+    count: async () => 1,
+    isVisible: async () => true,
     waitFor: async () => {},
     evaluate: async () => ({ 可见: true }),
     locator: (选择器) => ({
@@ -34,7 +36,10 @@ function 造页面(店名, 店铺ID) {
     url: () => "https://fxg.jinritemai.com/ffa/morder/receipt/list",
     context: () => ({ pages: () => [page] }),
     waitForTimeout: async (ms) => new Promise((resolve) => setTimeout(resolve, Math.min(ms, 20))),
-    locator: () => ({ first: () => 造头部(店名, 店铺ID) }),
+    locator: (selector) => {
+      assert.equal(selector, '[class*="headerShopName"]', '所有店铺头部读取都必须兼容 CSS 模块类名');
+      return { first: () => 造头部(店名, 店铺ID) };
+    },
   };
   return page;
 }
@@ -42,6 +47,12 @@ function 造页面(店名, 店铺ID) {
 test("读取当前抖音店铺身份：顶部已渲染出店铺ID/店名时必须读得到（禁止再回退成 0 个有效店铺ID）", async () => {
   const 身份 = await 读取当前抖音店铺身份(造页面("德达医疗康养器械旗舰店", "162329841"));
   assert.deepEqual(身份, { storeId: "162329841", storeName: "德达医疗康养器械旗舰店" });
+});
+
+test("等待目标店铺：CSS 模块头部类名变化后仍能识别并确认已切到目标店", async () => {
+  const page = 造页面("德达医疗康养器械旗舰店", "162329841");
+  const result = await 等待目标店铺(page, { storeId: "162329841", storeName: "德达医疗康养器械旗舰店" }, 100);
+  assert.deepEqual(result.identity, { storeId: "162329841", storeName: "德达医疗康养器械旗舰店" });
 });
 
 test("读取当前抖音店铺身份：读不到时必须抛错并带可诊断原因", async () => {

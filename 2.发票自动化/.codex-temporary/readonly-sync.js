@@ -58,6 +58,12 @@ async function 同步一个平台(key, 只跑店铺) {
   return 结果汇总;
 }
 
+function 计算只读同步退出码(结果汇总) {
+  // 外层每日巡检依赖进程码识别部分失败，不能只打印明细后仍返回成功。
+  if (!Array.isArray(结果汇总)) return 1;
+  return 结果汇总.some((结果) => 结果?.状态 !== '成功') ? 1 : 0;
+}
+
 async function main() {
   const 参数 = process.argv.slice(2);
   const 目标 = 参数[0] || 'all';
@@ -72,10 +78,14 @@ async function main() {
   for (const 行 of 汇总) {
     console.log(`${行.平台}｜${行.店铺}｜读取 ${行.读取} 单（新增 ${行.新增}，更新 ${行.更新}）｜${行.状态}`);
   }
-  process.exit(0);
+  process.exitCode = 计算只读同步退出码(汇总);
 }
 
-main().catch((错误) => {
-  console.error('只读同步异常终止：', 错误 && 错误.stack || 错误);
-  process.exit(1);
-});
+if (require.main === module) {
+  main().catch((错误) => {
+    console.error('只读同步异常终止：', 错误 && 错误.stack || 错误);
+    process.exitCode = 1;
+  });
+}
+
+module.exports = { 计算只读同步退出码 };
