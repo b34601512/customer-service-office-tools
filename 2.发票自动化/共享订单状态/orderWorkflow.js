@@ -78,6 +78,7 @@ function 校验工作流转换(currentStatus, targetStatus) {
 function 转换订单工作流状态(order, targetStatus, now = new Date().toISOString()) {
   const 当前状态 = 读取工作流状态(order);
   const 目标状态 = 校验工作流转换(当前状态, targetStatus);
+  if (目标状态 === 工作流状态.已处理) return 构建已处理订单状态(order, now);
   const next = {
     ...order,
     workflowStatus: 目标状态,
@@ -91,16 +92,31 @@ function 转换订单工作流状态(order, targetStatus, now = new Date().toISO
     next.processingAt = next.processingAt || now;
     next.invoiceRegisteredAt = next.invoiceRegisteredAt || now;
     next.handledAt = '';
-  } else if (目标状态 === 工作流状态.已处理) {
-    next.processingAt = next.processingAt || now;
-    next.invoiceRegisteredAt = next.invoiceRegisteredAt || now;
-    next.handledAt = now;
   } else {
     next.processingAt = '';
     next.invoiceRegisteredAt = '';
     next.handledAt = '';
   }
   return next;
+}
+
+function 构建已处理订单状态(order, now) {
+  return {
+    ...order,
+    workflowStatus: 工作流状态.已处理,
+    updatedAt: now,
+    processingAt: order.processingAt || now,
+    invoiceRegisteredAt: order.invoiceRegisteredAt || now,
+    handledAt: now,
+  };
+}
+
+function 标记平台开票成功订单为已处理(order, now = new Date().toISOString()) {
+  if (读取后台开票状态(order).kind !== 'success') {
+    throw new Error('标记订单已处理失败：平台开票状态不是成功。');
+  }
+  if (读取工作流状态(order) === 工作流状态.已处理) return order;
+  return 构建已处理订单状态(order, now);
 }
 
 function 获取订单统计(orderList = []) {
@@ -214,6 +230,7 @@ module.exports = {
   获取允许转换状态,
   校验工作流转换,
   转换订单工作流状态,
+  标记平台开票成功订单为已处理,
   获取订单统计,
   规范化筛选状态,
   筛选订单,

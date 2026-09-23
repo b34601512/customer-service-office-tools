@@ -6,6 +6,7 @@ const {
   工作流状态,
   从旧记录推断工作流状态,
   转换订单工作流状态,
+  标记平台开票成功订单为已处理,
   获取订单统计,
   筛选订单,
   读取平台状态,
@@ -43,6 +44,23 @@ test('非法跨阶段转换直接抛中文原因', () => {
   assert.throws(
     () => 转换订单工作流状态({ workflowStatus: 'unknown' }, 工作流状态.处理中),
     /人工阶段无效/,
+  );
+});
+
+test('平台开票成功可将任一本地阶段自动标记为已处理', () => {
+  const now = '2026-09-23T03:00:00.000Z';
+  const handled = 标记平台开票成功订单为已处理({
+    workflowStatus: 工作流状态.待处理,
+    platformStatus: { kind: 'success', text: '开票成功' },
+  }, now);
+
+  assert.equal(handled.workflowStatus, 工作流状态.已处理);
+  assert.equal(handled.processingAt, now);
+  assert.equal(handled.invoiceRegisteredAt, now);
+  assert.equal(handled.handledAt, now);
+  assert.throws(
+    () => 标记平台开票成功订单为已处理({ workflowStatus: 工作流状态.处理中, invoiceStatusKind: 'pending' }, now),
+    /平台开票状态不是成功/,
   );
 });
 

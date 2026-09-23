@@ -11,7 +11,7 @@ const {
   同步扫描到的发票订单信息,
   手动新增待处理订单,
   设置订单处理状态,
-  批量标记开票成功已登记订单为已处理,
+  批量补标平台开票成功订单,
   归档清理已处理订单,
   设置订单处理中状态,
   设置订单跟进客服,
@@ -241,7 +241,7 @@ test('后台普通订单没有本地记录时不会被批量创建', () => {
   assert.equal(记录转列表(读取订单记录(file)).length, 0);
 });
 
-test('一键处理只会把开票成功的已登记订单标记为已处理', () => {
+test('平台开票成功会自动把本地各未完成阶段标记为已处理', () => {
   const file = 创建临时记录文件();
   const scan = 记住扫描到的催票订单({
     store: { id: '京东1店', name: '京东1店' },
@@ -259,7 +259,8 @@ test('一键处理只会把开票成功的已登记订单标记为已处理', ()
   设置订单发票登记状态(keys['1000000000002'], true, file);
   设置订单处理中状态(keys['1000000000003'], true, file);
   设置订单处理状态(keys['1000000000003'], true, file);
-  同步扫描到的发票订单信息({
+
+  const result = 同步扫描到的发票订单信息({
     store: { id: '京东1店', name: '京东1店' },
     invoiceOrders: [
       { orderNumber: '1000000000001', invoiceStatusText: '开票成功', invoiceStatusKind: 'success' },
@@ -268,22 +269,31 @@ test('一键处理只会把开票成功的已登记订单标记为已处理', ()
       { orderNumber: '1000000000004', invoiceStatusText: '开票成功', invoiceStatusKind: 'success' },
     ],
   }, file);
-
-  const result = 批量标记开票成功已登记订单为已处理(file);
   const records = Object.fromEntries(记录转列表(读取订单记录(file)).map((order) => [order.orderNumber, order]));
 
-  assert.equal(result.updatedCount, 1);
+  assert.equal(result.updatedCount, 4);
   assert.equal(records['1000000000001'].workflowStatus, 'handled');
   assert.equal(records['1000000000002'].workflowStatus, 'invoice_registered');
   assert.equal(records['1000000000003'].workflowStatus, 'handled');
-  assert.equal(records['1000000000004'].workflowStatus, 'pending');
+  assert.equal(records['1000000000004'].workflowStatus, 'handled');
+  assert.notEqual(records['1000000000004'].invoiceReturned, true);
+  assert.equal(records['1000000000004'].invoiceReturnFilePath, undefined);
   assert.deepEqual(统计订单记录(读取订单记录(file)), {
     total: 4,
-    pending: 1,
+    pending: 0,
     processing: 0,
     invoiceRegistered: 1,
-    handled: 2,
+    handled: 3,
   });
+
+  const raw = 读取订单记录(file);
+  raw.orders['京东1店:1000000000001'].workflowStatus = 'processing';
+  raw.orders['京东1店:1000000000004'].workflowStatus = 'pending';
+  fs.writeFileSync(file, JSON.stringify(raw, null, 2), 'utf8');
+  const catchUp = 批量补标平台开票成功订单(file);
+  assert.equal(catchUp.updatedCount, 2);
+  assert.equal(读取订单记录(file).orders['京东1店:1000000000001'].workflowStatus, 'handled');
+  assert.equal(读取订单记录(file).orders['京东1店:1000000000004'].workflowStatus, 'handled');
 });
 
 test('归档清理已处理订单会先写备份再移出当前记录', () => {

@@ -23,7 +23,7 @@ test('2号原有催票、订单和正式回传入口仍在', () => {
   assert.match(text, /自动识别全部启用店铺/);
   assert.match(text, /查看和处理订单状态/);
   assert.match(text, /手动新增待处理订单/);
-  assert.match(text, /批量标记开票成功订单/);
+  assert.match(text, /补标平台开票成功订单/);
   assert.match(text, /批量回传待开票发票/);
 });
 

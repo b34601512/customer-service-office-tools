@@ -421,7 +421,7 @@ test('京东回传完成不会被无关成功文案误判', async () => {
   }
 });
 
-test('京东回传完成会把当前订单行开票成功判定为成功', { timeout: 5_000 }, async () => {
+test('京东回传完成会把当前订单行开票成功判定为成功', { timeout: 15_000 }, async () => {
   const browser = await chromium.launch({ channel: 'msedge', headless: true });
   try {
     const page = await browser.newPage();

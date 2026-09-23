@@ -34,6 +34,7 @@ const {
   订单匹配搜索,
   是发票已登记待回传订单,
   是平台待开票待回传订单,
+  标记平台开票成功订单为已处理,
 } = 加载共享模块('orderWorkflow.js');
 
 const 订单备注字数上限 = 200;
@@ -225,7 +226,12 @@ function 同步扫描到的发票订单信息({ store, invoiceOrders }, filePath
     if (!data.orders[key]) continue;
     const patch = 构建后台发票字段补丁(record, now);
     if (!Object.keys(patch).length) continue;
-    repository.更新订单记录(key, { storeName: String(store.name || data.orders[key].storeName || ''), ...patch });
+    const recordPatch = { storeName: String(store.name || data.orders[key].storeName || ''), ...patch };
+    repository.更新订单记录(key, (existing) => (
+      patch.platformStatus?.kind === 'success'
+        ? 标记平台开票成功订单为已处理({ ...existing, ...recordPatch }, now)
+        : recordPatch
+    ));
     updatedCount += 1;
   }
   const latest = repository.读取订单数据();
@@ -309,14 +315,16 @@ function 设置订单备注(key, noteText, filePath = 催票订单记录文件�
   return 创建京东订单仓库(filePath).更新订单记录(key, { noteText: 规范化备注文本(noteText) });
 }
 
-function 批量标记开票成功已登记订单为已处理(filePath = 催票订单记录文件路径) {
+function 批量补标平台开票成功订单(filePath = 催票订单记录文件路径) {
   const repository = 创建京东订单仓库(filePath);
   const before = repository.读取订单数据();
   const targets = repository.记录转列表(before).filter((order) => (
-    读取工作流状态(order) === 工作流状态.发票已登记
-    && String(order.invoiceStatusKind || order.platformStatus?.kind || '') === 'success'
+    读取工作流状态(order) !== 工作流状态.已处理
+    && 读取后台开票状态(order).kind === 'success'
   ));
-  for (const order of targets) repository.转换订单状态(order.key, 工作流状态.已处理);
+  for (const order of targets) {
+    repository.更新订单记录(order.key, (existing) => 标记平台开票成功订单为已处理(existing));
+  }
   const latest = repository.读取订单数据();
   return { updatedCount: targets.length, records: repository.记录转列表(latest), stats: 统计订单记录(latest, filePath) };
 }
@@ -394,7 +402,7 @@ module.exports = {
   手动新增待处理订单,
   设置订单处理状态,
   更新订单工作流状态,
-  批量标记开票成功已登记订单为已处理,
+  批量补标平台开票成功订单,
   设置订单处理中状态,
   设置订单跟进客服,
   设置订单发票登记状态,

@@ -76,7 +76,7 @@ test('旧三布尔记录先复制备份再迁移，京东字段、回传证据�
   assert.equal(JSON.parse(fs.readFileSync(data.workflowMigration.backupPath, 'utf8')).version, 1);
 });
 
-test('重新扫描只更新后台事实，人工阶段、负责人、备注和回传凭证保持不变', () => {
+test('重扫发现开票成功会自动已处理并保留负责人、备注和回传凭证', () => {
   const file = 创建临时文件();
   const first = 记住扫描到的催票订单({
     store: { id: '京东1店', name: '京东一店' },
@@ -101,13 +101,15 @@ test('重新扫描只更新后台事实，人工阶段、负责人、备注和�
   }, file);
 
   const order = 记录转列表(读取订单记录(file), file)[0];
-  assert.equal(order.workflowStatus, 'invoice_registered');
+  assert.equal(order.workflowStatus, 'handled');
   assert.equal(order.assigneeName, '李四');
   assert.equal(order.noteText, '客户催过一次');
   assert.equal(order.lastReturnAttempt.status, 'error');
   assert.equal(order.invoiceStatusKind, 'success');
   assert.equal(order.platformStatus.text, '开票成功');
   assert.equal(order.invoiceTitle, '新抬头');
+  assert.notEqual(order.invoiceReturned, true);
+  assert.equal(order.invoiceReturnFilePath, undefined);
 });
 
 test('回传失败保留发票已登记，成功保存凭证并自动进入已处理', () => {
