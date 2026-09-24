@@ -1,6 +1,7 @@
 // 该文件用于解决京东下载目录中文件状态枚举和新下载痕迹识别问题。
 const fs = require("fs");
 const path = require("path");
+const { 查找完整临时下载产物 } = require("../../../shared/completeTemporaryArtifact");
 
 function isTemporaryDownloadFile(fileName) {
   return /\.(crdownload|tmp)$/i.test(fileName || "");
@@ -25,10 +26,13 @@ function listDownloadArtifacts(downloadDir) {
 }
 
 function findLatestNewDownloadArtifact(downloadDir, beforeFiles) {
-  // 这里只返回本轮新增、非临时且非空的真实下载文件。
-  return listDownloadArtifacts(downloadDir).find(
+  // 这里只返回本轮新增、非临时且非空的真实下载文件；
+  // Chrome 偶发不把已完整的 .crdownload 收尾改名时，校验结构完整后恢复成正式文件再返回。
+  const normal = listDownloadArtifacts(downloadDir).find(
     (item) => !beforeFiles.has(item.name) && !isTemporaryDownloadFile(item.name) && item.size > 0
-  ) || null;
+  );
+  if (normal) return normal;
+  return 查找完整临时下载产物(downloadDir, beforeFiles, { stableMs: 2000 });
 }
 
 module.exports = {

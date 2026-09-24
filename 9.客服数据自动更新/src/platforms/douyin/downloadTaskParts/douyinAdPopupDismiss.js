@@ -7,7 +7,10 @@ const { getAutomationTime } = require("../../../engine/browserAutomationScope");
 const DOUYIN_AD_POPUP_SELECTORS = [
   ".ws-arrival-modal-wrap",
   "[class*='arrival-modal']",
-  "[class*='arrival_modal']"
+  "[class*='arrival_modal']",
+  // 2026-09-24 实采：体验分引导层会盖住店铺菜单并拦截切店点击（data-guide="expr-score-guide"）。
+  "[data-guide='expr-score-guide']",
+  "[class*='exprScoreContainer']"
 ];
 // 只认明确“关闭”语义的入口；促销 CTA（如“查看商品”“立即参与”）一律不点。
 const DOUYIN_AD_CLOSE_SELECTORS = [

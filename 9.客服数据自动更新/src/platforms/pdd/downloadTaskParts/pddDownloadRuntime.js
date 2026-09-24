@@ -1,6 +1,7 @@
 const { ensureDir } = require("../../../engine/fileSystem");
 const { log } = require("../../../engine/logger");
 const { waitForDownloadArtifact } = require("../../../shared/downloadEventEngine");
+const { 查找完整临时下载产物 } = require("../../../shared/completeTemporaryArtifact");
 const { listPddDownloadArtifacts } = require("./pddDownloadArtifacts");
 
 const PDD_DOWNLOAD_TIMEOUT_MS = 60000;
@@ -12,7 +13,9 @@ async function waitForPddDownloadStart(downloadDir, beforeFiles, timeoutMs = PDD
     downloadDir,
     timeoutMs,
     pollIntervalMs: PDD_DOWNLOAD_POLL_INTERVAL_MS,
-    findNewArtifact: () => listPddDownloadArtifacts(downloadDir).find((item) => !beforeFiles.has(item.name)),
+    findNewArtifact: () => listPddDownloadArtifacts(downloadDir).find((item) => !beforeFiles.has(item.name))
+      // Chrome 偶发不把已完整的 .crdownload 收尾改名时，校验结构完整后恢复成正式文件再返回。
+      || 查找完整临时下载产物(downloadDir, beforeFiles, { stableMs: 2000 }),
     actionText: "点击拼多多下载表单"
   });
 }

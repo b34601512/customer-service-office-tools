@@ -119,13 +119,19 @@ async function ensureDouyinStoreMenuOpen(page, existingShopHeader = null) {
 
 async function clickDouyinSwitchStoreEntry(page) {
   // 该函数只确认菜单并点击唯一的“切换组织/店铺”入口。
-  await runDouyinMerchantStoreAction(
-    page,
-    async () => {
-      const switchStoreEntry = await ensureDouyinStoreMenuOpenWithoutPopupHandling(page);
-      await switchStoreEntry.click({ timeout: 5000, noWaitAfter: true });
-    }
-  );
+  // 2026-09-24 实采：体验分引导层可能在两次弹窗治理之间才盖上来，
+  // 这里对“被遮挡”类点击错误只做一次“再关抖音弹窗后重试同一点击”，不猜测其它按钮。
+  const clickSwitchEntry = async () => {
+    const switchStoreEntry = await ensureDouyinStoreMenuOpenWithoutPopupHandling(page);
+    await switchStoreEntry.click({ timeout: 5000, noWaitAfter: true });
+  };
+  try {
+    await runDouyinMerchantStoreAction(page, clickSwitchEntry);
+  } catch (error) {
+    if (!isPointerInterceptedError(error)) throw error;
+    await dismissDouyinAdPopup(page);
+    await runDouyinMerchantStoreAction(page, clickSwitchEntry);
+  }
 }
 
 async function findExactDouyinStoreOption(page, expectedStoreName) {
