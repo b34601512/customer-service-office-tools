@@ -1,26 +1,34 @@
-// AirScript 共享脚本：写排班表的「售前每日班次」（只写售前 5 人名单内的行；写后回读校验并保存）
-// 版本：2026-09-20.1
+// AirScript 共享脚本：写排班表的「售前每日班次」+「售前值班底色」
+// 版本：2026-09-24.1
 //
-// 配套工具：21.AI自动排班经验/工具/写在线排班表.cjs（通过同步 webhook + AirScript-Token 调用本脚本）
-// 参考实现：9.客服数据自动更新/src/kdocsSync/（同一套「文档共享脚本 + sync_task」机制）
+// 配套工具（21.AI自动排班经验/工具/）：
+//   - 写在线排班表.cjs    → operationType=write_seller_schedule（写售前 5 人每日班次值）
+//   - 写在线值班底色.cjs  → operationType=write_seller_duty_colors（写售前值班浅绿底色）
+//                           operationType=diagnose_colors（只读诊断：RGB/颜色 API 是否可用）
 //
 // 调用参数（Context.argv）：
-//   {
-//     operationType: 'write_seller_schedule',
-//     requiredScriptVersion: '2026-09-20.1',
-//     sheetName: '2026年10月',          // 只写这一张月表
-//     dayCount: 31,                     // 天数（28~31；决定写到哪一列）
-//     employees: [                      // 只允许下面 expectedSellerNames 里的名字
-//       { name: '韩欢欢', shifts: ['早', '早', '', ... 共 dayCount 个] },
-//       ...
-//     ]
-//   }
-// 班次取值：'早' / '晚' / ''（'休' 会被归一成 ''，表里休息就是空白格）。
-// 本脚本只写：目标月表里售前 5 人所在行的 C..(dayCount 对应列)，不改底色、不改其他行/表。
+//   { operationType:'write_seller_schedule', requiredScriptVersion:'2026-09-24.1',
+//     sheetName:'2026年10月', dayCount:31,
+//     employees:[{name:'韩欢欢', shifts:['早','早','', ... 共 dayCount 个]}, ...] }
+//   { operationType:'write_seller_duty_colors', requiredScriptVersion:'2026-09-24.1',
+//     sheetName:'2026年10月', dayCount:31,
+//     duties:[{name:'韩欢欢', day:1, shift:'早'}, ...] }
+//   { operationType:'diagnose_colors', requiredScriptVersion:'2026-09-24.1',
+//     sheetName:'2026年10月', addresses:['C3','D4', ...],
+//     duties:[{name:'韩欢欢', day:1, shift:'早'}, ...]（二选一，只读） }
+//
+// 安全边界：
+//   - 只认售前 5 人名单（韩欢欢/麦诺谦/叶炳辉/徐佳楠/刘秀文），只写他们所在行；
+//   - 班次写 C..(dayCount 列)；值班底色只写 duties 指定的格；
+//   - 值班底色写入前逐格核对当前班次 = 值班班次，不符立即中止（一格都不写）；
+//   - 不碰统计列、其他行、其他月表；写后回读校验并保存。
 
-const scriptVersion = '2026-09-20.1'
-const expectedOperationType = 'write_seller_schedule'
+const scriptVersion = '2026-09-24.1'
+const opWriteSchedule = 'write_seller_schedule'
+const opWriteDutyColors = 'write_seller_duty_colors'
+const opDiagnoseColors = 'diagnose_colors'
 const expectedSellerNames = ['韩欢欢', '麦诺谦', '叶炳辉', '徐佳楠', '刘秀文']
+const dutyColorHex = '#E2F0D9'
 const minDayCount = 28
 const maxDayCount = 31
 
@@ -68,18 +76,71 @@ function readRowValues(sheet, address, dayCount) {
   return row
 }
 
-function main() {
-  if (typeof Context === 'undefined' || Context === null || !Context.argv) {
-    throw new Error('缺少 Context.argv，必须由 webhook 调用并传入参数。')
+// 颜色值归一化：数字（RGB/BGR 两种字节序都算）或 '#RRGGBB' / 'RRGGBB' 文本 → 候选十六进制列表
+function toHexCandidates(value) {
+  const out = []
+  if (typeof value === 'number' && isFinite(value)) {
+    const n = value >>> 0 & 0xffffff
+    const bytes = [(n >> 16) & 0xff, (n >> 8) & 0xff, n & 0xff]
+    const toHex = function (list) {
+      return '#' + list.map(function (x) { return ('0' + x.toString(16)).slice(-2).toUpperCase() }).join('')
+    }
+    out.push(toHex(bytes))
+    out.push(toHex([bytes[2], bytes[1], bytes[0]]))
+    return out
   }
-  const argv = Context.argv
-  if (argv.operationType !== expectedOperationType) {
-    throw new Error('operationType 不匹配：' + cellText(argv.operationType))
+  const text = cellText(value).trim().toUpperCase()
+  const hexMatch = text.match(/#?([0-9A-F]{6})/)
+  if (hexMatch) out.push('#' + hexMatch[1])
+  const rgbMatch = text.match(/RGB\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/)
+  if (rgbMatch) {
+    out.push('#' + [rgbMatch[1], rgbMatch[2], rgbMatch[3]].map(function (x) {
+      return ('0' + Number(x).toString(16)).slice(-2).toUpperCase()
+    }).join(''))
   }
-  if (String(argv.requiredScriptVersion || '') !== scriptVersion) {
-    throw new Error('脚本版本不匹配：在线 ' + scriptVersion + '，调用方要求 ' + cellText(argv.requiredScriptVersion))
-  }
+  return out
+}
 
+// 定位目标月表 + 表头自检（标题含月份、日期行 C..(dayCount 列) = 1..dayCount）
+function sheetAndHeader(sheetName, dayCount) {
+  let sheet = null
+  try {
+    sheet = Application.Worksheets.Item(sheetName)
+  } catch (error) {
+    throw new Error('找不到工作表「' + sheetName + '」：' + errorText(error))
+  }
+  if (!sheet) throw new Error('找不到工作表「' + sheetName + '」。')
+  const lastDayColumn = columnLetter(2 + dayCount)
+  const title = cellText(sheet.Range('A1').Value2)
+  if (title.indexOf(sheetName) < 0) {
+    throw new Error('A1 标题与工作表不匹配：' + title)
+  }
+  const dayHeaderAddress = 'C2:' + lastDayColumn + '2'
+  const dayHeaderRaw = sheet.Range(dayHeaderAddress).Value2
+  const dayHeader = dayHeaderRaw && Array.isArray(dayHeaderRaw[0]) ? dayHeaderRaw[0] : dayHeaderRaw
+  if (!dayHeader || dayHeader.length !== dayCount) {
+    throw new Error('日期表头区域形状不对：' + dayHeaderAddress)
+  }
+  for (let dayIndex = 0; dayIndex < dayCount; dayIndex += 1) {
+    if (Number(dayHeader[dayIndex]) !== dayIndex + 1) {
+      throw new Error('日期表头第 ' + (dayIndex + 1) + ' 格不是 ' + (dayIndex + 1) + '：' + cellText(dayHeader[dayIndex]))
+    }
+  }
+  return { sheet: sheet, lastDayColumn: lastDayColumn }
+}
+
+// 按 B 列姓名定位行（只认名单里的名字）
+function locateRows(sheet) {
+  const rowByName = {}
+  for (let row = 1; row <= 30; row += 1) {
+    const name = cellText(sheet.Range('B' + row).Value2).trim()
+    if (name && expectedSellerNames.indexOf(name) >= 0) rowByName[name] = row
+  }
+  return rowByName
+}
+
+// 操作 1：写售前每日班次值（原 2026-09-20.1 逻辑，保持结果字段不变）
+function runWriteSchedule(argv) {
   const sheetName = cellText(argv.sheetName).trim()
   if (!/^\d{4}年\d{1,2}月$/.test(sheetName)) {
     throw new Error('sheetName 必须是「YYYY年M月」形式：' + sheetName)
@@ -88,7 +149,6 @@ function main() {
   if (dayCount !== Math.floor(dayCount) || dayCount < minDayCount || dayCount > maxDayCount) {
     throw new Error('dayCount 必须是 ' + minDayCount + '~' + maxDayCount + ' 的整数：' + cellText(argv.dayCount))
   }
-  const lastDayColumn = columnLetter(2 + dayCount) // C=第3列=1号
 
   const employees = Array.isArray(argv.employees) ? argv.employees : []
   if (employees.length === 0) throw new Error('employees 为空。')
@@ -113,37 +173,11 @@ function main() {
     normalizedEmployees.push({ name: name, shifts: normalizedShifts })
   }
 
-  let sheet = null
-  try {
-    sheet = Application.Worksheets.Item(sheetName)
-  } catch (error) {
-    throw new Error('找不到工作表「' + sheetName + '」：' + errorText(error))
-  }
-  if (!sheet) throw new Error('找不到工作表「' + sheetName + '」。')
+  const located = sheetAndHeader(sheetName, dayCount)
+  const sheet = located.sheet
+  const lastDayColumn = located.lastDayColumn
+  const rowByName = locateRows(sheet)
 
-  // 表头自检：标题含月份、日期行 C..(dayCount 列) = 1..dayCount
-  const title = cellText(sheet.Range('A1').Value2)
-  if (title.indexOf(sheetName) < 0) {
-    throw new Error('A1 标题与工作表不匹配：' + title)
-  }
-  const dayHeaderAddress = 'C2:' + lastDayColumn + '2'
-  const dayHeaderRaw = sheet.Range(dayHeaderAddress).Value2
-  const dayHeader = dayHeaderRaw && Array.isArray(dayHeaderRaw[0]) ? dayHeaderRaw[0] : dayHeaderRaw
-  if (!dayHeader || dayHeader.length !== dayCount) {
-    throw new Error('日期表头区域形状不对：' + dayHeaderAddress)
-  }
-  for (let dayIndex = 0; dayIndex < dayCount; dayIndex += 1) {
-    if (Number(dayHeader[dayIndex]) !== dayIndex + 1) {
-      throw new Error('日期表头第 ' + (dayIndex + 1) + ' 格不是 ' + (dayIndex + 1) + '：' + cellText(dayHeader[dayIndex]))
-    }
-  }
-
-  // 按 B 列姓名定位行（只认名单里的名字）
-  const rowByName = {}
-  for (let row = 1; row <= 30; row += 1) {
-    const name = cellText(sheet.Range('B' + row).Value2).trim()
-    if (name && expectedSellerNames.indexOf(name) >= 0) rowByName[name] = row
-  }
   const targets = []
   for (let index = 0; index < normalizedEmployees.length; index += 1) {
     const employee = normalizedEmployees[index]
@@ -202,7 +236,7 @@ function main() {
 
   return {
     scriptVersion: scriptVersion,
-    operationType: expectedOperationType,
+    operationType: opWriteSchedule,
     sheetName: sheetName,
     dayCount: dayCount,
     writtenEmployees: targets.map(function (target) {
@@ -214,6 +248,251 @@ function main() {
     saveCompleted: true,
     payloadChecksum: checksumOf(checksumText)
   }
+}
+
+// 操作 2：只写售前值班底色（浅绿 #E2F0D9），不写任何值
+function runWriteDutyColors(argv) {
+  const sheetName = cellText(argv.sheetName).trim()
+  if (!/^\d{4}年\d{1,2}月$/.test(sheetName)) {
+    throw new Error('sheetName 必须是「YYYY年M月」形式：' + sheetName)
+  }
+  const dayCount = Number(argv.dayCount)
+  if (dayCount !== Math.floor(dayCount) || dayCount < minDayCount || dayCount > maxDayCount) {
+    throw new Error('dayCount 必须是 ' + minDayCount + '~' + maxDayCount + ' 的整数：' + cellText(argv.dayCount))
+  }
+
+  const duties = Array.isArray(argv.duties) ? argv.duties : []
+  if (duties.length === 0) throw new Error('duties 为空。')
+  if (duties.length !== dayCount * 2) {
+    throw new Error('duties 数量应为 ' + (dayCount * 2) + '（每天早 1 + 晚 1），实际 ' + duties.length)
+  }
+  const normalized = []
+  const seen = {}
+  const perDay = {}
+  for (let index = 0; index < duties.length; index += 1) {
+    const item = duties[index] || {}
+    const name = cellText(item.name).trim()
+    if (expectedSellerNames.indexOf(name) < 0) {
+      throw new Error('不在售前名单内，拒绝写入：' + name)
+    }
+    const day = Number(item.day)
+    if (day !== Math.floor(day) || day < 1 || day > dayCount) {
+      throw new Error(name + ' 的 day 不合法：' + cellText(item.day))
+    }
+    const shift = cellText(item.shift).trim()
+    if (shift !== '早' && shift !== '晚') {
+      throw new Error(name + ' 的 shift 只能是 早/晚：' + shift)
+    }
+    const key = name + '|' + day
+    if (seen[key]) throw new Error('同一人同一天重复：' + key)
+    seen[key] = true
+    if (!perDay[day]) perDay[day] = { early: 0, late: 0 }
+    if (shift === '早') perDay[day].early += 1
+    else perDay[day].late += 1
+    normalized.push({ name: name, day: day, shift: shift })
+  }
+  for (let day = 1; day <= dayCount; day += 1) {
+    const p = perDay[day]
+    if (!p || p.early !== 1 || p.late !== 1) {
+      throw new Error('d' + day + ' 值班不是「早 1 + 晚 1」：早 ' + (p ? p.early : 0) + ' / 晚 ' + (p ? p.late : 0))
+    }
+  }
+  // 排序成固定顺序，保证校验和稳定（按天、再早后晚、再姓名）
+  normalized.sort(function (a, b) {
+    if (a.day !== b.day) return a.day - b.day
+    if (a.shift !== b.shift) return a.shift === '早' ? -1 : 1
+    return a.name < b.name ? -1 : (a.name > b.name ? 1 : 0)
+  })
+
+  const located = sheetAndHeader(sheetName, dayCount)
+  const sheet = located.sheet
+  const rowByName = locateRows(sheet)
+
+  const targets = normalized.map(function (item) {
+    const row = rowByName[item.name]
+    if (!row) throw new Error('B 列找不到售前姓名：' + item.name)
+    return {
+      name: item.name,
+      day: item.day,
+      shift: item.shift,
+      row: row,
+      address: columnLetter(2 + item.day) + row
+    }
+  })
+
+  // 写前核对：每格当前班次必须等于值班班次（不符 → 一格都不写）
+  const preMismatches = []
+  for (let index = 0; index < targets.length; index += 1) {
+    const target = targets[index]
+    const actual = cellText(sheet.Range(target.address).Value2).trim()
+    if (actual !== target.shift) {
+      preMismatches.push(target.name + ' d' + target.day + '：当前班次「' + actual + '」≠ 值班班次「' + target.shift + '」')
+    }
+  }
+  if (preMismatches.length > 0) {
+    throw new Error('写前核对不通过（未写任何格）：' + preMismatches.slice(0, 10).join('；'))
+  }
+
+  // 写底色：只写 duties 指定的格，不动值/其他格式
+  const expectedColor = RGB(226, 240, 217)
+  for (let index = 0; index < targets.length; index += 1) {
+    sheet.Range(targets[index].address).Interior.Color = expectedColor
+  }
+
+  // 保存前回读（颜色 + 班次值）
+  const colorMismatches = []
+  const valueMismatches = []
+  for (let index = 0; index < targets.length; index += 1) {
+    const target = targets[index]
+    const actualColor = sheet.Range(target.address).Interior.Color
+    if (toHexCandidates(actualColor).indexOf(dutyColorHex) < 0) {
+      colorMismatches.push(target.address + ' 颜色=' + cellText(actualColor))
+    }
+    if (cellText(sheet.Range(target.address).Value2).trim() !== target.shift) {
+      valueMismatches.push(target.address)
+    }
+  }
+  if (colorMismatches.length > 0) {
+    throw new Error('保存前回读颜色不一致：' + colorMismatches.slice(0, 10).join('；'))
+  }
+  if (valueMismatches.length > 0) {
+    throw new Error('保存前回读班次变了：' + valueMismatches.slice(0, 10).join('；'))
+  }
+
+  Application.ActiveWorkbook.Save()
+
+  // 保存后再回读
+  const savedColorMismatches = []
+  for (let index = 0; index < targets.length; index += 1) {
+    const target = targets[index]
+    const actualColor = sheet.Range(target.address).Interior.Color
+    if (toHexCandidates(actualColor).indexOf(dutyColorHex) < 0) {
+      savedColorMismatches.push(target.address + ' 颜色=' + cellText(actualColor))
+    }
+  }
+  if (savedColorMismatches.length > 0) {
+    throw new Error('保存后回读颜色不一致：' + savedColorMismatches.slice(0, 10).join('；'))
+  }
+
+  const checksumText = sheetName + '|' + normalized.map(function (item) {
+    return item.name + '|' + item.day + '|' + item.shift
+  }).join(';')
+
+  return {
+    scriptVersion: scriptVersion,
+    operationType: opWriteDutyColors,
+    sheetName: sheetName,
+    dayCount: dayCount,
+    writtenCellCount: targets.length,
+    writtenCells: targets.map(function (target) { return target.address }),
+    dutyColorHex: dutyColorHex,
+    readBackMatched: true,
+    savedReadBackMatched: true,
+    saveCompleted: true,
+    payloadChecksum: checksumOf(checksumText)
+  }
+}
+
+// 操作 3：只读诊断（不写任何东西）——确认 RGB()/Interior.Color 可用、看指定格当前颜色
+function runDiagnoseColors(argv) {
+  const out = {
+    scriptVersion: scriptVersion,
+    operationType: opDiagnoseColors,
+    rgbType: typeof RGB
+  }
+  try {
+    out.rgbSample = RGB(226, 240, 217)
+  } catch (error) {
+    out.rgbError = errorText(error)
+  }
+  const sheetName = cellText(argv.sheetName).trim()
+  if (sheetName) {
+    if (!/^\d{4}年\d{1,2}月$/.test(sheetName)) {
+      throw new Error('sheetName 必须是「YYYY年M月」形式：' + sheetName)
+    }
+    let sheet = null
+    try {
+      sheet = Application.Worksheets.Item(sheetName)
+    } catch (error) {
+      throw new Error('找不到工作表「' + sheetName + '」：' + errorText(error))
+    }
+    const addresses = Array.isArray(argv.addresses) ? argv.addresses : []
+    const duties = Array.isArray(argv.duties) ? argv.duties : []
+    out.sheetName = sheetName
+    out.cells = []
+    if (duties.length > 0) {
+      const rowByName = locateRows(sheet)
+      for (let index = 0; index < duties.length && index < 200; index += 1) {
+        const item = duties[index] || {}
+        const name = cellText(item.name).trim()
+        const day = Number(item.day)
+        const shift = cellText(item.shift).trim()
+        const row = rowByName[name]
+        if (!row || day !== Math.floor(day) || day < 1 || day > 31) continue
+        const address = columnLetter(2 + day) + row
+        let color = null
+        let value = null
+        try {
+          color = sheet.Range(address).Interior.Color
+        } catch (error) {
+          color = 'ERR:' + errorText(error)
+        }
+        try {
+          value = sheet.Range(address).Value2
+        } catch (error) {
+          value = 'ERR:' + errorText(error)
+        }
+        out.cells.push({
+          name: name,
+          day: day,
+          shift: shift,
+          address: address,
+          value: cellText(value),
+          color: cellText(color),
+          colorHex: toHexCandidates(color)
+        })
+      }
+      return out
+    }
+    for (let index = 0; index < addresses.length && index < 200; index += 1) {
+      const address = cellText(addresses[index]).trim()
+      if (!/^[A-Z]{1,3}\d{1,4}$/.test(address)) continue
+      let color = null
+      let value = null
+      try {
+        color = sheet.Range(address).Interior.Color
+      } catch (error) {
+        color = 'ERR:' + errorText(error)
+      }
+      try {
+        value = sheet.Range(address).Value2
+      } catch (error) {
+        value = 'ERR:' + errorText(error)
+      }
+      out.cells.push({
+        address: address,
+        value: cellText(value),
+        color: cellText(color),
+        colorHex: toHexCandidates(color)
+      })
+    }
+  }
+  return out
+}
+
+function main() {
+  if (typeof Context === 'undefined' || Context === null || !Context.argv) {
+    throw new Error('缺少 Context.argv，必须由 webhook 调用并传入参数。')
+  }
+  const argv = Context.argv
+  if (String(argv.requiredScriptVersion || '') !== scriptVersion) {
+    throw new Error('脚本版本不匹配：在线 ' + scriptVersion + '，调用方要求 ' + cellText(argv.requiredScriptVersion))
+  }
+  const operationType = cellText(argv.operationType)
+  if (operationType === opWriteSchedule) return runWriteSchedule(argv)
+  if (operationType === opWriteDutyColors) return runWriteDutyColors(argv)
+  if (operationType === opDiagnoseColors) return runDiagnoseColors(argv)
+  throw new Error('operationType 不支持：' + operationType)
 }
 
 return main()
