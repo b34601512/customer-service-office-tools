@@ -1,0 +1,141 @@
+﻿// AirScript 共享脚本：只给「售前值班格」写浅绿底色 #E2F0D9（不写任何值）
+// 版本：2026-09-24.1
+// 配套工具：21.AI自动排班经验/工具/写在线值班底色.cjs（同一套「文档共享脚本 + sync_task」机制）
+//
+// 入参（Context.argv）：
+//   写底色 { operationType:'write_seller_duty_colors', requiredScriptVersion:'2026-09-24.1',
+//            sheetName:'2026年10月', dayCount:31, duties:[{name:'韩欢欢', day:1, shift:'早'}, ...] }
+//   只读诊断 { operationType:'diagnose_colors', 其余同上（只读，不写） }
+//
+// 边界：只认售前 5 人名单；只写 duties 指定的格；写前逐格核对「当前班次 = 值班班次」（不符一格不写）；
+//       写后回读颜色+班次、保存；不写值、不动字体/边框/统计列/其他月表。
+
+const VERSION = '2026-09-24.1'
+const SELLERS = ['韩欢欢', '麦诺谦', '叶炳辉', '徐佳楠', '刘秀文']
+const GREEN_HEX = '#E2F0D9'
+const MIN_DAYS = 28
+const MAX_DAYS = 31
+
+function fail(msg) { throw new Error(msg) }
+function text(v) { return v === null || v === undefined ? '' : String(v) }
+function col(n) { let s = ''; while (n > 0) { const r = (n - 1) % 26; s = String.fromCharCode(65 + r) + s; n = Math.floor((n - 1) / 26) } return s }
+function sum(t) { let h = 5381; for (let i = 0; i < t.length; i++) h = ((h * 33) ^ t.charCodeAt(i)) >>> 0; return ('00000000' + h.toString(16)).slice(-8) }
+// 颜色值 → #RRGGBB 候选（数字按 RGB/BGR 两种字节序都算，字符串直接取 6 位十六进制）
+function hexOf(v) {
+  if (typeof v === 'number' && isFinite(v)) {
+    const n = (v >>> 0) & 0xffffff, b = [(n >> 16) & 255, (n >> 8) & 255, n & 255]
+    const hx = function (a) { return '#' + a.map(function (x) { return ('0' + x.toString(16)).slice(-2).toUpperCase() }).join('') }
+    return [hx(b), hx([b[2], b[1], b[0]])]
+  }
+  const m = text(v).toUpperCase().match(/#?([0-9A-F]{6})/)
+  return m ? ['#' + m[1]] : []
+}
+
+const argv = Context.argv
+if (!argv) fail('缺少 Context.argv，必须由 webhook 调用并传入参数。')
+if (String(argv.requiredScriptVersion || '') !== VERSION) fail('脚本版本不匹配：在线 ' + VERSION + '，调用方要求 ' + text(argv.requiredScriptVersion))
+const operationType = text(argv.operationType)
+const isWrite = operationType === 'write_seller_duty_colors'
+const isDiag = operationType === 'diagnose_colors'
+if (!isWrite && !isDiag) fail('operationType 不支持：' + operationType)
+
+const sheetName = text(argv.sheetName).trim()
+if (!/^\d{4}年\d{1,2}月$/.test(sheetName)) fail('sheetName 必须是「YYYY年M月」形式：' + sheetName)
+const dayCount = Number(argv.dayCount)
+if (dayCount !== Math.floor(dayCount) || dayCount < MIN_DAYS || dayCount > MAX_DAYS) fail('dayCount 必须是 ' + MIN_DAYS + '~' + MAX_DAYS + ' 的整数：' + text(argv.dayCount))
+
+// 校验 duties：名单内、每天合法、同一人同一天不重复
+const duties = Array.isArray(argv.duties) ? argv.duties : []
+const normalized = []
+const seen = {}
+const perDay = {}
+for (let i = 0; i < duties.length; i++) {
+  const d = duties[i] || {}
+  const name = text(d.name).trim()
+  if (SELLERS.indexOf(name) < 0) fail('不在售前名单内，拒绝写入：' + name)
+  const day = Number(d.day)
+  if (day !== Math.floor(day) || day < 1 || day > dayCount) fail(name + ' 的 day 不合法：' + text(d.day))
+  const shift = text(d.shift).trim()
+  if (shift !== '早' && shift !== '晚') fail(name + ' 的 shift 只能是 早/晚：' + shift)
+  if (seen[name + '|' + day]) fail('同一人同一天重复：' + name + '|' + day)
+  seen[name + '|' + day] = true
+  if (!perDay[day]) perDay[day] = { e: 0, l: 0 }
+  if (shift === '早') perDay[day].e++
+  else perDay[day].l++
+  normalized.push({ name: name, day: day, shift: shift })
+}
+if (isWrite) {
+  if (normalized.length !== dayCount * 2) fail('duties 数量应为 ' + dayCount * 2 + '（每天早 1 + 晚 1），实际 ' + normalized.length)
+  for (let day = 1; day <= dayCount; day++) {
+    const p = perDay[day]
+    if (!p || p.e !== 1 || p.l !== 1) fail('d' + day + ' 值班不是「早 1 + 晚 1」（早 ' + (p ? p.e : 0) + ' / 晚 ' + (p ? p.l : 0) + '）')
+  }
+}
+
+// 定位月表 + 行（按 B 列姓名，只认名单）
+const sheet = Application.Worksheets.Item(sheetName)
+if (text(sheet.Range('A1').Value2).indexOf(sheetName) < 0) fail('A1 标题与工作表不匹配：' + text(sheet.Range('A1').Value2))
+const rowByName = {}
+for (let r = 1; r <= 30; r++) {
+  const nm = text(sheet.Range('B' + r).Value2).trim()
+  if (SELLERS.indexOf(nm) >= 0) rowByName[nm] = r
+}
+const targets = normalized.map(function (d) {
+  const row = rowByName[d.name]
+  if (!row) fail('B 列找不到售前姓名：' + d.name)
+  return { name: d.name, day: d.day, shift: d.shift, addr: col(2 + d.day) + row }
+})
+
+// 只读诊断：返回 RGB 是否可用 + 每个目标格当前值/颜色
+if (isDiag) {
+  const rgb = (function () { try { return { type: typeof RGB, sample: RGB(226, 240, 217) } } catch (e) { return { type: typeof RGB, error: text(e && e.message ? e.message : e) } } })()
+  return {
+    scriptVersion: VERSION, operationType: 'diagnose_colors', sheetName: sheetName, rgb: rgb,
+    cells: targets.map(function (t) {
+      const v = sheet.Range(t.addr).Value2
+      const c = sheet.Range(t.addr).Interior.Color
+      return { name: t.name, day: t.day, shift: t.shift, address: t.addr, value: text(v), color: text(c), colorHex: hexOf(c) }
+    })
+  }
+}
+
+// 写前核对：每格当前班次必须 = 值班班次（不符 → 一格都不写）
+const badPre = []
+targets.forEach(function (t) {
+  const actual = text(sheet.Range(t.addr).Value2).trim()
+  if (actual !== t.shift) badPre.push(t.name + ' d' + t.day + '：当前「' + actual + '」≠ 值班「' + t.shift + '」')
+})
+if (badPre.length > 0) fail('写前核对不通过（未写任何格）：' + badPre.slice(0, 10).join('；'))
+
+// 写底色（只设 Interior.Color，不动值）
+targets.forEach(function (t) { sheet.Range(t.addr).Interior.Color = RGB(226, 240, 217) })
+
+// 保存前回读：颜色 + 班次
+const badRead = []
+targets.forEach(function (t) {
+  if (hexOf(sheet.Range(t.addr).Interior.Color).indexOf(GREEN_HEX) < 0) badRead.push(t.addr + ' 颜色=' + text(sheet.Range(t.addr).Interior.Color))
+  if (text(sheet.Range(t.addr).Value2).trim() !== t.shift) badRead.push(t.addr + ' 班次变了')
+})
+if (badRead.length > 0) fail('保存前回读不一致：' + badRead.slice(0, 10).join('；'))
+
+Application.ActiveWorkbook.Save()
+
+// 保存后再回读颜色
+const badSaved = []
+targets.forEach(function (t) {
+  if (hexOf(sheet.Range(t.addr).Interior.Color).indexOf(GREEN_HEX) < 0) badSaved.push(t.addr + ' 颜色=' + text(sheet.Range(t.addr).Interior.Color))
+})
+if (badSaved.length > 0) fail('保存后回读颜色不一致：' + badSaved.slice(0, 10).join('；'))
+
+// 固定顺序算校验和（天 → 早/晚 → 姓名），与本地工具一致
+normalized.sort(function (a, b) {
+  if (a.day !== b.day) return a.day - b.day
+  if (a.shift !== b.shift) return a.shift === '早' ? -1 : 1
+  return a.name < b.name ? -1 : (a.name > b.name ? 1 : 0)
+})
+return {
+  scriptVersion: VERSION, operationType: 'write_seller_duty_colors', sheetName: sheetName, dayCount: dayCount,
+  writtenCellCount: targets.length, writtenCells: targets.map(function (t) { return t.addr }),
+  dutyColorHex: GREEN_HEX, readBackMatched: true, savedReadBackMatched: true, saveCompleted: true,
+  payloadChecksum: sum(sheetName + '|' + normalized.map(function (d) { return d.name + '|' + d.day + '|' + d.shift }).join(';'))
+}

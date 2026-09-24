@@ -28,7 +28,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const EXPECTED_SCRIPT_VERSION = '2026-09-24.1';
+const EXPECTED_SCRIPT_VERSION = '2026-09-20.1';
 const EXPECTED_OPERATION_TYPE = 'write_seller_schedule';
 const EXPECTED_SELLER_NAMES = ['韩欢欢', '麦诺谦', '叶炳辉', '徐佳楠', '刘秀文'];
 const MIN_DAY_COUNT = 28;

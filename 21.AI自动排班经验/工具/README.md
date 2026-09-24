@@ -11,7 +11,8 @@
 | `对比排班表.py` | 对比两张表（改前/改后、AI 版/人工版、快照对真表）：班次/底色/覆盖/统计/值班次数 | 只读 |
 | `解排班示例.py` | 2026-10 案例的求解过程（**模板**：下月复制，改顶部「案例配置」） | 只读，输出计划 JSON |
 | `推应休天数.py` | 从上月表「星期行周六红标」推本月大小周休息天数（法定节假日仍要问人事/用户） | 只读 |
-| `AirScript-写售前排班.txt` | 在线写入脚本：粘贴到金山排班表文档的「文档共享脚本」（写售前 5 人名单内的班次 / 值班底色 / 只读诊断） | 模板 |
+| `AirScript-写售前排班.txt` | 在线写入脚本（写班次）：粘贴到金山排班表文档的「文档共享脚本」 | 模板 |
+| `AirScript-写值班底色.txt` | 在线写入脚本（写售前值班浅绿 + 只读诊断）：另一个「文档共享脚本」，单一职责、短 | 模板 |
 | `写在线排班表.cjs` | 调 AirScript 把售前排班写进在线表（只写目标月表售前 5 人；写后在线回读+保存） | 写在线 |
 | `写在线值班底色.cjs` | 调 AirScript 把售前值班浅绿底色写进在线表（只写目标月表 duty 指定的值班格；写前核对班次、写后回读+保存） | 写在线 |
 
@@ -19,8 +20,10 @@
 
 排班表在金山在线文档里，**本地 xlsx 工具只是对拍样例**。要在线上表写班次，走 AirScript（复刻 9 号项目 `9.客服数据自动更新/src/kdocsSync` 的「文档共享脚本 + 同步 webhook + AirScript-Token」机制）：
 
-1. **一次性准备**（在排班表在线文档里）：新建「文档共享脚本」→ 把 `工具/AirScript-写售前排班.txt` 全文粘进去 → `Ctrl+S` 保存；为该脚本生成**脚本令牌**、复制**同步 webhook**（形如 `https://www.kdocs.cn/api/v3/ide/file/<file_id>/script/<script_id>/sync_task`）。脚本升级过版本：在线报「脚本版本不匹配」时，把该文件全文重新粘贴覆盖保存即可。
-2. 把 webhook 和令牌填进 `project-config/platform-config.json`（模板见 `platform-config.example.json`；**该文件已 gitignore，令牌等同密码，不入库、不打印**）。
+1. **一次性准备**（在排班表在线文档里，每个能力一个脚本，单一职责）：新建「文档共享脚本」→ 粘贴对应 `.txt` 全文 → `Ctrl+S` 保存；为该脚本生成**脚本令牌**、复制**同步 webhook**（形如 `https://www.kdocs.cn/api/v3/ide/file/<file_id>/script/<script_id>/sync_task`）。
+   - 写班次 → `工具/AirScript-写售前排班.txt`；写售前值班底色 → `工具/AirScript-写值班底色.txt`。
+   - 脚本升级过版本：在线报「脚本版本不匹配」时，把对应文件全文重新粘贴覆盖保存即可（另一个脚本不受影响）。
+2. 把 webhook 和令牌填进 `project-config/platform-config.json` 的对应配置段（`kdocsScheduleSync` = 写班次；`kdocsDutyColorSync` = 写值班底色；模板见 `platform-config.example.json`；**该文件已 gitignore，令牌等同密码，不入库、不打印**）。
 3. 写入（**先 `--dry-run` 看一眼载荷；真正写入前必须用户批准**）：
 
 ```powershell

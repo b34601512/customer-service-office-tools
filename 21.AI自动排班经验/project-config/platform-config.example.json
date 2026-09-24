@@ -3,5 +3,10 @@
     "documentUrl": "https://www.kdocs.cn/l/cga7jWGHxzkp",
     "webhookUrl": "https://www.kdocs.cn/api/v3/ide/file/<file_id>/script/<script_id>/sync_task",
     "apiToken": "<AirScript-Token>"
+  },
+  "kdocsDutyColorSync": {
+    "documentUrl": "https://www.kdocs.cn/l/cga7jWGHxzkp",
+    "webhookUrl": "https://www.kdocs.cn/api/v3/ide/file/<file_id>/script/<script_id>/sync_task",
+    "apiToken": "<AirScript-Token>"
   }
 }

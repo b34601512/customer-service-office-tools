@@ -4,8 +4,9 @@
  * （只写目标月表售前 5 人的指定值班格；不写班次值、不碰其他行/其他月表）。
  *
  * 前置（一次性）：
- *   在线文档「自动排班脚本」已替换为 工具/AirScript-写售前排班.txt 的最新版（版本号见下）；
- *   webhook/脚本令牌已填进 project-config/platform-config.json（该文件 gitignored，不打印、不入库）。
+ *   在线文档里新建「文档共享脚本」（建议命名「写值班底色」），粘贴 工具/AirScript-写值班底色.txt 全文并保存；
+ *   该脚本的 webhook/令牌填进 project-config/platform-config.json 的 kdocsDutyColorSync（gitignored，不打印、不入库）。
+ *   注：写班次用的是另一个脚本（工具/AirScript-写售前排班.txt + kdocsScheduleSync），两者互不影响。
  *
  * 用法（Windows PowerShell / bash 均可）：
  *   node 工具/写在线值班底色.cjs --plan 测试数据/2026年10月-计划.json --sheet 2026年10月 --dry-run
@@ -128,7 +129,7 @@ function loadSettings(args) {
   if (fs.existsSync(configPath)) {
     try {
       const parsed = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-      fileConfig = parsed && parsed.kdocsScheduleSync ? parsed.kdocsScheduleSync : {};
+      fileConfig = parsed && parsed.kdocsDutyColorSync ? parsed.kdocsDutyColorSync : {};
     } catch (error) {
       throw new Error('配置文件解析失败（' + configPath + '）：' + sanitize(error && error.message));
     }
@@ -137,8 +138,8 @@ function loadSettings(args) {
   const apiToken = String(args.token || fileConfig.apiToken || '').trim();
   if (!webhookUrl || !apiToken) {
     throw new Error(
-      '缺少 webhook 或脚本令牌。请先在排班表在线文档里更新「文档共享脚本」（粘贴 工具/AirScript-写售前排班.txt 全文），' +
-      '再把 webhookUrl / apiToken 填进 ' + configPath + '（或用 --webhook/--token 临时传）。'
+      '缺少 webhook 或脚本令牌（配置段 kdocsDutyColorSync）。请先在排班表在线文档里新建一个「文档共享脚本」（建议命名「写值班底色」），' +
+      '粘贴 工具/AirScript-写值班底色.txt 全文并保存，再为该脚本生成令牌/复制同步 webhook，填进 ' + configPath + ' 的 kdocsDutyColorSync（或用 --webhook/--token 临时传）。'
     );
   }
   if (!/^https:\/\/(?:www\.)?kdocs\.cn\/api\/v3\/ide\/file\/[^/]+\/script\/[^/]+\/sync_task\/?$/i.test(webhookUrl)) {
