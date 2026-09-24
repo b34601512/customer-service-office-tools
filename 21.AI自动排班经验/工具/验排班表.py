@@ -390,6 +390,29 @@ def check_shifts(cur, report, max_streak):
             report.add("二 晚班", "warn", f"{e['name']} d{block_start}~d{days[-1]} 连续晚班 {block} 天")
 
 
+def min_consecutive_duty(sellers, days):
+    """班次约束下「连值」的理论最少处数（按人天计）；无可行解返回 None。
+    连值 = 同一人连续两天都值班。用来区分「真错」和「班次决定、换谁都连」的被迫连值。"""
+    early = {d: [e["name"] for e in sellers if e["shifts"][d] == "早"] for d in days}
+    late = {d: [e["name"] for e in sellers if e["shifts"][d] == "晚"] for d in days}
+    states = {frozenset(): 0}
+    for d in days:
+        nxt = {}
+        for prev, cost in states.items():
+            for e in early[d]:
+                for l in late[d]:
+                    if e == l:
+                        continue
+                    add = (1 if e in prev else 0) + (1 if l in prev else 0)
+                    key = frozenset((e, l))
+                    if key not in nxt or nxt[key] > cost + add:
+                        nxt[key] = cost + add
+        states = nxt
+        if not states:
+            return None
+    return min(states.values()) if states else None
+
+
 def check_duty(cur, report, green):
     if all(not c for e in cur["employees"] for c in e["colors"].values()):
         report.add("四 值班", "warn", "输入没有底色数据（TSV），值班检查跳过")
@@ -410,11 +433,17 @@ def check_duty(cur, report, green):
         return
     total, n = len(cur["days"]) * 2, len(sellers)
     lo, hi = math.floor(total / n), math.ceil(total / n)
+    ds_by = {e["name"]: [d for d in cur["days"] if e["name"] in duty[d]] for e in sellers}
+    consec = [(nm, a, b) for nm, ds in ds_by.items() for a, b in zip(ds, ds[1:]) if b == a + 1]
+    min_consec = min_consecutive_duty(sellers, cur["days"])
+    for nm, a, b in consec:
+        if min_consec is not None and len(consec) <= min_consec:
+            report.add("四 值班", "warn",
+                       f"{nm} d{a}→d{b} 连续两天值班（本月班次下最少必然连值 {min_consec} 处，本方案已是最少）")
+        else:
+            report.add("四 值班", "error", f"{nm} d{a}→d{b} 连续两天值班")
     for e in sellers:
-        ds = [d for d in cur["days"] if e["name"] in duty[d]]
-        for a, b in zip(ds, ds[1:]):
-            if b == a + 1:
-                report.add("四 值班", "error", f"{e['name']} d{a}→d{b} 连续两天值班")
+        ds = ds_by[e["name"]]
         if not lo - 1 <= len(ds) <= hi + 1:
             report.add("四 值班", "error", f"{e['name']} 值班 {len(ds)} 次（应 {lo}~{hi}）")
         elif not lo <= len(ds) <= hi:
