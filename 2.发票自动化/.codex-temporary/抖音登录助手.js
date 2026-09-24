@@ -25,7 +25,12 @@ function 是登录页(url) {
   console.log(`店铺=${店铺.name}｜当前URL=${page.url()}`);
   const 截止 = Date.now() + 240 * 60 * 1000;
   while (Date.now() < 截止) {
-    await page.waitForTimeout(5000);
+    try {
+      await page.waitForTimeout(5000);
+    } catch (e) {
+      console.log('浏览器窗口被关闭，退出等待。');
+      process.exit(2);
+    }
     if (page.isClosed()) { console.log('浏览器窗口被关闭，退出等待。'); process.exit(2); }
     const url = page.url();
     if (!是登录页(url)) {
