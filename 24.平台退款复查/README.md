@@ -1,4 +1,4 @@
-# 24. 平台退款复查（天猫先行）
+# 24. 平台退款复查（天猫 / 拼多多）
 
 ## 角色
 AI 是**复查秘书**：只读检查「平台已给买家退款 / 可申诉」订单的**货物是否安全**，输出需要申诉或跟进的清单。
@@ -16,10 +16,11 @@ AI 是**复查秘书**：只读检查「平台已给买家退款 / 可申诉」�
 ## 数据来源
 | 用途 | 地址 | 读取方式 |
 | --- | --- | --- |
-| 待申诉订单 | https://qn.taobao.com/home.htm/appeal/portal/appealable/D/1 | 受控浏览器（复用天猫 profile 登录态） |
+| 天猫待申诉订单 | https://qn.taobao.com/home.htm/appeal/portal/appealable/D/1 | 受控浏览器（复用天猫 profile 登录态） |
+| 拼多多可申诉订单 | https://mms.pinduoduo.com/orders/appeals/aftersale/order | 受控浏览器（同源 fetch 接口，见 `pdd-appeal-list.js`） |
 | ERP 查单/作废/审单/发货 | https://v2.guanyierp.com/index | 受控浏览器（独立 ERP profile） |
 | 售后对接表（退货登记） | https://www.kdocs.cn/l/ccj1mhG3wLy6 | AirScript 服务端只读（`kdocs-query.js`） |
-| 另一张金山表（用途待确认） | https://www.kdocs.cn/l/csvonDeJ0BE2 | 只读 |
+| 撕单表 | https://www.kdocs.cn/l/csvonDeJ0BE2 | 网页只读整表（`read-kdocs.js`） |
 
 ## 红线
 - 后台/ERP/金山一律**只读**；任何提交/申诉/同意/发送动作先停下来问用户。
@@ -52,7 +53,12 @@ node src/tools/kdocs-query.js <订单号...> --out runtime/kdocs/退货查询.js
 
 # 4) 一条龙复查（清单→ERP→撕单表→退货登记→报告）
 node scripts/复查天猫申诉订单.js --stores tmall1,tmall2,tmall6
-#    报告：runtime/review/复查报告-<时间>.md
+node scripts/复查拼多多申诉订单.js --stores pdd02,pdd03
+#    报告：runtime/review/复查报告-<平台>-<时间>.md
+
+# 拼多多清单采集（四 tab：维权/赔偿/极速退款/极速换货；只读接口）
+node src/tools/pdd-appeal-list.js --store pdd02
+#    登录态失效时：node src/tools/pdd-login.js --store pdd02（自动填一次，无滑块）
 ```
 
 ## 判定口径（脚本结构判定 + 模型语义）
@@ -65,9 +71,9 @@ node scripts/复查天猫申诉订单.js --stores tmall1,tmall2,tmall6
 | ERP 已审核、未发货、撕单表没有 | 风险-已审单未撕单（可能还会发） |
 | ERP 查无此单 | 待人工核 |
 
-## 实测事实（2026-09-27 首轮，三店 23 个申诉单号）
-- 安全-已登记退货 20 ｜ 待人工核-ERP无此单 2 ｜ 风险-已发货未登记退货 1（`5127801625175058100`）。
-- 三店待申诉：tmall1 12、tmall2 13、tmall6 2（都在「纠纷」tab；赔付/处罚/投诉 均 0）。
+## 实测事实
+- **天猫（2026-09-27，三店 23 个申诉单号）**：安全 22（已登记退货 20 / ERP已作废 1 / 平台备注「请勿发货」1）｜ 风险 1（`5127801625175058100`，已发企微提醒 @李守耀）。
+- **拼多多（2026-09-27）**：pdd02 74 条 / pdd03 15 条（共 88 个唯一订单），全部「已发货」；复查结果见 `runtime/review/复查报告-pdd-*.md`。
 
 ## 能力来源（别重造）
 - **22号**（后台售后服务单分析）：本项目的 `src/`、`经验/` 直接复刻，含受控浏览器、金山 AirScript、天猫/ERP 探针思路。

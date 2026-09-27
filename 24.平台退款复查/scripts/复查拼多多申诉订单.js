@@ -1,14 +1,14 @@
 #!/usr/bin/env node
-// 24号 天猫退款申诉订单 · 货物安全复查（只读编排，平台实现见 src/features/review/reviewPipeline.js）。
+// 24号 拼多多可申诉订单 · 货物安全复查（只读编排，平台实现见 src/features/review/reviewPipeline.js）。
 //
 // 用法：
-//   node scripts/复查天猫申诉订单.js --stores tmall1,tmall2,tmall6
-//   node scripts/复查天猫申诉订单.js --stores tmall1 --orders runtime/tmall/订单号.txt
-//   node scripts/复查天猫申诉订单.js --stores tmall1 --skip-erp --skip-kdocs     # 只出清单
+//   node scripts/复查拼多多申诉订单.js --stores pdd02,pdd03
+//   node scripts/复查拼多多申诉订单.js --stores pdd02 --orders runtime/pdd/订单号.txt
+//   node scripts/复查拼多多申诉订单.js --stores pdd02 --skip-erp --skip-kdocs     # 只出清单
 const { runReview } = require("../src/features/review/reviewPipeline");
 
 function parseArgs(argv) {
-  const args = { stores: "tmall1,tmall2,tmall6" };
+  const args = { stores: "pdd02,pdd03" };
   for (let index = 0; index < argv.length; index += 1) {
     const token = argv[index];
     if (!token.startsWith("--")) continue;
@@ -25,4 +25,4 @@ function parseArgs(argv) {
 }
 
 const args = parseArgs(process.argv.slice(2));
-runReview({ platform: "tmall", ...args });
+runReview({ platform: "pdd", ...args });

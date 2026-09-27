@@ -66,7 +66,7 @@ function readOrders(args) {
     const file = path.isAbsolute(args.ordersFile) ? args.ordersFile : projectPath(args.ordersFile);
     raw.push(...fs.readFileSync(file, "utf8").split(/[\s,，;；]+/));
   }
-  return Array.from(new Set(raw.map((s) => s.trim()).filter((s) => /^\d{6,30}$/.test(s))));
+  return Array.from(new Set(raw.map((s) => s.trim()).filter((s) => /^\d{6,30}(-\d{3,30})?$/.test(s))));
 }
 
 // 确保订单查询 frame 在：没有就点左上菜单里的「订单查询」
