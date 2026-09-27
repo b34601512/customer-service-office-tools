@@ -19,6 +19,7 @@ const { execFileSync } = require("child_process");
 const { projectPath } = require("../src/config/stores");
 const { rowMatchesOrder, normalizeOrderNo } = require("../src/features/review/orderNoMatch");
 const { loadTornRows, matchTornRows } = require("../src/features/review/tornSheet");
+const { classifyDelivery } = require("../src/features/review/deliveryState");
 const { log } = require("../src/engine/log");
 
 function parseArgs(argv) {
@@ -142,6 +143,9 @@ function main() {
     }
   }
 
+  // 物流状态：漏退回的单还要看「货在路上没有」（用户 2026-09-27：还在路上不用管）
+  //   判定规则与反向测试见 src/features/review/deliveryState.js + tests/deliveryState.test.js
+
   // 3.8) ERP：**只对三来源都没命中的单查**（作废 = 安全；实测 16 单里 1 单作废、1 单「邮费补差/无需物流」）
   let erpByOrder = new Map();
   if (!args.skipErp && args.kdocsResults) {
@@ -173,11 +177,33 @@ function main() {
     const erpCanceled = Boolean(erp && erp.cancel);
     results.push({ ...item, received, warehouseRows, huaihuaRows, tornRows: tornHits, erp, erpCanceled });
   }
+  // 老清单（2026-09-27 16:05 前采集的）没有顶层字段 → 从原始行里兜底取
+  const rawDeliveryState = (raw) => {
+    let found = "";
+    const walk = (obj) => {
+      for (const [key, value] of Object.entries(obj || {})) {
+        if (value && typeof value === "object" && !Array.isArray(value)) walk(value);
+        else if (key === "deliveryWareStateName" && !found) found = String(value || "");
+      }
+    };
+    walk(raw);
+    return found;
+  };
+  for (const item of results) {
+    const state = item.deliveryStateName || rawDeliveryState(item.raw);
+    const verdict = classifyDelivery(state);
+    item.deliveryStateName = state;
+    item.deliveryVerdict = verdict.label;
+    item.transit = !item.received && verdict.kind === "in_transit";
+    item.signedRisk = !item.received && verdict.kind === "signed";
+  }
   const summary = {
     总单数: results.length,
     已收到货: results.filter((r) => r.received).length,
     漏退回: results.filter((r) => !r.received).length,
     漏退回_ERP已作废: results.filter((r) => !r.received && r.erpCanceled).length,
+    漏退回_在途不用管: results.filter((r) => r.transit && !r.erpCanceled).length,
+    漏退回_已签收风险: results.filter((r) => r.signedRisk && !r.erpCanceled).length,
     漏退回_ERP已发货: results.filter((r) => !r.received && r.erp && !r.erpCanceled).length,
     京东仓命中: results.filter((r) => r.warehouseRows.length).length,
     怀化表命中: results.filter((r) => r.huaihuaRows.length).length,
@@ -208,7 +234,7 @@ function main() {
     "",
     "## 漏退回（京东仓 / 怀化表 / 撕单表 三处都没命中 = 重点看）",
     "",
-    "| 订单号 | 店铺 | 售后单号 | 金额 | 申请时间 | 商品 | ERP（作废/审单/发货）|",
+    "| 订单号 | 店铺 | 售后单号 | 金额 | 申请时间 | 物流状态 | 商品 | ERP（作废/审单/发货）| 结论 |",
     "| --- | --- | --- | --- | --- | --- | --- |"
   ];
   const missing = results.filter((r) => !r.received);
@@ -216,7 +242,8 @@ function main() {
     const erpText = item.erp
       ? `${item.erp.cancel ? "★已作废" : "未作废"} / ${item.erp.approveState || "-"} / ${item.erp.deliveryLabel || "-"}${item.erp.expressName ? " / " + item.erp.expressName : ""}`
       : "（未查）";
-    mdLines.push(`| ${item.orderId} | ${item.store} | ${item.serviceOrderId} | ¥${item.actualPayAmount ?? "-"} | ${(item.applyTime || "").slice(0, 10)} | ${String(item.wareName || "").slice(0, 30)} | ${erpText} |`);
+    const verdictText = item.erpCanceled ? "ERP 已作废 = 安全" : (item.deliveryVerdict || "");
+    mdLines.push(`| ${item.orderId} | ${item.store} | ${item.serviceOrderId} | ¥${item.actualPayAmount ?? "-"} | ${(item.applyTime || "").slice(0, 10)} | ${item.deliveryStateName || "-"} | ${String(item.wareName || "").slice(0, 30)} | ${erpText} | ${verdictText} |`);
   }
   mdLines.push("", "## 已收到 / 已撕单（有记录）", "");
   for (const item of results.filter((r) => r.received)) {
@@ -233,7 +260,7 @@ function main() {
   log("京东仅退款复查", "完成", `总 ${summary.总单数}｜已收到 ${summary.已收到货}｜漏退回 ${summary.漏退回}`, path.relative(projectPath(), mdFile));
   console.log(`\n  ===== 京东「仅退款」漏退回复查 =====`);
   console.log(`    总 ${summary.总单数} ｜ 已收到/已撕单 ${summary.已收到货}（京东仓 ${summary.京东仓命中} / 怀化表 ${summary.怀化表命中} / 撕单表 ${summary.撕单表命中}）｜ ⚠ 漏退回 ${summary.漏退回}`);
-  console.log(`    漏退回里：ERP 已作废 ${summary.漏退回_ERP已作废} 单（= 安全）｜ ERP 已发货 ${summary.漏退回_ERP已发货} 单（重点看）`);
+  console.log(`    漏退回里：ERP 已作废 ${summary.漏退回_ERP已作废} 单（= 安全）｜ 还在路上 ${summary.漏退回_在途不用管} 单（不用管）｜ 已签收 ${summary.漏退回_已签收风险} 单（真风险）`);
   console.log(`\n  报告：${path.relative(projectPath(), mdFile)}\n  数据：${path.relative(projectPath(), jsonFile)}\n`);
   return report;
 }

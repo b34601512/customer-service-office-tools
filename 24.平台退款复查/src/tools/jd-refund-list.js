@@ -122,6 +122,10 @@ function pickRow(row) {
     serviceOrderId: String(pick("afsServiceId") || ""),
     reverseId: String(pick("reverseId") || ""),
     customerExpect: pick("customerExpect"),
+    // 发货物流当前状态（运输中/物流异常/已签收/拒收/已出库）——漏退回判定必需：
+    // 用户 2026-09-27 口径：**还在路上（运输中）的不用管**。
+    deliveryState: pick("deliveryWareState"),
+    deliveryStateName: pick("deliveryWareStateName") || "",
     afsStatusTitle: pick("afsStatusTitle") || "",
     applyReason: pick("afsReasons") || "",
     applyTime: msToIso(pick("afsApplyTime", "applyTime")),
