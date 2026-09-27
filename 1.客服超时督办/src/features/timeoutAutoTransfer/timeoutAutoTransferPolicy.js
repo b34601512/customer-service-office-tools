@@ -57,8 +57,8 @@ function resolveStaffGroupLabel(staffGroup) {
 }
 
 function isWithinOwnShiftWindow(config, staffGroup, shiftLabel, now) {
-  // “当班”＝当前时刻落在本人班次的时间窗内（早班 8:00~16:00，晚班 15:45/14:00~23:45/22:30；用户 2026-09-27 拍板早班 16:00 下班）。
-  // 早晚班重叠时段（售后 14:00~16:00、售前 15:45~16:00）里早班人还没下班，不能把他当成不在班。
+  // “当班”＝当前时刻落在本人班次的时间窗内（早班排班 8:00~16:30，16:00 起提前交接、自动关闭并按不在班处理；晚班 15:45/14:00~23:45/22:30）。
+  // 早晚班重叠时段（售后 14:00~16:00、售前 15:45~16:00）里早班人还在交接，不能把他当成不在班。
   const startTimeText = resolveOffDutyStartTime(config, staffGroup, shiftLabel);
   const closeTimeText = resolveOffDutyCloseTime(config, staffGroup, shiftLabel);
   if (!startTimeText || !closeTimeText) {

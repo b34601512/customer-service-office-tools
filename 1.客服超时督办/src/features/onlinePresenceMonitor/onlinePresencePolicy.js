@@ -69,8 +69,8 @@ function resolveExpectedShiftStageForGroup(config, staffGroup, now = new Date())
 }
 
 function listOnDutyShiftStagesForGroup(config, staffGroup, now = new Date()) {
-  // 这里按上班时间窗给出当前在岗的班次集合：早晚班重叠期（售前 15:45~16:00、售后 14:00~16:00）
-  // 早班人还没下班，两个班都算在岗；早班到 16:00 退出后只剩晚班，从此晚班必须已上线。
+  // 这里按上班时间窗给出当前在岗的班次集合：早班排班到 16:30，但 16:00 起是提前交接的 30 分钟（开关自动关闭）。
+  // 早晚班重叠期（售前 15:45~16:00、售后 14:00~16:00）两个班都算在岗；16:00 后只剩晚班，从此晚班必须已上线。
   if (!["pre_sales", "after_sales"].includes(staffGroup)) {
     return [];
   }

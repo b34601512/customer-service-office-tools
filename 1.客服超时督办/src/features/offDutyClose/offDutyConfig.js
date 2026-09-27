@@ -63,8 +63,10 @@ function buildOffDutyConfig(input = {}) {
     offDutyPreSalesLateStartTime: normalizeTimeText(input.offDutyPreSalesLateStartTime, "15:45"),
     offDutyAfterSalesEarlyStartTime: normalizeTimeText(input.offDutyAfterSalesEarlyStartTime, "08:00"),
     offDutyAfterSalesLateStartTime: normalizeTimeText(input.offDutyAfterSalesLateStartTime, "14:00"),
+    // 早班排班到 16:30，16:00 起是提前交接的 30 分钟处理时间，到点自动关闭开关。
     offDutyPreSalesEarlyCloseTime: normalizeTimeText(input.offDutyPreSalesEarlyCloseTime, "16:00"),
     offDutyPreSalesLateCloseTime: normalizeTimeText(input.offDutyPreSalesLateCloseTime, "23:45"),
+    // 同上：售后早班排班到 16:30，16:00 起提前交接关闭。
     offDutyAfterSalesEarlyCloseTime: normalizeTimeText(input.offDutyAfterSalesEarlyCloseTime, "16:00"),
     offDutyAfterSalesLateCloseTime: normalizeTimeText(input.offDutyAfterSalesLateCloseTime, "22:30"),
     offDutyTomorrowShiftNotificationEnabled: normalizeBoolean(
