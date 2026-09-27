@@ -41,3 +41,5 @@ CLI 标准输出只承载当前业务页面；底层 `console.*` 诊断及兼容
 双击 `启动发票自动化.bat`，或运行 `node .\总入口.js`。首次使用应进入所需子目录执行 `npm install`，以后用该目录的启动批处理或 `npm start`。
 
 根共享层运行 `node --test .\总入口.test.js .\共享CLI\*.test.js .\共享CLI\tui\*.test.js .\共享订单状态\*.test.js .\共享发票回传\*.test.js .\tui\*.test.js`；每个子项目进入目录执行 `npm test`。自动测试全部使用临时 JSON、模拟页面或模拟回调，不执行真实登录、发票下载、上传或提交。人工验收见根目录 `订单状态人工验收.md`；正式回传会提交真实发票，已按用户决定移除 CLI 确认闸门，进入回传即直接执行，不再要求输入 y 确认。
+
+日常自动化入口：`node scripts/每日只读巡检.js`（只读巡检 + 待处理清单）；诺诺确认有发票后 `node .codex-temporary/检查诺诺发票.js <订单号...>` 生成 `.codex-temporary/诺诺发票检查结果.json`，再 `node scripts/回传已开发票.js` 只回传已开发票的订单（真实提交，需用户授权）。只读同步带单店 8 分钟墙钟上限（`INVOICE_READONLY_SYNC_STORE_LIMIT_MS` 可覆盖），禁止静默卡死。
