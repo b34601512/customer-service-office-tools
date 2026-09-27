@@ -18,12 +18,15 @@
 //   → **先清空编辑器里的全部默认内容** → 把本文件全文粘进去 → 保存（脚本名：只读查询订单号）。
 //   建议用记事本或 VSCode 打开本文件复制，别从网页或聊天窗口复制。
 //
+// 【2026-09-27 改】订单号归一化匹配：怀化表里订单号常夹着空格/零宽字符/全角数字（用户实测，
+//   他手工时代必须「清除特殊字符/不可见字符」才能 VLOOKUP 到）→ 单元格与关键字**两边都归一化**再 indexOf。
+//
 // 调用：POST <webhookUrl>   Header: AirScript-Token: <token>
 //       Body: {"Context":{"argv":[{"keywords":["5127667812586099609"],"maxRows":50000}]}}
 //       可选：{"sheets":["退货退款表","异常件"]} 只查指定表（快）；默认全部工作表。
 // 返回：{ scriptVersion, keywords, checkedSheets, scannedRows, sheetDetails[], matchCount, matches[] }
 
-var scriptVersion = '2026-09-18.7'
+var scriptVersion = '2026-09-27.1'
 var MAX_MATCHES = 40
 var COLUMN_LIMIT = 'AH'   // 读到第 34 列，与「退货退款表」最大列对齐
 var CHUNK_ROWS = 2000
@@ -39,6 +42,20 @@ function toText(value) {
   if (!value) return ''
   var text = String(value)
   return text.replace(/^[\s\u3000]+/, '').replace(/[\s\u3000]+$/, '')
+}
+
+// 订单号归一化（2026-09-27 用户指出：怀化表里订单号常夹着空格/不可见字符，不归一化会漏匹配）：
+//   去文本前缀捌号、所有空白（含全角空格/不换行空格）、零宽与方向控制字符；全角数字/字母→半角；各种横杠→半角连字符。
+function normalize(value) {
+  var text = String(value ? value : '')
+  text = text.replace(/['\u2018\u2019\u201c\u201d]/g, '')
+  text = text.replace(/[\s\u3000\u00a0]+/g, '')
+  text = text.replace(/[\u200b-\u200f\u202a-\u202e\ufeff]/g, '')
+  text = text.replace(/[\uff10-\uff19\uff21-\uff3a\uff41-\uff5a]/g, function (ch) {
+    return String.fromCharCode(ch.charCodeAt(0) - 65248)
+  })
+  text = text.replace(/[\u2010-\u2015\u2212\uff0d~\uff5e]/g, '-')
+  return text.toUpperCase()
 }
 
 function contains(haystack, needle) {
@@ -72,8 +89,9 @@ function rowHitsKeywords(row, keywords) {
   for (var columnIndex = 0; columnIndex - row.length < 0; columnIndex += 1) {
     var cellText = toText(row[columnIndex])
     if (!cellText) continue
+    var normalizedCell = normalize(cellText)
     for (var keywordIndex = 0; keywordIndex - keywords.length < 0; keywordIndex += 1) {
-      if (contains(cellText, keywords[keywordIndex])) return true
+      if (contains(normalizedCell, keywords[keywordIndex])) return true
     }
   }
   return false
@@ -164,7 +182,7 @@ function parseArgument(rawArgument) {
   var rawKeywords = bag.keywords ? bag.keywords : []
   if (contains(typeof rawKeywords, 'string')) rawKeywords = [rawKeywords]
   for (var keywordIndex = 0; keywordIndex - rawKeywords.length < 0; keywordIndex += 1) {
-    var keywordText = toText(rawKeywords[keywordIndex])
+    var keywordText = normalize(toText(rawKeywords[keywordIndex]))
     if (keywordText.length < MIN_KEYWORD_LENGTH) continue
     keywords.push(keywordText)
   }

@@ -14,6 +14,7 @@ const path = require("path");
 const { execFileSync } = require("child_process");
 const { projectPath } = require("../../config/stores");
 const { classifyOrder } = require("./safetyClassify");
+const { rowMatchesOrder } = require("./orderNoMatch");
 
 const PLATFORMS = {
   tmall: {
@@ -215,10 +216,11 @@ function runReview(options) {
     if (!tornByCode.has(row.code)) tornByCode.set(row.code, []);
     tornByCode.get(row.code).push(row);
   }
+  // 归一化匹配：怀化表里订单号可能夹空格/零宽字符（用户 2026-09-27 指出），两边归一化再比。
   const returnHitCodes = new Set();
   for (const match of returnMatches) {
-    for (const value of match.values || []) {
-      if (orderIds.includes(String(value).trim())) returnHitCodes.add(String(value).trim());
+    for (const orderId of orderIds) {
+      if (rowMatchesOrder(match.values, orderId)) returnHitCodes.add(orderId);
     }
   }
 
@@ -238,7 +240,7 @@ function runReview(options) {
     const returned = returnHitCodes.has(orderId);
     const warehouseReturned = warehouseHitOrders.has(orderId);
     const category = classifyOrder({ erp: erpRow, torn, returned, warehouseReturned });
-    results.push({ orderId, category, erp: erpRow, torn, returned, warehouseReturned, warehouseRows: warehouseMatches.filter((m) => m.orderId === orderId).flatMap((m) => m.rows), returnRows: returnMatches.filter((m) => (m.values || []).includes(orderId)), appeals: appealsByOrder.get(orderId) || [] });
+    results.push({ orderId, category, erp: erpRow, torn, returned, warehouseReturned, warehouseRows: warehouseMatches.filter((m) => m.orderId === orderId).flatMap((m) => m.rows), returnRows: returnMatches.filter((m) => rowMatchesOrder(m.values, orderId)), appeals: appealsByOrder.get(orderId) || [] });
   }
 
   // 5.5) 平台后台备注（只对「风险/待人工核」单）。
