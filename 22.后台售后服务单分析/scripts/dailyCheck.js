@@ -77,7 +77,7 @@ async function main() {
   const duty = await resolveDutyTargets({});
   const atName = args.at || duty.names[0] || "";
   console.log(`\n  通知对象：${duty.window} → ${duty.names.join("、") || "(无人值班)"}${args.at ? `（指定 ${args.at}）` : ""}`);
-  const text = buildNoticeText(result, { atName });
+  const text = buildNoticeText(result);
   const textFile = projectPath("runtime", "kdocs", "每日检查", `${stamp}-待发消息.txt`);
   fs.writeFileSync(textFile, text, "utf8");
   console.log(`  消息草稿：${path.relative(projectPath(), textFile)}（${Buffer.byteLength(text, "utf8")} 字节）`);

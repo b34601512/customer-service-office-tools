@@ -7,7 +7,10 @@
 //   批量单号编码：platformCode=单号1(enter)单号2(enter)… & separatorPlatform=3（3=逗号；
 //     1=空格、2=分号、4=换行）——这是页面「批量筛选」对话框的真实编码（前端 JS 里挖出来的）。
 //   单据时间 dateType：0=最近7天、1=2017年至7天以前、2=2017年以前（页面 select 的三个选项）。
-//     → 一次查不全，本工具对每批单号自动查 dateType=0 和 1 两遍再合并（业务单不会老到 2017 年前）。
+//     → 一次查不全，本工具对每批单号自动查 dateType=0/1/2 三遍再合并。
+//   作废过滤 cancel：false=只看未作废（默认，会漏掉作废单）、true=只看作废、**留空=不过滤（全都要）**。
+//     2026-09-27 用户实测踩坑：5127668712759105946 在 ERP 里是「作废」单，
+//     之前用 cancel=false 查不到，用户勾上「作废」才看到 → 本工具固定传 cancel=（空）。
 //   接口返回 { total, rows:[…] }，每行含 cancel/approve/assignState/deliveryState/refund 等。
 //
 // 用法：
@@ -108,7 +111,7 @@ async function queryBatch(frame, codes, dateType) {
     "refund=",
     "approve=",
     "financeReject=",
-    "cancel=false",
+    "cancel=",
     "hold="
   ].join("&");
   return frame.evaluate(async (body) => {

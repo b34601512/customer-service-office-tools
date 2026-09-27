@@ -66,10 +66,11 @@ function selectPendingRefunds(samples, options = {}) {
   return { days, cutoff: cutoff.toISOString().slice(0, 10), items: picked, skipped, totalAmount: picked.reduce((sum, item) => sum + item.refund, 0) };
 }
 
-function buildNoticeText(result, options = {}) {
-  const atName = options.atName || "";
+function buildNoticeText(result) {
+  // 2026-09-27 用户指出：企微接口的 mentioned_mobile_list 会自己渲染 @某人，
+  // 正文里再手写 @名字会重复 → 正文只写标题，@ 交给接口。
   const lines = [
-    `【售后退款待处理】${atName ? `@${atName}` : ""}`.trim(),
+    "【售后退款待处理】",
     `近 ${result.days} 天登记的退货：客户已寄回、应退金额仍未退款，共 ${result.items.length} 单 ${Math.round(result.totalAmount).toLocaleString("en-US")} 元，请尽快处理：`,
     "（格式：登记日 平台 客户 订单号 应退金额）"
   ];

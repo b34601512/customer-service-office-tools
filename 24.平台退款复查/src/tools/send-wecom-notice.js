@@ -7,6 +7,8 @@
 //
 // 说明：webhook 与人员手机号在 project-config/wecom-notify.json（不入库）；
 //       企微文本消息上限 2048 字节，超了直接报错不发送。
+// ⚠ 正文里**不要手写 @某人**（2026-09-27 用户指出）：--at 会通过 mentioned_mobile_list
+//   让企微自己渲染 @，正文再写一个就重复成两个 @。正文只写标题即可。
 const fs = require("fs");
 const path = require("path");
 const { projectPath } = require("../config/stores");
