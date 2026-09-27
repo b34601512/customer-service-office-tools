@@ -129,7 +129,8 @@ async function handleOnlinePresenceSummary(stateStore, summary) {
   }
 
   const notificationResult = await sendOnlinePresenceReminder({
-    expectedStaffNames: summary.expectedStaffNames
+    expectedStaffNames: summary.expectedStaffNames,
+    staffGroupByExpectedName: summary.staffGroupByExpectedName
   });
   stateStore.markAbsenceReminderSent(summary.absenceKey, {
     status: "reminded",

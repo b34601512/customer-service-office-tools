@@ -123,10 +123,13 @@ function summarizeOnlinePresenceStatus(input) {
   const onlineByGroup = {};
   const onlineStaffNames = [];
   const offlineStaffNames = [];
+  // 这里给每个应值班人留一份分组，提醒文案才能按售前/售后说清各自要开的开关。
+  const staffGroupByExpectedName = {};
 
   for (const staffName of expectedStaffNames) {
     const row = rowMap[staffName];
     const staffGroup = row?.staffGroup || parseStaffRoleGroup(row?.roleLabel);
+    staffGroupByExpectedName[staffName] = staffGroup;
     expectedByGroup[staffGroup] ||= [];
     onlineByGroup[staffGroup] ||= [];
     expectedByGroup[staffGroup].push(staffName);
@@ -148,6 +151,7 @@ function summarizeOnlinePresenceStatus(input) {
 
   return {
     expectedStaffNames,
+    staffGroupByExpectedName,
     onlineStaffNames,
     offlineStaffNames,
     missingStaffNames,

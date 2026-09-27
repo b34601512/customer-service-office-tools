@@ -144,6 +144,27 @@ test("当前应值班客服全部未开启自动分配才提醒", () => {
   assert.equal(summary.shouldNotify, true);
 });
 
+test("汇总应值班名单时应该带上每个人的分组，供提醒文案精准到组", () => {
+  const summary = summarizeOnlinePresenceStatus({
+    config: createConfig(),
+    now: new Date("2026-06-26T16:10:00+08:00"),
+    todayShiftMap: {
+      售后客服甲: { normalizedShift: "晚班" },
+      售前客服乙: { normalizedShift: "晚班" }
+    },
+    rowMap: {
+      售后客服甲: createRow("售后客服甲", "售后客服", false),
+      售前客服乙: createRow("售前客服乙", "售前客服", false)
+    }
+  });
+
+  assert.deepEqual(summary.staffGroupByExpectedName, {
+    售后客服甲: "after_sales",
+    售前客服乙: "pre_sales"
+  });
+  assert.equal(summary.shouldNotify, true);
+});
+
 test("成员状态读取不完整时不应该贸然提醒", () => {
   const summary = summarizeOnlinePresenceStatus({
     config: createConfig(),
