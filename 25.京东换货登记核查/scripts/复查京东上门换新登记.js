@@ -24,9 +24,11 @@ const { projectPath } = require("../src/config/stores");
 const { normalizeOrderNo } = require("../src/features/review/orderNoMatch");
 const { log } = require("../src/engine/log");
 const { runAirScript } = require("../src/engine/kdocsAirScript");
+const { judgeOrder, OPTION_COLUMNS, ADDRESS_COLUMN } = require("../src/features/exchange/registrationCheck");
 
 const SHEET = "换货维修登记表";
-const COLUMN = { 地址: 10, 订单号: 13, 处理方式: 16, 质保标准: 17, 客户寄给厂家的运费: 18, 厂家寄给客户的运费: 19, 处理客服: 22, 备注: 23 };
+// 列号与 src/features/exchange/registrationCheck.js 保持一致（判定的唯一出处在那里）
+const COLUMN = { 地址: ADDRESS_COLUMN.index, 订单号: 13, 处理方式: 16, 质保标准: OPTION_COLUMNS[0].index, 客户寄给厂家的运费: OPTION_COLUMNS[1].index, 厂家寄给客户的运费: OPTION_COLUMNS[2].index, 处理客服: 22, 备注: 23 };
 const NO_ACTION = "无需处理";
 const KEYWORD_BATCH = 10;   // 金山批量关键词实测：10 个/批稳，20 个/批 403
 
@@ -161,26 +163,18 @@ function main() {
         原始值: row.values
       };
     });
-    const registered = rows.length > 0;
-    let verdict = "ok";
-    const problems = [];
-    if (!registered) { verdict = "missing"; problems.push("未登记（工厂不知道这台机器是谁寄回的）"); }
-    else {
+    // 判定统一走被测过的纯函数（见 src/features/exchange/registrationCheck.js + tests/exchangeRegistration.test.js）
+    const judged = judgeOrder(rows);
+    let verdict = judged.verdict;
+    let problems = judged.problems.slice();
+    if (verdict === "coarse") {
+      // 老版金山脚本拿不到列号 → 粗判（有地址样文本才算有问题），并在报告里标出来
+      verdict = "ok";
       for (const check of checks) {
-        if (check.地址 && check.地址.trim()) problems.push(`地址列填了「${String(check.地址).slice(0, 30)}」`);
-        for (const [index, value] of check.选项.entries()) {
-          const columnName = ["质保标准", "客户寄给厂家的运费", "厂家寄给客户的运费"][index];
-          if (value !== null && value !== NO_ACTION) problems.push(`${columnName}=「${value || "(空)"}」（应为无需处理）`);
-        }
-        if (check.处理方式 === "") problems.push("处理方式列为空");
+        if (looksLikeAddress(check.原始值, item.orderId)) { problems.push("（粗判）行里出现疑似地址/电话文本"); verdict = "risk"; }
       }
-      // 老版脚本兜底：拿不到列号时，用「有没有地址样文本」粗判
-      if (!withCells) {
-        for (const check of checks) if (looksLikeAddress(check.原始值, item.orderId)) problems.push("（粗判）行里出现疑似地址/电话文本");
-      }
-      if (problems.length) verdict = "risk";
     }
-    results.push({ ...item, registered, checks, verdict, problems });
+    results.push({ ...item, registered: rows.length > 0, checks, verdict, problems });
   }
 
   const summary = {
