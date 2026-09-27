@@ -192,7 +192,8 @@ function main() {
     总单数: results.length,
     已规范登记: results.filter((r) => r.verdict === "ok").length,
     未登记: results.filter((r) => r.verdict === "missing").length,
-    登记有问题: results.filter((r) => r.verdict === "risk").length
+    登记有问题: results.filter((r) => r.verdict === "risk").length,
+    待核_选项填了别的值: results.filter((r) => r.verdict === "warn").length
   };
   const report = { generatedAt: new Date().toISOString(), scriptVersions, columnMap: COLUMN, summary, results };
   const jsonFile = projectPath("runtime", "review", `复查报告-上门换新登记-${runStamp}.json`);
@@ -204,28 +205,39 @@ function main() {
     "",
     `检查范围：客户期望=换货 + 售后状态=完成 → pickWareTypeName=「上门换新取件」→ 最近 ${args.days} 天`,
     "",
-    `**共 ${summary.总单数} 单 ｜ ✅ 已规范登记 ${summary.已规范登记} ｜ ⚠ 未登记 ${summary.未登记} ｜ ⚠ 登记有问题 ${summary.登记有问题}**`,
+    `**共 ${summary.总单数} 单 ｜ ✅ 已规范登记 ${summary.已规范登记} ｜ ⚠ 未登记 ${summary.未登记} ｜ ⚠ 有风险 ${summary.登记有问题} ｜ 🟡 待核 ${summary.待核_选项填了别的值}**`,
     "",
-    "规范 = 三个选项（质保标准 / 客户寄给厂家的运费 / 厂家寄给客户的运费）都选「无需处理」+ **地址列不填**。",
+    "口径（用户 2026-09-27 拍板）：**要防的是工厂重复换货 → 填多了才有问题，空着没事**。",
+    "- ✅ 规范 = **地址列空** + 三个选项列**空或「无需处理」**；",
+    "- ⚠ 有风险 = 地址列填了内容（工厂可能照着又寄一台）；",
+    "- 🟡 待核 = 三个选项列填了「无需处理」以外的值（原文列在下面，人/模型看是不是给工厂布置了动作）；",
+    "- ⚠ 未登记 = 金山表里根本没有这单（工厂不知道机器是谁寄回的）。",
     "",
     "| 订单号 | 店铺 | 售后单 | 申请日期 | 登记行 | 地址列 | 质保 | 运费1 | 运费2 | 判定 |",
     "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |"
   ];
   for (const item of results) {
     const check = item.checks[0] || {};
-    const mark = item.verdict === "ok" ? "✅ 规范" : (item.verdict === "missing" ? "⚠ 未登记" : "⚠ 有问题");
-    lines.push(`| ${item.orderId} | ${item.store} | ${item.serviceOrderId} | ${(item.applyTime || "").slice(0, 10)} | ${check.row || "-"} | ${check.地址 === null ? "-" : (check.地址 || "(空)")} | ${(check.选项 || [])[0] || "-"} | ${(check.选项 || [])[1] || "-"} | ${(check.选项 || [])[2] || "-"} | ${mark} |`);
+    const mark = item.verdict === "ok" ? "✅ 规范"
+      : (item.verdict === "missing" ? "⚠ 未登记"
+        : (item.verdict === "risk" ? "⚠ 有风险" : "🟡 待核"));
+    lines.push(`| ${item.orderId} | ${item.store} | ${item.serviceOrderId} | ${(item.applyTime || "").slice(0, 10)} | ${check.row || "-"} | ${check.地址 === null ? "(无列号)" : (check.地址 || "(空)")} | ${(check.选项 || [])[0] || "-"} | ${(check.选项 || [])[1] || "-"} | ${(check.选项 || [])[2] || "-"} | ${mark} |`);
   }
-  if (summary.未登记 || summary.登记有问题) {
-    lines.push("", "## 需要处理的单", "");
-    for (const item of results.filter((r) => r.verdict !== "ok")) lines.push(`- ${item.orderId}（${item.store}）：${item.problems.join("；")}`);
+  if (summary.未登记 || summary.登记有问题 || summary.待核_选项填了别的值) {
+    lines.push("", "## 需要看的单（异常 + 待核）", "");
+    for (const item of results.filter((r) => r.verdict !== "ok")) {
+      lines.push(`- ${item.orderId}（${item.store}，申请 ${(item.applyTime || "").slice(0, 10)}）：${item.problems.join("；") || "（见下面原始行）"}`);
+      for (const check of item.checks) {
+        lines.push(`  - 登记行 ${check.row}：地址=${check.地址 === null ? "(无列号)" : (check.地址 || "(空)")}｜三项=${(check.选项 || []).map((v) => (v === null ? "(无列号)" : (v || "(空)"))).join(" / ")}｜处理方式=${check.处理方式 || "(空)"}｜客服=${check.客服 || "(空)"}｜备注=${check.备注 || "(空)"}`);
+      }
+    }
   }
   const mdFile = projectPath("runtime", "review", `复查报告-上门换新登记-${runStamp}.md`);
   fs.writeFileSync(mdFile, lines.join("\n"), "utf8");
 
-  log("上门换新登记核查", "完成", `总 ${summary.总单数}｜规范 ${summary.已规范登记}｜未登记 ${summary.未登记}｜有问题 ${summary.登记有问题}`, path.relative(projectPath(), mdFile));
+  log("上门换新登记核查", "完成", `总 ${summary.总单数}｜规范 ${summary.已规范登记}｜未登记 ${summary.未登记}｜有风险 ${summary.登记有问题}｜待核 ${summary.待核_选项填了别的值}`, path.relative(projectPath(), mdFile));
   console.log(`\n  ===== 京东「上门换新取件」登记核查 =====`);
-  console.log(`    共 ${summary.总单数} 单 ｜ ✅ 规范 ${summary.已规范登记} ｜ ⚠ 未登记 ${summary.未登记} ｜ ⚠ 有问题 ${summary.登记有问题}`);
+  console.log(`    共 ${summary.总单数} 单 ｜ ✅ 规范 ${summary.已规范登记} ｜ ⚠ 未登记 ${summary.未登记} ｜ ⚠ 有风险 ${summary.登记有问题} ｜ 🟡 待核 ${summary.待核_选项填了别的值}`);
   console.log(`\n  报告：${path.relative(projectPath(), mdFile)}\n`);
   return report;
 }
