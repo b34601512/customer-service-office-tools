@@ -47,7 +47,9 @@ function resolveCloseTimeText(config, staffGroup, shiftStage) {
 }
 
 function resolveExpectedShiftStageForGroup(config, staffGroup, now = new Date()) {
-  // 这里把当前时间归到早班、晚班或非值班时间，避免凌晨无上班时间时误报。
+  // 这里是粗粒度的工作时段门禁（供自动转接判断“该组现在有没有工作时段”）：
+  // 交班前算早班、交班后算晚班；只有完全不工作（如凌晨）才返回空。
+  // 具体的“在岗班次集合”（重叠期早班也算在岗）用 listOnDutyShiftStagesForGroup。
   if (!["pre_sales", "after_sales"].includes(staffGroup)) {
     return "";
   }
@@ -66,6 +68,33 @@ function resolveExpectedShiftStageForGroup(config, staffGroup, now = new Date())
   return "late";
 }
 
+function listOnDutyShiftStagesForGroup(config, staffGroup, now = new Date()) {
+  // 这里按上班时间窗给出当前在岗的班次集合：早晚班重叠期（售前 15:45~16:00、售后 14:00~16:00）
+  // 早班人还没下班，两个班都算在岗；早班到 16:00 退出后只剩晚班，从此晚班必须已上线。
+  if (!["pre_sales", "after_sales"].includes(staffGroup)) {
+    return [];
+  }
+
+  const nowMinutes = resolveMinutesOfDay(now);
+  const workStartMinutes = parseMinutesOfDay(config.onlinePresenceWorkStartTime || "08:00");
+  const lateStartMinutes = parseMinutesOfDay(resolveLateStartTimeText(staffGroup));
+  const earlyCloseMinutes = parseMinutesOfDay(resolveCloseTimeText(config, staffGroup, "early"));
+  const lateCloseMinutes = parseMinutesOfDay(resolveCloseTimeText(config, staffGroup, "late"));
+
+  if (nowMinutes < workStartMinutes || nowMinutes >= lateCloseMinutes) {
+    return [];
+  }
+
+  const stages = [];
+  if (nowMinutes < earlyCloseMinutes) {
+    stages.push("early");
+  }
+  if (nowMinutes >= lateStartMinutes) {
+    stages.push("late");
+  }
+  return stages;
+}
+
 function normalizeScheduledShiftItem(staffName, shiftInfo, rowMap, config, now) {
   // 这里把排班和成员设置行合并成统一判断对象，规则层不直接依赖页面原始结构。
   const row = rowMap[staffName] || {};
@@ -75,16 +104,18 @@ function normalizeScheduledShiftItem(staffName, shiftInfo, rowMap, config, now) 
     staffName,
     staffGroup,
     shiftStage,
-    expectedShiftStage: resolveExpectedShiftStageForGroup(config, staffGroup, now),
+    expectedShiftStages: listOnDutyShiftStagesForGroup(config, staffGroup, now),
     row
   };
 }
 
 function listExpectedOnlineStaff(todayShiftMap, rowMap, config, now = new Date()) {
-  // 这里挑出当前应值班的售前和售后客服，后续由各自的在线开关规则判断是否有人在线。
+  // 这里挑出当前应值班的售前和售后客服：重叠期早班、晚班都算在岗，各自开关规则判断是否有人在线。
   return Object.entries(todayShiftMap || {})
     .map(([staffName, shiftInfo]) => normalizeScheduledShiftItem(staffName, shiftInfo, rowMap, config, now))
-    .filter((item) => item.expectedShiftStage && item.shiftStage === item.expectedShiftStage)
+    .filter(
+      (item) => item.expectedShiftStages.length > 0 && item.expectedShiftStages.includes(item.shiftStage)
+    )
     .map((item) => item.staffName);
 }
 
@@ -169,6 +200,7 @@ function summarizeOnlinePresenceStatus(input) {
 module.exports = {
   buildOnlinePresenceAbsenceKey,
   listExpectedOnlineStaff,
+  listOnDutyShiftStagesForGroup,
   parseMinutesOfDay,
   resolveExpectedShiftStageForGroup,
   summarizeOnlinePresenceStatus

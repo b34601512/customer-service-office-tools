@@ -63,9 +63,9 @@ function buildOffDutyConfig(input = {}) {
     offDutyPreSalesLateStartTime: normalizeTimeText(input.offDutyPreSalesLateStartTime, "15:45"),
     offDutyAfterSalesEarlyStartTime: normalizeTimeText(input.offDutyAfterSalesEarlyStartTime, "08:00"),
     offDutyAfterSalesLateStartTime: normalizeTimeText(input.offDutyAfterSalesLateStartTime, "14:00"),
-    offDutyPreSalesEarlyCloseTime: normalizeTimeText(input.offDutyPreSalesEarlyCloseTime, "16:30"),
+    offDutyPreSalesEarlyCloseTime: normalizeTimeText(input.offDutyPreSalesEarlyCloseTime, "16:00"),
     offDutyPreSalesLateCloseTime: normalizeTimeText(input.offDutyPreSalesLateCloseTime, "23:45"),
-    offDutyAfterSalesEarlyCloseTime: normalizeTimeText(input.offDutyAfterSalesEarlyCloseTime, "16:30"),
+    offDutyAfterSalesEarlyCloseTime: normalizeTimeText(input.offDutyAfterSalesEarlyCloseTime, "16:00"),
     offDutyAfterSalesLateCloseTime: normalizeTimeText(input.offDutyAfterSalesLateCloseTime, "22:30"),
     offDutyTomorrowShiftNotificationEnabled: normalizeBoolean(
       input.offDutyTomorrowShiftNotificationEnabled,
@@ -153,6 +153,44 @@ function formatShiftForDisplay(shiftLabel) {
   return normalizedShift || "休息";
 }
 
+const OFF_DUTY_BOUNDARY_TIME_KEYS = [
+  "offDutyPreSalesEarlyStartTime",
+  "offDutyPreSalesLateStartTime",
+  "offDutyAfterSalesEarlyStartTime",
+  "offDutyAfterSalesLateStartTime",
+  "offDutyPreSalesEarlyCloseTime",
+  "offDutyPreSalesLateCloseTime",
+  "offDutyAfterSalesEarlyCloseTime",
+  "offDutyAfterSalesLateCloseTime"
+];
+
+function resolveNextOffDutyBoundaryDelayMs(config, now = new Date()) {
+  // 这里算离下一个班次边界（上下班时间）还有多久，主循环据此把等待压在边界上，
+  // 让 16:00 到点立刻执行关闭，而不是等下一轮固定的 5 分钟。
+  const nowMs = now.getTime();
+  let nextBoundaryMs = 0;
+
+  for (const key of OFF_DUTY_BOUNDARY_TIME_KEYS) {
+    const timeText = String(config?.[key] || "").trim();
+    if (!timeText) {
+      continue;
+    }
+
+    let boundaryMs;
+    try {
+      boundaryMs = parseTimeTextToDate(now, timeText).getTime();
+    } catch (error) {
+      continue;
+    }
+
+    if (boundaryMs > nowMs && (nextBoundaryMs === 0 || boundaryMs < nextBoundaryMs)) {
+      nextBoundaryMs = boundaryMs;
+    }
+  }
+
+  return nextBoundaryMs === 0 ? Infinity : nextBoundaryMs - nowMs;
+}
+
 module.exports = {
   OFF_DUTY_DEFAULT_SCAN_INTERVAL_MS,
   OFF_DUTY_MODE_NAME,
@@ -164,6 +202,7 @@ module.exports = {
   normalizePositiveNumber,
   normalizeTimeText,
   parseTimeTextToDate,
+  resolveNextOffDutyBoundaryDelayMs,
   resolveOffDutyCloseTime,
   resolveOffDutyStartTime,
   resolveShiftStage

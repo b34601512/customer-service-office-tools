@@ -1,6 +1,7 @@
 // 该文件用于调度下班监控主循环。
 const { loadReplyConfig } = require("../../../config/replyConfigLoader");
 const { log, logError } = require("../../../engine/logger");
+const { resolveNextOffDutyBoundaryDelayMs } = require("../offDutyConfig");
 const { resolveOffDutyScanDates } = require("../offDutyRunWindow");
 const {
   buildOffDutyCandidate,
@@ -156,7 +157,9 @@ async function monitorOffDutyWorkflow(createOffDutyPage, stopState) {
         );
       }
 
-      await waitForStopOrTimeout(stopState, config.offDutyScanIntervalMs, 5000);
+      // 这里把等待压在下一个班次边界上（如 16:00）：到点立刻扫一次并关闭，不让动作拖到下一轮 5 分钟。
+      const boundaryDelayMs = resolveNextOffDutyBoundaryDelayMs(config, new Date());
+      await waitForStopOrTimeout(stopState, Math.min(config.offDutyScanIntervalMs, boundaryDelayMs), 5000);
     } catch (error) {
       activePage = await closeOffDutyPage(activePage);
       if (isLoginRequiredError(error)) throw error;

@@ -2,6 +2,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 
 const {
+  listOnDutyShiftStagesForGroup,
   resolveExpectedShiftStageForGroup,
   summarizeOnlinePresenceStatus
 } = require("../../src/features/onlinePresenceMonitor/onlinePresencePolicy");
@@ -64,6 +65,79 @@ test("无人在线提醒应该覆盖售后早班到晚班结束", () => {
     resolveExpectedShiftStageForGroup(createConfig(), "after_sales", new Date("2026-06-26T22:30:00+08:00")),
     ""
   );
+});
+
+test("在岗班次集合应该覆盖售前早晚班重叠期 15:45~16:00", () => {
+  const config = createConfig();
+
+  assert.deepEqual(
+    listOnDutyShiftStagesForGroup(config, "pre_sales", new Date("2026-06-26T15:44:00+08:00")),
+    ["early"]
+  );
+  assert.deepEqual(
+    listOnDutyShiftStagesForGroup(config, "pre_sales", new Date("2026-06-26T15:45:00+08:00")),
+    ["early", "late"]
+  );
+  assert.deepEqual(
+    listOnDutyShiftStagesForGroup(config, "pre_sales", new Date("2026-06-26T16:00:00+08:00")),
+    ["late"]
+  );
+  assert.deepEqual(
+    listOnDutyShiftStagesForGroup(config, "pre_sales", new Date("2026-06-26T23:45:00+08:00")),
+    []
+  );
+});
+
+test("在岗班次集合应该覆盖售后早晚班重叠期 14:00~16:00", () => {
+  const config = createConfig();
+
+  assert.deepEqual(
+    listOnDutyShiftStagesForGroup(config, "after_sales", new Date("2026-06-26T13:59:00+08:00")),
+    ["early"]
+  );
+  assert.deepEqual(
+    listOnDutyShiftStagesForGroup(config, "after_sales", new Date("2026-06-26T14:00:00+08:00")),
+    ["early", "late"]
+  );
+  assert.deepEqual(
+    listOnDutyShiftStagesForGroup(config, "after_sales", new Date("2026-06-26T16:00:00+08:00")),
+    ["late"]
+  );
+  assert.deepEqual(
+    listOnDutyShiftStagesForGroup(config, "after_sales", new Date("2026-06-26T22:30:00+08:00")),
+    []
+  );
+});
+
+test("早班还在岗时晚班没上线不提醒，16:00 早班下班后晚班没人则提醒", () => {
+  const todayShiftMap = {
+    早班客服: { normalizedShift: "早班" },
+    晚班客服: { normalizedShift: "晚班" }
+  };
+  const rowMap = {
+    早班客服: createRow("早班客服", "售前客服", false, true),
+    晚班客服: createRow("晚班客服", "售前客服", false, false)
+  };
+
+  const duringOverlap = summarizeOnlinePresenceStatus({
+    config: createConfig(),
+    now: new Date("2026-06-26T15:50:00+08:00"),
+    todayShiftMap,
+    rowMap
+  });
+  assert.deepEqual(duringOverlap.expectedStaffNames, ["早班客服", "晚班客服"]);
+  assert.deepEqual(duringOverlap.onlineStaffNames, ["早班客服"]);
+  assert.equal(duringOverlap.shouldNotify, false);
+
+  const afterEarlyClose = summarizeOnlinePresenceStatus({
+    config: createConfig(),
+    now: new Date("2026-06-26T16:05:00+08:00"),
+    todayShiftMap,
+    rowMap
+  });
+  assert.deepEqual(afterEarlyClose.expectedStaffNames, ["晚班客服"]);
+  assert.deepEqual(afterEarlyClose.onlineStaffNames, []);
+  assert.equal(afterEarlyClose.shouldNotify, true);
 });
 
 test("售前有人在线但售后无人在线时仍然应该提醒", () => {

@@ -90,7 +90,7 @@ function saveControlCenterConfig(payload) {
     ),
     offDutyPreSalesEarlyCloseTime: normalizeTimeText(
       payload.offDutyPreSalesEarlyCloseTime,
-      "16:30"
+      "16:00"
     ),
     offDutyPreSalesLateCloseTime: normalizeTimeText(
       payload.offDutyPreSalesLateCloseTime,
@@ -98,7 +98,7 @@ function saveControlCenterConfig(payload) {
     ),
     offDutyAfterSalesEarlyCloseTime: normalizeTimeText(
       payload.offDutyAfterSalesEarlyCloseTime,
-      "16:30"
+      "16:00"
     ),
     offDutyAfterSalesLateCloseTime: normalizeTimeText(
       payload.offDutyAfterSalesLateCloseTime,

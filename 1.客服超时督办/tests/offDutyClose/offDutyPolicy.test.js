@@ -1,7 +1,10 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 
-const { buildOffDutyConfig } = require("../../src/features/offDutyClose/offDutyConfig");
+const {
+  buildOffDutyConfig,
+  resolveNextOffDutyBoundaryDelayMs
+} = require("../../src/features/offDutyClose/offDutyConfig");
 const {
   buildOffDutyCandidate,
   buildOffDutyCompletionNoticeKey,
@@ -81,7 +84,7 @@ test("售后早班到点后应该只关闭开关，不再自动释放对话", ()
 
   assert.ok(candidate);
   assert.equal(candidate.workflowKind, "close_only");
-  assert.equal(candidate.closeTimeText, "16:30");
+  assert.equal(candidate.closeTimeText, "16:00");
 });
 
 test("售前晚班到点后也不应该自动给出任何转接动作", () => {
@@ -201,7 +204,7 @@ test("售前晚班在上班时间窗内（15:45~23:45）不应该生成关闭候
   assert.equal(candidate, null);
 });
 
-test("售后早班在上班时间窗内（08:00~16:30）不应该生成关闭候选", () => {
+test("售后早班在上班时间窗内（08:00~16:00）不应该生成关闭候选", () => {
   const config = buildOffDutyConfig({});
   const row = createRow("卢安", "售后客服", { currentConversationCount: 1 });
   const todayShiftMap = buildTodayShiftMapForPolicy({
@@ -216,6 +219,43 @@ test("售后早班在上班时间窗内（08:00~16:30）不应该生成关闭候
   });
 
   assert.equal(candidate, null);
+});
+
+test("售后早班 16:00 到点后应该生成关闭候选", () => {
+  const config = buildOffDutyConfig({});
+  const row = createRow("卢安", "售后客服", { currentConversationCount: 0 });
+  const todayShiftMap = buildTodayShiftMapForPolicy({
+    卢安: { rawShift: "早", normalizedShift: "早班" }
+  }, { 卢安: row });
+  const candidate = buildOffDutyCandidate({
+    now: new Date("2026-03-25T16:00:00"),
+    config,
+    row,
+    todayShiftMap,
+    tomorrowShiftMap: {}
+  });
+
+  assert.ok(candidate);
+  assert.equal(candidate.silentClose, false);
+  assert.equal(candidate.closeTimeText, "16:00");
+});
+
+test("下班主循环应该能算出下一个班次边界，保证 16:00 到点立刻执行", () => {
+  const config = buildOffDutyConfig({});
+
+  assert.equal(
+    resolveNextOffDutyBoundaryDelayMs(config, new Date("2026-03-25T15:59:00")),
+    60 * 1000
+  );
+  // 16:01 的下一个边界是 22:30。
+  assert.equal(
+    resolveNextOffDutyBoundaryDelayMs(config, new Date("2026-03-25T16:01:00")),
+    ((22 - 16) * 60 + (30 - 1)) * 60 * 1000
+  );
+  assert.equal(
+    resolveNextOffDutyBoundaryDelayMs(config, new Date("2026-03-25T23:46:00")),
+    Infinity
+  );
 });
 
 test("完成通知键应该按日期和客服名去重", () => {

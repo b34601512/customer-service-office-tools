@@ -128,13 +128,13 @@ module.exports = {
   offDutyAfterSalesLateStartTime: "14:00",
 
   // 这里控制售前早班下班收尾时间。
-  offDutyPreSalesEarlyCloseTime: "16:30",
+  offDutyPreSalesEarlyCloseTime: "16:00",
 
   // 这里控制售前晚班下班收尾时间。
   offDutyPreSalesLateCloseTime: "23:45",
 
   // 这里控制售后早班下班收尾时间。
-  offDutyAfterSalesEarlyCloseTime: "16:30",
+  offDutyAfterSalesEarlyCloseTime: "16:00",
 
   // 这里控制售后晚班下班收尾时间。
   offDutyAfterSalesLateCloseTime: "22:30",

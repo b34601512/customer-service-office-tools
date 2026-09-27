@@ -48,9 +48,9 @@ function readControlCenterConfig() {
       "14:00"
     ),
     offDutyPreSalesEarlyCloseTime: parseQuotedStringLiteral(
-      getReplyConfigValueWithFallback(replyConfigContent, ["offDutyPreSalesEarlyCloseTime"], "\"16:30\""),
+      getReplyConfigValueWithFallback(replyConfigContent, ["offDutyPreSalesEarlyCloseTime"], "\"16:00\""),
       "售前早班关闭时间",
-      "16:30"
+      "16:00"
     ),
     offDutyPreSalesLateCloseTime: parseQuotedStringLiteral(
       getReplyConfigValueWithFallback(replyConfigContent, ["offDutyPreSalesLateCloseTime"], "\"23:45\""),
@@ -58,9 +58,9 @@ function readControlCenterConfig() {
       "23:45"
     ),
     offDutyAfterSalesEarlyCloseTime: parseQuotedStringLiteral(
-      getReplyConfigValueWithFallback(replyConfigContent, ["offDutyAfterSalesEarlyCloseTime"], "\"16:30\""),
+      getReplyConfigValueWithFallback(replyConfigContent, ["offDutyAfterSalesEarlyCloseTime"], "\"16:00\""),
       "售后早班关闭时间",
-      "16:30"
+      "16:00"
     ),
     offDutyAfterSalesLateCloseTime: parseQuotedStringLiteral(
       getReplyConfigValueWithFallback(replyConfigContent, ["offDutyAfterSalesLateCloseTime"], "\"22:30\""),
