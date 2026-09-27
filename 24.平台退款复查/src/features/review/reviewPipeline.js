@@ -25,6 +25,15 @@ const PLATFORMS = {
     appealText: (item) => `${item.refundId || "-"}/${item.handleType || "-"}/剩${item.leftHours}h`,
     collectHint: "src/tools/tmall-appeal-list.js --store <店>"
   },
+  jd: {
+    title: "京东可申诉订单",
+    listDir: ["runtime", "jd"],
+    listPrefix: "申诉清单-",
+    orderIdPattern: /^\d{6,20}$/,
+    extractOrders: (data) => (data.items || []).map((item) => item.orderId).filter(Boolean),
+    appealText: (item) => `${item.tab || "-"}/${item.arbitTypeDesc || "-"}/${item.arbitStateDesc || "-"}/判责${item.arbitResultDesc || "-"}`,
+    collectHint: "src/tools/jd-appeal-list.js --store <店>"
+  },
   pdd: {
     title: "拼多多可申诉订单",
     listDir: ["runtime", "pdd"],
@@ -203,8 +212,9 @@ function runReview(options) {
       if (!byStore.has(store)) byStore.set(store, []);
       byStore.get(store).push(item.orderId);
     }
-    const noteTool = options.platform === "pdd" ? "src/tools/pdd-order-note.js" : "src/tools/tmall-order-note.js";
-    for (const [store, ids] of byStore) {
+    const noteTool = { pdd: "src/tools/pdd-order-note.js", tmall: "src/tools/tmall-order-note.js", jd: "src/tools/jd-order-note.js" }[options.platform];
+    if (!noteTool) { console.log("    （该平台还没有后台备注工具，跳过备注步骤）"); }
+    for (const [store, ids] of (noteTool ? byStore : [])) {
       const outFile = projectPath("runtime", options.platform, `订单备注-${store}-${runStamp}.json`);
       try {
         runNode([noteTool, "--store", store, "--orders", ...ids, "--out", path.relative(projectPath(), outFile)], `${store} 平台后台备注（${ids.length} 单）`);
