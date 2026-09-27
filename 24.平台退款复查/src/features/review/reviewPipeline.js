@@ -166,18 +166,21 @@ function runReview(options) {
     returnMatches = merged.matches;
   }
 
-  // 4.5) 京东仓退货表（**JD 专属**，用户 2026-09-27 口径）：货退到京东仓 = 安全，不用管。
+  // 4.5) 京东仓退货表（用户 2026-09-27 口径）：货退到京东仓 = 安全，不用管。
+  //   **对所有平台都查**（实测表里 453 行有 136 个天猫单——京东仓也给天猫发货，不只发京东单）。
   //   工具：src/tools/jd-warehouse-returns.js（导出明细 CSV → JSON，含「销售平台单号」）。
   //   默认自动刷新一次；失败则退用最新已有文件，并提醒。
   let warehouseMatches = [];
-  if (options.platform === "jd" && !options.skipKdocs) {
+  if (!options.skipKdocs) {
     const dir = projectPath("runtime", "jd");
     const latestFile = () => {
       if (!fs.existsSync(dir)) return "";
       const files = fs.readdirSync(dir).filter((name) => name.startsWith("京东仓退货明细-") && name.endsWith(".json")).sort();
       return files.length ? path.join(dir, files[files.length - 1]) : "";
     };
-    if (!options.skipWarehouse) {
+    const freshFile = latestFile();
+    const freshAge = freshFile ? Date.now() - fs.statSync(freshFile).mtimeMs : Infinity;
+    if (!options.skipWarehouse && freshAge > 12 * 3600 * 1000) {
       try {
         runNode(["src/tools/jd-warehouse-returns.js"], "京东仓退货表（导出明细）");
       } catch (error) {
@@ -296,10 +299,10 @@ function runReview(options) {
     const tornText = item.torn.length ? item.torn.map((t) => `${t.date}「${t.status}」`).join("<br>") : "-";
     const appealText = item.appeals.map((a) => platformConfig.appealText(a)).join("<br>") || "-";
     const noteText = item.platformNote ? (item.platformNote.noteText ? String(item.platformNote.noteText).replace(/\|/g, "／").replace(/\r?\n/g, " ") : "（空）") : "-";
-    const warehouseText = options.platform === "jd" ? (item.warehouseReturned ? item.warehouseRows.map((row) => `${row["ECLP退货单号"]}｜${row["退货单状态"]}｜${row["逆向运单号"]}`).join("<br>") : "无") : "-";
+    const warehouseText = item.warehouseReturned ? item.warehouseRows.map((row) => `${row["ECLP退货单号"]}｜${row["退货单状态"]}｜${row["逆向运单号"]}`).join("<br>") : (options.skipKdocs ? "-" : "无");
     mdLines.push(`| ${item.orderId} | **${item.category}** | ${item.erp ? item.erp.shopName : "-"} | ${appealText} | ${erpText} | ${tornText} | ${item.returned ? "已登记" : "无"} | ${warehouseText} | ${noteText} |`);
   }
-  if (options.platform === "jd") {
+  if (warehouseMatches.length) {
     mdLines.push("", "## 京东仓退货明细命中（证据）", "");
     for (const match of warehouseMatches) {
       for (const row of match.rows) {
