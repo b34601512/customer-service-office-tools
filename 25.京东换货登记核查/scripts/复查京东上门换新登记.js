@@ -15,7 +15,7 @@
 //
 // 用法：
 //   node scripts/复查京东上门换新登记.js                 # 全部店（读各店最新清单）
-//   node scripts/复查京东上门换新登记.js --days 30 --stores jd1,jd3
+//   node scripts/复查京东上门换新登记.js --days 90 --stores jd1,jd3
 //   node scripts/复查京东上门换新登记.js --list-file runtime/jd/上门换新取件清单-jd1-xxx.json
 const fs = require("fs");
 const path = require("path");
@@ -33,7 +33,7 @@ const NO_ACTION = "无需处理";
 const KEYWORD_BATCH = 10;   // 金山批量关键词实测：10 个/批稳，20 个/批 403
 
 function parseArgs(argv) {
-  const args = { stores: "jd1,jd2,jd3,jd6,jd8", days: 30 };
+  const args = { stores: "jd1,jd2,jd3,jd6,jd8", days: 90 };   // 默认 3 个月（用户 2026-09-27 拍板）
   for (let index = 0; index < argv.length; index += 1) {
     const token = argv[index];
     if (!token.startsWith("--")) continue;

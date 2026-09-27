@@ -11,7 +11,8 @@
 //   接口：POST ...&api=dsm.seller.afs.bff.serviceOrderQueryDsmService.page（**带签名，页内 fetch 被拒 code 312 → 只能驱动页面**）
 // 驱动页面的坑（照 24号 经验，别踩）：筛选控件必须**真实鼠标点**；默认 tab 是「待审核」要先切「全部」；切完 tab 筛选区收起要重新点「展开」。
 //
-// 用法：node src/tools/jd-exchange-list.js --store jd1 [--days 30] [--attach] [--page-size 100]
+// 用法：node src/tools/jd-exchange-list.js --store jd1 [--days 90] [--attach] [--page-size 100]
+//   --days 默认 90（3 个月，=京东页面默认能查的范围，用户 2026-09-27 拍板「改成 3 个月」）
 // 只读：只点 tab/展开/筛选/查询/翻页。
 const fs = require("fs");
 const path = require("path");
@@ -27,7 +28,7 @@ const STATUS_DONE = "完成";
 const PICK_TYPE_TARGET = "上门换新取件";
 
 function parseArgs(argv) {
-  const args = { store: "jd1", pageSize: 100, maxPages: 40, days: 30 };
+  const args = { store: "jd1", pageSize: 100, maxPages: 40, days: 90 };
   for (let index = 0; index < argv.length; index += 1) {
     const token = argv[index];
     if (!token.startsWith("--")) continue;

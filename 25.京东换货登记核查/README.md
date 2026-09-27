@@ -15,9 +15,9 @@
 ## 怎么跑
 
 ```bash
-# ① 取数（京东自主售后：客户期望=换货 + 售后状态=完成 → 本地筛「上门换新取件」→ 最近 30 天）
+# ① 取数（京东自主售后：客户期望=换货 + 售后状态=完成 → 本地筛「上门换新取件」→ 最近 3 个月=默认）
 node src/tools/jd-exchange-list.js --store jd1
-node src/tools/jd-exchange-list.js --store jd3 --days 30
+node src/tools/jd-exchange-list.js --store jd3 --days 90   # 默认就是 90 天，可省略
 
 # ② 登记核查（金山「换货维修登记表」按订单号查 + 判「地址列空 / 三项无需处理」）
 node scripts/复查京东上门换新登记.js                    # 读各店最新清单
