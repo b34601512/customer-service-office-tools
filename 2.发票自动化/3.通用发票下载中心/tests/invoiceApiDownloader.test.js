@@ -8,7 +8,7 @@ const {
   解析主体列表,
   排列主体查询顺序,
   选择可下载发票记录,
-  带重试执行诺诺接口,
+  提交诺诺页面接口,
 } = require('../src/nuonuo/invoiceApiDownloader');
 
 test('诺诺快速查询请求体支持订单编号查询', () => {
@@ -71,46 +71,23 @@ test('多主体查询顺序优先默认主体', () => {
   assert.deepEqual(ordered.map((company) => company.id), ['b', 'a']);
 });
 
-test('诺诺页面 fetch 瞬时失败会自动重试一次', async () => {
+test('诺诺页面 fetch 失败不再自动重试（失败不重复请求平台）', async () => {
   let attempts = 0;
-  const result = await 带重试执行诺诺接口(
-    async () => {
+  const page = {
+    evaluate: async () => {
       attempts += 1;
-      if (attempts === 1) throw new Error('page.evaluate: TypeError: Failed to fetch');
-      return 'ok';
+      throw new Error('page.evaluate: TypeError: Failed to fetch');
     },
-    { 接口描述: '测试接口', 重试间隔Ms: 0 },
-  );
-  assert.equal(result, 'ok');
-  assert.equal(attempts, 2);
-});
-
-test('诺诺页面已关闭时不重试 fetch 错误', async () => {
-  let attempts = 0;
+  };
   await assert.rejects(
-    () => 带重试执行诺诺接口(
-      async () => {
-        attempts += 1;
-        throw new Error('page.evaluate: TypeError: Failed to fetch');
-      },
-      { page: { isClosed: () => true }, 重试间隔Ms: 0 },
-    ),
+    () => 提交诺诺页面接口(page, '/api/test', 'a=1'),
     /Failed to fetch/,
   );
-  assert.equal(attempts, 1);
+  assert.equal(attempts, 1, '第一次失败必须直接抛出，不许再发第二次请求');
 });
 
-test('诺诺 HTTP 或响应错误不触发网络重试', async () => {
-  let attempts = 0;
-  await assert.rejects(
-    () => 带重试执行诺诺接口(
-      async () => {
-        attempts += 1;
-        throw new Error('诺诺接口异常：HTTP 500');
-      },
-      { 重试间隔Ms: 0 },
-    ),
-    /HTTP 500/,
-  );
-  assert.equal(attempts, 1);
+test('下载中心不得再提供诺诺接口自动重试能力', () => {
+  const 模块 = require('../src/nuonuo/invoiceApiDownloader');
+  assert.equal(模块.带重试执行诺诺接口, undefined, '禁止再加回诺诺接口自动重试（失败不重复请求平台）');
+  assert.equal(模块.是可重试诺诺接口错误, undefined, '禁止再加回重试判定开关');
 });

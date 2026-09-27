@@ -1,6 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { 批量单店最大尝试次数, 批量店铺页面保留模式, 批量回传页面保留模式, ControlCenterTaskService } = require('../src/controlCenter/taskService');
+const taskServiceModule = require('../src/controlCenter/taskService');
+const { 批量店铺页面保留模式, 批量回传页面保留模式, ControlCenterTaskService } = taskServiceModule;
 
 function 创建控制台状态桩() {
   // 该函数模拟后台状态对象，验证任务服务是否按预期推送状态。
@@ -46,7 +47,7 @@ function 构建成功巡检结果(storeName) {
   };
 }
 
-test('全部店铺识别时单店失败不会阻断后续店铺', async () => {
+test('全部店铺识别时单店失败不会阻断后续店铺，且不自动重试', async () => {
   const state = 创建控制台状态桩();
   const 调用顺序 = [];
   const 页面保留模式列表 = [];
@@ -84,14 +85,14 @@ test('全部店铺识别时单店失败不会阻断后续店铺', async () => {
   const runningPromise = service.currentTaskPromise;
   await runningPromise;
 
-  assert.equal(批量单店最大尝试次数, 2);
   assert.equal(批量店铺页面保留模式, 'keep');
-  assert.deepEqual(调用顺序, ['京东A店', '京东B店', '京东B店', '京东C店']);
-  assert.deepEqual(页面保留模式列表, ['keep', 'keep', 'keep', 'keep']);
-  assert.deepEqual(headless列表, [false, false, false, false]);
-  assert.deepEqual(人工登录列表, [true, true, true, true]);
+  assert.equal(taskServiceModule.批量单店最大尝试次数, undefined, '禁止再加回批量单店自动重试次数（失败不自动重试平台请求）');
+  assert.deepEqual(调用顺序, ['京东A店', '京东B店', '京东C店']);
+  assert.deepEqual(页面保留模式列表, ['keep', 'keep', 'keep']);
+  assert.deepEqual(headless列表, [false, false, false]);
+  assert.deepEqual(人工登录列表, [true, true, true]);
   assert.equal(保存结果.filter((result) => result.status === 'success').length, 2);
-  assert.equal(保存结果.filter((result) => result.status === 'error').length, 2);
+  assert.equal(保存结果.filter((result) => result.status === 'error').length, 1);
   const 失败结果 = 保存结果.find((result) => result.status === 'error');
   assert.equal(失败结果.pageUrl, 'https://shop.jd.com/jdm/finance/consumerInvoice/cinvoiceOrder');
   assert.equal(失败结果.screenshotPath, undefined);
@@ -100,7 +101,7 @@ test('全部店铺识别时单店失败不会阻断后续店铺', async () => {
   assert.match(state.currentTask.message, /京东B店/);
 });
 
-test('批量识别全程打开可见浏览器，登录失效也不会退回后台黑窗', async () => {
+test('批量识别遇到登录失效只跑一次并记录失败，不自动重试也不退回后台黑窗', async () => {
   const state = 创建控制台状态桩();
   const 调用记录 = [];
   const 店铺列表 = [
@@ -111,20 +112,19 @@ test('批量识别全程打开可见浏览器，登录失效也不会退回后�
     更新店铺结果方法: () => {},
     执行巡检方法: async (选项) => {
       调用记录.push(选项);
-      if (调用记录.length === 1) {
-        throw new Error('登录态失效，请在可见窗口内完成登录。');
-      }
-      return 构建成功巡检结果(选项.店铺配置.name);
+      throw new Error('登录态失效，请在可见窗口内完成登录。');
     },
   });
 
   service.启动全部排查();
   await service.currentTaskPromise;
 
-  assert.equal(调用记录.length, 2);
-  assert.deepEqual(调用记录.map((选项) => 选项.headless), [false, false]);
-  assert.deepEqual(调用记录.map((选项) => 选项.允许人工登录), [true, true]);
-  assert.deepEqual(调用记录.map((选项) => 选项.页面保留模式), ['keep', 'keep']);
+  assert.equal(调用记录.length, 1, '失败后不得自动重试平台请求');
+  assert.deepEqual(调用记录.map((选项) => 选项.headless), [false]);
+  assert.deepEqual(调用记录.map((选项) => 选项.允许人工登录), [true]);
+  assert.deepEqual(调用记录.map((选项) => 选项.页面保留模式), ['keep']);
+  const 失败结果 = state.storeResults.find((result) => result.status === 'error');
+  assert.ok(失败结果, '登录失效必须落一条失败结果供人工处理');
 });
 
 test('单店排查仍然打开可见浏览器给人工核对', async () => {
