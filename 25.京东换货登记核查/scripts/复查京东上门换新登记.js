@@ -88,12 +88,23 @@ function queryRows(orderIds) {
   return { byOrder, scriptVersions: [...scriptVersions] };
 }
 
+// 用哪个金山脚本：25号 专用的「只读查行带列号」（能拿到列号）优先；
+//   没配就退回 22号/24号 那份「只读查询订单号」（只有非空值，判不了地址列 → 报告会标粗判）。
+function scriptName() {
+  try {
+    const config = JSON.parse(fs.readFileSync(projectPath("project-config", "kdocs-airscript.json"), "utf8"));
+    const entry = config.scripts && config.scripts.rowQuery;
+    if (entry && entry.webhookUrl) return "rowQuery";
+  } catch (error) { /* 配置读不到就退回老脚本 */ }
+  return "query";
+}
+
 function runAirScriptSync(keywords) {
   // AirScript 是异步的；这里用子进程同步跑，保持脚本主线是同步风格（与 24号 一致）
   const enginePath = projectPath("src", "engine", "kdocsAirScript.js");
   const code = [
     `const { runAirScript } = require(${JSON.stringify(enginePath)});`,
-    `runAirScript({ keywords: ${JSON.stringify(keywords)}, sheets: [${JSON.stringify(SHEET)}], maxRows: 50000 })`,
+    `runAirScript({ keywords: ${JSON.stringify(keywords)}, sheet: ${JSON.stringify(SHEET)}, maxRows: 50000 }, { script: ${JSON.stringify(scriptName())} })`,
     "  .then((r) => { process.stdout.write(JSON.stringify(r)); })",
     "  .catch((e) => { process.stderr.write(String(e.message)); process.exitCode = 1; });"
   ].join(String.fromCharCode(10));
