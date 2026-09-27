@@ -16,6 +16,7 @@ function parseArgs(argv) {
     if (key === "skip-erp") { args.skipErp = true; continue; }
     if (key === "skip-kdocs") { args.skipKdocs = true; continue; }
     if (key === "skip-notes") { args.skipNotes = true; continue; }
+    if (key === "skip-warehouse") { args.skipWarehouse = true; continue; }
     const value = argv[index + 1];
     index += 1;
     if (key === "stores") args.stores = value;

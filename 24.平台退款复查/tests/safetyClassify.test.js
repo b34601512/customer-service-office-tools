@@ -19,6 +19,14 @@ test("已发货 + 退货表搜不到 → 风险（核心要抓的双重损失）
   assert.equal(classifyOrder({ erp: { cancel: false, deliveryState: 2, approve: true }, torn: [], returned: false }), "风险-已发货未登记退货");
 });
 
+test("京东仓退货命中 → 安全-已退京东仓（优先于退货表，用户 2026-09-27 口径）", () => {
+  assert.equal(classifyOrder({ erp: { cancel: false, deliveryState: 2, approve: true }, torn: [], returned: false, warehouseReturned: true }), "安全-已退京东仓");
+});
+
+test("京东仓没命中不影响原判定（不是京东仓的货不能被它洗白）", () => {
+  assert.equal(classifyOrder({ erp: { cancel: false, deliveryState: 2, approve: true }, torn: [], returned: false, warehouseReturned: false }), "风险-已发货未登记退货");
+});
+
 test("部分发货（deliveryState=1）也算已发货", () => {
   assert.equal(classifyOrder({ erp: { cancel: false, deliveryState: 1, approve: true }, torn: [], returned: false }), "风险-已发货未登记退货");
 });

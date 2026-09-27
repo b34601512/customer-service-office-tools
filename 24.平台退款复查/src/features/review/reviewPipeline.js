@@ -166,6 +166,45 @@ function runReview(options) {
     returnMatches = merged.matches;
   }
 
+  // 4.5) 京东仓退货表（**JD 专属**，用户 2026-09-27 口径）：货退到京东仓 = 安全，不用管。
+  //   工具：src/tools/jd-warehouse-returns.js（导出明细 CSV → JSON，含「销售平台单号」）。
+  //   默认自动刷新一次；失败则退用最新已有文件，并提醒。
+  let warehouseMatches = [];
+  if (options.platform === "jd" && !options.skipKdocs) {
+    const dir = projectPath("runtime", "jd");
+    const latestFile = () => {
+      if (!fs.existsSync(dir)) return "";
+      const files = fs.readdirSync(dir).filter((name) => name.startsWith("京东仓退货明细-") && name.endsWith(".json")).sort();
+      return files.length ? path.join(dir, files[files.length - 1]) : "";
+    };
+    if (!options.skipWarehouse) {
+      try {
+        runNode(["src/tools/jd-warehouse-returns.js"], "京东仓退货表（导出明细）");
+      } catch (error) {
+        console.log(`    ⚠ 京东仓退货表刷新失败（用已有文件兜底）：${error.message.split("\n")[0]}`);
+      }
+    }
+    const file = latestFile();
+    if (file) {
+      const data = JSON.parse(fs.readFileSync(file, "utf8"));
+      const byOrder = new Map();
+      for (const item of data.items || []) {
+        const orderNo = String(item["销售平台单号"] || "").trim();
+        if (!orderNo) continue;
+        if (!byOrder.has(orderNo)) byOrder.set(orderNo, []);
+        byOrder.get(orderNo).push(item);
+      }
+      for (const orderId of orderIds) {
+        const hit = byOrder.get(orderId);
+        if (hit) warehouseMatches.push({ orderId, rows: hit });
+      }
+      console.log(`  京东仓退货表：${path.basename(file)}（${(data.items || []).length} 行）→ 命中 ${warehouseMatches.length} 单`);
+    } else {
+      console.log("  ⚠ 还没有京东仓退货表（先跑 src/tools/jd-warehouse-returns.js，需京东物流登录态）");
+    }
+  }
+  const warehouseHitOrders = new Set(warehouseMatches.map((m) => m.orderId));
+
   // 5) 判定
   const erpByCode = new Map((erp.orders || []).map((row) => [row.platformCode, row]));
   const tornByCode = new Map();
@@ -194,8 +233,9 @@ function runReview(options) {
     const erpRow = erpByCode.get(orderId) || null;
     const torn = tornByCode.get(orderId) || [];
     const returned = returnHitCodes.has(orderId);
-    const category = classifyOrder({ erp: erpRow, torn, returned });
-    results.push({ orderId, category, erp: erpRow, torn, returned, returnRows: returnMatches.filter((m) => (m.values || []).includes(orderId)), appeals: appealsByOrder.get(orderId) || [] });
+    const warehouseReturned = warehouseHitOrders.has(orderId);
+    const category = classifyOrder({ erp: erpRow, torn, returned, warehouseReturned });
+    results.push({ orderId, category, erp: erpRow, torn, returned, warehouseReturned, warehouseRows: warehouseMatches.filter((m) => m.orderId === orderId).flatMap((m) => m.rows), returnRows: returnMatches.filter((m) => (m.values || []).includes(orderId)), appeals: appealsByOrder.get(orderId) || [] });
   }
 
   // 5.5) 平台后台备注（只对「风险/待人工核」单）。
@@ -248,15 +288,24 @@ function runReview(options) {
     "",
     `订单 ${orderIds.length} 个 ｜ ${Object.entries(report.summary).map(([k, v]) => `${k} ${v}`).join(" ｜ ")}`,
     "",
-    "| 订单编号 | 判定 | 店铺 | 申诉（类型/金额/剩余） | ERP状态 | 撕单表 | 退货登记 | 后台备注（看这里，ERP备注不更新） |",
-    "| --- | --- | --- | --- | --- | --- | --- | --- |"
+    "| 订单编号 | 判定 | 店铺 | 申诉（类型/金额/剩余） | ERP状态 | 撕单表 | 退货登记 | 京东仓退货 | 后台备注（看这里，ERP备注不更新） |",
+    "| --- | --- | --- | --- | --- | --- | --- | --- | --- |"
   ];
   for (const item of results) {
     const erpText = item.erp ? `${item.erp.cancelState}/${item.erp.approveState}/${item.erp.assignLabel}/${item.erp.deliveryLabel}` : "ERP无此单";
     const tornText = item.torn.length ? item.torn.map((t) => `${t.date}「${t.status}」`).join("<br>") : "-";
     const appealText = item.appeals.map((a) => platformConfig.appealText(a)).join("<br>") || "-";
     const noteText = item.platformNote ? (item.platformNote.noteText ? String(item.platformNote.noteText).replace(/\|/g, "／").replace(/\r?\n/g, " ") : "（空）") : "-";
-    mdLines.push(`| ${item.orderId} | **${item.category}** | ${item.erp ? item.erp.shopName : "-"} | ${appealText} | ${erpText} | ${tornText} | ${item.returned ? "已登记" : "无"} | ${noteText} |`);
+    const warehouseText = options.platform === "jd" ? (item.warehouseReturned ? item.warehouseRows.map((row) => `${row["ECLP退货单号"]}｜${row["退货单状态"]}｜${row["逆向运单号"]}`).join("<br>") : "无") : "-";
+    mdLines.push(`| ${item.orderId} | **${item.category}** | ${item.erp ? item.erp.shopName : "-"} | ${appealText} | ${erpText} | ${tornText} | ${item.returned ? "已登记" : "无"} | ${warehouseText} | ${noteText} |`);
+  }
+  if (options.platform === "jd") {
+    mdLines.push("", "## 京东仓退货明细命中（证据）", "");
+    for (const match of warehouseMatches) {
+      for (const row of match.rows) {
+        mdLines.push(`- ${match.orderId}：${row["ECLP退货单号"]}｜${row["退货单状态"]}｜${row["商品名称"] || ""}｜销售出库单号 ${row["销售出库单号"] || "-"}｜逆向运单 ${row["逆向运单号"] || "-"}`);
+      }
+    }
   }
   mdLines.push("", "## 平台后台备注原文（只对风险/待人工核单；ERP 备注不更新，以这里为准）", "");
   for (const row of noteRows) {
