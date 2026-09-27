@@ -189,6 +189,36 @@ function runReview(options) {
     results.push({ orderId, category, erp: erpRow, torn, returned, returnRows: returnMatches.filter((m) => (m.values || []).includes(orderId)), appeals: appealsByOrder.get(orderId) || [] });
   }
 
+  // 5.5) 平台后台备注（只对「风险/待人工核」单）。
+  // 经验（2026-09-27 用户指出）：**ERP 的卖家备注（sellerMemo）不更新，不能拿它判断处理进度**；
+  //   真实进度看平台后台备注：拼多多 = 售后工作台 `mallRemark`（pdd-order-note.js），
+  //   天猫 = 订单详情备注（tmall-order-note.js）。备注是自由文本，只抓原文写进报告，判读交模型。
+  let noteRows = [];
+  if (!options.skipNotes) {
+    const noteTargets = results.filter((item) => /^风险|^待/.test(item.category));
+    const byStore = new Map();
+    for (const item of noteTargets) {
+      const store = item.appeals[0]?.store || (stores.length === 1 ? stores[0] : "");
+      if (!store) continue; // 没有店铺归属就不猜
+      if (!byStore.has(store)) byStore.set(store, []);
+      byStore.get(store).push(item.orderId);
+    }
+    const noteTool = options.platform === "pdd" ? "src/tools/pdd-order-note.js" : "src/tools/tmall-order-note.js";
+    for (const [store, ids] of byStore) {
+      const outFile = projectPath("runtime", options.platform, `订单备注-${store}-${runStamp}.json`);
+      try {
+        runNode([noteTool, "--store", store, "--orders", ...ids, "--out", path.relative(projectPath(), outFile)], `${store} 平台后台备注（${ids.length} 单）`);
+        const data = JSON.parse(fs.readFileSync(outFile, "utf8"));
+        for (const row of data.rows || []) noteRows.push({ store, orderId: row.orderSn, found: row.found, noteText: row.mallRemark || "" });
+        for (const row of data.results || []) noteRows.push({ store, orderId: row.orderId, found: row.ok, noteText: (row.notes || []).join(" ／ ") });
+      } catch (error) {
+        console.log(`    ⚠ ${store} 后台备注读取失败：${error.message.split("\n")[0]}`);
+      }
+    }
+  }
+  const noteByOrder = new Map(noteRows.map((row) => [row.orderId, row]));
+  for (const item of results) item.platformNote = noteByOrder.get(item.orderId) || null;
+
   // 6) 报告
   const report = {
     generatedAt: new Date().toISOString(),
@@ -208,14 +238,19 @@ function runReview(options) {
     "",
     `订单 ${orderIds.length} 个 ｜ ${Object.entries(report.summary).map(([k, v]) => `${k} ${v}`).join(" ｜ ")}`,
     "",
-    "| 订单编号 | 判定 | 店铺 | 申诉（类型/金额/剩余） | ERP状态 | 撕单表 | 退货登记 |",
-    "| --- | --- | --- | --- | --- | --- | --- |"
+    "| 订单编号 | 判定 | 店铺 | 申诉（类型/金额/剩余） | ERP状态 | 撕单表 | 退货登记 | 后台备注（看这里，ERP备注不更新） |",
+    "| --- | --- | --- | --- | --- | --- | --- | --- |"
   ];
   for (const item of results) {
     const erpText = item.erp ? `${item.erp.cancelState}/${item.erp.approveState}/${item.erp.assignLabel}/${item.erp.deliveryLabel}` : "ERP无此单";
     const tornText = item.torn.length ? item.torn.map((t) => `${t.date}「${t.status}」`).join("<br>") : "-";
     const appealText = item.appeals.map((a) => platformConfig.appealText(a)).join("<br>") || "-";
-    mdLines.push(`| ${item.orderId} | **${item.category}** | ${item.erp ? item.erp.shopName : "-"} | ${appealText} | ${erpText} | ${tornText} | ${item.returned ? "已登记" : "无"} |`);
+    const noteText = item.platformNote ? (item.platformNote.noteText ? String(item.platformNote.noteText).replace(/\|/g, "／").replace(/\r?\n/g, " ") : "（空）") : "-";
+    mdLines.push(`| ${item.orderId} | **${item.category}** | ${item.erp ? item.erp.shopName : "-"} | ${appealText} | ${erpText} | ${tornText} | ${item.returned ? "已登记" : "无"} | ${noteText} |`);
+  }
+  mdLines.push("", "## 平台后台备注原文（只对风险/待人工核单；ERP 备注不更新，以这里为准）", "");
+  for (const row of noteRows) {
+    mdLines.push(`- ${row.orderId}（${row.store}${row.found ? "" : "，后台查无此单"}）：${row.noteText || "（空）"}`);
   }
   mdLines.push("", "## 退货登记原始行（证据）", "");
   for (const match of returnMatches) {
@@ -228,7 +263,7 @@ function runReview(options) {
   for (const [category, count] of Object.entries(report.summary)) console.log(`    ${category}：${count}`);
   for (const item of results) {
     if (/^风险|^待/.test(item.category)) {
-      console.log(`    ⚠ ${item.orderId}（${item.erp ? item.erp.shopName : "ERP无此单"}）→ ${item.category}${item.erp ? ` ｜ ${item.erp.assignLabel}/${item.erp.deliveryLabel}` : ""}`);
+      console.log(`    ⚠ ${item.orderId}（${item.erp ? item.erp.shopName : "ERP无此单"}）→ ${item.category}${item.erp ? ` ｜ ${item.erp.assignLabel}/${item.erp.deliveryLabel}` : ""} ｜ 后台备注：${item.platformNote ? (item.platformNote.noteText || "（空）") : "未读到"}`);
     }
   }
   console.log(`\n  报告：${path.relative(projectPath(), mdFile)}\n  数据：${path.relative(projectPath(), jsonFile)}\n`);

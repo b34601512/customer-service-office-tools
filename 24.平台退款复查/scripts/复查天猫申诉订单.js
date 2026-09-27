@@ -15,6 +15,7 @@ function parseArgs(argv) {
     const key = token.slice(2);
     if (key === "skip-erp") { args.skipErp = true; continue; }
     if (key === "skip-kdocs") { args.skipKdocs = true; continue; }
+    if (key === "skip-notes") { args.skipNotes = true; continue; }
     const value = argv[index + 1];
     index += 1;
     if (key === "stores") args.stores = value;
