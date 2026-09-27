@@ -1,0 +1,8 @@
+# 只备份源代码：运行产物、浏览器登录态、依赖一律不入库
+runtime/
+node_modules/
+*.log
+# 含个人配置/密钥的文件不入库
+project-config/kdocs-airscript.json
+project-config/wecom-notify.json
+project-config/stores.json
