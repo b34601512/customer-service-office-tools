@@ -8,7 +8,7 @@
  *   3. 在本项目 project-config/platform-config.json 里填：
  *      {
  *        "kdocsScheduleSync": {
- *          "documentUrl": "https://www.kdocs.cn/l/cga7jWGHxzkp",
+ *          "documentUrl": "https://www.kdocs.cn/l/<排班表分享ID>",
  *          "webhookUrl": "https://www.kdocs.cn/api/v3/ide/file/<file_id>/script/<script_id>/sync_task",
  *          "apiToken": "<AirScript-Token>"
  *        }

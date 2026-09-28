@@ -3,7 +3,7 @@
 // 匿名 + 无头，不需要 token，不动文档内容。
 //
 // 用法：
-//   node src/tools/read-kdocs.js --url "https://www.kdocs.cn/l/ccj1mhG3wLy6" --list
+//   node src/tools/read-kdocs.js --url "https://www.kdocs.cn/l/<对接表分享ID>" --list
 //   node src/tools/read-kdocs.js --url "..." --sheet "退货退款表" --head 5
 //   node src/tools/read-kdocs.js --url "..." --sheet "退货退款表" --grep "5127667812586099609"
 //   node src/tools/read-kdocs.js --url "..." --all --grep "5127667812586099609"     # 跨全部工作表搜（推荐）
@@ -15,7 +15,18 @@ const { listSheets, readSheet, readSheets } = require("../engine/kdocs");
 const { projectPath } = require("../config/stores");
 const { log } = require("../engine/log");
 
-const DEFAULT_URL = "https://www.kdocs.cn/l/ccj1mhG3wLy6"; // 2026年【湖南怀化售后】对接表
+const DEFAULT_URL = readLocalKdocsUrl("huaihuaDuijieTable", "https://www.kdocs.cn/l/<对接表分享ID>"); // 2026年【湖南怀化售后】对接表
+
+function readLocalKdocsUrl(key, fallback) {
+  // 这里从本机 project-config/kdocs-links.local.json 读真实表链接（该文件已 gitignore）；没配置时返回占位值。
+  try {
+    const payload = JSON.parse(fs.readFileSync(path.join(projectPath("project-config"), "kdocs-links.local.json"), "utf8"));
+    const value = String(payload[key] || "").trim();
+    return value || fallback;
+  } catch {
+    return fallback;
+  }
+}
 
 function parseArgs(argv) {
   const args = { url: DEFAULT_URL, headless: true, head: 10 };

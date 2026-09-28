@@ -19,9 +19,20 @@ const { projectPath } = require("../../config/stores");
 const { normalizeOrderNo } = require("./orderNoMatch");
 const { log } = require("../../engine/log");
 
-const TORN_SHEET_URL = "https://www.kdocs.cn/l/csvonDeJ0BE2";
+const TORN_SHEET_URL = readLocalKdocsUrl("sidanTable", "https://www.kdocs.cn/l/<撕单表分享ID>");
 const TORN_SHEET_NAME = "撕单表";
 const DEFAULT_REUSE_SECONDS = 12 * 3600;
+
+function readLocalKdocsUrl(key, fallback) {
+  // 这里从本机 project-config/kdocs-links.local.json 读真实表链接（该文件已 gitignore）；没配置时返回占位值。
+  try {
+    const payload = JSON.parse(fs.readFileSync(path.join(projectPath("project-config"), "kdocs-links.local.json"), "utf8"));
+    const value = String(payload[key] || "").trim();
+    return value || fallback;
+  } catch {
+    return fallback;
+  }
+}
 
 function stampNow() {
   const now = new Date();

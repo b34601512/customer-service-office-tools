@@ -3,7 +3,7 @@
 // 规则（用户原话）：「查丢件的看快递理赔没有，如果理赔了就不管了。」
 //   → 命中且**理赔金额 > 0** = 已理赔 = **不用管**；「无需理赔」/ 0 元 = 还没赔，得看。
 //
-// 表结构（2026-09-27 实测，488 行 × 27 列，链接 https://www.kdocs.cn/l/csnbSKbQM9pO）：
+// 表结构（2026-09-27 实测，488 行 × 27 列，链接 https://www.kdocs.cn/l/<快递理赔表分享ID>）：
 //   0 登记客服 | 1 登记时间 | 2 店铺名称 | 3 产品型号 | **4 订单号（表头误写「，」）** | 5 客户地址 |
 //   6 发货时间 | 7 订单金额 | 8 快递公司 | 9 寄出运单（形如「圆通速递运单号:YT2171052685762」）|
 //   **10 理赔金额（元）** | **11 理赔方式**（圆通月结 / 无需理赔 / 顺丰月结 …）| 14 理赔截图 | 15 财务备注 |
@@ -18,9 +18,20 @@ const { projectPath } = require("../../config/stores");
 const { normalizeOrderNo } = require("./orderNoMatch");
 const { log } = require("../../engine/log");
 
-const HANDOVER_URL = "https://www.kdocs.cn/l/csnbSKbQM9pO";
+const HANDOVER_URL = readLocalKdocsUrl("courierClaimTable", "https://www.kdocs.cn/l/<快递理赔表分享ID>");
 const HANDOVER_SHEET = "快递问题";
 const DEFAULT_REUSE_SECONDS = 12 * 3600;
+
+function readLocalKdocsUrl(key, fallback) {
+  // 这里从本机 project-config/kdocs-links.local.json 读真实表链接（该文件已 gitignore）；没配置时返回占位值。
+  try {
+    const payload = JSON.parse(fs.readFileSync(path.join(projectPath("project-config"), "kdocs-links.local.json"), "utf8"));
+    const value = String(payload[key] || "").trim();
+    return value || fallback;
+  } catch {
+    return fallback;
+  }
+}
 const COLUMNS = { orderNo: 4, express: 9, claimAmount: 10, claimWay: 11, reason: 16, result: 18, shop: 2, date: 1, product: 3, goodsValue: 7 };
 
 function stampNow() {

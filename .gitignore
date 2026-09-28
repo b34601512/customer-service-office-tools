@@ -168,3 +168,5 @@ tools/git-secret-store.json.bak
 17.探域科技AI自动配置/02.业务专用/德达医疗/
 # 工具运行时状态（pi loop 状态等），随机器变化
 **/.pi/
+# 本机真实金山表链接（真实分享 ID 不入库，代码读它、缺省用占位）
+**/project-config/kdocs-links.local.json

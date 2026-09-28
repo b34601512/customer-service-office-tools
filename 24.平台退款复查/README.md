@@ -22,8 +22,8 @@ AI 是**复查秘书**：只读检查「平台已给买家退款 / 可申诉」�
 | 天猫待申诉订单 | https://qn.taobao.com/home.htm/appeal/portal/appealable/D/1 | 受控浏览器（复用天猫 profile 登录态） |
 | 拼多多可申诉订单 | https://mms.pinduoduo.com/orders/appeals/aftersale/order | 受控浏览器（同源 fetch 接口，见 `pdd-appeal-list.js`） |
 | ERP 查单/作废/审单/发货 | https://v2.guanyierp.com/index | 受控浏览器（独立 ERP profile） |
-| 售后对接表（退货登记） | https://www.kdocs.cn/l/ccj1mhG3wLy6 | AirScript 服务端只读（`kdocs-query.js`） |
-| 撕单表 | https://www.kdocs.cn/l/csvonDeJ0BE2 | 网页只读整表（`read-kdocs.js`） |
+| 售后对接表（退货登记） | https://www.kdocs.cn/l/<对接表分享ID> | AirScript 服务端只读（`kdocs-query.js`） |
+| 撕单表 | https://www.kdocs.cn/l/<撕单表分享ID> | 网页只读整表（`read-kdocs.js`） |
 
 ## 红线
 - 后台/ERP/金山一律**只读**；任何提交/申诉/同意/发送动作先停下来问用户。
@@ -51,7 +51,7 @@ node src/tools/tmall-appeal-list.js --store tmall1 --tabs D,P,C,T
 node src/tools/erp-order-status.js --orders-file runtime/tmall/订单号-tmall1.txt
 
 # 3) 金山只读
-node src/tools/read-kdocs.js --url "https://www.kdocs.cn/l/csvonDeJ0BE2" --sheet "撕单表" --out runtime/kdocs/撕单表.json
+node src/tools/read-kdocs.js --url "https://www.kdocs.cn/l/<撕单表分享ID>" --sheet "撕单表" --out runtime/kdocs/撕单表.json
 node src/tools/kdocs-query.js <订单号...> --out runtime/kdocs/退货查询.json
 
 # 4) 一条龙复查（清单→ERP→撕单表→退货登记→报告）

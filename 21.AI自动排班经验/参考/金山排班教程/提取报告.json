@@ -1,10 +1,10 @@
 {
   "标题": "排班教程",
-  "最终地址": "https://www.kdocs.cn/l/cv0dFUfGyvHU",
+  "最终地址": "https://www.kdocs.cn/l/<排班教程分享ID>",
   "接口": [
     {
       "status": 200,
-      "url": "https://www.kdocs.cn/api/v3/office/file/cv0dFUfGyvHU/open/otl"
+      "url": "https://www.kdocs.cn/api/v3/office/file/<排班教程分享ID>/open/otl"
     }
   ],
   "open/otl字节数": 60040,

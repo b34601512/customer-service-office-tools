@@ -49,7 +49,7 @@ const withDuty = () => {
   const c = base();
   c.wecom.memberMobileMap = { "张三": "13800000101", "李四": "13800000102" };
   c.duty = {
-    scheduleUrl: "https://www.kdocs.cn/l/cga7jWGHxzkp",
+    scheduleUrl: "https://www.kdocs.cn/l/<排班表分享ID>",
     group: "售后",
     leadNames: ["李四"],
     managerNames: ["张三"]
