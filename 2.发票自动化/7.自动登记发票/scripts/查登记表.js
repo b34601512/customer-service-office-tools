@@ -8,6 +8,7 @@
 //   node scripts/查登记表.js --尾部                            # 只诊断：行数 / 最后一行 / 各年条数 / 最后几行
 //   node scripts/查登记表.js 260903-171347832413939 --全部表     # 全部工作表都扫（慢）
 //   node scripts/查登记表.js --行 2751                      # 按行号读（带列字母，核对字段/看填写样式）
+//   node scripts/查登记表.js --行 2751 --公式                 # 连公式一起读（分清哪些列不能写）
 //   node scripts/查登记表.js --行 2740-2760
 //   node scripts/查登记表.js 260903-171347832413939 --out project-config/查重-260903.json
 const fs = require("fs");
@@ -30,6 +31,7 @@ function 解析参数(argv) {
       i += 1;
       continue;
     }
+    if (词 === "--公式") { 结果.withFormula = true; continue; }
     if (词 === "--out") { 结果.out = argv[i + 1]; i += 1; continue; }
     if (词 === "--最大行") { 结果.最大行 = Number(argv[i + 1]); i += 1; continue; }
     if (词.startsWith("--")) continue;
@@ -45,7 +47,7 @@ async function main() {
     process.exit(2);
   }
   const 请求 = { keywords: 参数.关键词, maxRows: 参数.最大行, tailRows: 参数.尾部 };
-  if (参数.rowFrom) { 请求.rowFrom = 参数.rowFrom; 请求.rowTo = 参数.rowTo; }
+  if (参数.rowFrom) { 请求.rowFrom = 参数.rowFrom; 请求.rowTo = 参数.rowTo; if (参数.withFormula) 请求.withFormula = true; }
   if (参数.sheets) 请求.sheets = 参数.sheets;
   if (参数.全部表) 请求.allSheets = true;
 
