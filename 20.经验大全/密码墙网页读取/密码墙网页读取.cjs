@@ -191,12 +191,14 @@ async function scrollCollect(page, opts) {
   let lines = null;
   let prev = null;
   let stable = 0;
+  const snapshots = [];
   for (let i = 0; i < maxSteps; i++) {
     const snap = await page.evaluate(() => {
       const el = document.querySelector('[data-pi-scroll-target="1"]');
       return el ? el.innerText : '';
     });
     const cur = normalizeLines(snap);
+    snapshots.push(cur);
     if (lines === null) lines = cur;
     else if (cur.length) lines = unionLines(lines, cur);
 
@@ -223,6 +225,33 @@ async function scrollCollect(page, opts) {
     }
   });
   await page.waitForTimeout(300);
+
+  // 自检：每张滚动快照都应是合并全文的子序列；否则说明有行没合并进去（漏采）
+  if (lines && lines.length) {
+    let badSnaps = 0;
+    let missingTotal = 0;
+    for (let i = 0; i < snapshots.length; i++) {
+      let cursor = 0;
+      let missing = 0;
+      for (const line of snapshots[i]) {
+        let k = cursor;
+        while (k < lines.length && lines[k] !== line) k++;
+        if (k < lines.length) cursor = k + 1;
+        else missing++;
+      }
+      if (missing > 0) {
+        badSnaps++;
+        missingTotal += missing;
+        console.log(`[滚动采集][警告] 第 ${i + 1} 张快照有 ${missing} 行未出现在全文（疑似漏采）`);
+      }
+    }
+    if (badSnaps === 0) {
+      console.log(`[滚动采集] 自检通过：${snapshots.length} 张快照均为合并全文的子序列`);
+    } else {
+      console.log(`[滚动采集] 自检警告：${badSnaps}/${snapshots.length} 张快照有未合并行（共 ${missingTotal} 行），必须人工核对`);
+    }
+  }
+
   console.log(`[滚动采集] 容器高度 ${found.sh}px / 视口 ${found.ch}px，合并 ${lines ? lines.length : 0} 行`);
   return (lines || []).join('\n');
 }
