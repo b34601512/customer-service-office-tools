@@ -40,7 +40,7 @@ async function main() {
   if (参数.sheets) 请求.sheets = 参数.sheets;
   if (参数.全部表) 请求.allSheets = true;
 
-  const 结果 = await 跑脚本([请求]);
+  const 结果 = await 跑脚本(请求);   // 直接传对象：传数组时金山会转成类数组对象，脚本里取不到 keywords（2026-09-28 实测）
   console.log(`\n  脚本版本 ${结果.scriptVersion} | 扫描 ${结果.checkedSheets} 个表 / ${结果.scannedRows} 行`);
   for (const 表 of 结果.sheetDetails || []) {
     const 年份 = 表.yearCounts ? Object.keys(表.yearCounts).sort().map((y) => `${y} 年 ${表.yearCounts[y]} 条`).join("、") : "";
