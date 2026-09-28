@@ -44,7 +44,39 @@
 - 表单自带一份示例模板（服饰行业），要全部替换成本公司内容再保存。
 - 保存接口：`POST /api/shop-config/customer-style/save`；列表：`GET /api/shop-config/customer-style/list`（返回 `role / salutation / setting / example / toServices`）。
 
-## 5. 自定义Agent（后台）实操要点
+## 5. 先查知识库，再决定要不要建 Agent（2026-09-28 德达实测）
+
+**结论：买家问题能在知识库里找到现成问答卡（QA/三段式）的，不要建 Agent。**
+Agent 只在三种情况下有增量：① 多轮流程（要分步推进、每步确认）；② 要 `@` 引用表格/工具做查表计算；③ 需要强制约束口径（也可写进自定义风格，风格不计 Agent 费）。
+
+实测（德达医疗旗舰店，仅 1 店）：原 5 类拆分 Agent（选型/雾化/礼品/运费退换/配件）的内容在知识库里**全都有现成卡**，例如：
+
+| 类型 | 知识库现有卡（示例） |
+| --- | --- |
+| 雾化 | `雾化/是什么？/*`、`雾化/使用/*`、`雾化/售后/*`、`雾化/雾化配件/*`、`C1L专属：雾化功能`、`售后/C1：C1不带雾化和遥控器` |
+| 礼品/赠品 | `礼品/售前礼品问题/*`、`礼品/礼品分开发/*`、`晒图/发货后/*` |
+| 运费/退换 | `运费承担原则`、`运费/0.运费责任归属/*`、`运费/1.买家责任/*`、`运费/2.我司责任/*`、`退货/*`、`换货/*` |
+| 配件/耗材 | `使用教程/*`、`滤芯`、`过滤棉`、`鼻音管`、`便携制氧/*` |
+| 选型 | `选款/有基础疾病→医用推荐/*`、`选款/款式对比、区别？/*`、`需求/需求（第一步，挖掘需求）/*` |
+
+操作：把这 5 个 Agent 全部 `toggle` + `drafts-toggle` 关掉（保留不删，可回滚），即可回到“默认智能体 + 知识库 + 自定义风格”，当天无 Agent 调用 → 1 积分/次。
+
+### 怎么核实（两个证据链）
+
+1. **知识库有没有现成卡**：
+   - 后台知识库页搜索框（对应接口 `POST /api/kbe/v1/knowledge-card/page`）。
+   - ⚠️ 该接口只认 `searchKnowledge`（`title`/`keyword`/`searchKey` 都会被忽略、返回全量）；分页是游标式（`lastUpdatedAt`+`lastId`），用 `pageIndex` 翻页会拿到重复数据。
+2. **回答到底走没走 Agent**（改完必验）：
+   - 调优工坊 → 点开任意记录 → 详情里的 **「自定义Agent」字段**：有值=走了 Agent（实测旧记录显示“通用规则”）；空=默认智能体。
+   - **场景回放**（详情抽屉里的按钮）：`POST /api/im/agent-scene-replay/start {cardId, thirdShopId}`，结果查 `GET /api/im/agent-scene-replay/latest?thirdShopId=&cardId=`。
+     用当前配置重生成同一条咨询，可验证知识库/风格改动（**不支持**触发器/话术拦截/兜底话术）；回放记录的“生成结果”下方**没有「自定义Agent」行** = 确实没走 Agent。
+   - 实测结果：德达 2026-09-28 13:35 的“C1 少配件”那条，回放后由默认智能体作答，内容正确（先答 C1 不带遥控器/雾化器，再按知识库要求请买家发照片核对是否漏发，不擅自承诺补发）。
+
+### 还缺卡的情况怎么办
+
+搜不到现成卡（如德达的“配件怎么买/在哪买”）→ 先向用户要业务口径再补卡；**不要凭空编造购买路径或价格**。
+
+## 6. 自定义Agent（后台）实操要点
 
 - 列表：`GET /api/copilot/v1/agent/customized-agent/list`（含 `isRun` 正式版本开关、`draftsIsRun` 草稿开关、`orderStatus`、`relationShop/relationProducts`）。
 - 新建/改名：`POST /api/kbe/v1/agent/customized-agent/save`（body 含 `name` + 适用范围/店铺/客服/订单状态；返回新 id；改名时带 `id` + 新 `name`，改完回读列表）。
@@ -59,14 +91,14 @@
   - 只关“正式”不够：草稿开着时仍可能在用草稿内容，改完必须回读列表确认 `isRun=false` **且** `draftsIsRun=false`。
 - 工具：`01.通用/工具/探域自定义AgentAPI模板.cjs`（list/detail/save-draft/publish，发布需显式 `--allow-publish true`）。
 
-## 6. 改完怎么验证
+## 7. 改完怎么验证
 
 1. **状态回读**：Agent 的 `isRun`、`orderStatus`、`relationShop` 是否按预期；风格是否已绑定客服。
 2. **效果验证**：用调优工坊「场景回放」验证知识库/自定义Agent/风格改动是否生效（触发器、话术拦截、兜底话术不在回放范围）。
 3. **成本验证**：调优工坊按天看生成量（`POST /api/im/agent-trace/paginateV2`，body `{thirdShopId,pageIndex,pageSize,beginTime,endTime}`），配合积分余额 `GET /api/gc/subscription-order/points/usage-status`；出现"当天没有任何 Agent 调用"的日子，才算真的省到。
 4. **基线先行**：改动前先记一天的生成量/余额，否则事后无法归因。
 
-## 7. 坑
+## 8. 坑
 
 - 计费是"店铺×天"级：**只要当天有一次 Agent 调用，全天按 1.5**——留着"顺手用一下"的宽触发 Agent，等于全天涨价。
 - 触发描述收得太窄会漏推荐：拆分后要按真实对话抽查命中情况（调优工坊）。
