@@ -51,7 +51,7 @@ node scripts/生成待登记清单.js --文本 "<客服消息原文>" --平台�
 
 | 角色 | 文件/命令 |
 |---|---|
-| 文档里的只读脚本（用户在文档里粘一次、保存、生成同步 webhook） | `kdocs-scripts/AirScript-只读查询订单号.md` |
+| 文档里的只读脚本（用户在文档里粘一次、保存、生成同步 webhook） | **本机私有**：`project-config/kdocs-scripts/AirScript-只读查询订单号.md`（含公司链接与表结构，**不入库**，用户 2026-09-28 拍板） |
 | 调用端 | `src/金山脚本客户端.js` + `scripts/查登记表.js` |
 | 本机配置（不入库） | `project-config/kdocs-airscript.json`（`scripts.query.webhookUrl` + 令牌，令牌可回退读 12号） |
 | 诊断（看表到底有多少行、最后一行几号） | `node scripts/查登记表.js --尾部` |
