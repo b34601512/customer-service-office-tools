@@ -15,9 +15,10 @@
 
 ## 2. 拆分原则（一个 Agent 只干一件事）
 
-1. **触发场景描述写"买家情形"，不写场景名**。
+1. **触发场景描述写"买家情形"，不写场景名**；**名称也要具体到一个问题类型**（如「雾化判断」「运费与退换」，而不是「售前咨询」「通用咨询」）。
    - 反例：「售前咨询」「通用咨询」——等于全部放开，普通咨询也会命中。
    - 正例：「买家问该买几升/哪款适合、说出血氧或使用档位时」。必要时列多条情形。
+   - 名称按表单说明是"内部展示和管理用"，路由仍由触发场景描述决定；但名称不具体会让人误以为"范围很宽"，也容易漏建/重复建。
 2. **一个 Agent 只保留"多轮推进型流程"**（需要按步骤收集信息再给结论的场景，如选型推荐、定制留资、议价）。
    一次性可查的信息（参数、材质、政策、FAQ）都不该进 Agent。
 3. **触发范围能收就收**：订单状态（售前/售中/售后）、指定商品或商品组，都是缩小命中面的开关；多个 Agent 的触发描述要互斥。
@@ -46,6 +47,9 @@
 ## 5. 自定义Agent（后台）实操要点
 
 - 列表：`GET /api/copilot/v1/agent/customized-agent/list`（含 `isRun` 正式版本开关、`draftsIsRun` 草稿开关、`orderStatus`、`relationShop/relationProducts`）。
+- 新建/改名：`POST /api/kbe/v1/agent/customized-agent/save`（body 含 `name` + 适用范围/店铺/客服/订单状态；返回新 id；改名时带 `id` + 新 `name`，改完回读列表）。
+  - **新建出来的 Agent 默认未启用**（`isRun=false`）：发布内容后还要把正式/草稿两个开关都打开才生效。
+  - 名称要具体到一个问题类型（如「雾化判断」），不要用「售前咨询」这种大范围名字。
 - 详情：`GET /api/copilot/v1/agent/customized-agent/detail?id=...`（`draftContent` / `onlineContent`）。
 - 改内容并发布：`POST /api/copilot/v1/agent/customized-agent/publish`，body `{id, content, desc, labelGroupId, labelMeta, tableIds, toolType}`；发布后用 detail 回读 `onlineContent` 比对。
 - 启停（两个开关，都要关才算真正停用）：
