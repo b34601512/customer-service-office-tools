@@ -2,3 +2,6 @@
 project-config/
 *.local.json
 *.local.js
+
+# 轮询状态（本机，不入库）
+.state/
