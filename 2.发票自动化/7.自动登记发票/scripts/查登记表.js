@@ -7,7 +7,8 @@
 //   node scripts/查登记表.js 260903-171347832413939            # 查订单号（默认只查登记子表）
 //   node scripts/查登记表.js --尾部                            # 只诊断：行数 / 最后一行 / 各年条数 / 最后几行
 //   node scripts/查登记表.js 260903-171347832413939 --全部表     # 全部工作表都扫（慢）
-//   node scripts/查登记表.js --sheets "德达医疗器械发票登记 --毛叶红" 260903-171347832413939
+//   node scripts/查登记表.js --行 2751                      # 按行号读（带列字母，核对字段/看填写样式）
+//   node scripts/查登记表.js --行 2740-2760
 //   node scripts/查登记表.js 260903-171347832413939 --out project-config/查重-260903.json
 const fs = require("fs");
 const path = require("path");
@@ -22,6 +23,13 @@ function 解析参数(argv) {
     if (词 === "--sheets") { 结果.sheets = String(argv[i + 1] || "").split(",").map((s) => s.trim()).filter(Boolean); i += 1; continue; }
     if (词 === "--全部表") { 结果.全部表 = true; continue; }
     if (词 === "--尾部") { 结果.只诊断 = true; if (/^\d+$/.test(String(argv[i + 1] || ""))) { 结果.尾部 = Number(argv[i + 1]); i += 1; } continue; }
+    if (词 === "--行") {
+      const 范围 = String(argv[i + 1] || "").split("-");
+      结果.rowFrom = Number(范围[0]);
+      结果.rowTo = Number(范围[1] || 范围[0]);
+      i += 1;
+      continue;
+    }
     if (词 === "--out") { 结果.out = argv[i + 1]; i += 1; continue; }
     if (词 === "--最大行") { 结果.最大行 = Number(argv[i + 1]); i += 1; continue; }
     if (词.startsWith("--")) continue;
@@ -32,11 +40,12 @@ function 解析参数(argv) {
 
 async function main() {
   const 参数 = 解析参数(process.argv.slice(2));
-  if (!参数.关键词.length && !参数.只诊断) {
-    console.error('用法：node scripts/查登记表.js <订单号...> | --尾部 [N] [--全部表] [--sheets "表1,表2"] [--out 文件]');
+  if (!参数.关键词.length && !参数.只诊断 && !参数.rowFrom) {
+    console.error('用法：node scripts/查登记表.js <订单号...> | --尾部 [N] | --行 2751 [--行 2740-2760] [--全部表] [--sheets "表1,表2"] [--out 文件]');
     process.exit(2);
   }
   const 请求 = { keywords: 参数.关键词, maxRows: 参数.最大行, tailRows: 参数.尾部 };
+  if (参数.rowFrom) { 请求.rowFrom = 参数.rowFrom; 请求.rowTo = 参数.rowTo; }
   if (参数.sheets) 请求.sheets = 参数.sheets;
   if (参数.全部表) 请求.allSheets = true;
 
@@ -53,6 +62,10 @@ async function main() {
   if (结果.tail && 结果.tail.length) {
     console.log("\n  最后几行（看填写样式）：");
     for (const 行 of 结果.tail) console.log(`    第 ${行.row} 行：${行.values.join(" | ").slice(0, 240)}`);
+  }
+  if (结果.dump && 结果.dump.length) {
+    console.log(`\n  按行读出 ${结果.dump.length} 行（列字母=值）：`);
+    for (const 行 of 结果.dump) console.log(`    第 ${行.row} 行：${行.values.join(" | ").slice(0, 400)}`);
   }
   if (参数.out) {
     const 输出路径 = path.isAbsolute(参数.out) ? 参数.out : path.join(项目根, 参数.out);
