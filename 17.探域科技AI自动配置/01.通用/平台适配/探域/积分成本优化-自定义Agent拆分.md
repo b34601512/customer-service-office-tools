@@ -48,7 +48,10 @@
 - 列表：`GET /api/copilot/v1/agent/customized-agent/list`（含 `isRun` 正式版本开关、`draftsIsRun` 草稿开关、`orderStatus`、`relationShop/relationProducts`）。
 - 详情：`GET /api/copilot/v1/agent/customized-agent/detail?id=...`（`draftContent` / `onlineContent`）。
 - 改内容并发布：`POST /api/copilot/v1/agent/customized-agent/publish`，body `{id, content, desc, labelGroupId, labelMeta, tableIds, toolType}`；发布后用 detail 回读 `onlineContent` 比对。
-- 启停：`POST /api/kbe/v1/agent/customized-agent/toggle`，body `{id, isRun}`（正式/草稿各一个开关；改完必须回读列表确认 `isRun`）。
+- 启停（两个开关，都要关才算真正停用）：
+  - 正式版本：`POST /api/kbe/v1/agent/customized-agent/toggle`，body `{id, isRun}`
+  - 草稿版本：`POST /api/kbe/v1/agent/customized-agent/drafts-toggle`，body `{id, isRun}`
+  - 只关“正式”不够：草稿开着时仍可能在用草稿内容，改完必须回读列表确认 `isRun=false` **且** `draftsIsRun=false`。
 - 工具：`01.通用/工具/探域自定义AgentAPI模板.cjs`（list/detail/save-draft/publish，发布需显式 `--allow-publish true`）。
 
 ## 6. 改完怎么验证
