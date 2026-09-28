@@ -1,0 +1,12 @@
+{
+  "name": "platform-appeal-backend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "后台申诉（拼多多维权申诉）：找可申诉单、抓证据、填表/提交、查审核结果（真实提交须用户批准）",
+  "scripts": {
+    "test": "node --test"
+  },
+  "dependencies": {
+    "playwright-core": "^1.62.1"
+  }
+}
