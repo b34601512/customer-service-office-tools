@@ -48,6 +48,7 @@
 
 - 列表：`GET /api/copilot/v1/agent/customized-agent/list`（含 `isRun` 正式版本开关、`draftsIsRun` 草稿开关、`orderStatus`、`relationShop/relationProducts`）。
 - 新建/改名：`POST /api/kbe/v1/agent/customized-agent/save`（body 含 `name` + 适用范围/店铺/客服/订单状态；返回新 id；改名时带 `id` + 新 `name`，改完回读列表）。
+- 删除：`POST /api/kbe/v1/agent/customized-agent/delete`（body `{id}`；UI 卡片右下角垃圾桶 → 确认框）。**不可回滚**，删前必须：① 把 detail 的 desc/content/orderStatus/relationShop 备份到本地；② 逐条核对内容已被接走（其他 Agent / 自定义风格 / 知识库）；③ 得用户明确同意。
   - **新建出来的 Agent 默认未启用**（`isRun=false`）：发布内容后还要把正式/草稿两个开关都打开才生效。
   - 名称要具体到一个问题类型（如「雾化判断」），不要用「售前咨询」这种大范围名字。
 - 详情：`GET /api/copilot/v1/agent/customized-agent/detail?id=...`（`draftContent` / `onlineContent`）。
