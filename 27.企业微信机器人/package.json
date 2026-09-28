@@ -1,0 +1,10 @@
+{
+  "name": "wecom-robot-ai-guide",
+  "version": "1.0.0",
+  "private": true,
+  "description": "27号：企业微信 × AI 接入手册（Skill/CLI/Webhook）与可复用工具",
+  "scripts": {
+    "test": "node --test",
+    "check": "node scripts/检查企微环境.js"
+  }
+}
