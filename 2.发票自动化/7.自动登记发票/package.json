@@ -1,0 +1,9 @@
+{
+  "name": "invoice-registration",
+  "version": "0.1.0",
+  "private": true,
+  "description": "7号：自动登记发票（消息解析 → ERP 查单 → 算金额 → 出待登记清单；写表需授权）",
+  "scripts": {
+    "test": "node --test"
+  }
+}
