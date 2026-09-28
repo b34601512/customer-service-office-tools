@@ -3,22 +3,22 @@
     "webhookUrl": "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=在此填写机器人key",
     "webhookName": "工单提醒群",
     "memberMobileMap": {
-      "李守耀": "18923872211",
-      "缪婷婷": "18520864897",
-      "柯紫婷": "13411062809",
-      "邓远祥": "18975175710",
-      "陈燕玲": "13923800587",
-      "黎路遥": "19925378376"
+      "售后主管张三": "13800000001",
+      "客服王五": "13800000002",
+      "客服赵六": "13800000003",
+      "客服钱七": "13800000004",
+      "客服孙八": "13800000005",
+      "客服主管李四": "13800000006"
     }
   },
   "duty": {
-    "scheduleUrl": "https://www.kdocs.cn/l/cga7jWGHxzkp",
+    "scheduleUrl": "https://www.kdocs.cn/l/<排班表文档ID>",
     "group": "售后",
     "leadNames": [
-      "李守耀"
+      "售后主管张三"
     ],
     "managerNames": [
-      "黎路遥"
+      "客服主管李四"
     ],
     "nonMarkerColors": [
       "#FFFFFF"
@@ -47,7 +47,7 @@
           "key": "jd1",
           "displayName": "京东1店",
           "enabled": false,
-          "username": "德达官方旗舰店--小黛",
+          "username": "示例旗舰店账号A",
           "mentionedMobileList": [],
           "sources": [
             {
@@ -81,7 +81,7 @@
           "key": "jd3",
           "displayName": "京东3店",
           "enabled": false,
-          "username": "DEDAKJ器械店--小黛",
+          "username": "示例旗舰店账号B",
           "mentionedMobileList": [],
           "sources": [
             {
@@ -115,7 +115,7 @@
           "key": "jd6",
           "displayName": "京东6店",
           "enabled": false,
-          "username": "DEDAKJ自营--小黛",
+          "username": "示例旗舰店账号C",
           "mentionedMobileList": [],
           "sources": [
             {

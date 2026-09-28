@@ -1,0 +1,5 @@
+{
+  "targetUrl": "https://<客服工作台域名>/main/<组织ID>/<分组ID>/chat",
+  "scheduleUrl": "https://www.kdocs.cn/l/<排班表文档ID>",
+  "managerStaffName": "主管姓名"
+}
