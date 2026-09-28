@@ -82,12 +82,50 @@ async function findDouyinMerchantHomePage(browser) {
   return null;
 }
 
+async function isDouyinPageNearlyBlank(page) {
+  // 解决（2026-09-27 09:34 白屏误判 + 2026-09-28 09:10 复发）：
+  // 登录页壳渲染失败时 body 无文本、根节点零高度、没有任何可见控件，
+  // 此时会话其实有效，直接 F5 重载一次即可回到商家首页（工具自身修复动作，不请求平台数据）。
+  try {
+    const snapshot = await page.evaluate(() => {
+      const body = document.body;
+      const text = body ? String(body.innerText || "").trim() : "";
+      const roots = body ? Array.from(body.children) : [];
+      const maxRootHeight = roots.reduce((max, element) => {
+        const rect = element.getBoundingClientRect();
+        return Math.max(max, rect.height || 0);
+      }, 0);
+      const visibleControls = Array.from(document.querySelectorAll("input, button, a"))
+        .filter((element) => {
+          const rect = element.getBoundingClientRect();
+          return rect.width > 0 && rect.height > 0;
+        }).length;
+      return { textLength: text.length, maxRootHeight, visibleControls };
+    });
+    return Boolean(snapshot)
+      && snapshot.textLength === 0
+      && snapshot.maxRootHeight < 10
+      && snapshot.visibleControls === 0;
+  } catch (_error) {
+    return false;
+  }
+}
+
+async function reloadDouyinBlankPageOnce(page, reloadedPages) {
+  if (reloadedPages.has(page)) return false;
+  reloadedPages.add(page);
+  if (!await isDouyinPageNearlyBlank(page)) return false;
+  await page.reload({ waitUntil: "domcontentloaded", timeout: 60000 }).catch(() => {});
+  return true;
+}
+
 async function waitForDouyinLoginRecovery(browser, loginPage, options = {}) {
   // 人工完成手机号验证码后，必须等商家首页真实店铺头部出现才算恢复。
   // 登录开始前就存在的残留旧页签不能作数：它们可能是上一轮未刷新的页面，
   // 否则过期会话会被秒判“已登录”，后续切店只能在未登录页上找不到入口。
   const timeoutMs = Number(options.loginRecoveryTimeoutMs) || DOUYIN_LOGIN_RECOVERY_TIMEOUT_MS;
   const knownPagesBeforeLogin = new Set(listDouyinBrowserPages(browser));
+  const reloadedBlankPages = new Set();
   const deadline = Date.now() + timeoutMs;
   while (Date.now() <= deadline) {
     if (await isDouyinMerchantHomePage(loginPage)) {
@@ -97,6 +135,12 @@ async function waitForDouyinLoginRecovery(browser, loginPage, options = {}) {
     for (const freshPage of freshPages) {
       if (await isDouyinMerchantHomePage(freshPage)) {
         return freshPage;
+      }
+    }
+    // 空白页每个页签最多重载一次；真实登录表单有可见控件，不会被误重载（不打断人工输入）。
+    for (const candidatePage of [loginPage, ...freshPages]) {
+      if (await reloadDouyinBlankPageOnce(candidatePage, reloadedBlankPages)) {
+        break;
       }
     }
     await loginPage.waitForTimeout(DOUYIN_POLL_INTERVAL_MS);

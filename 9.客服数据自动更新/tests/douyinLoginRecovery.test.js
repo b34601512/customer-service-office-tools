@@ -11,6 +11,18 @@ function makeFakeDouyinPage(name) {
     name,
     hasHeader: false,
     onPoll: null,
+    blank: false,
+    reloads: 0,
+    onReload: null,
+    async evaluate() {
+      return page.blank
+        ? { textLength: 0, maxRootHeight: 0, visibleControls: 0 }
+        : { textLength: 120, maxRootHeight: 600, visibleControls: 5 };
+    },
+    async reload() {
+      page.reloads += 1;
+      if (page.onReload) await page.onReload();
+    },
     locator() {
       return {
         first() {
@@ -74,6 +86,38 @@ function makeFakeDouyinPage(name) {
   };
   const recoveredNewTab = await waitForDouyinLoginRecovery(fakeBrowser3, loginPage3, { loginRecoveryTimeoutMs: 5000 });
   assert.strictEqual(recoveredNewTab.name, "fresh-home");
+
+  // 场景四（2026-09-27/09-28 白屏误判）：空白登录页 F5 重载一次后恢复 → 必须返回该页且只重载一次。
+  const loginPage4 = makeFakeDouyinPage("blank-login");
+  loginPage4.blank = true;
+  loginPage4.onReload = async () => {
+    loginPage4.blank = false;
+    loginPage4.hasHeader = true;
+  };
+  const fakeBrowser4 = { contexts: () => [{ pages: () => [loginPage4] }] };
+  const recoveredBlank = await waitForDouyinLoginRecovery(fakeBrowser4, loginPage4, { loginRecoveryTimeoutMs: 5000 });
+  assert.strictEqual(recoveredBlank, loginPage4, "空白页重载后必须视为登录恢复");
+  assert.strictEqual(loginPage4.reloads, 1, "空白页只允许重载一次");
+
+  // 场景五（反向断言）：一直空白也不许反复重载，只能重载一次并等待超时。
+  const loginPage5 = makeFakeDouyinPage("still-blank");
+  loginPage5.blank = true;
+  const fakeBrowser5 = { contexts: () => [{ pages: () => [loginPage5] }] };
+  await assert.rejects(
+    () => waitForDouyinLoginRecovery(fakeBrowser5, loginPage5, { loginRecoveryTimeoutMs: 80 }),
+    /等待抖音人工登录超时/,
+    "持续空白不得被误判恢复"
+  );
+  assert.strictEqual(loginPage5.reloads, 1, "持续空白只允许重载一次，不许反复刷新");
+
+  // 场景六（反向断言）：真实登录表单（有可见控件）绝不能被重载打断人工输入。
+  const loginPage6 = makeFakeDouyinPage("real-login-form");
+  const fakeBrowser6 = { contexts: () => [{ pages: () => [loginPage6] }] };
+  await assert.rejects(
+    () => waitForDouyinLoginRecovery(fakeBrowser6, loginPage6, { loginRecoveryTimeoutMs: 80 }),
+    /等待抖音人工登录超时/
+  );
+  assert.strictEqual(loginPage6.reloads, 0, "非空白登录页不得重载");
 
   console.log("douyinLoginRecovery.test.js: all assertions passed");
 })().catch((error) => {
