@@ -15,6 +15,7 @@ const { execFileSync } = require("child_process");
 const { projectPath } = require("../../config/stores");
 const { classifyOrder } = require("./safetyClassify");
 const { rowMatchesOrder } = require("./orderNoMatch");
+const { TORN_SHEET_URL } = require("./tornSheet");
 
 const PLATFORMS = {
   tmall: {
@@ -114,7 +115,7 @@ function runReview(options) {
   let tornRows = [];
   if (!options.skipKdocs) {
     const tornFile = projectPath("runtime", "review", `撕单表-${runStamp}.json`);
-    runNode(["src/tools/read-kdocs.js", "--url", "https://www.kdocs.cn/l/csvonDeJ0BE2", "--sheet", "撕单表", "--out", path.relative(projectPath(), tornFile)], "金山《撕单表》只读");
+    runNode(["src/tools/read-kdocs.js", "--url", TORN_SHEET_URL, "--sheet", "撕单表", "--out", path.relative(projectPath(), tornFile)], "金山《撕单表》只读");
     const torn = JSON.parse(fs.readFileSync(tornFile, "utf8"));
     const matrix = torn.matrix || [];
     const header = (matrix[0] || []).map((x) => String(x || "").trim());
