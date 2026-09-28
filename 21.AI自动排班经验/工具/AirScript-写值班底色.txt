@@ -4,14 +4,14 @@
 //
 // 入参（Context.argv）：
 //   写底色 { operationType:'write_seller_duty_colors', requiredScriptVersion:'2026-09-24.1',
-//            sheetName:'2026年10月', dayCount:31, duties:[{name:'韩欢欢', day:1, shift:'早'}, ...] }
+//            sheetName:'2026年10月', dayCount:31, duties:[{name:'周九', day:1, shift:'早'}, ...] }
 //   只读诊断 { operationType:'diagnose_colors', 其余同上（只读，不写） }
 //
 // 边界：只认售前 5 人名单；只写 duties 指定的格；写前逐格核对「当前班次 = 值班班次」（不符一格不写）；
 //       写后回读颜色+班次、保存；不写值、不动字体/边框/统计列/其他月表。
 
 const VERSION = '2026-09-24.1'
-const SELLERS = ['韩欢欢', '麦诺谦', '叶炳辉', '徐佳楠', '刘秀文']
+const SELLERS = ['周九', '郑十一', '冯十三', '王十二', '吴十']
 const GREEN_HEX = '#E2F0D9'
 const MIN_DAYS = 28
 const MAX_DAYS = 31

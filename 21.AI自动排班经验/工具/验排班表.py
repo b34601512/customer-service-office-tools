@@ -7,11 +7,11 @@
 统计列（休息/早班/晚班/实到/应到）如果是公式，按“公式结构”验：
 必须覆盖整月（`$C4:$AG4`）或按当月天数动态取范围（`OFFSET` + 引用「本月天数：」格），
 避免 30 天的月份把 31 号空白算成休息；如果是数值，则直接和矩阵对账。
-售后值班也要验：每班（早/晚）只标 1 人浅蓝 `BDD7EE`，组长李守耀在岗时他本人标黄 `FFFF00`。
+售后值班也要验：每班（早/晚）只标 1 人浅蓝 `BDD7EE`，组长李四在岗时他本人标黄 `FFFF00`。
 
 用法：
-    python 验排班表.py --xlsx "测试数据\\2026年10月客服排班表.xlsx" --lead 李守耀
-    python 验排班表.py --xlsx 本月.xlsx --prev "……\\2026年9月.tsv" --lead 李守耀 --json 报告.json
+    python 验排班表.py --xlsx "测试数据\\2026年10月客服排班表.xlsx" --lead 李四
+    python 验排班表.py --xlsx 本月.xlsx --prev "……\\2026年9月.tsv" --lead 李四 --json 报告.json
 
 只负责“判”；怎么改还是人（或别的单一用途小工具）的事。
 """
@@ -871,7 +871,7 @@ def main() -> None:
     parser.add_argument("--xlsx", required=True, help="本月排班表（xlsx 或 TSV）")
     parser.add_argument("--sheet", help="工作表名（默认活动表）")
     parser.add_argument("--prev", help="上月表（xlsx 或快照 TSV），用于跨月衔接校验")
-    parser.add_argument("--lead", default="李守耀", help="售后组长（全早、休日全员上班）")
+    parser.add_argument("--lead", default="李四", help="售后组长（全早、休日全员上班）")
     parser.add_argument("--green", default=GREEN, help=f"值班绿标颜色，默认 {GREEN}")
     parser.add_argument("--max-streak", type=int, default=6, help="连续上班上限（默认 6，验收清单是 ≤6）")
     parser.add_argument("--json", help="把问题清单写到 JSON")

@@ -47,12 +47,12 @@ test("没有任何店铺报错", () => {
 
 const withDuty = () => {
   const c = base();
-  c.wecom.memberMobileMap = { "黎路遥": "19925378376", "李守耀": "18923872211" };
+  c.wecom.memberMobileMap = { "张三": "13800000101", "李四": "13800000102" };
   c.duty = {
     scheduleUrl: "https://www.kdocs.cn/l/cga7jWGHxzkp",
     group: "售后",
-    leadNames: ["李守耀"],
-    managerNames: ["黎路遥"]
+    leadNames: ["李四"],
+    managerNames: ["张三"]
   };
   return c;
 };
@@ -63,8 +63,8 @@ test("合法 duty 配置通过", () => {
 
 test("主管/组长没手机号无法@报错", () => {
   const c = withDuty();
-  c.wecom.memberMobileMap = { "李守耀": "18923872211" };
-  assert.throws(() => validateConfig(c), /黎路遥.*手机号/);
+  c.wecom.memberMobileMap = { "李四": "13800000102" };
+  assert.throws(() => validateConfig(c), /张三.*手机号/);
 });
 
 test("duty 缺组长名单报错", () => {

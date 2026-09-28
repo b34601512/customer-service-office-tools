@@ -63,9 +63,9 @@ function testCliRendersFinishedRunOutcome() {
   renderDashboard({ terminal, projectConfig, state: { summaryRunFinishedAt: "2026-08-01T08:00:00.000Z", summaryTasks: finishedTasks } });
   const outputText = outputLines.join("\n");
   assert.match(outputText, /客服数据自动更新/);
-  assert.match(outputText, /作者：黎路遥/);
-  assert.match(outputText, /微信：luyao2089/);
-  assert.match(outputText, /官网：https:\/\/luyao2089\.cc/);
+  assert.match(outputText, /作者：张三/);
+  assert.match(outputText, /微信：account001/);
+  assert.match(outputText, /官网：https:\/\/account001\.cc/);
   assert.match(outputText, /共 1 家店铺全部成功/);
   assert.match(outputText, /平台\/店铺管理/);
   assert.match(outputText, /强制重新下载/);
@@ -74,7 +74,7 @@ function testCliRendersFinishedRunOutcome() {
 function testCliBrandMetadataIsComplete() {
   assert.strictEqual(
     formatCliBrandMetadata(),
-    "作者：黎路遥    微信：luyao2089    官网：https://luyao2089.cc"
+    "作者：张三    微信：account001    官网：https://account001.cc"
   );
 }
 

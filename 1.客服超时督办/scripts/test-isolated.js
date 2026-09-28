@@ -11,7 +11,7 @@ for (const entry of ["src", "tests", "scripts", "README.md", "启动中心.bat",
 }
 fs.mkdirSync(path.join(testRoot, "project-config"));
 fs.copyFileSync(path.join(projectRoot, "project-config", "reply-config.js"), path.join(testRoot, "project-config", "reply-config.js"));
-fs.writeFileSync(path.join(testRoot, "project-config", "app-config.json"), JSON.stringify({ targetUrl: "https://example.test/main/org/group/chat", scheduleUrl: "", managerStaffName: "黎路遥" }));
+fs.writeFileSync(path.join(testRoot, "project-config", "app-config.json"), JSON.stringify({ targetUrl: "https://example.test/main/org/group/chat", scheduleUrl: "", managerStaffName: "张三" }));
 fs.writeFileSync(path.join(testRoot, "project-config", "wecom-robot.json"), "{}");
 fs.cpSync(path.join(projectRoot, "node_modules", "playwright-core"), path.join(testRoot, "node_modules", "playwright-core"), { recursive: true });
 console.log(`隔离测试目录：${testRoot}`);

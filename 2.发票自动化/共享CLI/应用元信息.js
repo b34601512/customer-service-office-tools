@@ -1,9 +1,9 @@
 const fs = require('fs');
 const path = require('path');
 
-const 作者名称 = '黎路遥';
-const 作者微信 = 'luyao2089';
-const 官方网站域名 = 'luyao2089.cc';
+const 作者名称 = '张三';
+const 作者微信 = 'account001';
+const 官方网站域名 = 'account001.cc';
 const 总入口版本 = '0.01';
 
 function 读取JSON文件(文件路径) {

@@ -11,8 +11,8 @@ const {
 const baseEntry = {
   chatId: "chat-1",
   customerName: "客户甲",
-  sourceStaffName: "刘秀文",
-  targetStaffName: "叶炳辉",
+  sourceStaffName: "吴十",
+  targetStaffName: "冯十三",
   targetUserId: "pre-ye",
   reminderKind: "timeout"
 };
@@ -30,7 +30,7 @@ test("联系人快照改口到目标客服才算转接成功", () => {
   ]);
 
   assert.equal(pending.verified.length, 1);
-  assert.equal(pending.verified[0].targetStaffName, "叶炳辉");
+  assert.equal(pending.verified[0].targetStaffName, "冯十三");
   assert.equal(pending.failed.length, 0);
   assert.equal(pending.waiting.length, 0);
   assert.equal(listPendingTransferVerifications().length, 0);
@@ -74,7 +74,7 @@ test("快照里找不到该客户时按未核实处理，不能算成功", () =>
 
 test("同一客户重复登记只保留最新一条", () => {
   recordPendingTransferVerification(baseEntry);
-  recordPendingTransferVerification({ ...baseEntry, targetUserId: "pre-han", targetStaffName: "韩欢欢" });
+  recordPendingTransferVerification({ ...baseEntry, targetUserId: "pre-han", targetStaffName: "周九" });
 
   const pendingList = listPendingTransferVerifications();
   assert.equal(pendingList.length, 1);

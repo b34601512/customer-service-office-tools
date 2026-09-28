@@ -127,8 +127,8 @@
 
 ## 作者与版权
 
-作者：黎路遥  
-微信：`luyao2089`  
-话术精灵官网：`luyao2089.cc`
+作者：张三  
+微信：`account001`  
+话术精灵官网：`account001.cc`
 
-Copyright © 2026 黎路遥
+Copyright © 2026 张三

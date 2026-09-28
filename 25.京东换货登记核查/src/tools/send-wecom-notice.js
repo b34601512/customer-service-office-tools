@@ -2,8 +2,8 @@
 // 发企微群机器人消息（**默认只预演，不加 --send 绝不发送**）。
 //
 // 用法：
-//   node src/tools/send-wecom-notice.js --file runtime/kdocs/待发消息.txt --at 缪婷婷            # 预演，只打印
-//   node src/tools/send-wecom-notice.js --file runtime/kdocs/待发消息.txt --at 缪婷婷 --send     # 真发
+//   node src/tools/send-wecom-notice.js --file runtime/kdocs/待发消息.txt --at 王五            # 预演，只打印
+//   node src/tools/send-wecom-notice.js --file runtime/kdocs/待发消息.txt --at 王五 --send     # 真发
 //
 // 说明：webhook 与人员手机号在 project-config/wecom-notify.json（不入库）；
 //       企微文本消息上限 2048 字节，超了直接报错不发送。

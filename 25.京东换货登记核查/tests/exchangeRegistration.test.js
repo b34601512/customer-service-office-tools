@@ -19,7 +19,7 @@ const CLEAN = [
   { c: 17, v: "无需处理" },
   { c: 18, v: "无需处理" },
   { c: 19, v: "无需处理" },
-  { c: 22, v: "李守耀" },
+  { c: 22, v: "李四" },
   { c: 23, v: "客户申请了上门换新服务" }
 ];
 
@@ -37,7 +37,7 @@ test("三个选项列空着 → 仍然 ok（用户 2026-09-27 拍板：空着没
 });
 
 test("地址列填了内容 → risk（这是唯一会害工厂重复换货的填写）", () => {
-  const dirty = CLEAN.concat([{ c: 10, v: "李娜 18466103809 陕西省 渭南市 大荔县 城关街道" }]);
+  const dirty = CLEAN.concat([{ c: 10, v: "李娜 13800000108 陕西省 渭南市 大荔县 城关街道" }]);
   const verdict = judgeOrder([row(28138, dirty)]);
   assert.equal(verdict.verdict, "risk");
   assert.match(verdict.problems.join(" "), /地址列填了/);

@@ -10,12 +10,12 @@ const msg = (o) => o;
 const raw = {
   code: 0,
   data: [
-    msg({ body: { type: 'text', content: '德迩杰', chatinfo: { sid: 'S1' } }, from: { app: 'im.waiter', pin: 'dedakj自营--璇璇' }, datetime: ms(8, 39, 27) }),
+    msg({ body: { type: 'text', content: '德迩杰', chatinfo: { sid: 'S1' } }, from: { app: 'im.waiter', pin: 'dedakj自营--客服甲' }, datetime: ms(8, 39, 27) }),
     msg({ body: { type: 'text', content: '你这是什么牌子？', chatinfo: { sid: 'S1' } }, from: { app: 'im.customer', pin: 'jd_x' }, datetime: ms(8, 39, 19) }),
-    msg({ body: { type: 'text', content: '#E-s33', chatinfo: { sid: 'S1' } }, from: { app: 'im.waiter', pin: 'dedakj自营--璇璇' }, datetime: ms(8, 37, 13) }),
+    msg({ body: { type: 'text', content: '#E-s33', chatinfo: { sid: 'S1' } }, from: { app: 'im.waiter', pin: 'dedakj自营--客服甲' }, datetime: ms(8, 37, 13) }),
     msg({ body: { type: 'text', content: '亲亲～不用哒～<br/>无需添加任何制氧剂哦～', chatinfo: {} }, from: { app: 'im.waiter', pin: '@im.jd.com' }, datetime: ms(8, 37, 5) }),
     msg({ body: { type: 'text', content: '制氧机要加制氧剂吗？', chatinfo: { sid: 'S1' } }, from: { app: 'im.customer', pin: 'jd_x' }, datetime: ms(8, 37, 5) }),
-    msg({ body: { type: 'template2', chatinfo: { pushContent: '欢迎您光临本店' }, data: { tplData: { data: [{ data: { title: '欢迎您光临本店' }, type: 'header' }, { data: { content: '欢迎光临呀～有什么想了解的随时告诉我哦～' }, type: 'richText' }] } } }, from: { app: 'im.waiter', pin: 'DEDAKJ自营--小黛' }, datetime: ms(8, 37, 0) }),
+    msg({ body: { type: 'template2', chatinfo: { pushContent: '欢迎您光临本店' }, data: { tplData: { data: [{ data: { title: '欢迎您光临本店' }, type: 'header' }, { data: { content: '欢迎光临呀～有什么想了解的随时告诉我哦～' }, type: 'richText' }] } } }, from: { app: 'im.waiter', pin: 'DEDAKJ自营--客服辛' }, datetime: ms(8, 37, 0) }),
     msg({ body: { type: 'template2', chatinfo: {}, data: { tplData: { data: [{ data: { title: '德国DEDAKJ制氧机，制氧雾化一体机' }, type: 'header' }] } } }, from: { app: 'im.waiter', pin: 'jimi_vender_1000236020' }, datetime: ms(8, 36, 25) })
   ]
 };
@@ -23,12 +23,12 @@ const raw = {
 test('角色判定：机器人/自动应答/模板卡片都算 system', () => {
   assert.deepStrictEqual(classifyMessage({ from: { app: 'im.customer', pin: 'jd_x' }, body: {} }), { role: 'customer', label: '' });
   assert.deepStrictEqual(classifyMessage({ from: { app: 'im.waiter', pin: '@im.jd.com' }, body: { type: 'text' } }), { role: 'system', label: '自动回复' });
-  assert.deepStrictEqual(classifyMessage({ from: { app: 'im.waiter', pin: 'dedakj自营--璇璇' }, body: { type: 'text' } }), { role: 'waiter', label: '' });
+  assert.deepStrictEqual(classifyMessage({ from: { app: 'im.waiter', pin: 'dedakj自营--客服甲' }, body: { type: 'text' } }), { role: 'waiter', label: '' });
   // 以店铺账号名义下发的菜单自动答案（action.code=cfg.welcome.new）也是自动回复
-  assert.deepStrictEqual(classifyMessage({ from: { app: 'im.waiter', pin: 'DEDAKJ自营--安安' }, body: { type: 'text', action: { code: 'cfg.welcome.new' } } }), { role: 'system', label: '自动回复' });
+  assert.deepStrictEqual(classifyMessage({ from: { app: 'im.waiter', pin: 'DEDAKJ自营--客服乙' }, body: { type: 'text', action: { code: 'cfg.welcome.new' } } }), { role: 'system', label: '自动回复' });
   // 模板卡片
   assert.strictEqual(classifyMessage({ from: { pin: 'jimi_vender_1000236020' }, body: { type: 'template2' } }).label, '商品卡片');
-  assert.strictEqual(classifyMessage({ from: { pin: 'DEDAKJ自营--小黛' }, body: { type: 'template2', chatinfo: { pushContent: '欢迎您光临本店' } } }).label, '欢迎语');
+  assert.strictEqual(classifyMessage({ from: { pin: 'DEDAKJ自营--客服辛' }, body: { type: 'template2', chatinfo: { pushContent: '欢迎您光临本店' } } }).label, '欢迎语');
 });
 
 test('文本清洗：去 HTML、#E-s 表情编码换成（表情）', () => {

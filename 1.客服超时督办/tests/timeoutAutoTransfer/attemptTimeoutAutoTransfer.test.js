@@ -34,7 +34,7 @@ const config = {
 
 const memberMapByUserId = {
   "operation-1": { userId: "operation-1", staffName: "运营", staffGroup: "operation" },
-  "pre-ye": { userId: "pre-ye", staffName: "叶炳辉", staffGroup: "pre_sales" }
+  "pre-ye": { userId: "pre-ye", staffName: "冯十三", staffGroup: "pre_sales" }
 };
 
 const assignment = {
@@ -47,7 +47,7 @@ function buildScheduleData() {
   return {
     backgroundColorAvailable: true,
     shiftMap: {
-      叶炳辉: { normalizedShift: "早班", hasBackgroundColor: true, backgroundColor: "#E2F0D9" }
+      冯十三: { normalizedShift: "早班", hasBackgroundColor: true, backgroundColor: "#E2F0D9" }
     }
   };
 }
@@ -100,7 +100,7 @@ test.beforeEach(() => {
       }
     ],
     member_directory: [
-      { name: "黎路遥", mobile: "19900000000", user_id: "", inline_mention_enabled: true }
+      { name: "张三", mobile: "19900000000", user_id: "", inline_mention_enabled: true }
     ]
   }));
   global.fetch = async () => ({
@@ -119,7 +119,7 @@ test.after(() => {
 test("运营超时应该通过页面 socket 发出 assignChat 事件并登记待核验", async () => {
   publishOnlinePresenceSnapshot({
     rowsByStaffName: {
-      叶炳辉: { staffName: "叶炳辉", staffGroup: "pre_sales", transferEnabled: true }
+      冯十三: { staffName: "冯十三", staffGroup: "pre_sales", transferEnabled: true }
     }
   });
   const recorder = buildSentFrameRecorder();
@@ -142,14 +142,14 @@ test("运营超时应该通过页面 socket 发出 assignChat 事件并登记待
 
   const pendingList = listPendingTransferVerifications();
   assert.equal(pendingList.length, 1);
-  assert.equal(pendingList[0].targetStaffName, "叶炳辉");
+  assert.equal(pendingList[0].targetStaffName, "冯十三");
   assert.equal(pendingList[0].sourceStaffName, "运营");
 });
 
 test("当班客服不在线时不发转接指令，但必须@主管", async () => {
   publishOnlinePresenceSnapshot({
     rowsByStaffName: {
-      叶炳辉: { staffName: "叶炳辉", staffGroup: "pre_sales", transferEnabled: false }
+      冯十三: { staffName: "冯十三", staffGroup: "pre_sales", transferEnabled: false }
     }
   });
   const recorder = buildSentFrameRecorder();
@@ -188,7 +188,7 @@ test("当班客服不在线时不发转接指令，但必须@主管", async () =
 test("页面没有可用 socket 时按失败处理并通知主管", async () => {
   publishOnlinePresenceSnapshot({
     rowsByStaffName: {
-      叶炳辉: { staffName: "叶炳辉", staffGroup: "pre_sales", transferEnabled: true }
+      冯十三: { staffName: "冯十三", staffGroup: "pre_sales", transferEnabled: true }
     }
   });
   const page = buildPageWithSocket([
@@ -231,7 +231,7 @@ test("页面没有可用 socket 时按失败处理并通知主管", async () => 
 test("页面 socket 的命名空间还没暴露时绝不发无名帧，按失败处理并通知主管", async () => {
   publishOnlinePresenceSnapshot({
     rowsByStaffName: {
-      叶炳辉: { staffName: "叶炳辉", staffGroup: "pre_sales", transferEnabled: true }
+      冯十三: { staffName: "冯十三", staffGroup: "pre_sales", transferEnabled: true }
     }
   });
   const sentFrames = [];

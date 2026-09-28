@@ -11,7 +11,7 @@
 //     sheetName: '2026年10月',          // 只写这一张月表
 //     dayCount: 31,                     // 天数（28~31；决定写到哪一列）
 //     employees: [                      // 只允许下面 expectedSellerNames 里的名字
-//       { name: '韩欢欢', shifts: ['早', '早', '', ... 共 dayCount 个] },
+//       { name: '周九', shifts: ['早', '早', '', ... 共 dayCount 个] },
 //       ...
 //     ]
 //   }
@@ -20,7 +20,7 @@
 
 const scriptVersion = '2026-09-20.1'
 const expectedOperationType = 'write_seller_schedule'
-const expectedSellerNames = ['韩欢欢', '麦诺谦', '叶炳辉', '徐佳楠', '刘秀文']
+const expectedSellerNames = ['周九', '郑十一', '冯十三', '王十二', '吴十']
 const minDayCount = 28
 const maxDayCount = 31
 

@@ -607,11 +607,11 @@ test("未实质回复判定应透传最后人工消息发送人", () => {
     createMessage({
       timestamp: NOW_MS - 190 * 1000,
       role: "agent",
-      senderName: "缪婷婷（售后客服）",
+      senderName: "王五（售后客服）",
       text: ""
     })
   ], replyConfig, NOW_MS);
 
-  assert.equal(unresolvedState.lastHandlerSenderName, "缪婷婷（售后客服）");
+  assert.equal(unresolvedState.lastHandlerSenderName, "王五（售后客服）");
   assert.equal(unresolvedState.reasonLabel, "人工回复无效");
 });

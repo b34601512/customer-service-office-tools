@@ -20,7 +20,7 @@
  *   node 工具/写在线排班表.cjs --plan ... --sheet ... --dry-run      # 只打印载荷，不调用
  *   node 工具/写在线排班表.cjs --plan ... --sheet ... --webhook <url> --token <token>  # 临时覆盖配置
  *
- * 只写：目标月表里售前 5 人（韩欢欢/麦诺谦/叶炳辉/徐佳楠/刘秀文）的每日班次格；
+ * 只写：目标月表里售前 5 人（周九/郑十一/冯十三/王十二/吴十）的每日班次格；
  * 不改底色、不改其他行、不改其他月份子表；在线脚本写后回读校验并保存。
  * 失败不自动重试（失败处置总方针）。
  */
@@ -30,7 +30,7 @@ const path = require('path');
 
 const EXPECTED_SCRIPT_VERSION = '2026-09-20.1';
 const EXPECTED_OPERATION_TYPE = 'write_seller_schedule';
-const EXPECTED_SELLER_NAMES = ['韩欢欢', '麦诺谦', '叶炳辉', '徐佳楠', '刘秀文'];
+const EXPECTED_SELLER_NAMES = ['周九', '郑十一', '冯十三', '王十二', '吴十'];
 const MIN_DAY_COUNT = 28;
 const MAX_DAY_COUNT = 31;
 const DEFAULT_CONFIG_PATH = path.resolve(__dirname, '..', 'project-config', 'platform-config.json');

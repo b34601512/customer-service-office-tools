@@ -43,8 +43,8 @@ test("联系人快照改口后发送转接成功通知", async () => {
   recordPendingTransferVerification({
     chatId: "chat-1",
     customerName: "客户甲",
-    sourceStaffName: "刘秀文",
-    targetStaffName: "叶炳辉",
+    sourceStaffName: "吴十",
+    targetStaffName: "冯十三",
     targetUserId: "pre-ye",
     reminderKind: "timeout"
   });
@@ -56,7 +56,7 @@ test("联系人快照改口后发送转接成功通知", async () => {
   assert.equal(listPendingTransferVerifications().length, 0);
   assert.equal(sentContents.length, 1);
   assert.match(sentContents[0], /【超时自动转接】客户已改派/);
-  assert.match(sentContents[0], /已转给：叶炳辉/);
+  assert.match(sentContents[0], /已转给：冯十三/);
 });
 
 test("超时后仍未改派时发送失败通知并@主管", async () => {
@@ -74,8 +74,8 @@ test("超时后仍未改派时发送失败通知并@主管", async () => {
   const entry = recordPendingTransferVerification({
     chatId: "chat-2",
     customerName: "客户乙",
-    sourceStaffName: "刘秀文",
-    targetStaffName: "叶炳辉",
+    sourceStaffName: "吴十",
+    targetStaffName: "冯十三",
     targetUserId: "pre-ye",
     reminderKind: "missedReply",
     timeoutMs: 5000

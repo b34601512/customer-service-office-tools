@@ -21,6 +21,6 @@ test("登录成功必须同时满足指标页和店铺身份", async () => {
       return { async innerText() { return "德达旗舰店 客服数据 3分钟人工回复率 97.41%"; } };
     }
   };
-  assert.equal(await isPddMetricPageReady(page, { username: "德达旗舰店:小黛" }), true);
+  assert.equal(await isPddMetricPageReady(page, { username: "德达旗舰店:客服辛" }), true);
   assert.equal(await isPddMetricPageReady(page, { username: "其他店铺:账号" }), false);
 });

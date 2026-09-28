@@ -11,7 +11,7 @@ test("转接提醒文案在有 userid 时应该使用行内@", () => {
     customerName: "粮油经营兰华鹏",
     assignedAtText: "2026/04/16 09:50:35",
     actionLabel: "转接",
-    staffMentionText: "<@yebinghui>"
+    staffMentionText: "<@userid005>"
   });
 
   assert.equal(
@@ -19,7 +19,7 @@ test("转接提醒文案在有 userid 时应该使用行内@", () => {
     [
       "客户：粮油经营兰华鹏",
       "转接时间：2026/04/16 09:50:35",
-      "<@yebinghui>，你有新的转接信息，记得及时回复。"
+      "<@userid005>，你有新的转接信息，记得及时回复。"
     ].join("\n")
   );
 });
@@ -34,7 +34,7 @@ test("转接提醒应该优先命中企微 userid 行内@", () => {
         顾远: "13800000000"
       },
       memberUserIdMap: {
-        顾远: "yebinghui"
+        顾远: "userid005"
       },
       memberInlineMentionEnabledMap: {
         顾远: true
@@ -42,7 +42,7 @@ test("转接提醒应该优先命中企微 userid 行内@", () => {
     }
   );
 
-  assert.equal(plan.staffMentionText, "<@yebinghui>");
+  assert.equal(plan.staffMentionText, "<@userid005>");
   assert.deepEqual(plan.mentionedMobileList, []);
 });
 

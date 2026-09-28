@@ -1,0 +1,4 @@
+# 本项目的本地私有配置目录（公司 webhook / 表 key 等），永不入库
+project-config/
+*.local.json
+*.local.js

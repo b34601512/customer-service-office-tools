@@ -8,7 +8,7 @@
         {
           "key": "tmall1",
           "name": "德达旗舰店",
-          "account": "小黛",
+          "account": "客服辛",
           "profileDir": "runtime/state/browser-profiles/tmall/tmall1",
           "port": 9421,
           "enabled": true
@@ -16,7 +16,7 @@
         {
           "key": "tmall2",
           "name": "DEDAKJ旗舰店",
-          "account": "小黛",
+          "account": "客服辛",
           "profileDir": "runtime/state/browser-profiles/tmall/tmall2",
           "port": 9422,
           "enabled": true
@@ -24,7 +24,7 @@
         {
           "key": "tmall6",
           "name": "德迩杰旗舰店",
-          "account": "小黛",
+          "account": "客服辛",
           "profileDir": "runtime/state/browser-profiles/tmall/tmall6",
           "port": 9423,
           "enabled": true
@@ -38,7 +38,7 @@
         {
           "key": "jd1",
           "name": "德达官方旗舰店",
-          "account": "小黛",
+          "account": "客服辛",
           "profileDir": "runtime/state/browser-profiles/jd/jd1",
           "port": 9424,
           "enabled": true
@@ -46,7 +46,7 @@
         {
           "key": "jd3",
           "name": "DEDAKJ器械店",
-          "account": "小黛",
+          "account": "客服辛",
           "profileDir": "runtime/state/browser-profiles/jd/jd3",
           "port": 9425,
           "enabled": true
@@ -54,7 +54,7 @@
         {
           "key": "jd2",
           "name": "DEDAKJ旗舰店",
-          "account": "小黛",
+          "account": "客服辛",
           "profileDir": "runtime/state/browser-profiles/jd/jd2",
           "port": 9426,
           "enabled": true

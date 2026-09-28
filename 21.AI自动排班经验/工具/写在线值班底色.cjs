@@ -14,7 +14,7 @@
  *   node 工具/写在线值班底色.cjs --plan ... --sheet ...              # 真正写入（需用户批准）
  *   node 工具/写在线值班底色.cjs --plan ... --sheet ... --webhook <url> --token <token>  # 临时覆盖配置
  *
- * 计划 JSON 的 duty 格式：{"韩欢欢|1": "早", "刘秀文|1": "晚", ...}（每天早、晚各 1 人）
+ * 计划 JSON 的 duty 格式：{"周九|1": "早", "吴十|1": "晚", ...}（每天早、晚各 1 人）
  * 在线脚本写前逐格核对「当前班次 = 值班班次」，不符则一格都不写；写后回读 + Save。
  * 失败不自动重试（失败处置总方针）。
  */
@@ -25,7 +25,7 @@ const path = require('path');
 const EXPECTED_SCRIPT_VERSION = '2026-09-24.1';
 const OP_WRITE = 'write_seller_duty_colors';
 const OP_DIAGNOSE = 'diagnose_colors';
-const EXPECTED_SELLER_NAMES = ['韩欢欢', '麦诺谦', '叶炳辉', '徐佳楠', '刘秀文'];
+const EXPECTED_SELLER_NAMES = ['周九', '郑十一', '冯十三', '王十二', '吴十'];
 const MIN_DAY_COUNT = 28;
 const MAX_DAY_COUNT = 31;
 const DUTY_COLOR_HEX = '#E2F0D9';

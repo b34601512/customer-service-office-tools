@@ -194,8 +194,8 @@ class TuiCompatibilityTests(unittest.TestCase):
             self.app.switch_page(index)
             frame = self.app.build_frame()
             self.assertEqual(len(frame), 24)
-            self.assertIn('作者：黎路遥', frame[20])
-            self.assertIn('版权所有 © 黎路遥', frame[21])
+            self.assertIn('作者：张三', frame[20])
+            self.assertIn('版权所有 © 张三', frame[21])
             self.assertTrue(all(tui.display_width(line) == 100 for line in frame))
             self.assertNotIn('\ufffd', '\n'.join(frame))
             self.assertTrue(all(label in frame[3] for label in ('1首页', '2配置', '3日志', '4结果')))
@@ -268,7 +268,7 @@ class TuiCompatibilityTests(unittest.TestCase):
             self.app.start()
             self.app.stop()
         self.assertIn('首页', self.app.output.getvalue())
-        self.assertIn('黎路遥', self.app.output.getvalue())
+        self.assertIn('张三', self.app.output.getvalue())
 
     def test_cleanup_idempotent(self):
         with mock.patch.object(biz, 'close_owned_edge') as close:

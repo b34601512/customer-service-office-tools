@@ -1,5 +1,5 @@
 // 本文件是值班业务真源：拉金山排班（带缓存）→ 解析当日售后班次/底色 → 按天选出应@的人。
-// @规则（用户2026-09-03定）：组长李守耀当日在班就@组长；其他售后看背景标记色，有标记=值班；主管永远@。
+// @规则（用户2026-09-03定）：组长李四当日在班就@组长；其他售后看背景标记色，有标记=值班；主管永远@。
 // 界面与提醒链路都调 resolveDuty()/buildMentionPlan()，这里只出一份结论。
 const { log } = require("../../engine/logger");
 const { fetchScheduleMonth } = require("./scheduleFetcher");

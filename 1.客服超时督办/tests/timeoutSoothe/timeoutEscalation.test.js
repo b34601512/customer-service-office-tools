@@ -14,16 +14,16 @@ test("运营接待且已配置运营手机号时应该同时@运营和主管", (
     },
     {
       memberMobileMap: {
-        运营: "13058186211",
-        罗淑平: "19539045045",
-        黎路遥: "13800000000"
+        运营: "13800000105",
+        罗淑平: "13800000106",
+        张三: "13800000000"
       },
       memberUserIdMap: {},
       memberInlineMentionEnabledMap: {}
     }
   );
 
-  assert.deepEqual(result.mentionedMobileList, ["13058186211", "13800000000"]);
+  assert.deepEqual(result.mentionedMobileList, ["13800000105", "13800000000"]);
   assert.equal(result.mobileConfigured, true);
   assert.equal(result.managerIncluded, true);
 });
@@ -36,7 +36,7 @@ test("运营接待但未配置运营手机号时应该只@主管", () => {
     },
     {
       memberMobileMap: {
-        黎路遥: "13800000000"
+        张三: "13800000000"
       },
       memberUserIdMap: {},
       memberInlineMentionEnabledMap: {}
@@ -50,7 +50,7 @@ test("运营接待但未配置运营手机号时应该只@主管", () => {
 
 test("客服与主管同一手机号时只艾特一次", () => {
   const result = resolveEscalationMentionPlan({ staffName: "苏哲", staffGroup: "after_sales" }, {
-    memberMobileMap: { 苏哲: "13800000000", 黎路遥: "13800000000" }
+    memberMobileMap: { 苏哲: "13800000000", 张三: "13800000000" }
   });
   assert.deepEqual(result.mentionedMobileList, ["13800000000"]);
   assert.equal(result.managerIncluded, true);
@@ -65,10 +65,10 @@ test("客服有手机号时应该走底部@并保留主管@", () => {
     {
       memberMobileMap: {
         苏哲: "13900000000",
-        黎路遥: "13800000000"
+        张三: "13800000000"
       },
       memberUserIdMap: {
-        苏哲: "lishouyao"
+        苏哲: "userid002"
       },
       memberInlineMentionEnabledMap: {
         苏哲: true
@@ -90,10 +90,10 @@ test("正文@开关关闭后，超时提醒仍然应该只走底部手机号@", 
     {
       memberMobileMap: {
         苏哲: "13900000000",
-        黎路遥: "13800000000"
+        张三: "13800000000"
       },
       memberUserIdMap: {
-        苏哲: "lishouyao"
+        苏哲: "userid002"
       },
       memberInlineMentionEnabledMap: {
         苏哲: false

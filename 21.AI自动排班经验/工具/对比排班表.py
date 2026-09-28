@@ -4,7 +4,7 @@
 用法：
     cd "D:\\桌面\\办公软件\\21.AI自动排班经验"
     python "工具\\对比排班表.py" --a "旧表.xlsx" --b "新表.xlsx"
-    python "工具\\对比排班表.py" --a "上月.tsv" --b "本月.xlsx" --only 韩欢欢,麦诺谦 --quiet
+    python "工具\\对比排班表.py" --a "上月.tsv" --b "本月.xlsx" --only 周九,郑十一 --quiet
 
 - 两边都支持 xlsx / tsv（tsv 没有底色，会自动跳过底色对比）。
 - 只读，不改文件；有差异时退出码 1（方便串到别的脚本里）。

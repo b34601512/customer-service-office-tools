@@ -19,26 +19,26 @@ function testConfig() {
   return normalizeWecomFeedbackConfig({
     webhookUrl: 'https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=test',
     memberDirectory: [
-      { name: '韩欢欢', mobile: '10001', userId: '', inlineMentionEnabled: true },
+      { name: '周九', mobile: '10001', userId: '', inlineMentionEnabled: true },
       { name: '有userid客服', mobile: '10002', userId: 'userid-1', inlineMentionEnabled: true },
       { name: '售后客服', mobile: '10003', userId: '', inlineMentionEnabled: true }
     ],
     nicknameMappings: [
-      { nickname: '璇璇', staffName: '韩欢欢', role: '售前' },
+      { nickname: '客服甲', staffName: '周九', role: '售前' },
       { nickname: '行内昵称', staffName: '有userid客服', role: '售前' },
-      { nickname: '小洛', staffName: '售后客服', role: '售后' }
+      { nickname: '客服戊', staffName: '售后客服', role: '售后' }
     ]
   });
 }
 
 test('从京东 sourceNote 提取客服昵称', () => {
-  assert.equal(extractWaiterLabel('京东会话 sid=x（waiter=德达官方旗舰店--璇璇）'), '璇璇');
-  assert.equal(extractWaiterLabel('waiter=璇璇'), '璇璇');
+  assert.equal(extractWaiterLabel('京东会话 sid=x（waiter=德达官方旗舰店--客服甲）'), '客服甲');
+  assert.equal(extractWaiterLabel('waiter=客服甲'), '客服甲');
 });
 
 test('客服昵称同时保留售前售后岗位，默认岗位筛选为售前', () => {
   const config = testConfig();
-  const target = resolveWaiterTarget('德达官方旗舰店--小洛', config);
+  const target = resolveWaiterTarget('德达官方旗舰店--客服戊', config);
   assert.equal(target.staffName, '售后客服');
   assert.equal(target.role, '售后');
   assert.equal(normalizeRoleFilter(), '售前');
@@ -47,13 +47,13 @@ test('客服昵称同时保留售前售后岗位，默认岗位筛选为售前',
 
 test('客服昵称映射到 canonical staff，并用手机号底部@', () => {
   const config = testConfig();
-  const target = resolveFeedbackTarget({ sourceNote: 'waiter=德达官方旗舰店--璇璇' }, config);
+  const target = resolveFeedbackTarget({ sourceNote: 'waiter=德达官方旗舰店--客服甲' }, config);
   const preview = buildFeedbackPreview({
     content: '这是一条已经人工确认过的反馈文案\n第二行保持原样',
     target,
     config
   });
-  assert.equal(preview.target.staffName, '韩欢欢');
+  assert.equal(preview.target.staffName, '周九');
   assert.equal(preview.target.role, '售前');
   assert.equal(preview.mention.mode, 'bottom-mobile');
   assert.deepEqual(preview.payload.text.mentioned_mobile_list, ['10001']);
@@ -71,7 +71,7 @@ test('有 userid 时复刻1号的正文行内@', () => {
 
 test('分行文案使用真实换行，不生成字面量\\n', () => {
   const config = testConfig();
-  const target = resolveFeedbackTarget({ nickname: '璇璇' }, config);
+  const target = resolveFeedbackTarget({ nickname: '客服甲' }, config);
   const preview = buildFeedbackPreview({
     contentLines: ['第一行', '客户ID：脱敏值', '第三行'],
     target,
@@ -84,10 +84,10 @@ test('分行文案使用真实换行，不生成字面量\\n', () => {
 
 test('底部手机号@时拒绝正文重复写客服@', () => {
   const config = testConfig();
-  const target = resolveFeedbackTarget({ nickname: '璇璇' }, config);
+  const target = resolveFeedbackTarget({ nickname: '客服甲' }, config);
   assert.throws(
     () => buildFeedbackPreview({
-      content: '@韩欢欢（璇璇）\n反馈正文',
+      content: '@周九（客服甲）\n反馈正文',
       target,
       config
     }),

@@ -32,7 +32,7 @@ const DEFAULT_TEST_WECOM_CONFIG = {
     }
   ],
   member_directory: [
-    { name: "黎路遥", mobile: "19900000000", user_id: "", inline_mention_enabled: true }
+    { name: "张三", mobile: "19900000000", user_id: "", inline_mention_enabled: true }
   ]
 };
 

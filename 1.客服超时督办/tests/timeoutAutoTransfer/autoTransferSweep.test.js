@@ -47,8 +47,8 @@ function buildDecisionItem(overrides = {}) {
 }
 
 const memberMapByUserId = {
-  "after-chen": { userId: "after-chen", staffName: "陈燕玲", staffGroup: "after_sales" },
-  "after-miao": { userId: "after-miao", staffName: "缪婷婷", staffGroup: "after_sales" }
+  "after-chen": { userId: "after-chen", staffName: "孙八", staffGroup: "after_sales" },
+  "after-miao": { userId: "after-miao", staffName: "王五", staffGroup: "after_sales" }
 };
 
 test("补判账本可以落盘并读回，最多保留最近若干条", () => {
@@ -58,7 +58,7 @@ test("补判账本可以落盘并读回，最多保留最近若干条", () => {
     chatId: "chat-1",
     customerName: "客户甲",
     assigneeUserId: "after-chen",
-    targetStaffName: "缪婷婷",
+    targetStaffName: "王五",
     outcome: "sent",
     reason: "eligible",
     attemptedAtMs: 1000
@@ -67,7 +67,7 @@ test("补判账本可以落盘并读回，最多保留最近若干条", () => {
   const attempt = readAutoTransferSweepAttempt("chat-1");
   assert.equal(attempt.customerName, "客户甲");
   assert.equal(attempt.assigneeUserId, "after-chen");
-  assert.equal(attempt.targetStaffName, "缪婷婷");
+  assert.equal(attempt.targetStaffName, "王五");
   assert.equal(attempt.outcome, "sent");
   assert.equal(fs.existsSync(isolatedPath), true);
 
@@ -96,7 +96,7 @@ test("只挑真的分配到人、且客户还在等回复的会话去补判", ()
   assert.deepEqual(candidates.map((item) => item.chatId), ["chat-1"]);
   assert.equal(candidates[0].candidate.reminderKind, SHIFT_HANDOVER_REMINDER_KIND);
   assert.equal(candidates[0].assignment.status, "assigned");
-  assert.equal(candidates[0].assignment.assigneeMember.staffName, "陈燕玲");
+  assert.equal(candidates[0].assignment.assigneeMember.staffName, "孙八");
 });
 
 test("同一客户在冷却窗口内不重复补判，换人后可以立刻重判", () => {
@@ -185,9 +185,9 @@ const sweepScheduleService = {
     return {
       backgroundColorAvailable: true,
       shiftMap: {
-        陈燕玲: { normalizedShift: "早班", hasBackgroundColor: false, backgroundColor: "" },
-        李守耀: { normalizedShift: "早班", hasBackgroundColor: false, backgroundColor: "" },
-        缪婷婷: { normalizedShift: "晚班", hasBackgroundColor: false, backgroundColor: "" }
+        孙八: { normalizedShift: "早班", hasBackgroundColor: false, backgroundColor: "" },
+        李四: { normalizedShift: "早班", hasBackgroundColor: false, backgroundColor: "" },
+        王五: { normalizedShift: "晚班", hasBackgroundColor: false, backgroundColor: "" }
       }
     };
   }
@@ -228,8 +228,8 @@ test("交班补判：原接待已下班时补发转接指令并记账本", async
   resetPendingTransferVerifications();
   publishOnlinePresenceSnapshot({
     rowsByStaffName: {
-      李守耀: { staffName: "李守耀", staffGroup: "after_sales", autoAssignEnabled: true },
-      缪婷婷: { staffName: "缪婷婷", staffGroup: "after_sales", autoAssignEnabled: true }
+      李四: { staffName: "李四", staffGroup: "after_sales", autoAssignEnabled: true },
+      王五: { staffName: "王五", staffGroup: "after_sales", autoAssignEnabled: true }
     }
   });
 
@@ -238,9 +238,9 @@ test("交班补判：原接待已下班时补发转接指令并记账本", async
     page: buildSweepPage(frames),
     scheduleService: sweepScheduleService,
     memberMapByUserId: {
-      "after-chen": { userId: "after-chen", staffName: "陈燕玲", staffGroup: "after_sales" },
-      "after-li": { userId: "after-li", staffName: "李守耀", staffGroup: "after_sales" },
-      "after-miao": { userId: "after-miao", staffName: "缪婷婷", staffGroup: "after_sales" }
+      "after-chen": { userId: "after-chen", staffName: "孙八", staffGroup: "after_sales" },
+      "after-li": { userId: "after-li", staffName: "李四", staffGroup: "after_sales" },
+      "after-miao": { userId: "after-miao", staffName: "王五", staffGroup: "after_sales" }
     },
     replyConfig: sweepConfig,
     decisionItemsByChatId: {
@@ -258,7 +258,7 @@ test("交班补判：原接待已下班时补发转接指令并记账本", async
   assert.equal(listPendingTransferVerifications().length, 1);
   const attempt = readAutoTransferSweepAttempt("chat-handover");
   assert.equal(attempt.assigneeUserId, "after-chen");
-  assert.equal(attempt.targetStaffName, "缪婷婷");
+  assert.equal(attempt.targetStaffName, "王五");
 });
 
 test("交班补判：原接待还在班且在线时安静跳过，不记账本（否则下班后就补判不到了）", async () => {
@@ -266,8 +266,8 @@ test("交班补判：原接待还在班且在线时安静跳过，不记账本�
   resetPendingTransferVerifications();
   publishOnlinePresenceSnapshot({
     rowsByStaffName: {
-      陈燕玲: { staffName: "陈燕玲", staffGroup: "after_sales", autoAssignEnabled: true },
-      缪婷婷: { staffName: "缪婷婷", staffGroup: "after_sales", autoAssignEnabled: true }
+      孙八: { staffName: "孙八", staffGroup: "after_sales", autoAssignEnabled: true },
+      王五: { staffName: "王五", staffGroup: "after_sales", autoAssignEnabled: true }
     }
   });
 
@@ -276,8 +276,8 @@ test("交班补判：原接待还在班且在线时安静跳过，不记账本�
     page: buildSweepPage(frames),
     scheduleService: sweepScheduleService,
     memberMapByUserId: {
-      "after-chen": { userId: "after-chen", staffName: "陈燕玲", staffGroup: "after_sales" },
-      "after-miao": { userId: "after-miao", staffName: "缪婷婷", staffGroup: "after_sales" }
+      "after-chen": { userId: "after-chen", staffName: "孙八", staffGroup: "after_sales" },
+      "after-miao": { userId: "after-miao", staffName: "王五", staffGroup: "after_sales" }
     },
     replyConfig: sweepConfig,
     decisionItemsByChatId: {
@@ -298,8 +298,8 @@ test("交班补判：原接待换人后立刻重判", async () => {
   resetPendingTransferVerifications();
   publishOnlinePresenceSnapshot({
     rowsByStaffName: {
-      李守耀: { staffName: "李守耀", staffGroup: "after_sales", autoAssignEnabled: true },
-      缪婷婷: { staffName: "缪婷婷", staffGroup: "after_sales", autoAssignEnabled: true }
+      李四: { staffName: "李四", staffGroup: "after_sales", autoAssignEnabled: true },
+      王五: { staffName: "王五", staffGroup: "after_sales", autoAssignEnabled: true }
     }
   });
 
@@ -316,9 +316,9 @@ test("交班补判：原接待换人后立刻重判", async () => {
     page: buildSweepPage(frames),
     scheduleService: sweepScheduleService,
     memberMapByUserId: {
-      "after-chen": { userId: "after-chen", staffName: "陈燕玲", staffGroup: "after_sales" },
-      "after-li": { userId: "after-li", staffName: "李守耀", staffGroup: "after_sales" },
-      "after-miao": { userId: "after-miao", staffName: "缪婷婷", staffGroup: "after_sales" }
+      "after-chen": { userId: "after-chen", staffName: "孙八", staffGroup: "after_sales" },
+      "after-li": { userId: "after-li", staffName: "李四", staffGroup: "after_sales" },
+      "after-miao": { userId: "after-miao", staffName: "王五", staffGroup: "after_sales" }
     },
     replyConfig: sweepConfig,
     decisionItemsByChatId: {
@@ -340,7 +340,7 @@ test("交班补判：开关关闭时不动作", async () => {
     page: buildSweepPage(frames),
     scheduleService: sweepScheduleService,
     memberMapByUserId: {
-      "after-chen": { userId: "after-chen", staffName: "陈燕玲", staffGroup: "after_sales" }
+      "after-chen": { userId: "after-chen", staffName: "孙八", staffGroup: "after_sales" }
     },
     replyConfig: { ...sweepConfig, timeoutAutoTransferEnabled: false },
     decisionItemsByChatId: { "chat-handover": buildDecisionItem({ chatId: "chat-handover" }) },

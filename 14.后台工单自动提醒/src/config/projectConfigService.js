@@ -59,10 +59,10 @@ function validateConfig(config) {
     assertText(config.duty.group, "duty.group 缺少（要@的客服组，如 售后）");
     const memberMap = (config.wecom && config.wecom.memberMobileMap) || {};
     if (!Array.isArray(config.duty.managerNames) || config.duty.managerNames.length === 0) {
-      throw new Error("配置校验失败：duty.managerNames 至少填一人（如 黎路遥）");
+      throw new Error("配置校验失败：duty.managerNames 至少填一人（如 张三）");
     }
     if (!Array.isArray(config.duty.leadNames) || config.duty.leadNames.length === 0) {
-      throw new Error("配置校验失败：duty.leadNames 至少填一人（值班组长，如 李守耀）");
+      throw new Error("配置校验失败：duty.leadNames 至少填一人（值班组长，如 李四）");
     }
     for (const name of [...config.duty.managerNames, ...config.duty.leadNames]) {
       if (!String(memberMap[name] || "").trim()) {

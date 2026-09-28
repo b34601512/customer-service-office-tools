@@ -64,8 +64,8 @@ node src/tools/put-clipboard.js kdocs-scripts/AirScript-只读查询订单号.md
 | 用途 | 命令 | 备注 |
 |---|---|---|
 | 扫表取候选行 | `node src/tools/kdocs-filter.js --start-row 43000 --limit 3000 --out runtime/kdocs/x.json` | 走金山 AirScript 服务端只读；表尾才是最近记录 |
-| 该 @ 谁 | `node src/tools/who-is-on-duty.js [--at 14:30] [--json]` | 排班表匿名只读；14:00 前李守耀优先/否则早班，14:00 后晚班 |
-| 发企微群 | `node src/tools/send-wecom-notice.js --file <文本> --at 缪婷婷 [--send]` | **默认预演**；--send 才真发；≤2048 字节 |
+| 该 @ 谁 | `node src/tools/who-is-on-duty.js [--at 14:30] [--json]` | 排班表匿名只读；14:00 前李四优先/否则早班，14:00 后晚班 |
+| 发企微群 | `node src/tools/send-wecom-notice.js --file <文本> --at 王五 [--send]` | **默认预演**；--send 才真发；≤2048 字节 |
 | 每日一条命令 | `node scripts/dailyCheck.js [--days 7] [--send]` | 扫表→筛→去重→出清单→算通知对象；**默认不发** |
 | 天猫后台概览（判漏快筛） | `node src/tools/tmall-refund-overview.js --store tmall1 [--probe-pending]` | 8 秒读出「24小时内待处理」等 10 项；**=0 即没有签收超 24h 未处理的单** |
 | 天猫全部店铺一起扫 | `node scripts/checkTmallAllStores.js` | 遍历所有 tmall 店出汇总表（实测 3 店均无漏） |

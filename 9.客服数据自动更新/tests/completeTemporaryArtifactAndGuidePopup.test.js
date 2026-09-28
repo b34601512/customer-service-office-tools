@@ -20,13 +20,13 @@ function makeTempDir() {
 
 function writeCompleteXlsx(targetPath) {
   const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet([["姓名", "业绩"], ["小黛", 123]]), "整体数据");
+  XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet([["姓名", "业绩"], ["客服辛", 123]]), "整体数据");
   XLSX.writeFile(workbook, targetPath, { bookType: "xlsx" });
 }
 
 function writeCompleteXls(targetPath) {
   const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet([["姓名", "业绩"], ["小黛", 123]]), "Sheet0");
+  XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet([["姓名", "业绩"], ["客服辛", 123]]), "Sheet0");
   XLSX.writeFile(workbook, targetPath, { bookType: "biff8" });
 }
 

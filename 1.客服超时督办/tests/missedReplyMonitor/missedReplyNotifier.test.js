@@ -58,17 +58,17 @@ test("接待ID有值但成员表缺失时应该暴露具体ID", () => {
 test("当前接待客服就是主管时不应该重复行内@", () => {
   const plan = resolveMissedReplyMentionPlan(
     {
-      staffName: "黎路遥"
+      staffName: "张三"
     },
     {
       memberMobileMap: {
-        黎路遥: "13800000000"
+        张三: "13800000000"
       },
       memberUserIdMap: {
-        黎路遥: "manager"
+        张三: "manager"
       },
       memberInlineMentionEnabledMap: {
-        黎路遥: true
+        张三: true
       }
     }
   );
@@ -86,17 +86,17 @@ test("提醒名单只包含平台当前接待和主管", () => {
       memberMobileMap: {
         卢安: "13800000001",
         马倩: "13800000002",
-        黎路遥: "13800000000"
+        张三: "13800000000"
       },
       memberUserIdMap: {
         卢安: "deng",
         马倩: "ke",
-        黎路遥: "manager"
+        张三: "manager"
       },
       memberInlineMentionEnabledMap: {
         卢安: true,
         马倩: true,
-        黎路遥: true
+        张三: true
       }
     }
   );
@@ -111,9 +111,9 @@ test("last_handler 兜底时应提醒最后接待客服跟进", () => {
   assert.equal(
     resolveAssigneeActionLine({
       assignmentStatus: "last_handler",
-      staffMentionText: "缪婷婷",
+      staffMentionText: "王五",
       reminderKind: "timeout"
     }),
-    "缪婷婷，会话已结束客户仍未处理，请尽快处理。"
+    "王五，会话已结束客户仍未处理，请尽快处理。"
   );
 });
