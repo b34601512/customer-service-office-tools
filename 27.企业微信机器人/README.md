@@ -163,10 +163,29 @@ node scripts/发群消息.js --text "测试：客服日报已生成" --mention 1
 │   ├── 安装记录与实测.md         ← 实测证据（路径/版本/扫描/测试结果）
 │   ├── 踩坑与红线.md            ← 必须问人的事 + 两路线各自的坑
 │   └── 开源边界-私有与通用.md     ← ★哪些能开源、哪些是公司私有
+├── src/
+│   └── inbox.js                ← 消息帧 → 收件记录（纯函数，可单测）
 ├── scripts/
 │   ├── 检查企微环境.js           ← 只读体检（node/skill/cli/auth/webhook）
 │   ├── 发群消息.js              ← 群机器人 webhook 发送，默认 dry-run
 │   ├── 扫码授权.bat             ← ★新手走这个：双击+手机扫码，完成创建与授权
-│   └── 手动授权.bat             ← 进阶：API 模式机器人，输入 Bot ID+Secret
-└── tests/                      ← `npm test`（11 项，含「不得自动重试」反向断言）
+│   ├── 手动授权.bat             ← 进阶：API 模式机器人，输入 Bot ID+Secret
+│   ├── 导出机器人凭据.js         ← 从 wecom-cli 本机凭据库导出 Bot ID+Secret（长连接用，不入库）
+│   ├── 长连接守护.js            ← ★官方 SDK 长连接：只收不回，落 .state/inbox.jsonl
+│   └── 启动长连接守护.bat        ← 双击启动长连接守护
+└── tests/                      ← `npm test`（19 项，含「不得自动重试」反向断言）
 ```
+
+## 11. 长连接守护（官方 SDK，用来「读消息」）
+
+> 为什么必须走它：官方 CLI 的会话接口只给「会话名 + 最后消息时间」，**读不到正文**；
+> 要读正文只能用官方长连接（教程 #72：`aibot_subscribe` 订阅 → `aibot_msg_callback` 收 → `aibot_respond_msg` 回）。
+
+- **依赖**：`@wecom/aibot-node-sdk`（WecomTeam 官方）；连接地址 `wss://openws.work.weixin.qq.com`。
+- **凭据**：`node scripts/导出机器人凭据.js` 从 wecom-cli 本机凭据库导出到
+  `project-config/aibot-credentials.local.json`（已 gitignore，绝不入库）。
+- **启动**：`npm run 守护` 或双击 `scripts/启动长连接守护.bat`；**自检**：`npm run 守护:自检`（只验证认证+订阅，成功即退出）。
+- **行为**：收到消息/事件 → 追加到 `.state/inbox.jsonl`（一行一条：时间、单聊/群聊、发送者、类型、正文/附件备注）。
+  **只收不回**——任何真实回复/发送都必须先经用户同意（业务红线）。
+- **限制**：官方规定每个机器人同一时间只允许一条有效长连接（新连接会把旧的顶掉）；不要同时开多个守护。
+- **验证**：连上打印「长连接认证并订阅成功」；别人给机器人发消息后，`.state/inbox.jsonl` 会实时多一行。

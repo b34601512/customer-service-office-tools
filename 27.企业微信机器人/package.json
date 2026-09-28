@@ -5,6 +5,12 @@
   "description": "27号：企业微信 × AI 接入手册（Skill/CLI/Webhook）与可复用工具",
   "scripts": {
     "test": "node --test",
-    "check": "node scripts/检查企微环境.js"
+    "check": "node scripts/检查企微环境.js",
+    "导出凭据": "node scripts/导出机器人凭据.js",
+    "守护": "node scripts/长连接守护.js",
+    "守护:自检": "node scripts/长连接守护.js --check"
+  },
+  "dependencies": {
+    "@wecom/aibot-node-sdk": "^1.0.7"
   }
 }
