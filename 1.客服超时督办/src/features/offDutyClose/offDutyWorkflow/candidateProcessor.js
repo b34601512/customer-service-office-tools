@@ -1,5 +1,5 @@
 // 该文件用于处理单个客服的下班收尾动作。
-const { log } = require("../../../engine/logger");
+const { log, logError } = require("../../../engine/logger");
 const { buildOffDutyCompletionNoticeKey } = require("../offDutyPolicy");
 const { readMemberRow } = require("../memberSettingsPage");
 const { buildActionSummary } = require("./actionSummary");
@@ -35,6 +35,18 @@ async function processCandidate(page, candidate, config, stateStore) {
   const disabledResult = await disableMemberForOffDuty(page, candidate);
   const actions = disabledResult.actions.slice();
   const workingRow = disabledResult.row;
+
+  if (disabledResult.failedActions.length > 0) {
+    // 复查仍为开启态：本轮绝不对外说“已关闭”，也不标记完成，留好现场等下一轮重新执行。
+    const failedSummary = disabledResult.failedActions.map((name) => `${name}【仍开启】`).join("；");
+    const reason = `客服=${candidate.staffName} 下班收尾未生效：${failedSummary}，未发送“已完成”通知，等待下一轮复查`;
+    recordOffDutyProcess(candidate, "下班收尾未生效", reason, {
+      dispatchAction: "off_duty_close_failed",
+      dispatchTarget: candidate.staffName
+    });
+    logError("主线:失败", "下班监控", "下班收尾未生效", new Error(reason));
+    return;
+  }
 
   if (candidate.silentClose) {
     // 这里上班时间未到就关闭开关属于静默动作，只落记录和状态，不发企微“下班收尾”提醒，避免误导。

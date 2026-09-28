@@ -9,6 +9,7 @@ const {
 } = require("./onlinePresenceStateStore");
 const { publishOnlinePresenceSnapshot } = require("./onlinePresenceSnapshotStore");
 const {
+  listExpectedOnlineStaff,
   summarizeOnlinePresenceStatus
 } = require("./onlinePresencePolicy");
 const { sendOnlinePresenceReminder } = require("./onlinePresenceNotifier");
@@ -146,14 +147,22 @@ async function handleOnlinePresenceSummary(stateStore, summary) {
   );
 }
 
-function listTransferAutoOpenCandidates(rowMap, config) {
-  // 这里找出“自动分配已开但可被转接待没开”的应值班客服，供自动补开使用。
+function listTransferAutoOpenCandidates(rowMap, config, options = {}) {
+  // 这里找出“自动分配已开但可被转接待没开”的当班客服，供自动补开使用。
+  // 只允许处理当前在岗名单：早班 16:00 下班收尾后自动分配可能还没关，
+  // 若顺手把不在班的人也补开转接待，就会把下班监控刚关掉的开关又打开。
   if (!config?.transferAutoOpenEnabled) {
     return [];
   }
 
+  const onDutyStaffNameSet = new Set(options.onDutyStaffNames || []);
   return Object.entries(rowMap || {})
-    .filter(([, row]) => row?.autoAssignEnabled === true && row?.transferEnabled === false)
+    .filter(
+      ([staffName, row]) =>
+        onDutyStaffNameSet.has(staffName) &&
+        row?.autoAssignEnabled === true &&
+        row?.transferEnabled === false
+    )
     .map(([staffName]) => staffName);
 }
 
@@ -174,9 +183,9 @@ function listTransferAutoCloseCandidates(rowMap, config) {
     .map(([staffName]) => staffName);
 }
 
-async function autoOpenTransferEnabled(page, rowMap, config) {
-  // 这里自动帮客服打开“是否可被转接”：客服常常忘记开，导致别人无法转接待给他。
-  const candidates = listTransferAutoOpenCandidates(rowMap, config);
+async function autoOpenTransferEnabled(page, rowMap, config, options = {}) {
+  // 这里自动帮客服打开“是否可被转接”：只帮当前在岗且忘了开的客服，不碰已下班收尾的人。
+  const candidates = listTransferAutoOpenCandidates(rowMap, config, options);
   for (const staffName of candidates) {
     try {
       const changed = await setMemberTransferEnabled(page, staffName, true);
@@ -270,7 +279,15 @@ async function runOnlinePresenceScan(page, scheduleService, stateStore, runtimeS
   const scheduleBundle = await scheduleService.readShiftMapsForDate(now);
   const scheduledStaffNames = listScheduledCustomerServiceNames(scheduleBundle.today.shiftMap);
   const memberRows = await readScheduledMemberRows(page, scheduledStaffNames);
-  await autoOpenTransferEnabled(page, memberRows.rowMap, config);
+  // 只有当前在岗的客服才允许自动补开转接待：16:00 早班下班收尾后即便自动分配还开着，
+  // 也不能再把转接待打开，否则会反向撤销下班监控的关闭动作。
+  const onDutyStaffNames = listExpectedOnlineStaff(
+    scheduleBundle.today.shiftMap,
+    memberRows.rowMap,
+    config,
+    now
+  );
+  await autoOpenTransferEnabled(page, memberRows.rowMap, config, { onDutyStaffNames });
   await autoCloseTransferEnabled(page, memberRows.rowMap, config);
   // 把这一轮读到的成员开关登记为共享快照，供超时自动转接判断目标是否真的在线。
   publishOnlinePresenceSnapshot({

@@ -11,7 +11,7 @@ const {
 const { createDailyScheduleService } = require("../../scheduleQuery/dailyScheduleService");
 const { createOffDutyStateStore } = require("../offDutyStateStore");
 const {
-  ensureMemberSettingsView,
+  reloadMemberSettingsView,
   readMemberRow
 } = require("../memberSettingsPage");
 const { closeOffDutyPage } = require("./pageLifecycle");
@@ -108,7 +108,9 @@ async function monitorOffDutyWorkflow(createOffDutyPage, stopState) {
         activePage = await createOffDutyPage();
       }
 
-      await ensureMemberSettingsView(activePage);
+      // 每轮扫描前强制刷新成员设置页：开关可能被人工或别的电脑改动，
+      // 不刷新会读到缓存旧状态，导致漏关开关却在群里说“已关闭”。
+      await reloadMemberSettingsView(activePage, "下班监控");
       log(
         "主线:执行",
         "下班监控",
