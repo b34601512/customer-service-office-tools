@@ -6,6 +6,7 @@
 ## 0. 官方入口
 
 - 官方文档：<https://open.work.weixin.qq.com/help2/pc/21676>（《企业微信支持CLI开源》）→ 原文见 `经验/官方文档原文-清理版.md`
+- 如何获取 Bot ID 和 Secret：<https://open.work.weixin.qq.com/help2/pc/cat?doc_id=21677>（API 模式机器人 → 长连接）
 - 官方 CLI：<https://github.com/WecomTeam/wecom-cli>
 - 官方 Skill：<https://github.com/WecomTeam/wecom-unified>
 
@@ -16,7 +17,7 @@
 ```
 
 AI 会自动：装 Skill → 装 `@wecom/cli` → 弹出二维码让你**扫码创建并授权一个「智能机器人」**。
-⚠️ **扫码必须你本人做，AI 代替不了**；扫完之后让它跑体检：
+⚠️ **扫码必须你本人做，AI 代替不了**；不想扫码也可以走 §3 的「手动接入（API 模式机器人 Bot ID + Secret）」。扫完之后让它跑体检：
 
 ```bash
 node scripts/检查企微环境.js
@@ -30,22 +31,48 @@ node scripts/检查企微环境.js
 |---|---|---|---|
 | 是什么 | 群里「添加群机器人」给的 webhook 地址 | 企业微信官方 CLI（`wecom-cli`）+ Skill，扫码授权 | 把 B 的能力以 MCP 暴露给智能体 |
 | 能干什么 | **只能往它所在的群发消息**（text/markdown/图片/文件），可按手机号 @人 | 发消息（授权人 / 最近有往来的会话）+ 通讯录/文档/在线表格/智能表格/智能文档/日程/会议/待办/微盘/邮件 | 同 B，取决于授权了哪些权限 |
-| 授权 | 零授权（所以 **webhook 地址 = 密钥**） | 扫码一次；数据类权限可能需管理员审批/免审 | 需已建「API 模式机器人」，编辑页复制配置 |
+| 授权 | 零授权（所以 **webhook 地址 = 密钥**） | 两种任选：①扫码（官方推荐）②手动填 API 模式机器人的 Bot ID + Secret；数据类权限可能需管理员审批/免审 | 需已建「API 模式机器人」，编辑页复制配置 |
 | 适合 | 只做**通知/提醒** | 要 AI **查数据、读文档、发消息** | 已有 MCP 客户端的团队 |
 | 本仓库例子 | 1/4/14/19/22/24/25 号的企微提醒 | 本项目（27号） | 同左 |
 
 **一句话：只要提醒 → A；要 AI 动手查/写/发 → B；已有 MCP 平台 → C。**
 
-## 3. 路线 B：终端安装（不想走对话时）
+## 3. 路线 B：安装与两种接入方式
 
 前提：Node.js（含 npm/npx）。
 
 ```bash
 npm install -g @wecom/cli                    # 装 CLI（当前 1.3.4，需 >= 1.2.1）
 npx skills add WeComTeam/wecom-cli -y -g     # 终端版 Skill（必需）
-wecom-cli auth init                          # 出二维码，本人扫码（仅需一次）
+```
+
+### 3.1 接入方式①：扫码（官方推荐）
+
+```bash
+wecom-cli auth init                          # 出二维码，本人扫码（一次）
 wecom-cli auth show --status                 # authorized / unauthorized
 ```
+
+### 3.2 接入方式②：手动接入 = API 模式机器人（不扫码）
+
+适合：不想扫码 / 机器人要复用给 MCP、API / 要自己控制机器人的「可见范围」。
+
+先在企业微信客户端里创建并拿到 Bot ID + Secret（官方文档 21677）：
+1. 工作台 → **智能机器人** → 创建机器人 → **手动创建**；
+2. 选择 **API 模式创建**；
+3. API 配置页 → 连接方式选「**使用长连接**」；
+4. 页面自动生成并展示 **Bot ID** 和 **Secret**，复制保存；
+5. 补充机器人**可见范围**，其余保持默认，直接保存（API 模式不支持预览/调试）。
+
+在本目录**双击 `scripts/手动授权.bat`**（真实控制台窗口里输入 Bot ID、Secret，密文不回显、不进聊天记录）；
+或在任意终端窗口自己跑：
+
+```bash
+wecom-cli auth init --manual                 # 真实终端里交互输入 Bot ID + Secret
+wecom-cli auth show --status
+```
+
+> 坑：`--manual` **必须真实终端**。在 AI 的管道/重定向环境里跑会报 `893001 手动输入需要终端`，用 `.bat` 或自己开终端。
 
 装成功的样子、安全扫描结果、已知无害报错（PromptScript）：`经验/安装记录与实测.md`。
 
@@ -106,7 +133,9 @@ node scripts/发群消息.js --text "测试：客服日报已生成" --mention 1
 |---|---|
 | Skill/CLI 装没装？ | `node scripts/检查企微环境.js` |
 | `wecom-cli` 不存在或版本 < 1.2.1 | `npm install -g @wecom/cli` |
-| `auth show` 是 unauthorized | 本人扫码：`wecom-cli auth init` |
+| `auth show` 是 unauthorized | 二选一：扫码 `wecom-cli auth init`；或 API 模式手动接入（双击 `scripts/手动授权.bat`） |
+| 不想扫码 / 机器人要给多个工具复用 | 用 API 模式机器人（官方 21677），拿 Bot ID + Secret 走手动接入（见 §3.2） |
+| `--manual` 报「手动输入需要终端」 | 必须在真实终端窗口运行；用 `scripts/手动授权.bat`，AI 的管道环境不行 |
 | 发消息提示目标不在最近会话 | 让该群/人先给机器人发一条消息；或直接发给授权人本人 |
 | 路线 A 想 @ 特定人 | text 类型用 `--mention 手机号`；行内 @ 用 `<@userid>`（见 1号 `wecomTextMention.js`） |
 | PromptScript 装失败 | 无害，换一个 AI 客户端或用上面终端方式 |
@@ -124,6 +153,7 @@ node scripts/发群消息.js --text "测试：客服日报已生成" --mention 1
 │   └── 踩坑与红线.md            ← 必须问人的事 + 两路线各自的坑
 ├── scripts/
 │   ├── 检查企微环境.js           ← 只读体检（node/skill/cli/auth/webhook）
-│   └── 发群消息.js              ← 群机器人 webhook 发送，默认 dry-run
+│   ├── 发群消息.js              ← 群机器人 webhook 发送，默认 dry-run
+│   └── 手动授权.bat             ← API 模式机器人手动接入（双击后输入 Bot ID+Secret）
 └── tests/                      ← `npm test`（11 项，含「不得自动重试」反向断言）
 ```
