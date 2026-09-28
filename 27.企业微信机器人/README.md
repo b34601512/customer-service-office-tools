@@ -17,7 +17,7 @@
 ```
 
 AI 会自动：装 Skill → 装 `@wecom/cli` → 弹出二维码让你**扫码创建并授权一个「智能机器人」**。
-⚠️ **扫码必须你本人做，AI 代替不了**；不想扫码也可以走 §3 的「手动接入（API 模式机器人 Bot ID + Secret）」。扫完之后让它跑体检：
+⚠️ **扫码必须你本人做，AI 代替不了**（二维码出不来就双击 `scripts/扫码授权.bat`）；扫完之后让它跑体检：
 
 ```bash
 node scripts/检查企微环境.js
@@ -37,7 +37,7 @@ node scripts/检查企微环境.js
 
 **一句话：只要提醒 → A；要 AI 动手查/写/发 → B；已有 MCP 平台 → C。**
 
-## 3. 路线 B：安装与两种接入方式
+## 3. 路线 B：接入方式（**给其他主管：先看 3.1 扫码**）
 
 前提：Node.js（含 npm/npx）。
 
@@ -46,16 +46,20 @@ npm install -g @wecom/cli                    # 装 CLI（当前 1.3.4，需 >= 1
 npx skills add WeComTeam/wecom-cli -y -g     # 终端版 Skill（必需）
 ```
 
-### 3.1 接入方式①：扫码（官方推荐）
+### 3.1 扫码接入（✅ 默认推荐，所有人都能懂）
+
+只需一步：**双击 `scripts/扫码授权.bat`**（或在终端跑 `wecom-cli auth init`）→ 屏幕出现二维码 →
+用手机企业微信扫一下 → 按提示确认 → 看到 `authorized` 就完成（二维码 5 分钟内有效）。
+扫码会自动完成「创建机器人 + 授权」，不需要懂后台、不需要填任何 ID。
 
 ```bash
-wecom-cli auth init                          # 出二维码，本人扫码（一次）
+wecom-cli auth init                          # 出二维码，本人扫（等价于双击上面的 bat）
 wecom-cli auth show --status                 # authorized / unauthorized
 ```
 
-### 3.2 接入方式②：手动接入 = API 模式机器人（不扫码）
+> 扫码识别不了屏幕上的二维码时，让 AI 跑：`wecom-cli auth init --noninteractive --output-qrcode 二维码.png`，扫生成的图片。
 
-适合：不想扫码 / 机器人要复用给 MCP、API / 要自己控制机器人的「可见范围」。
+### 3.2 手动接入（进阶：不想扫码 / 机器人要复用给 MCP、API）
 
 先在企业微信客户端里创建并拿到 Bot ID + Secret（官方文档 21677）：
 1. 工作台 → **智能机器人** → 创建机器人 → **手动创建**；
@@ -64,7 +68,7 @@ wecom-cli auth show --status                 # authorized / unauthorized
 4. 页面自动生成并展示 **Bot ID** 和 **Secret**，复制保存；
 5. 补充机器人**可见范围**，其余保持默认，直接保存（API 模式不支持预览/调试）。
 
-在本目录**双击 `scripts/手动授权.bat`**（真实控制台窗口里输入 Bot ID、Secret，密文不回显、不进聊天记录）；
+然后双击 `scripts/手动授权.bat`（真实控制台窗口输入 Bot ID、Secret，密文不回显、不进聊天记录）；
 或在任意终端窗口自己跑：
 
 ```bash
@@ -133,7 +137,8 @@ node scripts/发群消息.js --text "测试：客服日报已生成" --mention 1
 |---|---|
 | Skill/CLI 装没装？ | `node scripts/检查企微环境.js` |
 | `wecom-cli` 不存在或版本 < 1.2.1 | `npm install -g @wecom/cli` |
-| `auth show` 是 unauthorized | 二选一：扫码 `wecom-cli auth init`；或 API 模式手动接入（双击 `scripts/手动授权.bat`） |
+| `auth show` 是 unauthorized | 推荐扫码：双击 `scripts/扫码授权.bat`（或终端跑 `wecom-cli auth init`） |
+| 我不懂命令行怎么办？ | **只做一件事：双击 `scripts/扫码授权.bat` 并用企业微信扫码**；其余交给你的 AI |
 | 不想扫码 / 机器人要给多个工具复用 | 用 API 模式机器人（官方 21677），拿 Bot ID + Secret 走手动接入（见 §3.2） |
 | `--manual` 报「手动输入需要终端」 | 必须在真实终端窗口运行；用 `scripts/手动授权.bat`，AI 的管道环境不行 |
 | 发消息提示目标不在最近会话 | 让该群/人先给机器人发一条消息；或直接发给授权人本人 |
@@ -154,6 +159,7 @@ node scripts/发群消息.js --text "测试：客服日报已生成" --mention 1
 ├── scripts/
 │   ├── 检查企微环境.js           ← 只读体检（node/skill/cli/auth/webhook）
 │   ├── 发群消息.js              ← 群机器人 webhook 发送，默认 dry-run
-│   └── 手动授权.bat             ← API 模式机器人手动接入（双击后输入 Bot ID+Secret）
+│   ├── 扫码授权.bat             ← ★新手走这个：双击+手机扫码，完成创建与授权
+│   └── 手动授权.bat             ← 进阶：API 模式机器人，输入 Bot ID+Secret
 └── tests/                      ← `npm test`（11 项，含「不得自动重试」反向断言）
 ```
