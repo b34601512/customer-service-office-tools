@@ -40,7 +40,17 @@ const DEFAULTS = {
   'text-limit': 4000,
   'input-selector': 'input[type="password"], input[type="text"]',
   'button-name': '确定|确认|提交',
+  'scroll-step': 0.6,
+  'scroll-settle': 400,
+  'scroll-max': 400,
 };
+
+// 滚动采集时过滤的界面噪声（不是文档正文）；已实测的飞书界面文案
+const SCROLL_NOISE = new Set([
+  '帮助中心', '快捷键', '跳转至首条评论', '复制', 'Plain Text',
+  '评论（0）', '评论（1）', '评论（2）', '评论（3）', '评论（4）', '评论（5）',
+]);
+const ZERO_WIDTH_RE = /[\u200b\u200c\u200d\ufeff]/g;
 
 const USAGE = `
 密码墙网页读取（只读）
@@ -65,6 +75,13 @@ const USAGE = `
   --no-submit                  只打开页面并截图，不输密码、不点按钮
   --headless                   无头运行（默认可见窗口；排障时不要加）
   --keep-open                  读完不关浏览器，留给人肉眼核对（Ctrl+C 结束）
+
+长文档滚动采集（虚拟滚动页面，如飞书长文档：正文只渲染可视区，直接读 body 会缺内容）：
+  --scroll-collect             逐步滚动并合并全文；结果写入 页面正文.txt
+  --scroll-selector <选择器>   指定滚动容器；默认自动选“可滚动幅度最大”的元素
+  --scroll-step <0~1>          每步滚动视口比例（默认 0.6）
+  --scroll-settle <毫秒>       每步后等待渲染（默认 400）
+  --scroll-max <步数>          最大步数（默认 400，防止死循环）
   --help                       显示本说明
 `;
 
@@ -77,7 +94,7 @@ function parseArgs(argv) {
       continue;
     }
     const key = token.slice(2);
-    if (key === 'help' || key === 'headless' || key === 'keep-open' || key === 'no-submit') {
+    if (key === 'help' || key === 'headless' || key === 'keep-open' || key === 'no-submit' || key === 'scroll-collect') {
       out[key] = true;
       continue;
     }
@@ -95,6 +112,119 @@ function num(args, key) {
   const n = Number(raw);
   if (!Number.isFinite(n) || n < 0) throw new Error(`参数 --${key} 需要非负数字，收到：${raw}`);
   return n;
+}
+
+// ---------- 长文档滚动采集 ----------
+
+function normalizeLines(text) {
+  return String(text == null ? '' : text)
+    .split('\n')
+    .map((l) => l.replace(ZERO_WIDTH_RE, '').trim())
+    .filter((l) => l && !SCROLL_NOISE.has(l));
+}
+
+// 行级 LCS：返回 acc、cur 的匹配行对（i, j）
+function lcsPairs(a, b) {
+  const n = a.length;
+  const m = b.length;
+  const dp = new Array(n + 1);
+  for (let i = 0; i <= n; i++) dp[i] = new Int32Array(m + 1);
+  for (let i = n - 1; i >= 0; i--) {
+    const row = dp[i];
+    const nxt = dp[i + 1];
+    for (let j = m - 1; j >= 0; j--) {
+      row[j] = a[i] === b[j] ? nxt[j + 1] + 1 : Math.max(nxt[j], row[j + 1]);
+    }
+  }
+  const pairs = [];
+  let i = 0;
+  let j = 0;
+  while (i < n && j < m) {
+    if (a[i] === b[j]) { pairs.push([i, j]); i++; j++; }
+    else if (dp[i + 1][j] >= dp[i][j + 1]) i++;
+    else j++;
+  }
+  return pairs;
+}
+
+// 按行对齐合并：把 cur 里 acc 没有的行按文档顺序插入；acc 已有的行不重复
+function unionLines(acc, cur) {
+  const pairs = lcsPairs(acc, cur);
+  const out = [];
+  let ai = 0;
+  let bi = 0;
+  for (const [i, j] of pairs) {
+    for (; ai < i; ai++) out.push(acc[ai]);
+    for (; bi < j; bi++) out.push(cur[bi]);
+    out.push(acc[i]);
+    ai = i + 1;
+    bi = j + 1;
+  }
+  for (; ai < acc.length; ai++) out.push(acc[ai]);
+  for (; bi < cur.length; bi++) out.push(cur[bi]);
+  return out;
+}
+
+async function scrollCollect(page, opts) {
+  const step = opts.step;
+  const settle = opts.settle;
+  const maxSteps = opts.max;
+  const found = await page.evaluate((sel) => {
+    let el = sel ? document.querySelector(sel) : null;
+    if (!el) {
+      let bestSize = 0;
+      for (const node of document.querySelectorAll('*')) {
+        const st = getComputedStyle(node);
+        if ((st.overflowY === 'auto' || st.overflowY === 'scroll') && node.scrollHeight > node.clientHeight + 100) {
+          const size = node.scrollHeight - node.clientHeight;
+          if (size > bestSize) { bestSize = size; el = node; }
+        }
+      }
+    }
+    if (!el) el = document.scrollingElement || document.documentElement;
+    el.setAttribute('data-pi-scroll-target', '1');
+    el.scrollTop = 0;
+    return { sh: el.scrollHeight, ch: el.clientHeight };
+  }, opts.selector || null);
+  await page.waitForTimeout(settle);
+
+  let lines = null;
+  let prev = null;
+  let stable = 0;
+  for (let i = 0; i < maxSteps; i++) {
+    const snap = await page.evaluate(() => {
+      const el = document.querySelector('[data-pi-scroll-target="1"]');
+      return el ? el.innerText : '';
+    });
+    const cur = normalizeLines(snap);
+    if (lines === null) lines = cur;
+    else if (cur.length) lines = unionLines(lines, cur);
+
+    const st = await page.evaluate(() => {
+      const el = document.querySelector('[data-pi-scroll-target="1"]');
+      return el ? { top: el.scrollTop, sh: el.scrollHeight, ch: el.clientHeight } : { top: 0, sh: 0, ch: 0 };
+    });
+    const atBottom = st.top + st.ch >= st.sh - 2;
+    if (atBottom && snap === prev) { stable++; if (stable >= 2) break; } else stable = 0;
+    prev = snap;
+
+    await page.evaluate((s) => {
+      const el = document.querySelector('[data-pi-scroll-target="1"]');
+      if (el) el.scrollTop = Math.min(el.scrollTop + el.clientHeight * s, el.scrollHeight);
+    }, step);
+    await page.waitForTimeout(settle);
+  }
+
+  await page.evaluate(() => {
+    const el = document.querySelector('[data-pi-scroll-target="1"]');
+    if (el) {
+      el.scrollTop = 0;
+      el.removeAttribute('data-pi-scroll-target');
+    }
+  });
+  await page.waitForTimeout(300);
+  console.log(`[滚动采集] 容器高度 ${found.sh}px / 视口 ${found.ch}px，合并 ${lines ? lines.length : 0} 行`);
+  return (lines || []).join('\n');
 }
 
 function resolvePassword(args) {
@@ -225,6 +355,16 @@ async function readPage(page) {
     }
 
     const after = await readPage(page);
+    if (args['scroll-collect']) {
+      console.log('[滚动采集] 开始（虚拟滚动长文档，逐步滚动并合并全文）……');
+      after.text = await scrollCollect(page, {
+        selector: args['scroll-selector'],
+        step: num(args, 'scroll-step'),
+        settle: num(args, 'scroll-settle'),
+        max: num(args, 'scroll-max'),
+      });
+      console.log(`[滚动采集] 合并后正文 ${after.text.length} 字`);
+    }
     await page.screenshot({ path: shotFile }).catch(() => {});
     fs.writeFileSync(textFile, after.text, 'utf8');
 
