@@ -82,6 +82,7 @@ const USAGE = `
   --scroll-step <0~1>          每步滚动视口比例（默认 0.6）
   --scroll-settle <毫秒>       每步后等待渲染（默认 400）
   --scroll-max <步数>          最大步数（默认 400，防止死循环）
+  --dump-links                 滚动扫描全文并导出超链接到 页面链接.txt（读取引用文档用；只读）
   --help                       显示本说明
 `;
 
@@ -94,7 +95,7 @@ function parseArgs(argv) {
       continue;
     }
     const key = token.slice(2);
-    if (key === 'help' || key === 'headless' || key === 'keep-open' || key === 'no-submit' || key === 'scroll-collect') {
+    if (key === 'help' || key === 'headless' || key === 'keep-open' || key === 'no-submit' || key === 'scroll-collect' || key === 'dump-links') {
       out[key] = true;
       continue;
     }
@@ -192,15 +193,29 @@ async function scrollCollect(page, opts) {
   let prev = null;
   let stable = 0;
   const snapshots = [];
+  const linkMap = new Map();
   for (let i = 0; i < maxSteps; i++) {
     const snap = await page.evaluate(() => {
       const el = document.querySelector('[data-pi-scroll-target="1"]');
       return el ? el.innerText : '';
     });
-    const cur = normalizeLines(snap);
-    snapshots.push(cur);
-    if (lines === null) lines = cur;
-    else if (cur.length) lines = unionLines(lines, cur);
+    if (opts.collectText !== false) {
+      const cur = normalizeLines(snap);
+      snapshots.push(cur);
+      if (lines === null) lines = cur;
+      else if (cur.length) lines = unionLines(lines, cur);
+    }
+    if (opts.collectLinks) {
+      const links = await page.evaluate(() => {
+        const el = document.querySelector('[data-pi-scroll-target="1"]');
+        if (!el) return [];
+        return [...el.querySelectorAll('a[href]')].map((a) => ({
+          text: (a.innerText || a.textContent || '').replace(/\s+/g, ' ').trim(),
+          href: a.href,
+        })).filter((l) => l.href && !/^javascript:/i.test(l.href));
+      }).catch(() => []);
+      for (const l of links) if (!linkMap.has(l.href)) linkMap.set(l.href, l);
+    }
 
     const st = await page.evaluate(() => {
       const el = document.querySelector('[data-pi-scroll-target="1"]');
@@ -227,7 +242,7 @@ async function scrollCollect(page, opts) {
   await page.waitForTimeout(300);
 
   // 自检：每张滚动快照都应是合并全文的子序列；否则说明有行没合并进去（漏采）
-  if (lines && lines.length) {
+  if (opts.collectText !== false && lines && lines.length) {
     let badSnaps = 0;
     let missingTotal = 0;
     for (let i = 0; i < snapshots.length; i++) {
@@ -253,7 +268,7 @@ async function scrollCollect(page, opts) {
   }
 
   console.log(`[滚动采集] 容器高度 ${found.sh}px / 视口 ${found.ch}px，合并 ${lines ? lines.length : 0} 行`);
-  return (lines || []).join('\n');
+  return { text: (lines || []).join('\n'), links: [...linkMap.values()] };
 }
 
 function resolvePassword(args) {
@@ -384,15 +399,26 @@ async function readPage(page) {
     }
 
     const after = await readPage(page);
-    if (args['scroll-collect']) {
+    const needScroll = args['scroll-collect'] || args['dump-links'];
+    if (needScroll) {
       console.log('[滚动采集] 开始（虚拟滚动长文档，逐步滚动并合并全文）……');
-      after.text = await scrollCollect(page, {
+      const collected = await scrollCollect(page, {
         selector: args['scroll-selector'],
         step: num(args, 'scroll-step'),
         settle: num(args, 'scroll-settle'),
         max: num(args, 'scroll-max'),
+        collectText: Boolean(args['scroll-collect']),
+        collectLinks: Boolean(args['dump-links']),
       });
-      console.log(`[滚动采集] 合并后正文 ${after.text.length} 字`);
+      if (args['scroll-collect']) {
+        after.text = collected.text;
+        console.log(`[滚动采集] 合并后正文 ${after.text.length} 字`);
+      }
+      if (args['dump-links']) {
+        const linkFile = path.join(outDir, '页面链接.txt');
+        fs.writeFileSync(linkFile, collected.links.map((l) => `${l.text || '(无文字)'}\t${l.href}`).join('\n'), 'utf8');
+        console.log(`[链接] 共 ${collected.links.length} 条，已写入 ${linkFile}`);
+      }
     }
     await page.screenshot({ path: shotFile }).catch(() => {});
     fs.writeFileSync(textFile, after.text, 'utf8');
