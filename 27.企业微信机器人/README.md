@@ -111,6 +111,7 @@ wecom-cli auth show --status
 1. 先 `wecom-cli message aibot sessions list` 取**本次**会话里的 `chat_id`（不要用手打的）。
 2. **用脚本发，别手拼 JSON**：`node scripts/发企微消息.cjs --chat-id "<本次的id>" --file 正文.md`
    - 它把正文包成 `{"chat_id":…,"msg_type":"markdown","markdown":{"content":"<字符串>"}}` 再调 CLI，并在 `success!=true` 时报错退出；单测 `node --test tests/发企微消息.test.js`。
+   - **`--markdown` 收的是「markdown 内容对象」本身**（`{"content":"…"}`），不是整包请求体（`chat_id`+`msg_type`+`markdown`）；整包只在 `--json` 里用。传错时 CLI 会**打印 help 并 exit=2**，别误以为参数没写全（2026-09-29 实例，脚本已修 + 单测锁死）。
    - **正文必须是字符串**：给 `content` 传数组会报 `10003 'content' 类型不匹配，应为字符串`（单元素数组偶尔被 CLI 的 json repair 改成字符串，于是“有时成功有时失败”——2026-09-29 实例：连着几条长汇报静默失败）。
    - 别在正文 JSON 里塞裸双引号（用「」）；**临时文件别放 `/tmp`**：Node 写的 `/tmp` 是 `C:\tmp`，bash 的 `/tmp` 是 MSYS 临时目录 → 读不到（实例：`cat: /tmp/md.json: No such file`）。
 3. 整包 `--json '{...}'` 容易被 CLI 的 json repair 改坏 → 报 `40073 非法的 chat_id`（其实是 JSON 坏了，不是 id 坏了）。

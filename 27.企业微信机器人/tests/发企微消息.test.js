@@ -1,7 +1,7 @@
 // 反向断言：正文必须是字符串，不许再出现「content 传数组」导致 10003 静默失败。
 const test = require('node:test');
 const assert = require('node:assert');
-const { 构造载荷, 取参数 } = require('../scripts/发企微消息.cjs');
+const { 构造载荷, 构造CLI参数, 取参数 } = require('../scripts/发企微消息.cjs');
 
 test('正常载荷：content 是字符串', () => {
   const 载荷 = 构造载荷({ chatId: 'woXXXX', content: '第一行\n第二行' });
@@ -25,4 +25,16 @@ test('参数解析：--dry-run 与 --file/--text', () => {
   assert.strictEqual(取参数(['--chat-id', 'x', '--dry-run']).dryRun, true);
   assert.strictEqual(取参数(['--chat-id', 'x', '--text', '你好']).text, '你好');
   assert.strictEqual(取参数(['--chat-id', 'x', '--file', 'a.md']).file, 'a.md');
+});
+
+test('命令行参数：--markdown 传的是内容对象，不是整包请求体（2026-09-29 实例：整包→CLI 打 help、exit=2）', () => {
+  const 载荷 = 构造载荷({ chatId: 'woXXXX', content: '你好' });
+  const args = 构造CLI参数(载荷, 'C:/x/wecom.js');
+  const i = args.indexOf('--markdown');
+  const markdown = JSON.parse(args[i + 1]);
+  assert.deepStrictEqual(Object.keys(markdown), ['content']);
+  assert.strictEqual(markdown.content, '你好');
+  assert.ok(!('chat_id' in markdown), 'chat_id 不能塞进 --markdown');
+  assert.ok(!('msg_type' in markdown), 'msg_type 不能塞进 --markdown');
+  assert.strictEqual(args[args.indexOf('--chat-id') + 1], 'woXXXX');
 });
