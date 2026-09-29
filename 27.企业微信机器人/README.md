@@ -114,6 +114,7 @@ wecom-cli auth show --status
    - 正文文件里的 JSON 用脚本生成（`JSON.stringify({content})`），别手写、别在 JSON 里塞裸双引号（用「」）；
    - **临时文件别放 `/tmp`**：Node 写的 `/tmp` 是 `C:	mp`，bash 的 `/tmp` 是 MSYS 临时目录 → 读不到（实例：`cat: /tmp/md.json: No such file`）。
 3. 整包 `--json '{...}'` 容易被 CLI 的 json repair 改坏 → 报 `40073 非法的 chat_id`（其实是 JSON 坏了，不是 id 坏了）。
+4. **读 offset 的顺序**：处理完消息要先把 `inbox.read-offset` 写成「本次读到的那个位置」，**再**发回复；若先发回复再按文件长度写 offset，会把等待期间新到的消息一起跳过（2026-09-29 实例：13:39 用户发的"自定义风格绑 DEDAKJ"被跳过近 1 小时）。
 
 ## 6. 红线（本仓库 + 官方）
 
