@@ -82,3 +82,17 @@ test("extractText / extractNote 直接调用也不抛错", () => {
   assert.equal(extractText(null), "");
   assert.equal(extractNote(undefined), "");
 });
+
+test("媒体消息：提取 url/aeskey，并落盘文件名可预测", () => {
+  const { extractMedia, mediaFileName } = require("../src/inbox");
+  const img = extractMedia({ image: { url: "https://x/a", aeskey: "k1" } });
+  assert.deepEqual(img, { kind: "image", url: "https://x/a", aeskey: "k1", name: "" });
+  assert.equal(extractMedia({ text: { content: "纯文本" } }), null);
+  const record = buildRecord({
+    body: { msgid: "m-9", chattype: "single", msgtype: "image", from: { userid: "u" }, image: { url: "https://x/a", aeskey: "k1" } }
+  });
+  assert.equal(record.media.url, "https://x/a");
+  assert.equal(mediaFileName("m-9", record.media), "m-9.jpg");
+  assert.equal(mediaFileName("m-9", { kind: "file", name: "发票.pdf" }), "发票.pdf");
+  assert.equal(mediaFileName("m-9", { kind: "file", name: "../etc/passwd" }), "passwd-m-9.bin");
+});

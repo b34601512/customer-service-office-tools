@@ -1,6 +1,8 @@
 // 收件记录：把长连接 SDK 的消息帧整理成可落盘的记录（纯函数，便于单测）。
 // 设计原则：只记录、不回复；内部 ID 只落本地文件，不打印给用户。
 
+const path = require("path");
+
 /** 把秒级时间戳转成可读时间；缺省用当前时间。 */
 function toLocalTime(createTime) {
   if (!createTime) return new Date().toISOString();
@@ -37,6 +39,26 @@ function extractNote(body) {
   return "";
 }
 
+function extractMedia(body) {
+  if (!body || typeof body !== "object") return null;
+  if (body.image && body.image.url) return { kind: "image", url: body.image.url, aeskey: body.image.aeskey || "", name: "" };
+  if (body.file && body.file.url) return { kind: "file", url: body.file.url, aeskey: body.file.aeskey || "", name: body.file.name || "" };
+  if (body.video && body.video.url) return { kind: "video", url: body.video.url, aeskey: body.video.aeskey || "", name: "" };
+  if (body.voice && body.voice.url) return { kind: "voice", url: body.voice.url, aeskey: body.voice.aeskey || "", name: "" };
+  return null;
+}
+
+/** 媒体落盘用的文件名（纯函数，便于单测）：优先用原文件名，否则 msgid + 默认扩展名。 */
+function mediaFileName(msgid, media) {
+  const fallbackExt = { image: ".jpg", voice: ".amr", video: ".mp4", file: ".bin" };
+  const raw = (media && media.name) || "";
+  const safe = path.basename(raw).replace(/[\\/:*?"<>|]/g, "_");
+  const base = String(msgid || "media") .replace(/[\\/:*?"<>|]/g, "_");
+  if (safe && safe.includes(".")) return safe;
+  if (safe) return `${safe}-${base}${fallbackExt[(media && media.kind) || "file"] || ".bin"}`;
+  return `${base}${fallbackExt[(media && media.kind) || "file"] || ".bin"}`;
+}
+
 /**
  * 把 SDK 的 WsFrame 整理成收件记录。
  * @param {{body?: object, headers?: object}} frame
@@ -53,8 +75,9 @@ function buildRecord(frame) {
     chatid: body.chatid || "",
     fromUserId: from.userid || "",
     text: extractText(body),
-    note: extractNote(body)
+    note: extractNote(body),
+    media: extractMedia(body)
   };
 }
 
-module.exports = { buildRecord, extractText, extractNote, toLocalTime };
+module.exports = { buildRecord, extractText, extractNote, extractMedia, mediaFileName, toLocalTime };

@@ -44,8 +44,27 @@ function appendRecord(record) {
 
 const seenMsgIds = new Set(); // 排重（SDK 官方建议按 msgid 排重）
 const MAX_SEEN = 5000;
+let wsClient = null; // 由 main() 注入，用于媒体解密下载
 
-function handleFrame(kind, frame) {
+/** 图片/文件/语音/视频消息：用 SDK 的 downloadFile(url, aeskey) 解密后落到 .state/media/。 */
+async function saveMedia(record) {
+  const media = record.media;
+  if (!media || !media.url || !wsClient) return;
+  try {
+    const { mediaFileName } = require("../src/inbox");
+    const { buffer, filename } = await wsClient.downloadFile(media.url, media.aeskey);
+    const dir = path.join(STATE_DIR, "media");
+    fs.mkdirSync(dir, { recursive: true });
+    const file = path.join(dir, filename || mediaFileName(record.msgid, media));
+    fs.writeFileSync(file, buffer);
+    record.mediaPath = file;
+    record.mediaBytes = buffer.length;
+  } catch (error) {
+    log("媒体下载失败：" + (error && error.message ? error.message : String(error)));
+  }
+}
+
+async function handleFrame(kind, frame) {
   let buildRecord;
   try {
     ({ buildRecord } = require("../src/inbox"));
@@ -63,11 +82,13 @@ function handleFrame(kind, frame) {
       seenMsgIds.delete(first);
     }
   }
+  await saveMedia(record);
   appendRecord(record);
   const who = record.chattype === "group" ? "群聊" : "单聊";
   const text = (record.text || record.note || "").replace(/\s+/g, " ").slice(0, 80);
+  const saved = record.mediaPath ? "（已存 " + path.basename(record.mediaPath) + "）" : "";
   if (DUMP) console.log(JSON.stringify(record, null, 2));
-  else log(`收到${who}消息 [${record.msgtype}] ${text}`);
+  else log(`收到${who}消息 [${record.msgtype}]${saved} ${text}`);
 }
 
 async function main() {
@@ -91,6 +112,7 @@ async function main() {
 
   const AiBot = sdk.default || sdk;
   const client = new AiBot.WSClient({ botId: creds.botId, secret: creds.secret });
+  wsClient = client;
 
   client.on("authenticated", () => {
     log(CHECK_ONLY ? "AUTH_OK：长连接认证并订阅成功" : "长连接认证并订阅成功（只收不回）");
