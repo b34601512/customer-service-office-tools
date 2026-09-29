@@ -40,18 +40,22 @@ if (sheetName) argv.sheetName = sheetName;
 
 (async () => {
   const startedAt = Date.now();
+  const controller = new AbortController();
+  const timeoutHandle = setTimeout(() => controller.abort(), 120000);
   let response;
   try {
     response = await fetch(webhook, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'AirScript-Token': token },
       body: JSON.stringify({ Context: { argv } }),
-      signal: AbortSignal.timeout(120000)
+      signal: controller.signal
     });
   } catch (error) {
+    clearTimeout(timeoutHandle);
     console.error(`连接金山失败：${error && error.message}`);
     process.exit(1);
   }
+  clearTimeout(timeoutHandle);
   const text = await response.text();
   if (!response.ok) {
     console.error(`金山接口 HTTP ${response.status}：${text.slice(0, 300)}（检查 API 地址/令牌，或脚本里有没有 return）`);
@@ -90,4 +94,5 @@ if (sheetName) argv.sheetName = sheetName;
     for (const row of rows.slice(0, 12)) console.log('  ' + row.join(' | ').slice(0, 200));
     if (rows.length > 12) console.log(`  …（共 ${rows.length} 行，全量见 --out 文件）`);
   }
+  process.exit(0);
 })();
