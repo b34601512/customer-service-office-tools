@@ -1,5 +1,7 @@
 // 通用工具：按任务JSON安全更新探域知识卡。
 // 默认只检查，不写入；写入必须 --action apply --allow-write true。
+// 业务字段（绑店/范围/启用状态等）默认**不许变**：只有任务文件带 businessPatch + approvedBy（客服主管/经理姓名）
+// 且命令行显式 --allow-business-change true 时，才允许按 businessPatch 改写这些字段（写入后按"补丁后的期望值"回读核对）。
 // 支持两种任务项：①带 id 的原位更新；②不带 id + 带 title 的新建（save），新建默认 stopped（ifOpen:false），
 // 且同标题已存在时不新建、不改写（status=title-conflict，交给调用方决定）。
 // 不写死公司、店铺、型号、正文、对象ID、账号或本机路径。
@@ -51,6 +53,7 @@ function payloadFrom(card, after) {
 function businessMeta(card) {
   const out = {};
   for (const key of FIELDS) if (key !== 'content' && key !== 'lastUpdatedAt') out[key] = card[key];
+  if (out.excludeCondition == null) out.excludeCondition = EMPTY_SCOPE();
   if (out.excludeCondition && typeof out.excludeCondition === 'object') {
     for (const key of ['spu', 'shop', 'rules', 'productGroupId', 'sellerGroup', 'platform']) {
       if (out.excludeCondition[key] == null) out.excludeCondition[key] = [];
@@ -65,11 +68,49 @@ function checkExpected(card, expected = {}) {
   }
   return diffs;
 }
+const CONDITION_KEYS = ['includeCondition', 'excludeCondition'];
+const PATCH_FORBIDDEN = ['id', 'content', 'lastUpdatedAt'];
+function assertPatchShape(patch) {
+  for (const key of Object.keys(patch || {})) {
+    if (!FIELDS.includes(key) || PATCH_FORBIDDEN.includes(key)) {
+      throw new Error(`businessPatch 不允许包含字段 ${key}（只允许业务字段，正文/ID 必须走 after）`);
+    }
+  }
+}
+// 业务补丁：条件类字段按键覆盖（patch.includeCondition.shop 整体替换原数组），其余字段直接替换。
+function mergeBusinessPatch(meta, patch) {
+  assertPatchShape(patch);
+  const out = { ...meta };
+  for (const [key, value] of Object.entries(patch || {})) {
+    if (CONDITION_KEYS.includes(key) && value && typeof value === 'object' && !Array.isArray(value)) {
+      out[key] = { ...(meta[key] || {}), ...value };
+    } else {
+      out[key] = value;
+    }
+  }
+  return out;
+}
+function expectedBusinessAfter(card, patch) {
+  return mergeBusinessPatch(businessMeta(card), patch);
+}
+// 红线锁：改绑店/范围等业务字段属破坏性变更，必须有人确认（主管/经理）且显式放行。
+function assertBusinessChangeAllowed({ patch, approvedBy, allowFlag }) {
+  if (!patch) return false;
+  assertPatchShape(patch);
+  if (!Object.keys(patch).length) return false;
+  if (!String(approvedBy || '').trim()) {
+    throw new Error('业务字段变更（绑店/范围等）必须在任务文件里写明 approvedBy（确认的客服主管/经理姓名）');
+  }
+  if (allowFlag !== 'true') {
+    throw new Error('业务字段变更必须显式传入 --allow-business-change true（确认后才放行）');
+  }
+  return true;
+}
 const EMPTY_SCOPE = () => ({ spu: [], shop: [], rules: [], productGroupId: [], sellerGroup: [], platform: [] });
 const slug = (v) => String(v).replace(/[^\w\u4e00-\u9fa5.-]+/g, '_').slice(0, 60) || 'card';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-(async () => {
+async function main() {
   const taskFile = required('task');
   const task = JSON.parse(fs.readFileSync(taskFile, 'utf8'));
   if (!Array.isArray(task.items) || !task.items.length) throw new Error('任务文件缺少 items');
@@ -77,6 +118,13 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const action = arg('action', 'check');
   if (!['check', 'apply', 'verify'].includes(action)) throw new Error(`未知 action: ${action}`);
   if (action === 'apply' && arg('allow-write') !== 'true') throw new Error('写入必须显式传入 --allow-write true');
+
+  const businessPatch = task.businessPatch || null;
+  if (businessPatch && action === 'apply') {
+    assertBusinessChangeAllowed({ patch: businessPatch, approvedBy: task.approvedBy, allowFlag: arg('allow-business-change') });
+  } else if (businessPatch) {
+    console.error('[只读] 本次是 check/verify：businessPatch 只用于计算“计划 payload / 期望值”，不写入后台。');
+  }
 
   const baseUrl = required('base-url').replace(/\/$/, '');
   const profile = required('profile');
@@ -265,7 +313,11 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
         continue;
       }
 
-      const payload = payloadFrom(beforeCard, item.after);
+      const expectBusiness = businessPatch ? expectedBusinessAfter(beforeCard, businessPatch) : businessMeta(beforeCard);
+      let payload = payloadFrom(beforeCard, item.after);
+      if (businessPatch) payload = mergeBusinessPatch(payload, businessPatch);
+      entry.approvedBy = task.approvedBy || null;
+      entry.expectBusinessSha256 = sha(expectBusiness);
       save(path.join(runDir, `${item.id}-payload.json`), payload);
 
       if (action === 'check') {
@@ -291,8 +343,12 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
       save(path.join(runDir, `${item.id}-after.json`), afterCard);
 
       const contentOk = sameContent(contentOf(afterCard), item.after);
-      const metaOk = stable(businessMeta(afterCard)) === stable(businessMeta(beforeCard));
+      const metaOk = stable(businessMeta(afterCard)) === stable(expectBusiness);
       entry.afterSha256 = sha(contentOf(afterCard));
+      entry.scopeShop = {
+        before: (beforeCard.includeCondition || {}).shop || [],
+        after: (afterCard.includeCondition || {}).shop || []
+      };
       entry.status = contentOk && metaOk ? 'verified' : 'verify-failed';
       journal.entries.push(entry);
       save(path.join(runDir, 'journal.json'), journal);
@@ -305,8 +361,17 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   journal.finishedAt = new Date().toISOString();
   save(path.join(runDir, 'journal.json'), journal);
   const summary = journal.entries.reduce((m, x) => ((m[x.status] = (m[x.status] || 0) + 1), m), {});
-  console.log(JSON.stringify({ runDir, summary }, null, 2));
-})().catch(error => {
-  console.error(error.stack || error.message);
-  process.exitCode = 1;
-});
+  console.log(JSON.stringify({ runDir, summary, approvedBy: task.approvedBy || null }, null, 2));
+}
+
+if (require.main === module) {
+  main().catch(error => {
+    console.error(error.stack || error.message);
+    process.exitCode = 1;
+  });
+}
+
+module.exports = {
+  FIELDS, stable, sha, segments, contentOf, sameContent, payloadFrom, businessMeta, checkExpected,
+  mergeBusinessPatch, expectedBusinessAfter, assertPatchShape, assertBusinessChangeAllowed
+};
