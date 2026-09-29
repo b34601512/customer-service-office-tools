@@ -69,11 +69,17 @@ if (sheetName) argv.sheetName = sheetName;
     process.exit(1);
   }
   const data = payload && payload.data ? payload.data : payload;
-  const result = data && data.result ? data.result : data;
+  if (payload && payload.error) {
+    console.error(`金山脚本报错：${payload.error}`);
+    for (const line of data.logs || []) console.error(`  [${line.level}] ${(line.args || []).join(' ').slice(0, 200)}`);
+    process.exit(1);
+  }
+  const result = data && data.result !== undefined ? data.result : data;
   const out = {
     fetchedAt: new Date().toISOString(),
     webhookHost: new URL(webhook).host,
     elapsedMs: Date.now() - startedAt,
+    logs: (data && data.logs) || [],
     result
   };
   const outFile = arg('out');

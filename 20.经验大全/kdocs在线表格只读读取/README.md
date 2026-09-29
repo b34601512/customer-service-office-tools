@@ -8,6 +8,7 @@
 | 文件 | 用途 |
 | --- | --- |
 | `AirScript-只读读取子表.txt` | 粘贴到**目标表格**的 AirScript 编辑器里（只读：只返回单元格，不改任何内容） |
+| `AirScript-只读读取子表-纯ASCII版.txt` | 同上，但**纯英文无中文注释**：粘贴时最不容易被剪贴板/编码弄坏，**优先用这份** |
 | `读取金山子表.cjs` | 本机 CLI：POST 调用该脚本，取回子表数据（可存 JSON） |
 
 同类的写入型脚本实例见 `../../12.店铺指标数据自动更新/src/kdocsSync/AirScript-写入数据源.txt`（那份会写表格，本目录这份**只读**）。
@@ -30,6 +31,12 @@ node .\读取金山子表.cjs --webhook "<API 地址>" --operation list_sheets  
 - 请求：`POST <API地址>`，头 `AirScript-Token: <令牌>`，体 `{"Context":{"argv":{...}}}`；
 - 脚本里用 `Context.argv.*` 取参数；`return` 的对象会被作为结果返回；
 - 本脚本参数：`operationType`（`read_sheet` / `list_sheets`）、`sheetName`、`maxRows`（≤3000）、`maxColumns`（≤80）、`requiredScriptVersion`。
+
+## 实测坑（2026-09-29）
+
+- 用 `cat 脚本.txt | clip.exe` 复制到剪贴板会把中文变乱码，粘进金山后报 `SyntaxError: Invalid or unexpected token`；要用 `powershell -NoProfile -Command "Set-Clipboard -Value ([IO.File]::ReadAllText('<路径>'))"`，或直接用纯 ASCII 版。
+- 金山 AirScript 的**脚本令牌是账号级的**（同一账号下不同表格可复用）：12号/9号 已配好的令牌可以直接调用别的表格的 API，实测 HTTP 200。
+- 返回结构：`{"data":{"logs":[...],"result":<脚本 return 的对象>},"error":"..."}`——脚本语法错或有异常时 `result` 为 null，看 `error` 和 `logs`。
 
 ## 边界
 
