@@ -93,6 +93,10 @@ function mergeBusinessPatch(meta, patch) {
 function expectedBusinessAfter(card, patch) {
   return mergeBusinessPatch(businessMeta(card), patch);
 }
+// 只有“正文 + 业务字段”都已到位才算已完成；只改绑店（正文不动）时不能被当成 already-target 跳过。
+function atTarget({ currentContent, after, currentBusiness, expectBusiness }) {
+  return sameContent(currentContent, after) && stable(currentBusiness) === stable(expectBusiness);
+}
 // 红线锁：改绑店/范围等业务字段属破坏性变更，必须有人确认（主管/经理）且显式放行。
 function assertBusinessChangeAllowed({ patch, approvedBy, allowFlag }) {
   if (!patch) return false;
@@ -139,6 +143,8 @@ async function main() {
   const runDir = path.join(backupDir, `knowledge-task-${runId}`);
   const journal = {
     runId, action, taskFile, company: task.company || null, scope: task.scope || null,
+    approvedBy: task.approvedBy || null,
+    businessPatchKeys: businessPatch ? Object.keys(businessPatch) : null,
     startedAt: new Date().toISOString(), entries: []
   };
   save(path.join(runDir, 'task.json'), task);
@@ -288,13 +294,17 @@ async function main() {
 
       save(path.join(runDir, `${item.id}-before.json`), beforeCard);
 
+      const expectBusiness = businessPatch ? expectedBusinessAfter(beforeCard, businessPatch) : businessMeta(beforeCard);
+      entry.businessPatch = businessPatch ? 'patched' : 'unchanged';
+      entry.expectBusinessSha256 = sha(expectBusiness);
+
       if (expectedDiffs.length) {
         entry.status = 'scope-conflict';
         journal.entries.push(entry);
         save(path.join(runDir, 'journal.json'), journal);
         continue;
       }
-      if (sameContent(current, item.after)) {
+      if (atTarget({ currentContent: current, after: item.after, currentBusiness: businessMeta(beforeCard), expectBusiness })) {
         entry.status = 'already-target';
         journal.entries.push(entry);
         save(path.join(runDir, 'journal.json'), journal);
@@ -313,11 +323,9 @@ async function main() {
         continue;
       }
 
-      const expectBusiness = businessPatch ? expectedBusinessAfter(beforeCard, businessPatch) : businessMeta(beforeCard);
       let payload = payloadFrom(beforeCard, item.after);
       if (businessPatch) payload = mergeBusinessPatch(payload, businessPatch);
       entry.approvedBy = task.approvedBy || null;
-      entry.expectBusinessSha256 = sha(expectBusiness);
       save(path.join(runDir, `${item.id}-payload.json`), payload);
 
       if (action === 'check') {
@@ -373,5 +381,5 @@ if (require.main === module) {
 
 module.exports = {
   FIELDS, stable, sha, segments, contentOf, sameContent, payloadFrom, businessMeta, checkExpected,
-  mergeBusinessPatch, expectedBusinessAfter, assertPatchShape, assertBusinessChangeAllowed
+  mergeBusinessPatch, expectedBusinessAfter, atTarget, assertPatchShape, assertBusinessChangeAllowed
 };

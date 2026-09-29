@@ -92,3 +92,19 @@ test('⑧ 空排除条件按 [] 归一化比较', () => {
   const b = { ...card(), excludeCondition: { spu: [], shop: [], rules: [], productGroupId: [], sellerGroup: [], platform: [] } };
   assert.equal(ex.stable(ex.businessMeta(a)), ex.stable(ex.businessMeta(b)));
 });
+
+test('⑨ 只改绑店（正文不动）时不能被当成 already-target 跳过', () => {
+  const before = card();
+  const patch = { includeCondition: { shop: [{ thirdShopId: DD }, { thirdShopId: DK }] } };
+  const expect = ex.expectedBusinessAfter(before, patch);
+  const cur = ex.businessMeta(before);
+  // 正文相同 + 业务字段未改 → 不算到位（要继续写）
+  assert.equal(ex.atTarget({ currentContent: ['第一段', '第二段'], after: ['第一段', '第二段'], currentBusiness: cur, expectBusiness: expect }), false);
+  // 正文相同 + 业务字段已是补丁后的值 → 到位
+  const afterCard = { ...before, includeCondition: { ...before.includeCondition, shop: [{ thirdShopId: DD }, { thirdShopId: DK }] } };
+  assert.equal(ex.atTarget({ currentContent: ['第一段', '第二段'], after: ['第一段', '第二段'], currentBusiness: ex.businessMeta(afterCard), expectBusiness: expect }), true);
+  // 不传补丁时行为不变：正文相同即到位
+  assert.equal(ex.atTarget({ currentContent: ['第一段', '第二段'], after: ['第一段', '第二段'], currentBusiness: cur, expectBusiness: ex.businessMeta(before) }), true);
+  // 正文不同 → 一律不到位
+  assert.equal(ex.atTarget({ currentContent: ['旧'], after: ['新'], currentBusiness: ex.businessMeta(afterCard), expectBusiness: expect }), false);
+});
