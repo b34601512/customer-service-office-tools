@@ -13,16 +13,24 @@ function toLocalTime(createTime) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 }
 
+/** 图文混排的子项数组：线上实际字段是 mixed.msg_item，样例/旧版用的是 mixed.items，两者都兼容。 */
+function mixedItems(body) {
+  if (!body || typeof body !== "object" || !body.mixed) return [];
+  const items = body.mixed.msg_item || body.mixed.items;
+  return Array.isArray(items) ? items : [];
+}
+
 /** 从消息体里提取可读文本（不同 msgtype 结构不同）。 */
 function extractText(body) {
   if (!body || typeof body !== "object") return "";
   if (body.text && typeof body.text.content === "string") return body.text.content;
   if (body.voice && typeof body.voice.content === "string") return body.voice.content; // 语音转文本
-  if (body.mixed && Array.isArray(body.mixed.items)) {
+  if (body.mixed) {
     const parts = [];
-    for (const item of body.mixed.items) {
+    for (const item of mixedItems(body)) {
       if (item && item.text && typeof item.text.content === "string") parts.push(item.text.content);
       if (item && item.image) parts.push("[图片]");
+      if (item && item.file) parts.push("[文件]");
     }
     return parts.join(" ");
   }
@@ -35,6 +43,12 @@ function extractNote(body) {
   if (body.image) return "图片（长连接带下载地址，如需可另存）";
   if (body.file) return `文件：${body.file.name || "未命名"}`;
   if (body.voice && !body.voice.content) return "语音（无转写文本）";
+  if (body.mixed) {
+    const kinds = mixedItems(body).map((item) => (item && item.msgtype) || (item && item.image ? "image" : item && item.file ? "file" : ""));
+    const label = { text: "文本", image: "图片", file: "文件", voice: "语音", video: "视频" };
+    const seen = [...new Set(kinds.filter(Boolean).map((k) => label[k] || k))];
+    return `图文混排（${seen.join("+") || "未知"}；长连接带下载地址，如需可另存）`;
+  }
   if (body.quote) return "含引用消息";
   return "";
 }
@@ -45,6 +59,12 @@ function extractMedia(body) {
   if (body.file && body.file.url) return { kind: "file", url: body.file.url, aeskey: body.file.aeskey || "", name: body.file.name || "" };
   if (body.video && body.video.url) return { kind: "video", url: body.video.url, aeskey: body.video.aeskey || "", name: "" };
   if (body.voice && body.voice.url) return { kind: "voice", url: body.voice.url, aeskey: body.voice.aeskey || "", name: "" };
+  if (body.mixed) {
+    for (const item of mixedItems(body)) {
+      if (item && item.image && item.image.url) return { kind: "image", url: item.image.url, aeskey: item.image.aeskey || "", name: "" };
+      if (item && item.file && item.file.url) return { kind: "file", url: item.file.url, aeskey: item.file.aeskey || "", name: item.file.name || "" };
+    }
+  }
   return null;
 }
 
@@ -80,4 +100,4 @@ function buildRecord(frame) {
   };
 }
 
-module.exports = { buildRecord, extractText, extractNote, extractMedia, mediaFileName, toLocalTime };
+module.exports = { buildRecord, extractText, extractNote, extractMedia, mixedItems, mediaFileName, toLocalTime };

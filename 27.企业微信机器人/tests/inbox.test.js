@@ -1,6 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { buildRecord, extractText, extractNote, toLocalTime } = require("../src/inbox");
+const { buildRecord, extractText, extractNote, extractMedia, mixedItems, toLocalTime } = require("../src/inbox");
 
 test("文本消息：拿到正文与来源、群聊带 chatid", () => {
   const record = buildRecord({
@@ -61,6 +61,35 @@ test("图文混排：文本与图片标记拼接", () => {
     }
   });
   assert.equal(mixed.text, "看这个 [图片]");
+});
+
+test("图文混排（线上字段 msg_item）：文本不丢、图片能另存", () => {
+  // 2026-09-29 实例：企微 mixed 消息用的是 msg_item，旧代码只认 items → 正文和图片全丢
+  const record = buildRecord({
+    body: {
+      msgid: "m1",
+      msgtype: "mixed",
+      chattype: "single",
+      from: { userid: "u" },
+      mixed: {
+        msg_item: [
+          { msgtype: "text", text: { content: "发现一个问题，9L流量可调不等于9升都是高浓度" } },
+          { msgtype: "image", image: { url: "https://img/x", aeskey: "k" } }
+        ]
+      }
+    }
+  });
+  assert.match(record.text, /9L流量可调/);
+  assert.match(record.text, /\[图片\]/);
+  assert.match(record.note, /图文混排/);
+  assert.deepEqual(record.media, { kind: "image", url: "https://img/x", aeskey: "k", name: "" });
+});
+
+test("mixedItems：兼容 items / msg_item，异常输入给空数组", () => {
+  assert.equal(mixedItems({ mixed: { msg_item: [1] } }).length, 1);
+  assert.equal(mixedItems({ mixed: { items: [1, 2] } }).length, 2);
+  assert.deepEqual(mixedItems({}), []);
+  assert.deepEqual(mixedItems(null), []);
 });
 
 test("时间处理：秒级时间戳转本地时间；异常输入兜底", () => {
