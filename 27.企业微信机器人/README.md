@@ -109,10 +109,10 @@ wecom-cli auth show --status
 
 **发消息的稳妥写法（2026-09-29 踩坑后固化）**
 1. 先 `wecom-cli message aibot sessions list` 取**本次**会话里的 `chat_id`（不要用手打的）。
-2. 拼命令用**显式参数**，正文 JSON 先写文件再读入：
-   `wecom-cli message aibot send --chat-id "<上一步的id>" --msg-type markdown --markdown "$(cat 正文.json)"`
-   - 正文文件里的 JSON 用脚本生成（`JSON.stringify({content})`），别手写、别在 JSON 里塞裸双引号（用「」）；
-   - **临时文件别放 `/tmp`**：Node 写的 `/tmp` 是 `C:	mp`，bash 的 `/tmp` 是 MSYS 临时目录 → 读不到（实例：`cat: /tmp/md.json: No such file`）。
+2. **用脚本发，别手拼 JSON**：`node scripts/发企微消息.cjs --chat-id "<本次的id>" --file 正文.md`
+   - 它把正文包成 `{"chat_id":…,"msg_type":"markdown","markdown":{"content":"<字符串>"}}` 再调 CLI，并在 `success!=true` 时报错退出；单测 `node --test tests/发企微消息.test.js`。
+   - **正文必须是字符串**：给 `content` 传数组会报 `10003 'content' 类型不匹配，应为字符串`（单元素数组偶尔被 CLI 的 json repair 改成字符串，于是“有时成功有时失败”——2026-09-29 实例：连着几条长汇报静默失败）。
+   - 别在正文 JSON 里塞裸双引号（用「」）；**临时文件别放 `/tmp`**：Node 写的 `/tmp` 是 `C:\tmp`，bash 的 `/tmp` 是 MSYS 临时目录 → 读不到（实例：`cat: /tmp/md.json: No such file`）。
 3. 整包 `--json '{...}'` 容易被 CLI 的 json repair 改坏 → 报 `40073 非法的 chat_id`（其实是 JSON 坏了，不是 id 坏了）。
 4. **读 offset 的顺序**：处理完消息要先把 `inbox.read-offset` 写成「本次读到的那个位置」，**再**发回复；若先发回复再按文件长度写 offset，会把等待期间新到的消息一起跳过（2026-09-29 实例：13:39 用户发的"自定义风格绑 DEDAKJ"被跳过近 1 小时）。
 
