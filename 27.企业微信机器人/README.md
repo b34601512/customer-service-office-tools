@@ -185,7 +185,10 @@ node scripts/发群消息.js --text "测试：客服日报已生成" --mention 1
 - **凭据**：`node scripts/导出机器人凭据.js` 从 wecom-cli 本机凭据库导出到
   `project-config/aibot-credentials.local.json`（已 gitignore，绝不入库）。
 - **启动**：`npm run 守护` 或双击 `scripts/启动长连接守护.bat`；**自检**：`npm run 守护:自检`（只验证认证+订阅，成功即退出）。
-- **行为**：收到消息/事件 → 追加到 `.state/inbox.jsonl`（一行一条：时间、单聊/群聊、发送者、类型、正文/附件备注）。
+- **行为**：收到消息/事件 → 追加到 `.state/inbox.jsonl`（一行一条：时间、单聊/群聊、发送者、类型、正文/附件备注）；
+  图片/文件/语音/视频会**自动解密另存到 `.state/media/`**（文件名写在记录的 `mediaPath`，SDK `downloadFile(url,aeskey)`）。
   **只收不回**——任何真实回复/发送都必须先经用户同意（业务红线）。
+- **断线留痕**：全量日志建议落 `.state/daemon.log`（`node scripts/长连接守护.js 2>&1 | tee -a .state/daemon.log`）；
+  SDK 会写 `WebSocket connection closed: <code> <reason>` 或 `Received disconnected_event...`（后者＝被新连接顶掉），便于事后定论。
 - **限制**：官方规定每个机器人同一时间只允许一条有效长连接（新连接会把旧的顶掉）；不要同时开多个守护。
 - **验证**：连上打印「长连接认证并订阅成功」；别人给机器人发消息后，`.state/inbox.jsonl` 会实时多一行。
