@@ -17,12 +17,33 @@ const SHEET = '售后待办清单';
 const WECOM = 'C:/Users/b3460/AppData/Roaming/npm/node_modules/@wecom/cli/bin/wecom.js';
 const 默认负责人 = { userId: 'woFqtuEQAAcXT3pES1oR41I8G9-a8A0w', userName: '李守耀（售后组长）' };
 const 优先级选项 = { 一般: { id: 'oonpZv', text: '一般' } };
+// 排班表里的名字 → 企微 userid（黎路遥 2026-09-29：工单负责人要按「此时此刻谁值班」来派）
+const 值班人员表 = {
+  柯紫婷: { userId: 'woFqtuEQAAm9VMBHM9Zqm3jl3W6U4y7Q', userName: '柯紫婷（售后客服）' },
+  李守耀: { userId: 默认负责人.userId, userName: 默认负责人.userName },
+};
+const 排班工具 = 'D:/桌面/办公软件/22.后台售后服务单分析/src/tools/who-is-on-duty.js';
+
+/** 从排班表返回的值班名单里挑一个我们认识的人（挑不到返回 null，绝不瞎猜） */
+function 挑选值班负责人(names, map = 值班人员表) {
+  for (const n of names || []) {
+    for (const key of Object.keys(map)) if (String(n).includes(key)) return map[key];
+  }
+  return null;
+}
+
+/** 调 22号 工具读「此刻售后谁值班」 */
+function 读此刻值班() {
+  const out = execFileSync(process.execPath, [排班工具, '--json'], { encoding: 'utf8', maxBuffer: 20 * 1024 * 1024 });
+  return JSON.parse(out.slice(out.indexOf('{'))).names || [];
+}
 
 function 解析参数(argv) {
   const out = { 优先级: '一般', dryRun: false };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--content') out.content = argv[++i];
+    else if (a === '--owner' && argv[i + 1] === 'auto') { out.ownerAuto = true; i += 1; }
     else if (a === '--owner') out.ownerId = argv[++i];
     else if (a === '--owner-name') out.ownerName = argv[++i];
     else if (a === '--deadline') out.deadline = argv[++i];
@@ -48,7 +69,13 @@ function 构造记录({ content, ownerId, ownerName, deadline, 优先级 }) {
   };
 }
 
-function 写({ content, ownerId, ownerName, deadline, 优先级, dryRun }) {
+function 写({ content, ownerId, ownerName, ownerAuto, deadline, 优先级, dryRun }) {
+  if (ownerAuto) {
+    const 值班 = 挑选值班负责人(读此刻值班());
+    if (!值班) throw new Error('排班表读不到认识的值班人，请显式传 --owner <userid>（不猜）');
+    ownerId = 值班.userId;
+    ownerName = 值班.userName;
+  }
   const rec = 构造记录({ content, ownerId, ownerName, deadline, 优先级 });
   const args = ['smartsheet', 'records', 'add', '--docid', DOCID, '--sheet-title', SHEET, '--records', JSON.stringify([rec])];
   if (dryRun) return { dryRun: true, args, rec };
@@ -69,4 +96,4 @@ if (require.main === module) {
     process.exitCode = 2;
   }
 }
-module.exports = { 解析参数, 构造记录, DOCID, SHEET };
+module.exports = { 解析参数, 构造记录, 挑选值班负责人, 值班人员表, DOCID, SHEET };
