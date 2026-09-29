@@ -105,3 +105,15 @@ python .\图片定点编辑器.py `
 - 输出明确状态，不把草稿、保存、核验混报。
 
 公司专用区只保留具体业务正文、型号结论、活动规则、真实ID、图片坐标和任务参数，不再复制执行代码。
+
+## 3. 探域建卡（新建 SHOP 卡片）
+
+用途：把**详情页/客服口径**里的事实写成新知识卡（只新建，不删除、不改既有卡）。
+
+```powershell
+node .\探域建卡.cjs --base-url http://agent.tanyuai.com --profile "C:/Users/b3460/.pi-edge-auto" --browser-channel msedge `
+  --build "卡片标题|店铺ID[,店铺ID]|" --content-file "正文.txt" --out "回读.json"
+# 正文用空行分段；也支持 --payload 直接给 {title,content[],thirdShopIds[]}
+```
+
+**注意（实测坑）**：新建成功后 `knowledge-card/page` 有 **~10 分钟可见延迟**——回读不到 ≠ 失败（2026-09-29 实测：同一张卡连建 3 次都"成功"，10 分钟后一次冒出 3 张）。写后回读务必**先用 createdAt 排序确认是否已有同名卡**，别急着重发。
