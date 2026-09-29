@@ -16,7 +16,7 @@ function isProcessMissingTaskkillOutput(outputText) {
 function killProcessTree(pid) {
   // 这里统一调用 Windows 的 taskkill 终止整棵进程树，避免后台浏览器或子任务残留孤儿进程。
   return new Promise((resolve, reject) => {
-    log("主线:停止", "网页控制台", "终止进程树", `调用 taskkill 终止 PID=${pid} 的进程树`);
+    log("主线:停止", "控制台", "终止进程树", `调用 taskkill 终止 PID=${pid} 的进程树`);
     const killer = spawn("taskkill.exe", ["/PID", String(pid), "/T", "/F"], {
       stdio: ["ignore", "pipe", "pipe"]
     });

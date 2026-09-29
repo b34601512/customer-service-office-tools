@@ -4,7 +4,7 @@ const { attachStateEventBroadcasts } = require("./eventStreamRoute");
 const { dispatchControlCenterRequest } = require("./requestDispatcher");
 
 function createServer(options) {
-  // 这里统一创建主管端网页控制台服务，具体路由交给职责模块处理。
+  // 本地 HTTP 仅暴露 API（清理看门狗、资源查询等），不提供网页控制台。
   const context = {
     ...options,
     readResourceUsage: options.readResourceUsage || readControlCenterResourceUsage,

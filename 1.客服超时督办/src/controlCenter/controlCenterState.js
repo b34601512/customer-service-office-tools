@@ -27,7 +27,7 @@ class ControlCenterState {
   }
 
   appendLog(line) {
-    // 这里统一缓存并广播后台日志，让网页控制台和终端尽量消费同一套运行信息。
+    // 这里统一缓存并广播后台日志，供 TUI 日志页消费。
     const channels = resolveLogChannels(line);
     this.logLines.push(line);
     if (this.logLines.length > this.maxLogLines) {
@@ -52,7 +52,7 @@ class ControlCenterState {
   }
 
   getSnapshot() {
-    // 这里返回网页控制台渲染所需的最小状态，避免把运行期对象直接暴露给外层。
+    // 这里返回控制台渲染所需的最小状态快照，避免把运行期对象直接暴露给外层。
     return {
       currentTask: this.currentTask,
       logLines: this.logLines.slice(),

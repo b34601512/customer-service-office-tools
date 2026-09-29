@@ -213,6 +213,43 @@ test("成员名称本身是运营且没有角色后缀时仍应识别为运营",
   assert.equal(operation.staffGroup, "operation");
 });
 
+test("黎经理无角色后缀时应识别为运营", async () => {
+  const page = {
+    async evaluate(pageFunction, input) {
+      if (input === undefined) {
+        return JSON.stringify({ token: "token_manager" });
+      }
+
+      if (String(input.requestPath || "").includes("/api/chat/contacts")) {
+        return {
+          ok: true,
+          status: 200,
+          text: JSON.stringify({
+            code: 0,
+            data: [{ id: "chat_mgr", name: "客户乙", assignedTo: "manager_1" }]
+          })
+        };
+      }
+
+      return {
+        ok: true,
+        status: 200,
+        text: JSON.stringify({
+          code: 0,
+          data: [{ userId: "manager_1", name: "黎经理" }]
+        })
+      };
+    }
+  };
+
+  const snapshot = await fetchTransferMonitorSnapshot(page);
+  const manager = snapshot.memberMapByUserId.manager_1;
+
+  assert.equal(manager.staffName, "黎经理");
+  assert.equal(manager.roleLabel, "");
+  assert.equal(manager.staffGroup, "operation");
+});
+
 test("拉取联系人快照时应该允许调用方指定最近客户范围", async () => {
   const seenInputs = [];
   const page = {

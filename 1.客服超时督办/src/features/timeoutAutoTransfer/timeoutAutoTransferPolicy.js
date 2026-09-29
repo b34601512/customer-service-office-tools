@@ -6,6 +6,7 @@
 //   3) 目标是“当班 + 已上线”的同组客服，不看值班标记/组长/背景色，谁当班在线谁就能接；
 //   4) 当班的人都不可接 → 不转（转了没人回），@主管让他安排。
 const { ASSIGNMENT_STATUS } = require("../shared/currentAssignment");
+const { resolveStaffRoleGroup } = require("../shared/staffIdentity");
 const {
   parseTimeTextToDate,
   resolveOffDutyCloseTime,
@@ -78,7 +79,15 @@ function isWithinOwnShiftWindow(config, staffGroup, shiftLabel, now) {
 
 function resolveTargetStaffGroup(assigneeMember) {
   // 成员角色缺失（未识别/经理等）时不做猜测，直接不转。
-  const sourceStaffGroup = normalizeStaffName(assigneeMember?.staffGroup);
+  let sourceStaffGroup = normalizeStaffName(assigneeMember?.staffGroup);
+  if (!sourceStaffGroup) {
+    sourceStaffGroup = normalizeStaffName(
+      resolveStaffRoleGroup({
+        staffName: assigneeMember?.staffName,
+        roleLabel: assigneeMember?.roleLabel
+      })
+    );
+  }
   return {
     sourceStaffGroup,
     targetStaffGroup: TRANSFER_TARGET_GROUP_BY_SOURCE_GROUP[sourceStaffGroup] || ""

@@ -39,7 +39,7 @@ function Start-TuiControlCenter {
   Write-Host "正在启动客服督办控制台（终端界面），按 Ctrl+C 可退出..."
   Push-Location $projectRoot
   try {
-    node src\controlCenter\startControlCenter.js --tui
+    node src\controlCenter\startControlCenter.js
     $exitCode = $LASTEXITCODE
     if ($null -ne $exitCode -and $exitCode -ne 0) {
       Write-Host "程序异常退出，退出码：$exitCode"

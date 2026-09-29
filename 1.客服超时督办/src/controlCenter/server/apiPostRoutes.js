@@ -38,17 +38,17 @@ async function handleApiPostRoute(request, response, pathname, context) {
       throw new Error("当前控制台未配置退出处理器，无法执行彻底退出。");
     }
 
-    let shutdownReason = "网页手动退出控制台";
+    let shutdownReason = "控制台请求彻底退出";
     try {
       const body = parseJsonBody(await readRequestBody(request));
       shutdownReason = String(body.reason || shutdownReason).trim() || shutdownReason;
     } catch (error) {
-      shutdownReason = "网页手动退出控制台";
+      shutdownReason = "控制台请求彻底退出";
     }
 
     writeJson(response, 200, {
       ok: true,
-      message: "控制台正在退出，已开始清理后台任务和控制台窗口。"
+      message: "控制台正在退出，已开始清理后台任务。"
     });
     setTimeout(() => {
       context.shutdownControlCenter(shutdownReason);

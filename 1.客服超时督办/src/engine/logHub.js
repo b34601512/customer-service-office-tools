@@ -3,7 +3,7 @@ const { EventEmitter } = require("events");
 const logBus = new EventEmitter();
 
 function broadcastLog(line) {
-  // 这里统一广播当前进程日志，保证终端和网页控制台尽量消费同一套日志源。
+  // 这里统一广播当前进程日志，供 TUI 日志页与文件日志共用同一套日志源。
   logBus.emit("line", line);
 }
 

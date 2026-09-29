@@ -18,7 +18,7 @@ function saveWecomRobotConfig(payload) {
   // 这里统一验证并保存企微提醒配置，避免主管端换电脑时还得手改 JSON。
   const nextConfig = buildPersistedWecomRobotConfig(payload);
   writeJsonObject(wecomRobotConfigPath, nextConfig);
-  log("主线:完成", "网页控制台", "保存企微提醒", "企微提醒配置写入完成");
+  log("主线:完成", "控制台", "保存企微提醒", "企微提醒配置写入完成");
   return readWecomRobotConfig();
 }
 

@@ -1,13 +1,58 @@
+const fs = require("fs");
 const path = require("path");
 const { spawnSync } = require("child_process");
 const appConfig = require("../config/appConfig");
 
+const RUNTIME_EDGE_PROFILE_SUFFIX = path.win32.join("runtime", "edge-user-data");
+
+function extractUserDataDirFromCommandLine(commandLine) {
+  const match = String(commandLine || "").match(/(?:^|\s)(?:"--user-data-dir=([^"]+)"|--user-data-dir=(?:"([^"]+)"|([^\s"]+)))(?=\s|$)/i);
+  if (!match) {
+    return "";
+  }
+
+  return match[1] || match[2] || match[3] || "";
+}
+
+function profileDirsMatch(actualRaw, profileDir) {
+  // 严格匹配 --user-data-dir 参数，不以目录子串误识别其他实例。
+  const expected = path.win32.resolve(profileDir);
+  const actual = path.win32.resolve(actualRaw);
+  if (actual.toLowerCase() === expected.toLowerCase()) {
+    return true;
+  }
+
+  try {
+    const expectedRealPath = fs.realpathSync.native(expected);
+    const actualRealPath = fs.realpathSync.native(actualRaw);
+    if (actualRealPath.toLowerCase() === expectedRealPath.toLowerCase()) {
+      return true;
+    }
+  } catch {
+    // WMI 可能把中文路径读成乱码，realpath 会失败；下面用 runtime 后缀 + 盘符兜底。
+  }
+
+  const expectedSuffix = RUNTIME_EDGE_PROFILE_SUFFIX.toLowerCase();
+  if (!expected.toLowerCase().endsWith(expectedSuffix)) {
+    return false;
+  }
+
+  const actualNormalized = String(actualRaw).replace(/\//g, "\\").toLowerCase();
+  if (!actualNormalized.endsWith(expectedSuffix)) {
+    return false;
+  }
+
+  return path.win32.parse(expected).root.toLowerCase() === path.win32.parse(actualNormalized).root.toLowerCase();
+}
+
 // 严格匹配 --user-data-dir 参数，不以目录子串误识别其他实例。
 function usesBrowserProfile(commandLine, profileDir) {
-  const match = String(commandLine || "").match(/(?:^|\s)(?:"--user-data-dir=([^"]+)"|--user-data-dir=(?:"([^"]+)"|([^\s"]+)))(?=\s|$)/i);
-  if (!match) return false;
-  const actual = match[1] || match[2] || match[3];
-  return path.win32.resolve(actual).toLowerCase() === path.win32.resolve(profileDir).toLowerCase();
+  const actual = extractUserDataDirFromCommandLine(commandLine);
+  if (!actual) {
+    return false;
+  }
+
+  return profileDirsMatch(actual, profileDir);
 }
 
 function assertBrowserProfileAvailable(profileDir, query = spawnSync) {

@@ -254,10 +254,10 @@ function startControlCenterCleanupWatchdog(options = {}, overrides = {}) {
   });
 
   worker.once("error", (error) => {
-    log("主线:失败", "网页控制台", "外部清理看门狗", `独立 Node 看门狗启动失败：${error.message}`);
+    log("主线:失败", "控制台", "外部清理看门狗", `独立 Node 看门狗启动失败：${error.message}`);
   });
   worker.unref();
-  log("主线:完成", "网页控制台", "外部清理看门狗", `独立 Node 看门狗已启动，PID=${worker.pid || 0}`);
+  log("主线:完成", "控制台", "外部清理看门狗", `独立 Node 看门狗已启动，PID=${worker.pid || 0}`);
   return worker.pid || 0;
 }
 

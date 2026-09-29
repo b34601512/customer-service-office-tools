@@ -60,56 +60,6 @@ test("后台启动请求不应该被登录态转换规则改写", async () => {
   });
 });
 
-test("控制台服务应该返回专属督办图标资源", async () => {
-  const server = createServer({
-    port: 0,
-    state: {
-      eventBus: {
-        on() {}
-      },
-      getSnapshot() {
-        return {};
-      }
-    },
-    taskService: {},
-    webRoot: path.join(__dirname, "../../src/controlCenter/web"),
-    shutdownControlCenter() {}
-  });
-
-  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
-  const address = server.address();
-  const baseUrl = `http://127.0.0.1:${address.port}`;
-
-  try {
-    const homeResponse = await fetch(`${baseUrl}/`);
-    const iconResponse = await fetch(`${baseUrl}/assets/supervisor-icon.svg`);
-    const manifestResponse = await fetch(`${baseUrl}/manifest.webmanifest`);
-    const faviconResponse = await fetch(`${baseUrl}/favicon.ico`);
-    const detailScriptResponse = await fetch(`${baseUrl}/countdown/customerMirrorDetailDialog.js`);
-    const listScriptResponse = await fetch(`${baseUrl}/countdown/customerMirrorList.js`);
-
-    assert.equal(homeResponse.status, 200);
-    const homeHtml = await homeResponse.text();
-    assert.match(homeHtml, /id="workflowGrid"/);
-    assert.doesNotMatch(homeHtml, /@include/);
-    assert.equal(iconResponse.status, 200);
-    assert.match(iconResponse.headers.get("content-type"), /image\/svg\+xml/);
-    assert.match(await iconResponse.text(), />督<\/text>/);
-    assert.equal(manifestResponse.status, 200);
-    assert.match(manifestResponse.headers.get("content-type"), /application\/manifest\+json/);
-    assert.match(await manifestResponse.text(), /客服督办控制台/);
-    assert.equal(faviconResponse.status, 200);
-    assert.equal(detailScriptResponse.status, 200);
-    assert.match(detailScriptResponse.headers.get("content-type"), /application\/javascript/);
-    assert.match(await detailScriptResponse.text(), /createCustomerMirrorDetailDialog/);
-    assert.equal(listScriptResponse.status, 200);
-    assert.match(listScriptResponse.headers.get("content-type"), /application\/javascript/);
-    assert.match(await listScriptResponse.text(), /createCustomerMirrorCountdownController/);
-  } finally {
-    await new Promise((resolve) => server.close(resolve));
-  }
-});
-
 test("控制台服务应该返回本项目资源占用", async () => {
   let receivedRootPids = [];
   const server = createServer({
@@ -127,7 +77,6 @@ test("控制台服务应该返回本项目资源占用", async () => {
         pid: 41002
       }
     },
-    webRoot: path.join(__dirname, "../../src/controlCenter/web"),
     getResourceRootPids() {
       return [52001];
     },
@@ -179,7 +128,6 @@ test("控制台服务应该向本机看门狗返回当前真实任务 PID", asyn
         pid: 41002
       }
     },
-    webRoot: path.join(__dirname, "../../src/controlCenter/web"),
     shutdownControlCenter() {}
   });
 

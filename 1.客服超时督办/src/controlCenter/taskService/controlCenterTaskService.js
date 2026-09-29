@@ -23,10 +23,11 @@ class ControlCenterTaskService {
     this.starting = true;
     try {
       await require("../ensureProjectDependencies").ensureProjectDependencies(this.projectRoot);
+      await require("./taskStartPreflight").assertControlCenterTaskCanStart(taskName, this.projectRoot);
       const taskConfig = buildTaskConfig(taskName, this.projectRoot);
       log(
         "主线:启动",
-        "网页控制台",
+        "控制台",
         `任务:${taskConfig.windowLabel}`,
         `准备启动子进程，command=${taskConfig.command} args=${taskConfig.args.join(" ")} cwd=${this.projectRoot}`
       );
@@ -37,7 +38,7 @@ class ControlCenterTaskService {
       const taskRunId = this.currentTaskRunId;
       child.stdin?.on?.("error", (error) => {
         if (!this.isCurrentProcess(child, taskRunId)) return;
-        log("主线:失败", "网页控制台", `任务:${taskConfig.windowLabel}`, `登录输入通道失败：${error.message}`);
+        log("主线:失败", "控制台", `任务:${taskConfig.windowLabel}`, `登录输入通道失败：${error.message}`);
         this.state.setTask({ ...this.state.currentTask, awaitingConfirmation: false,
           message: `登录确认通道已关闭：${error.message}。请取消任务后重新登录。` });
       });
@@ -69,7 +70,7 @@ class ControlCenterTaskService {
     } catch (error) {
       log(
         "主线:失败",
-        "网页控制台",
+        "控制台",
         `任务:${taskConfig.windowLabel}`,
         `子进程创建失败：${error.message}`
       );
@@ -99,7 +100,7 @@ class ControlCenterTaskService {
     this.state.setTask(taskState);
     log(
       "主线:完成",
-      "网页控制台",
+      "控制台",
       `任务:${taskState.label}`,
       `子进程已启动，PID=${child.pid}`
     );
@@ -121,14 +122,14 @@ class ControlCenterTaskService {
     const child = this.currentProcess;
 
     const stopMessage = `正在停止「${currentTask.label}」，请稍等几秒。`;
-    log("主线:停止", "网页控制台", `任务:${currentTask.label}`, `准备停止进程树，PID=${this.currentProcess.pid}`);
+    log("主线:停止", "控制台", `任务:${currentTask.label}`, `准备停止进程树，PID=${this.currentProcess.pid}`);
     this.state.setTask({
       ...currentTask,
       status: "stopping",
       awaitingConfirmation: false,
       message: stopMessage
     });
-    this.pendingStopReason = `任务「${currentTask.label}」已由网页控制台手动停止。`;
+    this.pendingStopReason = `任务「${currentTask.label}」已由控制台手动停止。`;
 
     try {
       await require("../processTree").killProcessTree(child.pid);
@@ -151,7 +152,7 @@ class ControlCenterTaskService {
     const stopMessage = `正在退出控制台，准备结束「${currentTask.label}」。`;
     log(
       "主线:停止",
-      "网页控制台",
+      "控制台",
       `任务:${currentTask.label}`,
       `控制台准备退出，先清理子进程 PID=${this.currentProcess.pid}`
     );
@@ -193,7 +194,7 @@ class ControlCenterTaskService {
       awaitingConfirmation: false,
       message: nextMessage
     });
-    log("主线:执行", "网页控制台", `任务:${this.state.currentTask.label}`, "已发送登录完成确认");
+    log("主线:执行", "控制台", `任务:${this.state.currentTask.label}`, "已发送登录完成确认");
   }
 
   handleProcessOutput(chunk, isError) {

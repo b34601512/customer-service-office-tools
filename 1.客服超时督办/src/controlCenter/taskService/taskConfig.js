@@ -1,7 +1,7 @@
 const path = require("path");
 
 function buildTaskConfig(taskName, projectRoot) {
-  // 这里统一控制网页按钮能启动的脚本，避免任意任务名被透传执行。
+  // 这里统一控制 TUI/接口能启动的任务名，避免任意任务名被透传执行。
   const nodeExecutable = process.execPath;
   if (taskName === "login") {
     return {

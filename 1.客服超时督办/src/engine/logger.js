@@ -94,7 +94,7 @@ function resetCurrentLogFileOnce() {
 }
 
 function emitLine(line, isError = false) {
-  // 这里统一输出并广播日志，保证终端与网页控制台看到一致的文本内容。
+  // 这里统一输出并广播日志，保证 TUI 与 current-run.log 看到一致的文本内容。
   if (isError) {
     console.error(line);
   } else {

@@ -18,7 +18,7 @@ if errorlevel 1 (
   exit /b 1
 )
 
-start "" /max /D "%~dp0" "%SUPERVISOR_NODE%" src\controlCenter\startControlCenter.js --tui
+start "" /max /D "%~dp0" "%SUPERVISOR_NODE%" src\controlCenter\startControlCenter.js
 set "START_CODE=%ERRORLEVEL%"
 if not "%START_CODE%"=="0" echo [ERROR] The TUI window could not be started. Exit code: %START_CODE%.
 endlocal & exit /b %START_CODE%

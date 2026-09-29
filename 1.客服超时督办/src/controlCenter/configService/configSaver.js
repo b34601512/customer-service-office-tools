@@ -249,7 +249,7 @@ function saveControlCenterConfig(payload) {
   appConfig.targetUrl = runtimeConfig.targetUrl;
   appConfig.scheduleUrl = runtimeConfig.scheduleUrl;
   appConfig.managerStaffName = runtimeConfig.managerStaffName;
-  log("主线:完成", "网页控制台", "保存配置", "主管端生产配置写入完成");
+  log("主线:完成", "控制台", "保存配置", "主管端生产配置写入完成");
   return readControlCenterConfig();
 }
 

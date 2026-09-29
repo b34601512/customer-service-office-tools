@@ -13,7 +13,7 @@
 ## 3. 模块结构
 
 - `src/main.js`：登录与后台督办总入口，同时启动共享聊天、无人在线和下班监控流程。
-- `src/controlCenter/`：本地控制台（TUI 终端界面为主，Web 网页界面为可选）、配置保存、任务子进程、资源监控和安全退出。
+- `src/controlCenter/`：本地 **TUI 控制台**、配置保存、任务子进程、资源监控和安全退出（无网页界面）。
 - `src/controlCenter/tui/`：零依赖 ANSI 终端界面，七个页面（总览/客户/日志/配置/企微/资源/报表），复用同一套状态与服务。
 - `src/features/chatMonitorRuntime/`、`transferMonitor/`、`missedReplyMonitor/`：共用完整联系人和成员快照；未回复责任从首条未解决客户消息起算，只有人工实质回复或客户明确表示问题已解决才能结案；客户弱收尾不关闭已有待办，AI 不参与结案。
 - `src/features/shared/currentAssignment.js`：当前接待业务真源，第一依据仍是联系人接口 `assignedTo`；`assignedTo` 清空（如客服结束会话）时，按会话内最后一条人工消息发送人兜底归属为“最后接待客服”（last_handler，见 issue #621），兜不到成员映射才报未分配；渠道账号和历史操作人仍不得补定当前责任。
@@ -27,8 +27,7 @@
 
 ## 4. 界面模式
 
-- `startControlCenter.js` 按 `--tui` / `--web` 或终端是否为 TTY 决定界面：TUI 模式接管当前终端（备用屏幕 + 原始按键），Web 模式拉起独立浏览器窗口。
-- TUI 与 Web 共用同一套 `ControlCenterState`、`ControlCenterTaskService` 和配置服务；TUI 的日志页直接订阅状态总线。
+- 控制台**仅 TUI**：双击「启动中心.bat」或 `npm run panel`；本地 HTTP 只供清理看门狗，无网页界面。
 - TUI 模式下 `console.log/error` 会被临时屏蔽，日志仍写入 `runtime/current-run.log` 并进入状态总线。
 - 状态 JSON（漏回复/无人在线/下班/登录态/过程记录）统一走 `src/engine/safeJson.js` 安全读取；绩效只读取追加式 `runtime/timeout-performance/ledger.jsonl`。
 

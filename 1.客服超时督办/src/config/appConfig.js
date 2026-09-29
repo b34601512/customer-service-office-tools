@@ -8,7 +8,7 @@ const appRuntimeConfigPath = path.join(projectConfigDir, "app-config.json");
 const appRuntimeConfig = readAppRuntimeConfig(appRuntimeConfigPath);
 const runtimeDir = path.join(projectRoot, "runtime");
 const userDataDir = path.join(runtimeDir, "edge-user-data");
-const controlCenterUserDataDir = path.join(runtimeDir, "edge-control-center");
+const controlCenterUserDataDir = path.join(runtimeDir, "edge-control-center"); // 遗留：旧网页控制台 Edge 资料，仅清理/资源识别
 
 module.exports = {
   targetUrl: appRuntimeConfig.targetUrl,
@@ -41,7 +41,6 @@ module.exports = {
   runtimeMaintenanceStateRetentionDays: 35,
   runtimeMaintenanceMaxStateEntries: 800,
   browserDiskCacheSizeBytes: 10 * 1024 * 1024,
-  controlCenterBrowserDiskCacheSizeBytes: 1024 * 1024,
   defaultTimeout: 30000,
   pageReadyTimeout: 60000,
   workbenchReadyTimeout: 20000,

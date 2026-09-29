@@ -25,11 +25,13 @@ function loadTaskServiceWithMocks(spawnImpl, options = {}) {
     "../../src/controlCenter/ensureProjectDependencies"
   );
   const processTreeModulePath = require.resolve("../../src/controlCenter/processTree");
+  const taskStartPreflightModulePath = require.resolve("../../src/controlCenter/taskService/taskStartPreflight");
   const taskServiceModulePath = require.resolve("../../src/controlCenter/controlCenterTaskService");
   const childProcessModule = require("child_process");
   const originalSpawn = childProcessModule.spawn;
   const originalEnsureProjectDependenciesCache = require.cache[ensureProjectDependenciesModulePath];
   const originalProcessTreeCache = require.cache[processTreeModulePath];
+  const originalTaskStartPreflightCache = require.cache[taskStartPreflightModulePath];
   const originalTaskServiceCache = require.cache[taskServiceModulePath];
 
   childProcessModule.spawn = spawnImpl;
@@ -53,6 +55,14 @@ function loadTaskServiceWithMocks(spawnImpl, options = {}) {
       }
     }
   };
+  require.cache[taskStartPreflightModulePath] = {
+    id: taskStartPreflightModulePath,
+    filename: taskStartPreflightModulePath,
+    loaded: true,
+    exports: {
+      async assertControlCenterTaskCanStart() {}
+    }
+  };
   delete require.cache[taskServiceModulePath];
 
   const { ControlCenterTaskService } = require("../../src/controlCenter/controlCenterTaskService");
@@ -72,6 +82,12 @@ function loadTaskServiceWithMocks(spawnImpl, options = {}) {
         require.cache[processTreeModulePath] = originalProcessTreeCache;
       } else {
         delete require.cache[processTreeModulePath];
+      }
+
+      if (originalTaskStartPreflightCache) {
+        require.cache[taskStartPreflightModulePath] = originalTaskStartPreflightCache;
+      } else {
+        delete require.cache[taskStartPreflightModulePath];
       }
 
       if (originalTaskServiceCache) {

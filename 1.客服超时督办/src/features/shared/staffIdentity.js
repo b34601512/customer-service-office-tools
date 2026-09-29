@@ -50,7 +50,15 @@ function parseStaffRoleGroup(rawRole) {
   return "";
 }
 
+// 小蟹成员列表里运营账号常不带「运营」后缀；这里按姓名白名单补齐，避免超时/漏回复无法同组转接。
+const OPERATION_STAFF_NAME_SET = new Set(["运营", "黎经理"]);
+
 function resolveStaffRoleGroup({ staffName, roleLabel } = {}) {
+  const normalizedName = normalizeStaffIdentityText(staffName);
+  if (OPERATION_STAFF_NAME_SET.has(normalizedName)) {
+    return "operation";
+  }
+
   // 平台的“运营”账号可能没有角色后缀；角色为空时，再用规范化成员名识别分组。
   return parseStaffRoleGroup(roleLabel) || parseStaffRoleGroup(staffName);
 }

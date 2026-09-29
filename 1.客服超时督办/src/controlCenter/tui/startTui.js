@@ -72,7 +72,7 @@ function buildStatusLines(ctx, app, serverPort) {
     if (task?.message) {
       lines.push(fit(`   ${task.message}`, app.columns));
     } else {
-      lines.push(fit(`   本地服务 http://127.0.0.1:${serverPort}（网页版仍可访问）`, app.columns));
+      lines.push(fit(`   按 Ctrl+C 可安全退出控制台与后台任务`, app.columns));
     }
   }
 

@@ -11,6 +11,16 @@ test("Edge 目录必须完整匹配参数，不匹配个人目录或相邻目录
   assert.equal(usesBrowserProfile('msedge.exe --user-data-dir=C:\\Users\\personal', profile), false);
 });
 
+test("WMI 乱码路径仍应识别为本项目 edge-user-data 目录", () => {
+  const profile = "D:\\桌面\\办公软件\\1.客服超时督办\\runtime\\edge-user-data";
+  const garbled = "D:\\����\\�칫����\\1.�ͷ���ʱ����\\runtime\\edge-user-data";
+  assert.equal(usesBrowserProfile(`msedge.exe --user-data-dir="${garbled}"`, profile), true);
+  assert.equal(
+    usesBrowserProfile('msedge.exe --user-data-dir="E:\\other\\runtime\\edge-user-data"', profile),
+    false
+  );
+});
+
 test("资料占用时只报错，不启动 taskkill 或删除文件", { skip: process.platform !== "win32" }, () => {
   let calls = 0;
   const query = (command, args) => {

@@ -1,33 +1,21 @@
 const net = require("net");
-const path = require("path");
-const appConfig = require("../config/appConfig");
 const { log, logError, resetCurrentLogFileOnce } = require("../engine/logger");
 const { subscribeLogs } = require("../engine/logHub");
 const { ControlCenterState } = require("./controlCenterState");
 const { ControlCenterTaskService } = require("./controlCenterTaskService");
-const { ControlCenterBrowserWindow } = require("./controlCenterBrowserWindow");
 const { createServer } = require("./controlCenterServer");
 const { startControlCenterCleanupWatchdog } = require("./controlCenterCleanupWatchdog");
-const { startControlCenterWindowLifecycleMonitor } = require("./controlCenterWindowLifecycleMonitor");
 const { createTui } = require("./tui/startTui");
-const { assertBrowserProfileAvailable } = require("../engine/browserRuntimeGuard");
-const {
-  runControlCenterRuntimeMaintenanceBeforeLaunch,
-  startRuntimeMaintenanceLoop
-} = require("../engine/runtimeMaintenance/runtimeMaintenance");
+const { startRuntimeMaintenanceLoop } = require("../engine/runtimeMaintenance/runtimeMaintenance");
 
 const defaultPort = 39360;
 
-function resolveConsoleMode() {
-  // 这里决定控制台界面形态：显式 --tui / --web 优先，未指定时按终端是否为 TTY 自动选择。
-  const argv = process.argv.slice(2);
-  if (argv.includes("--web")) {
-    return "web";
+function assertTuiTerminalAvailable() {
+  if (process.stdout.isTTY && process.stdin.isTTY) {
+    return;
   }
-  if (argv.includes("--tui")) {
-    return "tui";
-  }
-  return process.stdout.isTTY && process.stdin.isTTY ? "tui" : "web";
+
+  throw new Error("控制台仅支持 TUI：请双击「启动中心.bat」或在终端执行 npm run panel。");
 }
 
 function suppressConsoleOutput() {
@@ -44,7 +32,6 @@ function suppressConsoleOutput() {
 }
 
 function probePort(port) {
-  // 这里先探测端口是否可用，避免控制台启动时直接因为端口冲突炸掉。
   return new Promise((resolve) => {
     const tester = net.createServer();
     tester.once("error", () => resolve(false));
@@ -56,7 +43,6 @@ function probePort(port) {
 }
 
 async function findAvailablePort(startPort) {
-  // 这里从固定起始端口向后找空闲端口，保证双击启动时大概率一次成功。
   for (let currentPort = startPort; currentPort < startPort + 20; currentPort += 1) {
     const available = await probePort(currentPort);
     if (available) {
@@ -64,50 +50,42 @@ async function findAvailablePort(startPort) {
     }
   }
 
-  throw new Error("本地网页控制台端口全部被占用，请先关闭冲突程序。");
+  throw new Error("本地控制台 API 端口全部被占用，请先关闭冲突程序。");
 }
 
 async function main() {
-  // 这里统一启动控制台服务，并按界面模式接入 TUI 或网页控制台。
   resetCurrentLogFileOnce();
-  const consoleMode = resolveConsoleMode();
-  if (consoleMode === "tui" && (!process.stdout.isTTY || !process.stdin.isTTY)) {
-    throw new Error("TUI 界面需要真实终端窗口：请双击「启动中心.bat」或 npm run panel:tui 启动；无窗口环境请改用 npm run panel:web（网页界面）。");
+  const argv = process.argv.slice(2);
+  if (argv.includes("--web")) {
+    throw new Error("网页控制台已移除，请双击「启动中心.bat」或执行 npm run panel。");
   }
-  log("主线:启动", "网页控制台", "解析模式", `控制台界面：${consoleMode === "tui" ? "终端界面(TUI)" : "网页界面(Web)"}`);
+  assertTuiTerminalAvailable();
+  log("主线:启动", "控制台", "解析模式", "控制台界面：终端界面(TUI)");
+
   const port = await findAvailablePort(defaultPort);
   const state = new ControlCenterState();
   const unsubscribeLogs = subscribeLogs((line) => {
     state.appendLog(line);
   });
-  const browserWindow = new ControlCenterBrowserWindow(appConfig.projectRoot);
   let shutdownStarted = false;
   let server;
-  let stopWindowLifecycleMonitor = null;
   let stopRuntimeMaintenanceLoop = null;
   let tuiHandle = null;
   let restoreConsoleOutput = null;
 
   const shutdown = async (reason = "未说明原因") => {
-    // 这里统一执行彻底退出流程，保证后台任务、控制台界面和隐藏宿主进程一起收掉。
     if (shutdownStarted) {
       return;
     }
 
     shutdownStarted = true;
-    log("主线:停止", "网页控制台", "彻底退出", `原因=${reason}`);
-
-    if (typeof stopWindowLifecycleMonitor === "function") {
-      stopWindowLifecycleMonitor();
-      stopWindowLifecycleMonitor = null;
-    }
+    log("主线:停止", "控制台", "彻底退出", `原因=${reason}`);
 
     if (typeof stopRuntimeMaintenanceLoop === "function") {
       stopRuntimeMaintenanceLoop();
       stopRuntimeMaintenanceLoop = null;
     }
 
-    // TUI 模式先退出备用屏幕并还原终端，再继续清理后台。
     if (tuiHandle) {
       tuiHandle.dispose();
       tuiHandle.app.stop();
@@ -120,15 +98,9 @@ async function main() {
     }
 
     try {
-      await browserWindow.close();
-    } catch (error) {
-      logError("主线:失败", "网页控制台", "退出前关闭控制台网页", error);
-    }
-
-    try {
       await taskService.shutdownAllRunningTasks();
     } catch (error) {
-      logError("主线:失败", "网页控制台", "退出前清理任务", error);
+      logError("主线:失败", "控制台", "退出前清理任务", error);
     }
 
     unsubscribeLogs();
@@ -142,16 +114,15 @@ async function main() {
     process.exit(0);
   };
 
-  const taskService = new ControlCenterTaskService(appConfig.projectRoot, state, {
+  const taskService = new ControlCenterTaskService(require("../config/appConfig").projectRoot, state, {
     onTaskExit: ({ taskName, status, exitMessage }) => {
-      // 这里后台任务退出只更新状态，不再触发控制台总退出，避免异常现场被自动关闭。
       if (taskName !== "start") {
         return;
       }
 
       log(
         status === "failed" ? "主线:等待" : "主线:完成",
-        "网页控制台",
+        "控制台",
         "后台任务退出",
         status === "failed"
           ? `后台督办异常退出，控制台保持打开用于排障：${exitMessage}`
@@ -164,82 +135,58 @@ async function main() {
     port,
     state,
     taskService,
-    webRoot: path.join(__dirname, "web"),
     shutdownControlCenter: shutdown,
-    getResourceRootPids: () => [
-      process.pid,
-      taskService.currentProcess?.pid,
-      browserWindow.getProcessId()
-    ]
+    getResourceRootPids: () => [process.pid, taskService.currentProcess?.pid]
   });
 
   await new Promise((resolve) => {
     server.listen(port, "127.0.0.1", resolve);
   });
 
-  const url = `http://127.0.0.1:${port}`;
-  log("主线:完成", "网页控制台", "启动服务", `本地控制台已启动：${url}`);
-  log("主线:等待", "网页控制台", "后台运行", "启动器已进入运行模式，日志会持续写入网页控制台和 runtime/current-run.log。");
+  log("主线:完成", "控制台", "启动服务", `本地 API 已监听：127.0.0.1:${port}（仅清理看门狗使用，无网页界面）`);
+  log("主线:等待", "控制台", "后台运行", "TUI 已接管，日志写入 runtime/current-run.log。");
 
   process.on("SIGINT", () => {
-    shutdown("宿主终端收到 SIGINT")
-      .catch((error) => {
-        logError("主线:失败", "网页控制台", "关闭服务", error);
-        process.exit(0);
-      });
+    shutdown("宿主终端收到 SIGINT").catch((error) => {
+      logError("主线:失败", "控制台", "关闭服务", error);
+      process.exit(0);
+    });
   });
 
   process.on("SIGTERM", () => {
-    shutdown("宿主进程收到 SIGTERM")
-      .catch((error) => {
-        logError("主线:失败", "网页控制台", "关闭服务", error);
-        process.exit(0);
-      });
+    shutdown("宿主进程收到 SIGTERM").catch((error) => {
+      logError("主线:失败", "控制台", "关闭服务", error);
+      process.exit(0);
+    });
   });
 
   process.on("SIGBREAK", () => {
-    shutdown("宿主终端收到 SIGBREAK")
-      .catch((error) => {
-        logError("主线:失败", "网页控制台", "关闭服务", error);
-        process.exit(0);
-      });
+    shutdown("宿主终端收到 SIGBREAK").catch((error) => {
+      logError("主线:失败", "控制台", "关闭服务", error);
+      process.exit(0);
+    });
   });
 
   process.on("SIGHUP", () => {
-    shutdown("宿主终端窗口已关闭")
-      .catch((error) => {
-        logError("主线:失败", "网页控制台", "关闭服务", error);
-        process.exit(0);
-      });
+    shutdown("宿主终端窗口已关闭").catch((error) => {
+      logError("主线:失败", "控制台", "关闭服务", error);
+      process.exit(0);
+    });
   });
 
-  if (consoleMode === "tui") {
-    // TUI 模式：接管当前终端渲染控制台，不再拉起独立浏览器窗口。
-    restoreConsoleOutput = suppressConsoleOutput();
-    tuiHandle = createTui({
-      state,
-      taskService,
-      shutdown,
-      getResourceRootPids: () => [
-        process.pid,
-        taskService.currentProcess?.pid
-      ],
-      serverPort: port
-    });
-    tuiHandle.app.start();
-    log("主线:完成", "网页控制台", "TUI 界面", `终端控制台已接管，网页版仍可访问：${url}`);
-  } else {
-    assertBrowserProfileAvailable(appConfig.controlCenterUserDataDir);
-    runControlCenterRuntimeMaintenanceBeforeLaunch();
-    await browserWindow.open(url);
-    stopWindowLifecycleMonitor = startControlCenterWindowLifecycleMonitor({
-      isWindowOpen: () => browserWindow.isOpen(),
-      requestShutdown: shutdown
-    });
-  }
+  restoreConsoleOutput = suppressConsoleOutput();
+  tuiHandle = createTui({
+    state,
+    taskService,
+    shutdown,
+    getResourceRootPids: () => [process.pid, taskService.currentProcess?.pid],
+    serverPort: port
+  });
+  tuiHandle.app.start();
+  log("主线:完成", "控制台", "TUI 界面", "终端控制台已就绪。");
 
   startControlCenterCleanupWatchdog({
-    controlBrowserPid: browserWindow.getProcessId(),
+    controlBrowserPid: 0,
     serverPort: port
   });
   stopRuntimeMaintenanceLoop = startRuntimeMaintenanceLoop({
@@ -248,6 +195,6 @@ async function main() {
 }
 
 main().catch((error) => {
-  logError("主线:失败", "网页控制台", "启动失败", error);
+  logError("主线:失败", "控制台", "启动失败", error);
   process.exitCode = 1;
 });

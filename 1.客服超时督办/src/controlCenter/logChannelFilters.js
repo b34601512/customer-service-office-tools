@@ -83,7 +83,7 @@ function isOnlinePresenceLine(line) {
 }
 
 function resolveLogChannels(line) {
-  // 这里统一决定一行日志应该进入哪些网页控制台通道。
+  // 这里统一决定一行日志应该进入 TUI 的哪些日志通道。
   const normalizedLine = String(line || "");
   const channels = [];
 

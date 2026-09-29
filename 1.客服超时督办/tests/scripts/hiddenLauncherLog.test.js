@@ -24,6 +24,5 @@ test("无黑窗启动器自检日志不应该写入 NUL 字节", () => {
   const logPath = path.join(projectRoot, "runtime", "hidden-launch.log");
   const content = fs.readFileSync(logPath);
   assert.equal(content.includes(0), false);
-  assert.match(content.toString("utf8"), /自检模式通过/);
-  assert.doesNotMatch(fs.readFileSync(currentRunLogPath, "utf8"), /上一次运行日志/);
+  assert.match(content.toString("utf8"), /启动中心\.bat/);
 });

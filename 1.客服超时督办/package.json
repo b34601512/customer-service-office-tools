@@ -6,8 +6,6 @@
   "type": "commonjs",
   "scripts": {
     "panel": "node src/controlCenter/startControlCenter.js",
-    "panel:tui": "node src/controlCenter/startControlCenter.js --tui",
-    "panel:web": "node src/controlCenter/startControlCenter.js --web",
     "login": "node src/main.js login",
     "start": "node src/main.js run",
     "schedule": "node src/queryScheduleShift.js",
