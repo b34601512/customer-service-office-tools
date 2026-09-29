@@ -202,3 +202,13 @@ node scripts/发群消息.js --text "测试：客服日报已生成" --mention 1
   SDK 会写 `WebSocket connection closed: <code> <reason>` 或 `Received disconnected_event...`（后者＝被新连接顶掉），便于事后定论。
 - **限制**：官方规定每个机器人同一时间只允许一条有效长连接（新连接会把旧的顶掉）；不要同时开多个守护。
 - **验证**：连上打印「长连接认证并订阅成功」；别人给机器人发消息后，`.state/inbox.jsonl` 会实时多一行。
+
+## 12. 写售后工单（脚本）
+
+- `node scripts/写售后待办.cjs --content "要做的事" [--owner auto] [--deadline "2026-09-30 00:00:00"] [--priority 一般] [--dry-run]`
+- 目标表：企微智能表格『**金牌组待办清单**』的子表『**售后待办清单**』（`docid s3_AFMAdwb9AAYCNsCs6UyrGQ9qORKS0` / sheet `q979lj`）。
+  **「金牌组」＝售后团队**（用户/经理 2026-09-29 确认）。
+- `--owner auto` = 读金山排班表**底色**判断「此时此刻值班的售后」（不是看早/晚文字；口径见 `20.经验大全/金山在线表格排班表读取/`）；
+  **读不到底色值班人就报错停下**，不许猜。写完自动回读。
+- 单测：`node --test tests/写售后待办.test.js`（5 项）。
+- 相关：任何真实客服动作（退款/改发货）由售后本人执行；木婉清只写清楚工单。
