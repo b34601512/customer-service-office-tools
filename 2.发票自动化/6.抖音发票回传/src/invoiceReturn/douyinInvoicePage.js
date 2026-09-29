@@ -181,7 +181,21 @@ async function 打开抖音待回传发票页面(page, 店铺配置 = {}, 选项
     await page.goto(抖音待回传发票页面地址, { waitUntil: 'domcontentloaded', timeout: 60_000 });
     await 等待抖音待开票列表加载(page);
   }
-  const 切店结果 = await 确保抖音目标店铺(page, 店铺配置, onAction);
+  // 2026-09-29：列表就绪后会话仍可能瞬态跳登录页（假过期），在登录页上找店铺头部必然超时；
+  // 这里等登录恢复后再继续同一步（会话恢复，不是失败后的数据重试）。
+  if (是抖音登录页面(page.url())) {
+    打印日志('抖音登录', '登录状态', `列表就绪后页面进入登录页，等待登录恢复：${店铺配置.name}`);
+    await 等待抖音登录完成(page, 店铺配置, { timeoutMs: 登录等待超时毫秒 });
+  }
+  let 切店结果;
+  try {
+    切店结果 = await 确保抖音目标店铺(page, 店铺配置, onAction);
+  } catch (切店错误) {
+    if (!是抖音登录页面(page.url())) throw 切店错误;
+    打印日志('抖音登录', '登录状态', `切店过程中页面进入登录页，等待登录恢复后继续切店：${店铺配置.name}`);
+    await 等待抖音登录完成(page, 店铺配置, { timeoutMs: 登录等待超时毫秒 });
+    切店结果 = await 确保抖音目标店铺(page, 店铺配置, onAction);
+  }
   const 目标页面 = 切店结果.page;
   await 关闭多余抖音页面(目标页面.context().pages(), 目标页面);
   if (目标页面.url() !== 抖音待回传发票页面地址) {

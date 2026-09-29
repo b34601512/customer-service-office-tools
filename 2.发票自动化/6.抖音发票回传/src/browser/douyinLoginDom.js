@@ -72,8 +72,9 @@ async function 点击抖音发送验证码(page) {
 }
 
 async function 准备抖音手机号登录(page, 店铺配置 = {}, 选项 = {}) {
-  // 解决：抖音登录自动填手机号并发送验证码，但不自动点击登录。
-  const { autoSendCode = true } = 选项;
+  // 解决：抖音登录只预填手机号，不自动点「发送验证码」（真实短信=真实发送动作，必须由人触发，
+  // 2026-09-29 假过期误判时曾自动发过 3 次短信）；需要自动发码的旧行为可显式传 autoSendCode: true。
+  const { autoSendCode = false } = 选项;
   const 手机号输入框 = await 查找第一个可见输入框(page, 手机号输入框选择器列表);
   if (!手机号输入框) {
     return { filled: false, message: '未发现抖音手机号登录输入框，可能需要扫码或已经登录。' };
