@@ -37,6 +37,31 @@ function extractText(body) {
   return "";
 }
 
+/**
+ * 从消息体里提取「被引用消息」的原文（用户引用某条消息回复时，正文之外还带 quote）。
+ * 只看不下载：文本直接取；图片/文件/语音只记类型占位，避免把二进制塞进收件箱。
+ */
+function extractQuoteText(body) {
+  if (!body || typeof body !== "object") return "";
+  const quote = body.quote;
+  if (!quote || typeof quote !== "object") return "";
+  if (quote.text && typeof quote.text.content === "string") return quote.text.content;
+  if (quote.voice && typeof quote.voice.content === "string") return quote.voice.content;
+  if (quote.image) return "[引用：图片]";
+  if (quote.file) return `[引用：文件${quote.file.name ? "：" + quote.file.name : ""}]`;
+  if (quote.video) return "[引用：视频]";
+  if (quote.mixed) {
+    const parts = [];
+    for (const item of mixedItems(quote)) {
+      if (item && item.text && typeof item.text.content === "string") parts.push(item.text.content);
+      else if (item && item.image) parts.push("[引用：图片]");
+      else if (item && item.file) parts.push("[引用：文件]");
+    }
+    return parts.join(" ");
+  }
+  return typeof quote.msgtype === "string" ? `[引用：${quote.msgtype}]` : "";
+}
+
 /** 从消息体里提取附件备注（不下载，只记录类型与数量）。 */
 function extractNote(body) {
   if (!body || typeof body !== "object") return "";
@@ -96,8 +121,9 @@ function buildRecord(frame) {
     fromUserId: from.userid || "",
     text: extractText(body),
     note: extractNote(body),
+    quoteText: extractQuoteText(body),
     media: extractMedia(body)
   };
 }
 
-module.exports = { buildRecord, extractText, extractNote, extractMedia, mixedItems, mediaFileName, toLocalTime };
+module.exports = { buildRecord, extractText, extractNote, extractQuoteText, extractMedia, mixedItems, mediaFileName, toLocalTime };

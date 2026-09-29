@@ -1,6 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { buildRecord, extractText, extractNote, extractMedia, mixedItems, toLocalTime } = require("../src/inbox");
+const { buildRecord, extractText, extractNote, extractQuoteText, extractMedia, mixedItems, toLocalTime } = require("../src/inbox");
 
 test("文本消息：拿到正文与来源、群聊带 chatid", () => {
   const record = buildRecord({
@@ -124,4 +124,26 @@ test("媒体消息：提取 url/aeskey，并落盘文件名可预测", () => {
   assert.equal(mediaFileName("m-9", record.media), "m-9.jpg");
   assert.equal(mediaFileName("m-9", { kind: "file", name: "发票.pdf" }), "发票.pdf");
   assert.equal(mediaFileName("m-9", { kind: "file", name: "../etc/passwd" }), "passwd-m-9.bin");
+});
+
+test("引用消息：把被引用原文一起存进收件记录（回复时才对得上话）", () => {
+  const record = buildRecord({
+    body: {
+      msgid: "m-q1", chattype: "single", msgtype: "text", from: { userid: "u1" },
+      text: { content: "这个话术是我发错了，不用做" },
+      quote: { msgtype: "text", text: { content: ["收到你要加的话术：", "亲，咱们家做制氧机13年了…", "回 a / b / c 就行"].join(String.fromCharCode(10)) } }
+    }
+  });
+  assert.equal(record.note, "含引用消息");
+  assert.match(record.quoteText, /收到你要加的话术/);
+  assert.match(record.quoteText, /回 a \/ b \/ c 就行/);
+});
+
+test("引用图片/文件只记占位，不塞二进制；没引用就是空串（反向断言）", () => {
+  assert.equal(extractQuoteText({ text: { content: "无引用" } }), "");
+  assert.equal(extractQuoteText(null), "");
+  assert.equal(extractQuoteText({ quote: { image: { url: "https://x/a" } } }), "[引用：图片]");
+  assert.equal(extractQuoteText({ quote: { file: { name: "发票.pdf" } } }), "[引用：文件：发票.pdf]");
+  const noQuote = buildRecord({ body: { msgid: "m-2", msgtype: "text", text: { content: "普通消息" } } });
+  assert.equal(noQuote.quoteText, "");
 });
