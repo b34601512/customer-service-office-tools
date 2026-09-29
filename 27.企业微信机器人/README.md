@@ -107,6 +107,14 @@ wecom-cli auth show --status
 - 发图片/文件/语音/视频：先用 `media` 域把本地文件换成 media_id，再发。
 - 输出里**不许出现** userid / chat_id / mail_id 等内部 ID（用姓名、群名、主题、时间代替）。
 
+**发消息的稳妥写法（2026-09-29 踩坑后固化）**
+1. 先 `wecom-cli message aibot sessions list` 取**本次**会话里的 `chat_id`（不要用手打的）。
+2. 拼命令用**显式参数**，正文 JSON 先写文件再读入：
+   `wecom-cli message aibot send --chat-id "<上一步的id>" --msg-type markdown --markdown "$(cat 正文.json)"`
+   - 正文文件里的 JSON 用脚本生成（`JSON.stringify({content})`），别手写、别在 JSON 里塞裸双引号（用「」）；
+   - **临时文件别放 `/tmp`**：Node 写的 `/tmp` 是 `C:	mp`，bash 的 `/tmp` 是 MSYS 临时目录 → 读不到（实例：`cat: /tmp/md.json: No such file`）。
+3. 整包 `--json '{...}'` 容易被 CLI 的 json repair 改坏 → 报 `40073 非法的 chat_id`（其实是 JSON 坏了，不是 id 坏了）。
+
 ## 6. 红线（本仓库 + 官方）
 
 1. **扫码/验证码/短信必须本人做**：`wecom-cli auth init` 出码时停下来叫人，窗口留可见。
