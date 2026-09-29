@@ -33,7 +33,7 @@ test('挑选值班负责人：从排班名单里挑认识的（不猜）', () =>
   const { 挑选值班负责人 } = require('../scripts/写售后待办.cjs');
   assert.equal(挑选值班负责人(['柯紫婷', '邓远祥']).userName, '柯紫婷（售后客服）');
   assert.equal(挑选值班负责人(['李守耀', '柯紫婷']).userName, '李守耀（售后组长）');
-  assert.equal(挑选值班负责人(['邓远祥', '缪婷婷']), null);
+  assert.equal(挑选值班负责人(['徐佳楠', '麦诺谦']), null);
   assert.equal(挑选值班负责人([]), null);
   assert.equal(挑选值班负责人(undefined), null);
 });
