@@ -68,9 +68,11 @@ async function 写登记行(条目, 依赖, 选项 = {}) {
   //   主商品行：按订单号查，必须恰好 1 行且就是刚写那行。
   //   赠品行（同订单号）：按订单号查会查到主商品行，所以改验「写入返回的行内回读 + 探针末行 = 刚写那行」。
   if ((Number(选项.明细序号) || 0) > 0) {
+    // 云端回读是**截断展示**（例：J=51277241173411），所以只比订单号前 10 位。
     const 回读文本 = Array.isArray(写入.readBack) ? 写入.readBack.join("|") : String(写入.readBack || "");
-    if (!回读文本.includes(订单号)) {
-      throw new Error(`赠品行写后回读异常：第 ${写入.row} 行的回读里看不到订单号 ${订单号} → 请人工核对金山表。`);
+    const 订单号前缀 = 订单号.slice(0, 10);
+    if (回读文本 && !回读文本.includes(订单号前缀)) {
+      throw new Error(`赠品行写后回读异常：第 ${写入.row} 行的回读里看不到订单号 ${订单号前缀}… → 请人工核对金山表。`);
     }
     const 探针 = await 跑脚本({ probe: true, sheets: [表名] });
     if (Number(探针 && 探针.lastDataRow) !== Number(写入.row)) {

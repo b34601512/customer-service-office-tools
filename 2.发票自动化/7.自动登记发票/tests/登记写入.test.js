@@ -141,13 +141,13 @@ test("赠品行：明细序号 1/2 取对应明细、金额为 0；序号 0 仍�
   const 赠1 = 生成写表数据(条目, { 表名: "科技--唐雪梅", 明细序号: 1 }).列;
   assert.strictEqual(赠1.V.值, "YQD-DK");
   assert.strictEqual(赠1.W.值, 1);
-  assert.strictEqual(Number(赠1.Z.值), 0);
+  assert.strictEqual(赠1.Z, undefined);  // 赠品金额按表里习惯留空
   assert.strictEqual(赠1.J.值, "5127724117341157631");
 
   const 赠2 = 生成写表数据(条目, { 表名: "科技--唐雪梅", 明细序号: 2 }).列;
   assert.strictEqual(赠2.V.值, "BYG-DD-2m");
   assert.strictEqual(赠2.W.值, 2);
-  assert.strictEqual(Number(赠2.Z.值), 0);
+  assert.strictEqual(赠2.Z, undefined);
 
   // 越界 → 必须报「待人工」，绝不静默拿主商品顶替
   const 越界 = 生成写表数据(条目, { 表名: "科技--唐雪梅", 明细序号: 3 });
@@ -181,5 +181,5 @@ test("赠品行不放查重、但其它闸门照走（明细序号>0 时跳过 c
   assert.strictEqual(赠结果.状态, "已写入");
   assert.strictEqual(赠结果.行号, 10498);
   assert.ok(!调用.some((a) => a.checkOnly), "赠品行不该跑云端查重（同订单号是预期的）");
-  assert.ok(调用.some((a) => a.allowWrite === true && a.writeCells && Number(a.writeCells.Z) === 0), "赠品金额必须写 0");
+  assert.ok(调用.some((a) => a.allowWrite === true && a.writeCells && a.writeCells.V === "YQD-DK"), "赠品行要写型号");
 });
