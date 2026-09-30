@@ -4,7 +4,7 @@
 const { 跑脚本 } = require("../src/金山脚本客户端");
 
 function 解析参数(argv) {
-  const 结果 = { 表名: "", 脚本: "write", 列: "T", 文本: "同一个订单发票开一起", 行: 0, 订单号: "" };
+  const 结果 = { 表名: "", 脚本: "write", 列: "", 文本: "同一个订单发票开一起", 行: 0, 订单号: "" };
   for (let i = 0; i < argv.length; i += 1) {
     const 词 = argv[i];
     if (词 === "--订单号") { 结果.订单号 = argv[i + 1]; i += 1; continue; }
@@ -18,25 +18,34 @@ function 解析参数(argv) {
   return 结果;
 }
 
+// 备注列（用户 2026-09-30 纠正）：表②（集团/唐雪梅）=T；表①（德达/毛叶红）=S。
+// 注意：表①的 T 是「品名规格」公式列，**绝对不能碰**（2026-09-30 踩过一次）。
+function 备注列(表名) {
+  return /毛叶红|德达/.test(String(表名)) ? "S" : "T";
+}
+
 async function main() {
   const 参数 = 解析参数(process.argv.slice(2));
   if (!参数.订单号 || !参数.表名 || !参数.行) {
     console.error('用法：node scripts/写同单备注.js --订单号 <单号> --表 "<子表名>" --行 <行号> [--脚本 write|write_jituan] [--列 T] [--文本 "…"] --已确认');
     process.exit(2);
   }
+  // 公式列红线：表①（德达/毛叶红）的 T 列是「品名规格」公式列，任何写入/合并都不许碰（2026-09-30 踩过）。
+  if (/毛叶红|德达/.test(String(参数.表名)) && (参数.列 || "") === "T") { console.error("拒绝：表①（德达/毛叶红）的 T 列是品名规格公式列，不能碰；备注列是 S。"); process.exit(2); }
   if (!参数.已确认) { console.error("未授权：写表必须逐次授权，请加 --已确认"); process.exit(2); }
+  const 列 = 参数.列 || 备注列(参数.表名);
   const 结果 = await 跑脚本(
     {
       orderNo: 参数.订单号,
       row: 参数.行,
-      writeCells: { [参数.列]: 参数.文本 },
+      writeCells: { [列]: 参数.文本 },
       allowWrite: true,
       sheets: [参数.表名]
     },
     { 脚本: 参数.脚本 }
   );
   console.log(`\n  写同单备注：状态=${结果 && 结果.status}`);
-  console.log(`  订单号 ${参数.订单号}　表 ${参数.表名}　行 ${参数.行}　${参数.列}=${参数.文本}`);
+  console.log(`  订单号 ${参数.订单号}　表 ${参数.表名}　行 ${参数.行}　${列}=${参数.文本}`);
   if (结果 && 结果.readBack) console.log(`  写后回读：${JSON.stringify(结果.readBack).slice(0, 200)}`);
   if (!结果 || 结果.status !== "已写入") process.exitCode = 1;
 }

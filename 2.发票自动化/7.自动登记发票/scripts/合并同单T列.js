@@ -4,7 +4,7 @@
 const { 跑脚本 } = require("../src/金山脚本客户端");
 
 function 解析参数(argv) {
-  const 结果 = { 表名: "", 脚本: "", 列: "T", 订单号: "" };
+  const 结果 = { 表名: "", 脚本: "", 列: "", 订单号: "" };
   for (let i = 0; i < argv.length; i += 1) {
     const 词 = argv[i];
     if (词 === "--订单号") { 结果.订单号 = argv[i + 1]; i += 1; continue; }
@@ -22,13 +22,17 @@ async function main() {
     console.error('用法：node scripts/合并同单T列.js --订单号 <单号> --表 "<子表名>" [--脚本 合并|合并_毛叶红] [--列 T] --已确认');
     process.exit(2);
   }
+  // 公式列红线：表①（德达/毛叶红）的 T 列是「品名规格」公式列，任何写入/合并都不许碰（2026-09-30 踩过）。
+  if (/毛叶红|德达/.test(String(参数.表名)) && (参数.列 || "") === "T") { console.error("拒绝：表①（德达/毛叶红）的 T 列是品名规格公式列，不能碰；备注列是 S。"); process.exit(2); }
   if (!参数.已确认) { console.error("未授权：合并会改表格格式，必须逐次授权，请加 --已确认"); process.exit(2); }
   const 脚本 = 参数.脚本 || (/毛叶红|德达/.test(参数.表名) ? "合并_毛叶红" : "合并");
+  // 备注列（用户 2026-09-30）：表①（德达/毛叶红）=S；表②（集团/唐雪梅）=T。
+  const 列 = 参数.列 || (/毛叶红|德达/.test(参数.表名) ? "S" : "T");
   const 结果 = await 跑脚本(
-    { orderNo: 参数.订单号, mergeCols: [参数.列], allowWrite: true, sheets: [参数.表名] },
+    { orderNo: 参数.订单号, mergeCols: [列], allowWrite: true, sheets: [参数.表名] },
     { 脚本 }
   );
-  console.log(`\n  合并同单：脚本=${脚本} 表=${参数.表名} 订单号=${参数.订单号} 列=${参数.列}`);
+  console.log(`\n  合并同单：脚本=${脚本} 表=${参数.表名} 订单号=${参数.订单号} 列=${列}`);
   console.log(`  返回：${JSON.stringify(结果).slice(0, 400)}`);
   const 成功 = 结果 && (结果.mergedCells > 0 || 结果.mode === "merge");
   if (!成功) process.exitCode = 1;
