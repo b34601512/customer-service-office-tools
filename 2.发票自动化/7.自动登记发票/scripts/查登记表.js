@@ -8,6 +8,7 @@
 //   node scripts/查登记表.js --尾部                            # 只诊断：行数 / 最后一行 / 各年条数 / 最后几行
 //   node scripts/查登记表.js 260903-171347832413939 --全部表     # 全部工作表都扫（慢）
 //   node scripts/查登记表.js --行 2751                      # 按行号读（带列字母，核对字段/看填写样式）
+//   node scripts/查登记表.js --脚本 query_jituan --sheets "科技--唐雪梅" --尾部   # 读集团表（脚本键见 project-config/kdocs-airscript.json）
 //   node scripts/查登记表.js --行 2751 --公式                 # 连公式一起读（分清哪些列不能写）
 //   node scripts/查登记表.js --行 2740-2760
 //   node scripts/查登记表.js 260903-171347832413939 --out project-config/查重-260903.json
@@ -33,6 +34,7 @@ function 解析参数(argv) {
     }
     if (词 === "--公式") { 结果.withFormula = true; continue; }
     if (词 === "--out") { 结果.out = argv[i + 1]; i += 1; continue; }
+    if (词 === "--脚本") { 结果.脚本 = argv[i + 1]; i += 1; continue; }
     if (词 === "--最大行") { 结果.最大行 = Number(argv[i + 1]); i += 1; continue; }
     if (词.startsWith("--")) continue;
     结果.关键词.push(词);
@@ -51,7 +53,7 @@ async function main() {
   if (参数.sheets) 请求.sheets = 参数.sheets;
   if (参数.全部表) 请求.allSheets = true;
 
-  const 结果 = await 跑脚本(请求);   // 直接传对象：传数组时金山会转成类数组对象，脚本里取不到 keywords（2026-09-28 实测）
+  const 结果 = await 跑脚本(请求, 参数.脚本 ? { 脚本: 参数.脚本 } : {});   // 直接传对象：传数组时金山会转成类数组对象，脚本里取不到 keywords（2026-09-28 实测）
   console.log(`\n  脚本版本 ${结果.scriptVersion} | 扫描 ${结果.checkedSheets} 个表 / ${结果.scannedRows} 行`);
   for (const 表 of 结果.sheetDetails || []) {
     const 年份 = 表.yearCounts ? Object.keys(表.yearCounts).sort().map((y) => `${y} 年 ${表.yearCounts[y]} 条`).join("、") : "";

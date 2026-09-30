@@ -4,6 +4,7 @@
 // 安全闸门见 `src/登记写入.js`：字段不全拒写 → 没授权不写 → 云端查重命中拒写 → 写完回读必须 1 行。
 //
 // 用法：
+//   node scripts/写登记表.js --探针 --表 "科技--唐雪梅" --脚本 write_jituan   # 探针（集团表）
 //   node scripts/写登记表.js --探针                       # 只测云端写入脚本是否已保存生效（不写）
 //   node scripts/写登记表.js --订单号 <订单号>                # 只出「将要写入的列」，不写表
 //   node scripts/写登记表.js --订单号 <订单号> --已确认        # 用户当场点头后才带这个参数（逐次授权）
@@ -29,6 +30,7 @@ function 解析参数(argv) {
     if (词 === "--已确认") { 结果.已确认 = true; continue; }
     if (词 === "--dry-run") { 结果.干跑 = true; continue; }
     if (词 === "--探针") { 结果.探针 = true; continue; }
+    if (词 === "--脚本") { 结果.脚本 = argv[i + 1]; i += 1; continue; }
   }
   if (!结果.订单号 && !结果.探针) throw new Error("缺少 --订单号（或 --探针）");
   if (结果.干跑) 结果.已确认 = false;
@@ -56,8 +58,9 @@ function 落证据(结果) {
 
 async function main() {
   const 参数 = 解析参数(process.argv.slice(2));
-  // 写入走**独立脚本**（scripts.write）；只读查询脚本那份不动。
-  const 跑写入脚本 = (argv) => 跑脚本(argv, { 脚本: "write" });
+  const 脚本键 = 参数.脚本 || "write";
+  // 写入走**独立脚本**（默认 scripts.write；集团表是 scripts.write_jituan）；只读查询脚本那份不动。
+  const 跑写入脚本 = (argv) => 跑脚本(argv, { 脚本: 脚本键 });
   if (参数.探针) {
     const 结果 = await 探针({ 跑脚本: 跑写入脚本 }, 参数.表名 || 默认表名);
     console.log(`\n  云端写入脚本探针：scriptVersion=${结果.scriptVersion || "未知"} mode=${结果.mode || "未知"}`);
