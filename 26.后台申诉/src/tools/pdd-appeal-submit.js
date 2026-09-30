@@ -84,12 +84,18 @@ async function setItemChecked(page, label, want) {
 async function markMoneySection(page, title) {
   return page.evaluate((title) => {
     const vis = (e) => e && e.offsetParent !== null;
+    const 有请选择 = (e) => [...e.querySelectorAll("input")].some((i) => vis(i) && i.placeholder === "请选择");
+    const 有请输入 = (e) => [...e.querySelectorAll("input")].some((i) => vis(i) && i.placeholder === "请输入");
     // 取「最小、且真的带 请选择+请输入 两个 input」的那一段（复选框那一行也叫 outerWrapper，必须排掉）
     const heads = [...document.querySelectorAll("div")]
       .filter((e) => vis(e) && /outerWrapper/.test(String(e.className)) && (e.innerText || "").trim().startsWith(title))
-      .filter((e) => [...e.querySelectorAll("input")].some((i) => vis(i) && i.placeholder === "请选择") && [...e.querySelectorAll("input")].some((i) => vis(i) && i.placeholder === "请输入"))
+      .filter((e) => 有请选择(e) && 有请输入(e))
       .sort((a, b) => (a.innerText || "").length - (b.innerText || "").length);
-    const scope = heads[0];
+    // 兜底（2026-09-30 实测：有的单弹窗是平铺布局，没有"以申诉项名开头"的段，但一定有「最多可申诉」提示）
+    const 兜底 = () => [...document.querySelectorAll("div")]
+      .filter((e) => vis(e) && 有请选择(e) && 有请输入(e) && /最多可申诉/.test(e.innerText || ""))
+      .sort((a, b) => (a.innerText || "").length - (b.innerText || "").length)[0] || null;
+    const scope = heads[0] || 兜底();
     if (!scope) return null;
     const inputs = [...scope.querySelectorAll("input")].filter(vis);
     const reason = inputs.find((i) => i.placeholder === "请选择");
@@ -197,10 +203,16 @@ async function readFormState(page) {
     const amountInput = document.querySelector('input[data-appeal-amount="1"]');
     // 申诉项勾选状态：只认「可见 label 文案 = 申诉项名」的那一个 checkbox（避免读到隐藏副本）
     const ITEM_NAMES = ["货款申诉", "运费申诉", "纠纷退款率申诉"];
+    const findItemLabel = (name) => [...document.querySelectorAll("label")].filter(vis).find((l) => (l.innerText || "").trim() === name) || null;
     const checkedLabels = ITEM_NAMES.filter((name) => {
-      const label = [...document.querySelectorAll("label")].filter(vis).find((l) => (l.innerText || "").trim() === name);
+      const label = findItemLabel(name);
       const box = label ? label.querySelector('input[type=checkbox]') : null;
       return box ? box.checked : false;
+    });
+    // 2026-09-30 实测：有的单弹窗根本没有「申诉项」勾选框（单单只有“货款申诉”一个标签）→ 这种题型跳过勾选核对
+    const itemCheckboxes = ITEM_NAMES.some((name) => {
+      const label = findItemLabel(name);
+      return !!(label && label.querySelector('input[type=checkbox]'));
     });
     const textarea = [...document.querySelectorAll("textarea")].filter(vis).find((t) => (t.placeholder || "").includes("请描述所涉及订单的基本情况")) || null;
     // 凭证计数：图片上传区里的缩略图（beast-sortable-item）个数；视频区靠“含 VideoUpload”排除
@@ -212,6 +224,7 @@ async function readFormState(page) {
       reason: reasonInput ? reasonInput.value : null,
       amount: amountInput ? amountInput.value : null,
       checkedLabels,
+      itemCheckboxes,
       descriptionLength: textarea ? [...textarea.value].length : -1,
       requiredImages: imageAreas[0] ? countUploaded(imageAreas[0]) : null,
       optionalImages: imageAreas[1] ? countUploaded(imageAreas[1]) : null
@@ -337,8 +350,8 @@ async function main() {
     if (state.reason !== args.reason) problems.push(`申诉原因不是「${args.reason}」（读到「${state.reason}」）`);
     if (String(state.amount) !== String(args.amount)) problems.push(`金额不是 ${args.amount}（读到 ${state.amount}）`);
     if (state.descriptionLength !== descCheck.length) problems.push(`描述字数不是 ${descCheck.length}（读到 ${state.descriptionLength}）`);
-    for (const name of args.items) if (itemNames.includes(name) && !state.checkedLabels.includes(name)) problems.push(`申诉项没勾：${name}`);
-    for (const name of itemNames) if (!args.items.includes(name) && state.checkedLabels.includes(name)) problems.push(`申诉项没取消：${name}`);
+    for (const name of args.items) if (state.itemCheckboxes && itemNames.includes(name) && !state.checkedLabels.includes(name)) problems.push(`申诉项没勾：${name}`);
+    for (const name of itemNames) if (state.itemCheckboxes && !args.items.includes(name) && state.checkedLabels.includes(name)) problems.push(`申诉项没取消：${name}`);
     if (requiredFiles.length && state.requiredImages !== requiredFiles.length) problems.push(`必填凭证 ${state.requiredImages}/${requiredFiles.length}`);
     if (optionalFiles.length && state.optionalImages !== optionalFiles.length) problems.push(`选填凭证 ${state.optionalImages}/${optionalFiles.length}`);
     if (problems.length) {
