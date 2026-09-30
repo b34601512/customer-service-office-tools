@@ -220,3 +220,18 @@ node scripts/发群消息.js --text "测试：客服日报已生成" --mention 1
 - 相关：任何真实客服动作（退款/改发货）由售后本人执行；木婉清只写清楚工单。
 - **售后做完了帮她打钩**（用户 2026-09-30）：`wecom-cli smartsheet records update --json '{"docid":"<本机配置里的 docid>","sheet_title":"售后待办清单","records":[{"record_id":"<行ID>","values":{"是否完成":true}}]}'`（一次把要勾的行拼成一个请求；勾完必须回读确认）。
   行 ID 用 `records list` 按订单号搜出来；“售后已完成”的判据＝后台备注里已有实质动作（如「已通知拦截」「已发起协商」），单子还没结案（等买家/平台）也算完成。
+
+## 开机自启（无窗口）—— 2026-10-01 由「赵敏」帮装
+
+```
+Windows「启动」文件夹 木婉清-企微守护.lnk
+  → wscript.exe ...\scripts\静默启动.vbs      （纯 ASCII，不能写中文）
+    → node scripts\daemon_entry.cjs           （ASCII 入场：防重复 + 落日志）
+      → node scripts\长连接守护.js            （本体：只收不回，照旧）
+```
+
+- **防重复**：`daemon_entry.cjs` 先读 `.state/daemon.pid`，发现已有守护在跑就跳过
+  —— 同一个机器人只允许一条长连接，重复开会把旧的顶掉、漏消息。
+- **日志**：无窗口运行看不到控制台 → 输出落 `.state/daemon.log`（超 2 MB 自动清空）。
+- 手动起（会开黑窗）：`scripts\启动长连接守护.bat`；自检：`node scripts\长连接守护.js --check`。
+- 装法（换机器时照做）：双击 `scripts\静默启动.vbs` 跑一次，再给「启动」文件夹建个指向它的快捷方式。
