@@ -115,7 +115,7 @@ test("生成待登记条目：真实场景（拼多多2店 374.12 电子普票�
   assert.deepEqual(条目.待人工确认, []);
   assert.equal(条目.待人工完成, true);
   // 表 O 列「登记客服」必须写 AI 自己的名字（用户 2026-09-28 拍板），不能拿提需求客服的名字充数
-  assert.equal(条目.登记客服, "AI助手");
+  assert.equal(条目.登记客服, "木婉清");
   assert.equal(生成待登记条目({ 请求: {}, erp行: [], 登记客服: "别人" }).登记客服, "别人");
 });
 
@@ -202,7 +202,7 @@ test("生成写表数据：与客服真实登记行（第 2751 行）逐列对�
   assert.equal(列.G.值, "普票");
   assert.equal(列.I.值, "拼多多02店");
   assert.equal(列.J.值, "260903-171347832413939");
-  assert.equal(列.O.值, "AI助手");
+  assert.equal(列.O.值, "木婉清");
   assert.equal(列.U.值, "DH22-C1");
   assert.equal(列.V.值, 1);
   assert.equal(列.Y.值, 374.12);
@@ -219,7 +219,7 @@ test("生成写表数据：缺项挂待人工（不硬编）", () => {
   const { 生成写表数据 } = require("../src/发票规则");
   const { 列, 待人工 } = 生成写表数据({ 登记时间: "2026-09-28T10:00:00.000Z" });
   assert.equal(列.F.值, "正常");
-  assert.equal(列.O.值, "AI助手");
+  assert.equal(列.O.值, "木婉清");
   const 文本 = 待人工.join("；");
   assert.match(文本, /店铺/);
   assert.match(文本, /订单号/);
