@@ -134,13 +134,13 @@ test("赠品行：明细序号 1/2 取对应明细、金额为 0；序号 0 仍�
   assert.strictEqual(Number(主.Y.值), 499);
 
   const 赠1 = 生成写表数据(条目, { 表名: "科技--唐雪梅", 明细序号: 1 }).列;
-  assert.strictEqual(赠1.U.值, "YQD-DK");
+  assert.strictEqual(赠1.U.值, "YQD");   // 赠品型号按参考表规范化（氧气袋=YQD）
   assert.strictEqual(赠1.V.值, 1);
   assert.strictEqual(Number(赠1.Y.值), 0);
   assert.strictEqual(赠1.J.值, "5127724117341157631");
 
   const 赠2 = 生成写表数据(条目, { 表名: "科技--唐雪梅", 明细序号: 2 }).列;
-  assert.strictEqual(赠2.U.值, "BYG-DD-2m");
+  assert.strictEqual(赠2.U.值, "YY-XYG"); // 赠品型号按参考表规范化（鼻氧管=YY-XYG）
   assert.strictEqual(赠2.V.值, 2);
   assert.strictEqual(Number(赠2.Y.值), 0);
 
