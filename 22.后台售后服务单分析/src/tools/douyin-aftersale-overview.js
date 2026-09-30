@@ -9,14 +9,15 @@
 //     列表行自带倒计时（原文形如「22小时31分12秒后自动同意」），**时间还多就不算卡住**；
 //   · 「待商家收/发货（退货待收货）」「待消费者处理（待退货）」= 在途，不算漏。
 //
-// 用法：node src/tools/douyin-aftersale-overview.js --store douyin3 [--out runtime/douyin/概览-douyin3.json]
+// 用法：node src/tools/douyin-aftersale-overview.js --store douyin3 [--out runtime/douyin/概览-douyin3.json] [--port 9432]
+//   （两店共用一个 profile，活窗口可能挂在另一个店的端口上 → 用 --port 指定当前活窗口；店名校验不过就不给结论）
 // 只读：只读页面文本，不点任何「同意退款」等动作按钮。
 const fs = require("fs");
 const path = require("path");
 const { chromium } = require("playwright-core");
 const { resolveStore, projectPath } = require("../config/stores");
 const { log } = require("../engine/log");
-const { 校验当前店 } = require("./shop-identity");
+const { 校验当前店, 读页面店名 } = require("./shop-identity");
 
 const LIST_URL = "https://fxg.jinritemai.com/ffa/merchant-aftersale-workbench/aftersale/list";
 // 紧急区 + 待商家审核 + 待商家收发货 + 待消费者处理 + 纠纷
@@ -33,6 +34,7 @@ function parseArgs(argv) {
   for (let index = 0; index < argv.length; index += 1) {
     const key = argv[index].replace(/^--/, "");
     if (key === "store") { args.store = argv[index + 1]; index += 1; continue; }
+    if (key === "port") { args.port = Number(argv[index + 1]); index += 1; continue; }
     if (key === "out") { args.out = argv[index + 1]; index += 1; }
   }
   return args;
@@ -41,10 +43,11 @@ function parseArgs(argv) {
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   const store = resolveStore({ platform: "douyin", store: args.store });
-  log("抖店概览", "开始", `${args.store}（${store.name}）`, `端口 ${store.port}`);
-  const browser = await chromium.connectOverCDP(`http://127.0.0.1:${store.port}`);
+  const port = args.port || store.port; // 两店共用 profile：活窗口可能在另一家店的端口上
+  log("抖店概览", "开始", `${args.store}（${store.name}）`, `端口 ${port}`);
+  const browser = await chromium.connectOverCDP(`http://127.0.0.1:${port}`);
   const context = browser.contexts()[0];
-  if (!context) throw new Error(`端口 ${store.port} 上没有窗口（先用 probe-page 拉起）`);
+  if (!context) throw new Error(`端口 ${port} 上没有窗口（先用 probe-page 拉起）`);
 
   const page = await context.newPage();
   const result = { store: args.store, name: store.name, checkedAt: new Date().toISOString(), url: LIST_URL, counts: {} };
@@ -54,7 +57,7 @@ async function main() {
     await page.waitForTimeout(12000);
     const text = await page.evaluate(() => document.body.innerText.replace(/\s+/g, " "));
     // 店名（页面头部）
-    const shopName = await page.evaluate(() => ((document.querySelector(".headerShopName") || {}).textContent || "").trim());
+    const shopName = await 读页面店名(page);
     if (shopName) result.pageShopName = shopName;
     // 店铺身份：抖音共享账号两店一个 profile，窗口可能停在另一家店（2026-09-22 实测 douyin5 读到 douyin3 的数）
     result.shopIdentity = 校验当前店(store.name, shopName);

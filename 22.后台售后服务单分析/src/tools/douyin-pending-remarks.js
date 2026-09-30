@@ -14,7 +14,7 @@ const path = require("path");
 const { chromium } = require("playwright-core");
 const { resolveStore, projectPath } = require("../config/stores");
 const { log } = require("../engine/log");
-const { 校验当前店 } = require("./shop-identity");
+const { 校验当前店, 读页面店名 } = require("./shop-identity");
 
 const LIST_URL = "https://fxg.jinritemai.com/ffa/merchant-aftersale-workbench/aftersale/list";
 const DETAIL_URL = "https://fxg.jinritemai.com/ffa/maftersale/aftersale/detail-v3?aftersale_id=";
@@ -87,7 +87,7 @@ async function main() {
     await sleep(11000);
 
     // 店铺身份：窗口可能停在共享账号里的另一家店，不对就不许往下读（2026-09-22 实测 douyin5 读到 douyin3 的数）
-    const shopName = await page.evaluate(() => ((document.querySelector(".headerShopName") || {}).textContent || "").trim());
+    const shopName = await 读页面店名(page);
     const identity = 校验当前店(store.name, shopName);
     if (!identity.ok) {
       console.error(`\n  ✗ 当前窗口不是目标店，**不往下读**：${identity.理由}\n`);

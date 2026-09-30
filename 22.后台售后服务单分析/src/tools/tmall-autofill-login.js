@@ -13,12 +13,7 @@
 //   先决条件：该店铺的浏览器已用调试端口拉起（probe-page.js --keepOpen），停在登录页。
 // 只读/安全：不点任何后台处理按钮；只填登录表单并点「登录」并回读校验；遇到滑块/验证码立即停手报人。
 const { chromium } = require("playwright-core");
-
-// 账号来源（按顺序找）：9号 为主，12号 有 9号 没有的店（如 tmall6 德迩杰）。
-const 账号配置来源 = [
-  { 来源: "9号", 路径: "D:/桌面/办公软件/9.客服数据自动更新/project-config/platform-config.json" },
-  { 来源: "12号", 路径: "D:/桌面/办公软件/12.店铺指标数据自动更新/project-config/platform-config.json" },
-];
+const { 读账号 } = require("./login-account-source"); // 账号只从 9号/12号 配置读，见该文件头说明
 
 function 取参数(argv) {
   const 结果 = { store: "tmall1", accountKey: "", dry: false };
@@ -28,24 +23,6 @@ function 取参数(argv) {
     if (argv[i] === "--dry") { 结果.dry = true; continue; }
   }
   return 结果;
-}
-
-// 纯函数，可单测：来源列表默认从 9号/12号 配置文件读；单测里可注入假配置。
-function 读账号(accountKey, 来源列表) {
-  const 列表 = 来源列表 || 账号配置来源.map((项) => ({
-    来源: 项.来源,
-    店铺: ((require(项.路径).tmall || {}).stores) || [],
-  }));
-  for (const 项 of 列表) {
-    const 命中 = (项.店铺 || []).find((s) => s.key === accountKey);
-    if (!命中) continue;
-    // 天猫子账号的登录名就是整串「主账号:子账号」；原样填，不 split。
-    const 账号 = String(命中.username || 命中.account || "").trim();
-    const 密码 = String(命中.password || "").trim();
-    if (!账号 || !密码) throw new Error(`${项.来源}配置里 ${accountKey} 的账号或密码为空`);
-    return { 账号, 密码, 来源: `${项.来源}配置的 ${accountKey}` };
-  }
-  throw new Error(`9号/12号配置里都没有天猫店铺 ${accountKey}：不拿别家店的账号顶替，请人工确认`);
 }
 
 async function 填登录(page, 账号, 密码) {
@@ -84,7 +61,7 @@ async function main() {
   const { resolveStore } = require("../config/stores"); // stores.json 不入库，推迟到真正要跑时才 require
   const 参数 = 取参数(process.argv.slice(2));
   const 店铺 = resolveStore({ platform: "tmall", store: 参数.store });
-  const { 账号, 密码, 来源 } = 读账号(参数.accountKey || 参数.store);
+  const { 账号, 密码, 来源 } = 读账号("tmall", 参数.accountKey || 参数.store);
   console.log(`店铺 ${参数.store}（端口 ${店铺.port}）｜账号来源：${来源}｜账号 ${账号.slice(0, 3)}***（整串格式：主账号:子账号）`);
   const 浏览器 = await chromium.connectOverCDP(`http://127.0.0.1:${店铺.port}`);
   const 上下文 = 浏览器.contexts()[0];

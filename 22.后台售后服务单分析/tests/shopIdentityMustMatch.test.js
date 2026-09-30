@@ -31,3 +31,21 @@ test("目标店名缺失同样是拒绝（不能两边都空而误判通过）",
   const r = 校验当前店("", "");
   assert.strictEqual(r.ok, false);
 });
+
+// 2026-09-30 根因修复的反向断言：抖店改版后 class 变哈希（index_headerShopName__2wP1V），
+// 精确 `.headerShopName` 静默失配；头部文本还是多行（店名⏎旗舰店⏎正常营业）。
+const { 取店名 } = require("../src/tools/shop-identity");
+
+test("头部多行文本只取第一行（改版后的真实返回）", () => {
+  assert.strictEqual(取店名("德达医疗康养器械旗舰店\n旗舰店\n正常营业"), "德达医疗康养器械旗舰店");
+  assert.strictEqual(取店名("  DEDAKJ医疗器械旗舰店  "), "DEDAKJ医疗器械旗舰店");
+  assert.strictEqual(取店名(""), "");
+  assert.strictEqual(取店名(null), "");
+});
+
+test("取店名后仍走严格校验：多行头部能对上目标店，别家店照样拒绝", () => {
+  const 对 = 校验当前店("德达医疗康养器械旗舰店", 取店名("德达医疗康养器械旗舰店\n旗舰店\n正常营业"));
+  assert.strictEqual(对.ok, true);
+  const 错 = 校验当前店("DEDAKJ医疗器械旗舰店", 取店名("德达医疗康养器械旗舰店\n旗舰店\n正常营业"));
+  assert.strictEqual(错.ok, false);
+});

@@ -11,7 +11,7 @@ function 校验当前店(目标店名, 页面店名) {
   if (!当前) {
     return {
       ok: false, 需人工: true,
-      理由: "读不到页面店名（.headerShopName），无法确认当前窗口是哪家店——不许当目标店下结论"
+      理由: "读不到页面店名（class 含 headerShopName 的头部元素），无法确认当前窗口是哪家店——不许当目标店下结论"
     };
   }
   if (当前 !== 目标) {
@@ -23,4 +23,19 @@ function 校验当前店(目标店名, 页面店名) {
   return { ok: true, 需人工: false, 理由: "" };
 }
 
-module.exports = { 校验当前店 };
+// 取店名：头部元素的文本可能是多行（店名⏎旗舰店⏎正常营业），真正的店名在第一行。
+function 取店名(文本) {
+  return String(文本 || "").trim().split(/\r?\n/)[0].trim();
+}
+
+// 读页面店名（2026-09-30 根因修复）：抖店用 CSS modules，真实 class 形如 `index_headerShopName__2wP1V`
+//   （哈希会随发版变，精确选择器 `.headerShopName` 会静默失配）→ 用「class 包含 headerShopName」匹配。
+async function 读页面店名(page) {
+  const 文本 = await page.evaluate(() => {
+    const el = document.querySelector('[class*="headerShopName"]') || document.querySelector('[class*="ShopName"]');
+    return el ? (el.innerText || el.textContent || "") : "";
+  });
+  return 取店名(文本);
+}
+
+module.exports = { 校验当前店, 取店名, 读页面店名 };
