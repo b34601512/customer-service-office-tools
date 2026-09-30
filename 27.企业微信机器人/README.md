@@ -165,6 +165,8 @@ node scripts/发群消息.js --text "测试：客服日报已生成" --mention 1
 | 路线 A 想 @ 特定人 | text 类型用 `--mention 手机号`；行内 @ 用 `<@userid>`（见 1号 `wecomTextMention.js`） |
 | PromptScript 装失败 | 无害，换一个 AI 客户端或用上面终端方式 |
 | 发送报 45009 | 触发 20 条/分钟限频，等人确认后再发，脚本不自动重试 |
+| 想验 webhook key 还有没有效 | **探活没用**：非法 msgtype 一律返回 40058（连假 key 也一样，2026-09-30 实测）；只有「合法 payload 真发一条」才能看出 93000（key 无效）。所以验 key = 往群里发条最小消息，**先问用户** |
+| 金牌组提醒机器人被删/重建了 | webhook 会换 key：`14/22/24/25号` 的本地 `project-config/*.json` 里有同一串 key，**要一起换**（2026-09-30 实测 4 处） |
 
 ## 10. 目录说明
 
