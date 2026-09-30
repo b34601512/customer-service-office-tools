@@ -30,9 +30,9 @@ test("跑脚本：带 AirScript-Token、参数走 Context.argv、结果取 data.
     });
   });
   try {
-    const 结果 = await 跑脚本([{ keywords: ["260903-171347832413939"] }], { 配置: { apiToken: "test-token", scripts: { query: { webhookUrl: 地址 } } } });
+    const 结果 = await 跑脚本([{ keywords: ["260903-***********3939"] }], { 配置: { apiToken: "test-token", scripts: { query: { webhookUrl: 地址 } } } });
     assert.equal(收到头["airscript-token"], "test-token");
-    assert.deepEqual(收到体.Context.argv, [{ keywords: ["260903-171347832413939"] }]);
+    assert.deepEqual(收到体.Context.argv, [{ keywords: ["260903-***********3939"] }]);
     assert.equal(结果.matchCount, 1);
     assert.equal(结果.matches[0].row, 7);
   } finally {

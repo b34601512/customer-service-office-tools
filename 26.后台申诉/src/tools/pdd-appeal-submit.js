@@ -14,9 +14,9 @@
 //   · 申诉描述 ≤300 字 —— 超了会提交失败：/mercury/appeal/apply 返回「描述不能超过300字」
 //
 // 用法：
-//   node src/tools/pdd-appeal-submit.js --store pdd02 --order 260923-063795392132914 \
+//   node src/tools/pdd-appeal-submit.js --store pdd02 --order 260923-***********2914 \
 //     --reason "消费者反馈商品空包/少件/漏件，但实际未少发" --amount 150 \
-//     --text-file runtime/appeal/260923-063795392132914/申诉文案.txt \
+//     --text-file runtime/appeal/260923-***********2914/申诉文案.txt \
 //     --required a.png b.png c.png --optional d.png e.png        # 只填不交，留页给人看
 //   加 --submit 才真实提交；加 --close-after 干完关页（不留给人工核对）。
 const fs = require("fs");

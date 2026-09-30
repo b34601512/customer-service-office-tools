@@ -1,5 +1,5 @@
 // 拼多多：读订单在「售后工作台」的后台备注原文（只读）。
-//   node src/tools/pdd-order-note.js --store pdd02 --orders 260926-278396956242177 260827-138632240734011
+//   node src/tools/pdd-order-note.js --store pdd02 --orders 260926-***********2177 260827-***********4011
 //
 // ⚠ 经验（2026-09-27 用户指出）：**不要用 ERP 的卖家备注（sellerMemo）判断处理进度**——ERP 备注不更新，
 //   真实处理进度看平台后台备注。拼多多后台备注在售后工作台列表接口 `/mercury/mms/afterSales/queryList`

@@ -43,7 +43,7 @@ if (待打印.length === 0) { console.log('新消息 0 条'); process.exit(0); }
 console.log(`新消息 ${待打印.length} 条：`);
 for (const j of 待打印) {
   const 谁 = j.chattype === 'group' ? `【群 ${String(j.chatid || '').slice(0, 10)}】` : '【单聊】';
-  const 我 = String(j.fromUserId || '').startsWith('woFqtuEQAAjplA8tqHjWM4SC') ? '（黎路遥）' : '';
+  const 我 = String(j.fromUserId || '').startsWith('wo**********************') ? '（黎路遥）' : '';
   console.log(`[${j.at}] ${谁}${我}${j.note ? '(' + j.note + ')' : ''} ${j.kind}: ${String(j.text || '').slice(0, 300)}`);
 }
 if (!不回写 && 最近 === 0) {

@@ -10,7 +10,7 @@
 //   subAppealQueryType：1=维权申诉、5=订单赔偿申诉、2=极速退款申诉、7=极速换货申诉
 //
 // 关键字段（判「货物安全」用）：
-//   orderSn                              拼多多订单号（形如 260818-088971753771335）
+//   orderSn                              拼多多订单号（形如 260818-***********1335）
 //   afterSalesId / afterSalesStatus / afterSalesType   售后单 ID / 状态 / 类型
 //   refundAmount / receiveAmount         退款金额 / 实收（单位：分）
 //   refundTime                           退款时间（毫秒）

@@ -10,11 +10,11 @@
   },
   "分组名单": {
     "售后": {
-      "李守耀": { "userId": "<企微userid>", "userName": "李守耀（售后组长）" },
-      "邓远祥": { "userId": "<企微userid>", "userName": "邓远祥（售后客服）" }
+      "李某某": { "userId": "<企微userid>", "userName": "李某某（售后组长）" },
+      "邓某某": { "userId": "<企微userid>", "userName": "邓某某（售后客服）" }
     },
     "售前": {
-      "韩欢欢": { "userId": "<企微userid>", "userName": "韩欢欢（售前客服）" }
+      "韩某某": { "userId": "<企微userid>", "userName": "韩某某（售前客服）" }
     }
   }
 }

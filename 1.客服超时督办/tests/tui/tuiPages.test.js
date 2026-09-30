@@ -299,7 +299,7 @@ test("客户页：超长客户名应该截断而不是撑破表格", () => {
   const longNameItem = {
     customerName: "顺丰—德达查催群-深圳&湖南顺丰—德达查催群",
     statusTags: [{ label: "未进入超时", type: "neutral" }, { label: "未进入漏回复", type: "neutral" }],
-    previewText: "易婷婷：SF1227191794765"
+    previewText: "易婷婷：SF*********4765"
   };
   const row = buildCustomerRow(0, longNameItem, 80);
   assert.ok(displayWidth(row) <= 80);

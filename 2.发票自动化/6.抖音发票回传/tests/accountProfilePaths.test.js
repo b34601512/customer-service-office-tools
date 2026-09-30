@@ -14,7 +14,7 @@ test('账号资料目录使用哈希避免明文账号入路径', () => {
 test('同手机号两店共用资料，不同手机号隔离', () => {
   const first = 获取账号浏览器资料目录({ id: 'store-a', phoneNumber: '13800138000' });
   const second = 获取账号浏览器资料目录({ id: 'store-b', phoneNumber: ' 13800138000 ' });
-  const third = 获取账号浏览器资料目录({ id: 'store-a', phoneNumber: '13900139000' });
+  const third = 获取账号浏览器资料目录({ id: 'store-a', phoneNumber: '139****9000' });
   assert.equal(first, second);
   assert.notEqual(first, third);
   assert.equal(first.includes('store-a'), false);

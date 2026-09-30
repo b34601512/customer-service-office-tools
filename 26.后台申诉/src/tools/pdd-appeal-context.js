@@ -12,7 +12,7 @@
 //   6) context.json 汇总（规格、退款、售后单列表、文件清单）
 //
 // 用法：
-//   node src/tools/pdd-appeal-context.js --store pdd02 --order 260923-063795392132914
+//   node src/tools/pdd-appeal-context.js --store pdd02 --order 260923-***********2914
 //   node src/tools/pdd-appeal-context.js --store pdd02 --order <单1> <单2> --skip-chat-images
 const fs = require("fs");
 const path = require("path");

@@ -3,7 +3,7 @@
 ## 这个项目干什么
 
 平台介入退款/判商家责任后，商家可以在**售后申诉**里提交凭证翻案：追回货款 + 撤销纠纷退款率。
-本项目把 2026-09-28 首次实操（订单 `260923-063795392132914`，少件争议退款¥150）的全流程固化下来：
+本项目把 2026-09-28 首次实操（订单 `260923-***********2914`，少件争议退款¥150）的全流程固化下来：
 
 ```
 ① 找可申诉单       pdd-appeal-list.js        → 维权/赔偿/极速退款/极速换货 四类清单 + 金额/原因/倒计时
@@ -30,7 +30,7 @@ node src/tools/pdd-appeal-list.js --store pdd02
 node src/tools/pdd-appeal-list.js --store pdd02 --out runtime/pdd/申诉清单-pdd02.json
 
 # ② 一单取证（只读）：售后单 + 订单详情 + 订单快照 + 售后聊天（图片落 chat-imgs/）
-node src/tools/pdd-appeal-context.js --store pdd02 --order 260923-063795392132914
+node src/tools/pdd-appeal-context.js --store pdd02 --order 260923-***********2914
 #   → runtime/appeal/<订单号>/{afterSales.json, 订单详情.txt, 订单快照.txt, 售后详情-*.txt, chat-imgs/, context.json}
 
 # ③ 写文案（≤300 字，平台硬限制），存 runtime/appeal/<订单号>/申诉文案.txt

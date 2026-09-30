@@ -64,8 +64,8 @@ const { processCandidate } = require(candidateProcessorPath);
 
 function buildCandidate() {
   return {
-    staffName: "邓远祥",
-    actionKey: "2026-09-28::邓远祥::早班",
+    staffName: "邓某某",
+    actionKey: "2026-09-28::邓某某::早班",
     silentClose: false,
     closeAt: new Date(2026, 8, 28, 16, 0, 0),
     closeTimeText: "16:00",
@@ -111,7 +111,7 @@ test("点击后开关仍是开启态：不发“已完成”通知、不标记�
 
   await processCandidate({}, buildCandidate(), {}, store);
 
-  assert.deepEqual(memberPageState.clicks, ["邓远祥:autoAssign:false", "邓远祥:transfer:false"]);
+  assert.deepEqual(memberPageState.clicks, ["邓某某:autoAssign:false", "邓某某:transfer:false"]);
   assert.equal(notifierCalls.length, 0);
   assert.equal(calls.markActionCompleted.length, 0);
   assert.equal(calls.markCompletionNoticeSent.length, 0);

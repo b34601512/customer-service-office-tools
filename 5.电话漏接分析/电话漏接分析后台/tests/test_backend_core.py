@@ -76,7 +76,7 @@ class AnalysisCoreTest(unittest.TestCase):
                 "called_number_text": "0755",
             },
             {
-                "phone": "13900139000",
+                "phone": "139****9000",
                 "inbound_time": datetime(2026, 6, 30, 9, 1, 0),
                 "inbound_time_text": "2026-06-30 09:01:00",
                 "talk_seconds": 0,

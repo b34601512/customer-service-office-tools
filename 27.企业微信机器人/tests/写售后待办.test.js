@@ -11,12 +11,12 @@ test('解析参数：默认优先级/负责人', () => {
   assert.throws(() => 解析参数([]), /缺少 --content/);
 });
 
-test('构造记录：字段齐全且负责人默认李守耀', () => {
+test('构造记录：字段齐全且负责人默认李某某', () => {
   const rec = 构造记录({ content: '抖5 订单 123：处理一下', 优先级: '一般' }).values;
   assert.equal(rec.待办事项[0].text, '抖5 订单 123：处理一下');
   assert.equal(rec.是否完成, false);
   assert.match(rec.截止时间, /^\d{4}-\d{2}-\d{2} 00:00:00$/);
-  assert.equal(rec.负责人[0].userName, '李守耀（售后组长）');
+  assert.equal(rec.负责人[0].userName, '李某某（售后组长）');
   assert.equal(rec.优先级[0].id, 'oonpZv');
 });
 
@@ -48,17 +48,17 @@ const 假配置 = {
   颜色分组: { '#BDD7EE': '售后' },
   分组名单: {
     售后: {
-      柯紫婷: { userId: 'u-ke', userName: '柯紫婷（售后客服）' },
-      邓远祥: { userId: 'u-deng', userName: '邓远祥（售后客服）' },
+      柯某某: { userId: 'u-ke', userName: '柯某某（售后客服）' },
+      邓某某: { userId: 'u-deng', userName: '邓某某（售后客服）' },
     },
   },
 };
 
 test('挑选值班负责人：按底色挑唯一的售后值班（多人带底色=分不清→null，不猜）', () => {
   const { 挑选值班负责人 } = require('../scripts/写售后待办.cjs');
-  assert.equal(挑选值班负责人([{ 姓名: '邓远祥', 底色: '#BDD7EE' }], 假配置).userName, '邓远祥（售后客服）');
-  assert.equal(挑选值班负责人([{ 姓名: '柯紫婷', 底色: '#BDD7EE' }, { 姓名: '邓远祥', 底色: '#BDD7EE' }], 假配置), null);
-  assert.equal(挑选值班负责人(['徐佳楠', '麦诺谦'], 假配置), null);
+  assert.equal(挑选值班负责人([{ 姓名: '邓某某', 底色: '#BDD7EE' }], 假配置).userName, '邓某某（售后客服）');
+  assert.equal(挑选值班负责人([{ 姓名: '柯某某', 底色: '#BDD7EE' }, { 姓名: '邓某某', 底色: '#BDD7EE' }], 假配置), null);
+  assert.equal(挑选值班负责人(['徐某某', '麦某某'], 假配置), null);
   assert.equal(挑选值班负责人([], 假配置), null);
   assert.equal(挑选值班负责人(undefined, 假配置), null);
 });

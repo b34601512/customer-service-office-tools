@@ -4,14 +4,14 @@
 //      脚本正文 kdocs-scripts/AirScript-只读查询订单号.md（用户在文档里粘一次、保存、生成同步 webhook）。
 //
 // 用法：
-//   node scripts/查登记表.js 260903-171347832413939            # 查订单号（默认只查登记子表）
+//   node scripts/查登记表.js 260903-***********3939            # 查订单号（默认只查登记子表）
 //   node scripts/查登记表.js --尾部                            # 只诊断：行数 / 最后一行 / 各年条数 / 最后几行
-//   node scripts/查登记表.js 260903-171347832413939 --全部表     # 全部工作表都扫（慢）
+//   node scripts/查登记表.js 260903-***********3939 --全部表     # 全部工作表都扫（慢）
 //   node scripts/查登记表.js --行 2751                      # 按行号读（带列字母，核对字段/看填写样式）
 //   node scripts/查登记表.js --脚本 query_jituan --sheets "科技--唐雪梅" --尾部   # 读集团表（脚本键见 project-config/kdocs-airscript.json）
 //   node scripts/查登记表.js --行 2751 --公式                 # 连公式一起读（分清哪些列不能写）
 //   node scripts/查登记表.js --行 2740-2760
-//   node scripts/查登记表.js 260903-171347832413939 --out project-config/查重-260903.json
+//   node scripts/查登记表.js 260903-***********3939 --out project-config/查重-260903.json
 const fs = require("fs");
 const path = require("path");
 const { 跑脚本 } = require("../src/金山脚本客户端");

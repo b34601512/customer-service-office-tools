@@ -231,7 +231,7 @@ test('CSV 解析支持引号逗号和 UTF-8 BOM', () => {
 
 test('拼多多导出订单按表头转换为回传订单', () => {
   const order = 转换拼多多导出订单({
-    订单号: '260620-302975557183160',
+    订单号: '260620-***********3160',
     申请时间: '2026-07-01 10:30:00',
     承诺开票时间: '2026-07-10 23:59:59',
     发票金额: '362.18',
@@ -243,7 +243,7 @@ test('拼多多导出订单按表头转换为回传订单', () => {
     售后状态: '正常',
   }, { id: 'pdd-store-1', name: '拼多多店铺1' });
 
-  assert.equal(order.key, 'pdd-store-1:260620-302975557183160');
+  assert.equal(order.key, 'pdd-store-1:260620-***********3160');
   assert.equal(order.storeName, '拼多多店铺1');
   assert.equal(order.invoiceType, '增值税电子普通发票');
   assert.equal(order.buyerTaxNumber, '');
@@ -275,15 +275,15 @@ test('拼多多导出文件会去重并跳过空订单号', () => {
   const filePath = path.join(dir, 'orders.csv');
   fs.writeFileSync(filePath, [
     '订单号,发票金额,发票类型,抬头类型,发票抬头',
-    '260620-302975557183160,362.18,增值税电子普通发票,个人,个人',
-    '260620-302975557183160,362.18,增值税电子普通发票,个人,个人',
+    '260620-***********3160,362.18,增值税电子普通发票,个人,个人',
+    '260620-***********3160,362.18,增值税电子普通发票,个人,个人',
     ',100.00,增值税电子普通发票,个人,个人',
   ].join('\n'), 'utf8');
 
   const orders = 读取拼多多导出订单(filePath, { id: 'pdd-store-1', name: '拼多多店铺1' });
 
   assert.equal(orders.length, 1);
-  assert.equal(orders[0].orderNumber, '260620-302975557183160');
+  assert.equal(orders[0].orderNumber, '260620-***********3160');
 });
 
 test('拼多多广告弹窗和全屏遮罩会被自动关闭', async () => {

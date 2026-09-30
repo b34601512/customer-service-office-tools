@@ -1,1 +1,12 @@
 # 仓库只收源码：用 .gitignore 排除运行真值配置，仓库提供 *.example.* 模板
+
+# ── 打码过滤器（2026-09-30 用户：本地要能正常用，只是备份到 GitHub 时打码）等
+# 提交时「真值 → 打码值」，检出时「打码值 → 真值」；本机文件始终是真值。
+# 实现：tools/打码过滤器.js + 本机对照表 tools/打码对照.local（不入库，*.local 已 ignore）
+# 扫描/核对：node tools/打码.js --扫描 | --学 | --核对 | --体检   说明见 开源边界.md
+*.md   filter=打码
+*.json filter=打码
+*.js   filter=打码
+*.cjs  filter=打码
+*.py   filter=打码
+*.txt  filter=打码

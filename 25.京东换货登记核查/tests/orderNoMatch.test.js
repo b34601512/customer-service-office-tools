@@ -20,8 +20,8 @@ test("全角数字与 Excel 文本前缀撇号不影响匹配", () => {
 });
 
 test("拼多多横杠单号：不同横杠字符/全角横杠都能对上", () => {
-  assert.equal(normalizeOrderNo("260926－278396956242177"), normalizeOrderNo("260926-278396956242177"));
-  assert.equal(cellMatchesOrder("260926—278396956242177", "260926-278396956242177"), true);
+  assert.equal(normalizeOrderNo("260926－278396956242177"), normalizeOrderNo("260926-***********2177"));
+  assert.equal(cellMatchesOrder("260926—278396956242177", "260926-***********2177"), true);
 });
 
 test("单元格里带别的单号（拼在一起）也能命中", () => {

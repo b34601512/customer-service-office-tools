@@ -129,7 +129,7 @@ class OrderDetectorTest(unittest.TestCase):
 
     def test_platform_order_validation_rejects_page_internal_values(self) -> None:
         self.assertTrue(is_valid_platform_order_text("P001"))
-        self.assertTrue(is_valid_platform_order_text("260615-086371285323072"))
+        self.assertTrue(is_valid_platform_order_text("260615-***********3072"))
         self.assertFalse(is_valid_platform_order_text("setting"))
         self.assertFalse(is_valid_platform_order_text("$CpUjQHD9WXFFt3O+QVzGlA==$1$"))
 

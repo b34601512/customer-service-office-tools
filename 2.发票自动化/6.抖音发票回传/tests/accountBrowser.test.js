@@ -28,7 +28,7 @@ test('同手机号连续处理两店只启动一个浏览器，不同手机号�
     const second = await browser.创建抖音账号浏览器上下文({ id: 'b', phoneNumber: '13800138000' });
     assert.equal(first, second);
     assert.equal(contexts.length, 1);
-    const third = await browser.创建抖音账号浏览器上下文({ id: 'c', phoneNumber: '13900139000' });
+    const third = await browser.创建抖音账号浏览器上下文({ id: 'c', phoneNumber: '139****9000' });
     assert.notEqual(first, third);
     assert.equal(contexts.length, 2);
     await first.close();
@@ -47,7 +47,7 @@ test('批量登录同手机号验证一次，并保留各店结果', async (t) =
   const stores = [
     { id: 'a', name: 'A', phoneNumber: '13800138000' },
     { id: 'b', name: 'B', phoneNumber: '13800138000' },
-    { id: 'c', name: 'C', phoneNumber: '13900139000' },
+    { id: 'c', name: 'C', phoneNumber: '139****9000' },
   ];
   t.mock.method(config, '获取启用店铺列表', () => stores);
   t.mock.method(commonFs, '初始化运行目录', () => {});

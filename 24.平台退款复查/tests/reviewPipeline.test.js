@@ -10,14 +10,14 @@ test("tmall 从申诉清单取 orderId", () => {
 });
 
 test("pdd 从申诉清单取 orderSn（带横杠）", () => {
-  const orders = PLATFORMS.pdd.extractOrders({ items: [{ orderSn: "260818-088971753771335" }, { orderSn: "" }] });
-  assert.deepEqual(orders, ["260818-088971753771335"]);
-  assert.ok(PLATFORMS.pdd.orderIdPattern.test("260818-088971753771335"));
+  const orders = PLATFORMS.pdd.extractOrders({ items: [{ orderSn: "260818-***********1335" }, { orderSn: "" }] });
+  assert.deepEqual(orders, ["260818-***********1335"]);
+  assert.ok(PLATFORMS.pdd.orderIdPattern.test("260818-***********1335"));
 });
 
 test("单号正则：pdd 放行横杠单号、拒绝空/怪字符", () => {
-  assert.ok(PLATFORMS.pdd.orderIdPattern.test("260818-088971753771335"));
-  assert.ok(!PLATFORMS.pdd.orderIdPattern.test("260818-088971753771335x"));
+  assert.ok(PLATFORMS.pdd.orderIdPattern.test("260818-***********1335"));
+  assert.ok(!PLATFORMS.pdd.orderIdPattern.test("260818-***********1335x"));
   assert.ok(!PLATFORMS.pdd.orderIdPattern.test("abc-def"));
   assert.ok(PLATFORMS.tmall.orderIdPattern.test("5127801625175058100"));
 });

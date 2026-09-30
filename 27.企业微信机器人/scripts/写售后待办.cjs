@@ -7,7 +7,7 @@
  *   node scripts/写售后待办.cjs --content "要售后做什么" [--owner <企微userid>] [--deadline "2026-09-30 00:00:00"] [--priority 一般] [--dry-run]
  * 说明：
  *   - 只做「新增一行」，不删不改；写完会回读确认（关键词=待办正文前 20 字）。
- *   - 负责人默认李守耀（售后组长）；优先级默认「一般」（选项 id 取自表格既有行）。
+ *   - 负责人默认李某某（售后组长）；优先级默认「一般」（选项 id 取自表格既有行）。
  */
 const { execFileSync } = require('child_process');
 const fs = require('fs');
@@ -35,7 +35,7 @@ function 读表配置(env, 配置路径) {
 const DOCID = (() => { try { return 读表配置().docid; } catch (e) { return null; } })();
 const SHEET = '售后待办清单';
 const WECOM = 'C:/Users/b3460/AppData/Roaming/npm/node_modules/@wecom/cli/bin/wecom.js';
-const 默认负责人 = { userId: 'woFqtuEQAAcXT3pES1oR41I8G9-a8A0w', userName: '李守耀（售后组长）' };
+const 默认负责人 = { userId: 'wo******************************', userName: '李某某（售后组长）' };
 const 优先级选项 = { 一般: { id: 'oonpZv', text: '一般' } };
 
 /**
