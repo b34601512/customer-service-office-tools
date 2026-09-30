@@ -180,7 +180,8 @@ node scripts/发群消息.js --text "测试：客服日报已生成" --mention 1
 │   ├── 踩坑与红线.md            ← 已收拢到档案（这里只是指路）
 │   └── 开源边界-私有与通用.md     ← 已收拢到档案（这里只是指路）
 ├── src/
-│   └── inbox.js                ← 消息帧 → 收件记录（纯函数，可单测）
+│   ├── inbox.js                ← 消息帧 → 收件记录（纯函数，可单测）
+│   └── 企微通知.cjs             ← ★共享核心：21 号项目的 webhook 通知最终都走这里（22/24/25 号只是薄壳）
 ├── scripts/
 │   ├── 检查企微环境.js           ← 只读体检（node/skill/cli/auth/webhook）
 │   ├── 发群消息.js              ← 群机器人 webhook 发送，默认 dry-run
@@ -193,7 +194,6 @@ node scripts/发群消息.js --text "测试：客服日报已生成" --mention 1
 ```
 
 ## 11. 长连接守护（官方 SDK，用来「读消息」）
-
 > 为什么必须走它：官方 CLI 的会话接口只给「会话名 + 最后消息时间」，**读不到正文**；
 > 要读正文只能用官方长连接（教程 #72：`aibot_subscribe` 订阅 → `aibot_msg_callback` 收 → `aibot_respond_msg` 回）。
 
