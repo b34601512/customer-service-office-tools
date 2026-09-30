@@ -10,6 +10,7 @@
  *   - 负责人默认李守耀（售后组长）；优先级默认「一般」（选项 id 取自表格既有行）。
  */
 const { execFileSync } = require('child_process');
+const fs = require('fs');
 const path = require('path');
 
 // 值班/排班**口径统一在 28号 项目**（用户 2026-09-30：「专门讲安排工作、看排班表…统一迁移到这里来」）：
@@ -17,7 +18,21 @@ const path = require('path');
 const 值班库 = require('../../28.排班与派活/src/lib/值班');
 const 排班库 = require('../../28.排班与派活/src/lib/排班读取');
 
-const DOCID = 's3_AFMAdwb9AAYCNsCs6UyrGQ9qORKS0';
+// 表 docid = **公司私有数据，不进仓库**（仓库是公开的）：从本机配置读，环境变量优先。
+// 本机配置：27.企业微信机器人/project-config/售后待办.local.json → {"docid":"s3_…","sheet":"售后待办清单"}
+const 本机配置路径 = path.join(__dirname, '..', 'project-config', '售后待办.local.json');
+function 读表配置(env, 配置路径) {
+  const e = env || process.env;
+  if (e.WECOM_售后待办DOCID) return { docid: e.WECOM_售后待办DOCID, sheet: e.WECOM_售后待办SHEET || '售后待办清单' };
+  const p = 配置路径 || 本机配置路径;
+  if (!fs.existsSync(p)) {
+    throw new Error(`没读到售后待办表的 docid（公司私有数据，不进仓库）：请在本机建 ${p}，写 {"docid":"s3_…"}`);
+  }
+  const j = JSON.parse(fs.readFileSync(p, 'utf8'));
+  if (!j.docid) throw new Error(p + ' 里没有 docid');
+  return { docid: j.docid, sheet: j.sheet || '售后待办清单' };
+}
+const DOCID = (() => { try { return 读表配置().docid; } catch (e) { return null; } })();
 const SHEET = '售后待办清单';
 const WECOM = 'C:/Users/b3460/AppData/Roaming/npm/node_modules/@wecom/cli/bin/wecom.js';
 const 默认负责人 = { userId: 'woFqtuEQAAcXT3pES1oR41I8G9-a8A0w', userName: '李守耀（售后组长）' };
@@ -83,11 +98,12 @@ function 写({ content, ownerId, ownerName, ownerAuto, deadline, 优先级, dryR
     ownerName = 值班.userName;
   }
   const rec = 构造记录({ content, ownerId, ownerName, deadline, 优先级 });
-  const args = ['smartsheet', 'records', 'add', '--docid', DOCID, '--sheet-title', SHEET, '--records', JSON.stringify([rec])];
+  const { docid } = 读表配置();
+  const args = ['smartsheet', 'records', 'add', '--docid', docid, '--sheet-title', SHEET, '--records', JSON.stringify([rec])];
   if (dryRun) return { dryRun: true, args, rec };
   const out = execFileSync(process.execPath, [WECOM, ...args], { encoding: 'utf8', maxBuffer: 20 * 1024 * 1024 });
   const key = content.slice(0, 20);
-  const back = execFileSync(process.execPath, [WECOM, 'smartsheet', 'records', 'list', '--docid', DOCID, '--sheet-title', SHEET, '--limit', '300'], { encoding: 'utf8', maxBuffer: 40 * 1024 * 1024 });
+  const back = execFileSync(process.execPath, [WECOM, 'smartsheet', 'records', 'list', '--docid', docid, '--sheet-title', SHEET, '--limit', '300'], { encoding: 'utf8', maxBuffer: 40 * 1024 * 1024 });
   const hit = back.includes(key);
   return { ok: true, 回读命中: hit, 关键词: key, 原始响应长度: out.length };
 }
@@ -102,4 +118,4 @@ if (require.main === module) {
     process.exitCode = 2;
   }
 }
-module.exports = { 解析参数, 构造记录, 挑选值班负责人, 读此刻值班, 值班库, 排班库, DOCID, SHEET };
+module.exports = { 解析参数, 构造记录, 挑选值班负责人, 读此刻值班, 读表配置, 值班库, 排班库, DOCID, SHEET };

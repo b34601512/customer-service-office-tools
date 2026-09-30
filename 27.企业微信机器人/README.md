@@ -212,11 +212,11 @@ node scripts/发群消息.js --text "测试：客服日报已生成" --mention 1
 ## 12. 写售后工单（脚本）
 
 - `node scripts/写售后待办.cjs --content "要做的事" [--owner auto] [--deadline "2026-09-30 00:00:00"] [--priority 一般] [--dry-run]`
-- 目标表：企微智能表格『**金牌组待办清单**』的子表『**售后待办清单**』（`docid s3_AFMAdwb9AAYCNsCs6UyrGQ9qORKS0` / sheet `q979lj`）。
+- 目标表：企微智能表格『**金牌组待办清单**』的子表『**售后待办清单**』（**docid 是公司私有数据、不打进仓库**：本机存 `project-config/售后待办.local.json`，工具 `scripts/写售后待办.cjs` 会自己读；sheet `q979lj`）。
   **「金牌组」＝售后团队**（用户/经理 2026-09-29 确认）。
 - `--owner auto` = 问 **28号项目**（`28.排班与派活/src/tools/今天谁值班.cjs`）：读金山排班表**底色**判断「此时此刻值班的售后」（不是看早/晚文字；口径与名单都在 28号，本项目不再自带）；
   **读不到/分不清值班人就报错停下**，不许猜。写完自动回读。
 - 单测：`node --test tests/写售后待办.test.js`（含一条**反向锁**：27号 里不许再出现值班名单/排班表链接）。
 - 相关：任何真实客服动作（退款/改发货）由售后本人执行；木婉清只写清楚工单。
-- **售后做完了帮她打钩**（用户 2026-09-30）：`wecom-cli smartsheet records update --json '{"docid":"s3_AFMAdwb9AAYCNsCs6UyrGQ9qORKS0","sheet_title":"售后待办清单","records":[{"record_id":"<行ID>","values":{"是否完成":true}}]}'`（一次把要勾的行拼成一个请求；勾完必须回读确认）。
+- **售后做完了帮她打钩**（用户 2026-09-30）：`wecom-cli smartsheet records update --json '{"docid":"<本机配置里的 docid>","sheet_title":"售后待办清单","records":[{"record_id":"<行ID>","values":{"是否完成":true}}]}'`（一次把要勾的行拼成一个请求；勾完必须回读确认）。
   行 ID 用 `records list` 按订单号搜出来；“售后已完成”的判据＝后台备注里已有实质动作（如「已通知拦截」「已发起协商」），单子还没结案（等买家/平台）也算完成。

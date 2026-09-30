@@ -1,6 +1,8 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const { 解析参数, 构造记录, SHEET, DOCID } = require('../scripts/写售后待办.cjs');
+const fs = require('node:fs');
+const path = require('node:path');
+const { 解析参数, 构造记录, 读表配置, SHEET, DOCID } = require('../scripts/写售后待办.cjs');
 
 test('解析参数：默认优先级/负责人', () => {
   const r = 解析参数(['--content', '试试']);
@@ -26,7 +28,20 @@ test('构造记录：可指定负责人与截止时间', () => {
 
 test('常量：目标表就是「金牌组待办清单」的售后待办清单', () => {
   assert.equal(SHEET, '售后待办清单');
-  assert.ok(DOCID.startsWith('s3_'));
+  // docid 是公司私有数据，不许写回代码（2026-09-30 用户要求打码）：只从本机配置/环境变量读
+  if (DOCID) assert.ok(DOCID.startsWith('s3_'));
+});
+
+test('读表配置：环境变量优先；没有本机配置就报错（不内置 docid）', () => {
+  assert.equal(读表配置({ WECOM_售后待办DOCID: 's3_TEST' }).docid, 's3_TEST');
+  assert.equal(读表配置({ WECOM_售后待办DOCID: 's3_TEST' }).sheet, '售后待办清单');
+  assert.equal(读表配置({ WECOM_售后待办DOCID: 's3_TEST', WECOM_售后待办SHEET: '别的子表' }).sheet, '别的子表');
+  assert.throws(() => 读表配置({}, path.join(__dirname, '不存在的配置.local.json')), /docid/);
+});
+
+test('反向断言：脚本源码里不许再出现真实 docid（防止打码被改回去）', () => {
+  const 源 = fs.readFileSync(path.join(__dirname, '..', 'scripts', '写售后待办.cjs'), 'utf8');
+  assert.ok(!/s3_[A-Za-z0-9]{20,}/.test(源), '脚本里出现了 s3_ 开头的 docid，应改为从本机配置读');
 });
 
 const 假配置 = {

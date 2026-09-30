@@ -170,3 +170,6 @@ tools/git-secret-store.json.bak
 **/.pi/
 # 本机真实金山表链接（真实分享 ID 不入库，代码读它、缺省用占位）
 **/project-config/kdocs-links.local.json
+
+# 项目私有配置：只留本机、不入库（仓库公开；例：企微智能表格 docid）
+**/project-config/*.local.json
