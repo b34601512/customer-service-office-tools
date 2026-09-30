@@ -1,6 +1,10 @@
 #!/usr/bin/env node
 // 发企微群机器人消息（**默认只预演，不加 --send 绝不发送**）。
 //
+// ⚠ 2026-09-30 用户拍板：**群消息统一改由「木婉清」（27号 aibot）发**，不再默认用这个 webhook 脚本：
+//   cd 27.企业微信机器人 && node scripts/发企微消息.cjs --chat-id "<本次 sessions list 现取的群 chat_id>" --text "…"（默认群「金牌组」）。
+//   木婉清的消息不能真 @人（正文写名字即可）；**只有确实需要真 @ 时才回退到这个脚本**。
+//
 // 用法：
 //   node src/tools/send-wecom-notice.js --file runtime/kdocs/待发消息.txt --at 王五            # 预演，只打印
 //   node src/tools/send-wecom-notice.js --file runtime/kdocs/待发消息.txt --at 王五 --send     # 真发

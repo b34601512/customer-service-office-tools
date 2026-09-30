@@ -139,6 +139,10 @@ node scripts/发群消息.js --text "测试：客服日报已生成" --mention 1
 
 > 群机器人官方参数文档（给 AI 查）：<https://developer.work.weixin.qq.com/document/path/91770>
 
+> ⚠ **2026-09-30 用户拍板：群消息不再走群机器人 webhook，统一由木婉清（本机器人）发** ——
+> `node scripts/发企微消息.cjs --chat-id "<本次 sessions list 现取的群 chat_id>" --text "…"`（默认群「金牌组」）。
+> 木婉清的消息**不能真 @人**，把名字写进正文即可（已拍板 OK）；只有确实要 @ 时才用 webhook。
+
 ## 8. 客服主管的 3 个现成用法
 
 - **日报/异常推送**：各项目跑出的结果文本 → `发群消息.js`（路线 A）或 `message aibot send`（路线 B）发到主管群/客服群。
