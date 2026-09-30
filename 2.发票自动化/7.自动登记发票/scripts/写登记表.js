@@ -4,6 +4,7 @@
 // 安全闸门见 `src/登记写入.js`：字段不全拒写 → 没授权不写 → 云端查重命中拒写 → 写完回读必须 1 行。
 //
 // 用法：
+//   node scripts/写登记表.js --探针                       # 只测云端写入脚本是否已保存生效（不写）
 //   node scripts/写登记表.js --订单号 <订单号>                # 只出「将要写入的列」，不写表
 //   node scripts/写登记表.js --订单号 <订单号> --已确认        # 用户当场点头后才带这个参数（逐次授权）
 //   node scripts/写登记表.js --订单号 <订单号> --已确认 --表 "德达医疗器械发票登记 --毛叶红"
@@ -13,7 +14,7 @@ const fs = require("fs");
 const path = require("path");
 const { 跑脚本 } = require("../src/金山脚本客户端");
 const { 生成写表数据 } = require("../src/发票规则");
-const { 写登记行, 默认表名 } = require("../src/登记写入");
+const { 写登记行, 探针, 默认表名 } = require("../src/登记写入");
 
 const 项目根 = path.resolve(__dirname, "..");
 const 清单路径 = path.join(项目根, "project-config", "待登记清单.jsonl");
@@ -27,8 +28,9 @@ function 解析参数(argv) {
     if (词 === "--表") { 结果.表名 = argv[i + 1]; i += 1; continue; }
     if (词 === "--已确认") { 结果.已确认 = true; continue; }
     if (词 === "--dry-run") { 结果.干跑 = true; continue; }
+    if (词 === "--探针") { 结果.探针 = true; continue; }
   }
-  if (!结果.订单号) throw new Error("缺少 --订单号");
+  if (!结果.订单号 && !结果.探针) throw new Error("缺少 --订单号（或 --探针）");
   if (结果.干跑) 结果.已确认 = false;
   return 结果;
 }
@@ -54,8 +56,18 @@ function 落证据(结果) {
 
 async function main() {
   const 参数 = 解析参数(process.argv.slice(2));
+  // 写入走**独立脚本**（scripts.write）；只读查询脚本那份不动。
+  const 跑写入脚本 = (argv) => 跑脚本(argv, { 脚本: "write" });
+  if (参数.探针) {
+    const 结果 = await 探针({ 跑脚本: 跑写入脚本 }, 参数.表名 || 默认表名);
+    console.log(`\n  云端写入脚本探针：scriptVersion=${结果.scriptVersion || "未知"} mode=${结果.mode || "未知"}`);
+    if (结果.sheet) console.log(`  表：${结果.sheet}　最后数据行：${结果.lastDataRow}　下一个可写行：${结果.nextWriteRow}`);
+    if (结果.message) console.log(`  说明：${结果.message}`);
+    console.log("");
+    return;
+  }
   const 条目 = 读清单条目(参数.订单号);
-  const 结果 = await 写登记行(条目, { 跑脚本, 生成写表数据 }, {
+  const 结果 = await 写登记行(条目, { 跑脚本: 跑写入脚本, 生成写表数据 }, {
     已确认: 参数.已确认 === true,
     表名: 参数.表名 || 默认表名,
   });

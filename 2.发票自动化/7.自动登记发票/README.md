@@ -53,9 +53,10 @@ node scripts/写登记表.js --订单号 <订单号> --已确认      # 用户�
 3. **云端查重**：写前用 AirScript 全表查订单号，命中 → 拒写并回报命中行号（**重复登记=重复交税**）。
 4. **写完回读**：订单号必须恰好 1 行且行号=写入行；出现 2 行/行号不符 → 报错要人工核对。
 
-云端脚本：`project-config/kdocs-scripts/AirScript-登记写入.v4.md`（**本机文件，不入库**）。
-它是 v3 只读查询脚本的**超集**（同一个脚本、同一个同步地址）：不给 `orderNo+writeCells+allowWrite` 就还是纯只读。
-粘贴方式同 v3：文档 → 效率 → 高级开发 → AirScript → 打开「只读查询订单号」→ 清空 → 粘全文 → 保存。
+云端脚本：**读/写分两份**（用户 2026-09-30 定：读脚本不动）。
+- 读：`AirScript-只读查询订单号.md`（已生效，勿动）——查重展示/按行读/诊断。
+- 写：`AirScript-登记写入-独立脚本.md`（**本机文件，不入库**）——**新建**一个 AirScript 脚本「登记写入」，粘全文保存，再生成**它自己的同步 webhook**，填进本机 `project-config/kdocs-airscript.json` 的 `scripts.write.webhookUrl`。
+- 写入脚本自带安全探针：`node scripts/写登记表.js --探针` → 只回 `scriptVersion/lastDataRow/nextWriteRow`，**一个字节都不写**（用来确认已保存生效）。
 
 写入协议（本地 → 云端）：
 ```json

@@ -38,11 +38,10 @@ async function 写登记行(条目, 依赖, 选项 = {}) {
     return { 状态: "等授权", 订单号, 表名, 列, 说明: "未写入（需要用户逐次确认后再跑，带 --已确认）" };
   }
 
-  // 闸门 3：云端全表查重（不信网页读法）。
-  const 查重 = await 跑脚本({ keywords: [订单号], sheets: [表名] });
-  if (Number(查重 && 查重.matchCount) > 0) {
-    const 命中行 = 查重.matches && 查重.matches[0] ? 查重.matches[0].row : 0;
-    return { 状态: "已登记", 订单号, 表名, 命中行, 说明: "该订单号在云端登记表里已存在，拒绝重复写入" };
+  // 闸门 3：云端全表查重（走**独立写入脚本**的 checkOnly；只读查询脚本那份不动）。
+  const 查重 = await 跑脚本({ orderNo: 订单号, checkOnly: true, sheets: [表名] });
+  if (查重 && 查重.duplicate === true) {
+    return { 状态: "已登记", 订单号, 表名, 命中行: Number(查重.row) || 0, 说明: "该订单号在云端登记表里已存在，拒绝重复写入" };
   }
 
   // 闸门 4：写入。
@@ -55,11 +54,11 @@ async function 写登记行(条目, 依赖, 选项 = {}) {
   }
 
   // 闸门 5：回读必须恰好一行，且就是刚写的那一行。
-  const 回读 = await 跑脚本({ keywords: [订单号], sheets: [表名] });
-  const 回读行数 = Number(回读 && 回读.matchCount) || 0;
-  const 回读行号 = 回读 && 回读.matches && 回读.matches[0] ? 回读.matches[0].row : 0;
-  if (回读行数 !== 1 || 回读行号 !== 写入.row) {
-    throw new Error(`写后回读异常：订单号 ${订单号} 回读到 ${回读行数} 行（期望 1 行），行号 ${回读行号}（期望 ${写入.row}）→ 可能重复登记，请人工核对金山表第 ${写入.row} 行。`);
+  const 回读 = await 跑脚本({ orderNo: 订单号, checkOnly: true, sheets: [表名] });
+  const 回读行 = Number(回读 && 回读.row) || 0;
+  const 回读命中 = 回读 && 回读.duplicate === true;
+  if (!回读命中 || 回读行 !== 写入.row) {
+    throw new Error(`写后回读异常：订单号 ${订单号} 云端${回读命中 ? "查到 1 行" : "查不到"}，行号 ${回读行}（期望 ${写入.row}）→ 可能重复登记，请人工核对金山表第 ${写入.row} 行。`);
   }
 
   return {
@@ -72,4 +71,10 @@ async function 写登记行(条目, 依赖, 选项 = {}) {
   };
 }
 
-module.exports = { 写登记行, 取订单号, 默认表名 };
+module.exports = { 写登记行, 取订单号, 默认表名, 探针 };
+
+/** 云端探针：只回版本/行数，绝不写。用来确认用户在文档里保存的写入脚本已生效。 */
+async function 探针(依赖, 表名 = 默认表名) {
+  const 结果 = await 依赖.跑脚本({ probe: true, sheets: [表名] });
+  return 结果 || {};
+}
