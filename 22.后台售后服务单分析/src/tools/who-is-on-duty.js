@@ -1,7 +1,12 @@
 #!/usr/bin/env node
 // 判断"此刻该 @ 谁"：读排班表（金山，匿名只读）→ 取今天售后值班人 → 按用户规则挑选。
 //
-// 规则（用户 2026-09-18 拍板）：
+// ⚠ 口径变更（2026-09-30，用户要求统一）：**值班一律以 28号项目 的「单元格底色」判定**
+//   （28.排班与派活/README.md；颜色 #BDD7EE=售后、#E2F0D9=售前；不猜）。
+//   这里先问 28号；**底色挑不到才回退**到下面的旧口径（看早/晚文字），并在结果里把口径标出来。
+//   回退分支是临时兼容，待排班表底色稳定后应删掉。
+//
+// 旧口径（回退用，用户 2026-09-18 拍板）：
 //   · 14:00 前：优先李四（组长）；没有就 @ 早班值班的售后
 //   · 14:00 后：@ 晚班值班的售后（售后晚班 14:00-22:30）
 //
@@ -18,6 +23,9 @@ const { log } = require("../engine/log");
 
 const CONFIG_FILE = projectPath("project-config", "wecom-notify.json");
 const SHIFT_STOP_WORDS = ["早班", "晚班", "休息", "上班人数", "年假", "本月休息天数", "本月天数"];
+// 值班口径的唯一出处在 28号（用户 2026-09-30：「统一迁移到这里」）
+const 值班库 = require("../../../28.排班与派活/src/lib/值班");
+const 排班库 = require("../../../28.排班与派活/src/lib/排班读取");
 
 function readConfig() {
   if (!fs.existsSync(CONFIG_FILE)) {
@@ -102,15 +110,37 @@ async function resolveDutyTargets(args = {}) {
   const minutes = resolveMinutes(args);
   const sheetName = sheetNameForMonth(dateText);
   const day = Number(dateText.split("-")[2]);
+  const members = config.members || {};
+
+  // ① 先问 28号（口径=排班表单元格底色）；挑不到才走②的旧逻辑
+  const 底色 = 试底色值班(dateText);
+  if (底色 && 底色.found) {
+    return {
+      date: dateText, sheetName, dayColumn: 0, afterSales: [{ name: 底色.姓名, shift: "底色" }],
+      window: `底色值班（${底色.底色}）`, 口径: "底色（28号）",
+      names: [底色.姓名], mentions: [{ name: 底色.姓名, mobile: members[底色.姓名] || "" }],
+    };
+  }
+
   const { matrix } = await readSheet(config.scheduleUrl, sheetName, { headless: true });
   const duty = parseDuty(matrix, day);
   const target = pickTargets(duty.afterSales, minutes, config);
-  const members = config.members || {};
   return {
     date: dateText, sheetName, dayColumn: duty.dayColumn, afterSales: duty.afterSales,
-    window: target.window, names: target.names,
+    window: target.window, 口径: `回退·早/晚文字（底色没挑到：${(底色 && 底色.理由) || "未知"}）`,
+    names: target.names,
     mentions: target.names.map((name) => ({ name, mobile: members[name] || "" }))
   };
+}
+
+/** 问 28号：某天售后谁值班（看底色）。读表/配置失败一律返回 found:false，不抛 */
+function 试底色值班(日期) {
+  try {
+    const 配置 = 排班库.读配置();
+    return 值班库.从报告挑值班(排班库.读排班(日期, 配置), "售后", 配置);
+  } catch (error) {
+    return { found: false, 理由: `28号读表/配置失败：${error.message}` };
+  }
 }
 
 async function main() {

@@ -29,11 +29,32 @@ test('常量：目标表就是「金牌组待办清单」的售后待办清单',
   assert.ok(DOCID.startsWith('s3_'));
 });
 
-test('挑选值班负责人：从排班名单里挑认识的（不猜）', () => {
+const 假配置 = {
+  颜色分组: { '#BDD7EE': '售后' },
+  分组名单: {
+    售后: {
+      柯紫婷: { userId: 'u-ke', userName: '柯紫婷（售后客服）' },
+      邓远祥: { userId: 'u-deng', userName: '邓远祥（售后客服）' },
+    },
+  },
+};
+
+test('挑选值班负责人：按底色挑唯一的售后值班（多人带底色=分不清→null，不猜）', () => {
   const { 挑选值班负责人 } = require('../scripts/写售后待办.cjs');
-  assert.equal(挑选值班负责人(['柯紫婷', '邓远祥']).userName, '柯紫婷（售后客服）');
-  assert.equal(挑选值班负责人(['李守耀', '柯紫婷']).userName, '李守耀（售后组长）');
-  assert.equal(挑选值班负责人(['徐佳楠', '麦诺谦']), null);
-  assert.equal(挑选值班负责人([]), null);
-  assert.equal(挑选值班负责人(undefined), null);
+  assert.equal(挑选值班负责人([{ 姓名: '邓远祥', 底色: '#BDD7EE' }], 假配置).userName, '邓远祥（售后客服）');
+  assert.equal(挑选值班负责人([{ 姓名: '柯紫婷', 底色: '#BDD7EE' }, { 姓名: '邓远祥', 底色: '#BDD7EE' }], 假配置), null);
+  assert.equal(挑选值班负责人(['徐佳楠', '麦诺谦'], 假配置), null);
+  assert.equal(挑选值班负责人([], 假配置), null);
+  assert.equal(挑选值班负责人(undefined, 假配置), null);
+});
+
+test('口径单一（反向锁）：27号 不许再自带排班链接/值班名单，必须走 28号', () => {
+  const path = require('path');
+  const fs = require('fs');
+  const 源码 = fs.readFileSync(path.join(__dirname, '..', 'scripts', '写售后待办.cjs'), 'utf8');
+  const mod = require('../scripts/写售后待办.cjs');
+  assert.ok(源码.includes('28.排班与派活'), '必须引用 28号 的值班库');
+  assert.equal(mod.值班人员表, undefined, '旧的本项目值班名单要删干净');
+  assert.equal(mod.从report取有色姓名, undefined, '旧的读 report 逻辑要删干净');
+  assert.ok(!/kdocs\.cn\/l\//.test(源码), '排班表链接只能放在 28号 配置里');
 });

@@ -12,52 +12,36 @@
 const { execFileSync } = require('child_process');
 const path = require('path');
 
+// 值班/排班**口径统一在 28号 项目**（用户 2026-09-30：「专门讲安排工作、看排班表…统一迁移到这里来」）：
+// 本条只负责“照着 28号 的结论派人”，不再自己维护值班名单/排班表链接。
+const 值班库 = require('../../28.排班与派活/src/lib/值班');
+const 排班库 = require('../../28.排班与派活/src/lib/排班读取');
+
 const DOCID = 's3_AFMAdwb9AAYCNsCs6UyrGQ9qORKS0';
 const SHEET = '售后待办清单';
 const WECOM = 'C:/Users/b3460/AppData/Roaming/npm/node_modules/@wecom/cli/bin/wecom.js';
 const 默认负责人 = { userId: 'woFqtuEQAAcXT3pES1oR41I8G9-a8A0w', userName: '李守耀（售后组长）' };
 const 优先级选项 = { 一般: { id: 'oonpZv', text: '一般' } };
-// 排班表里的名字 → 企微 userid（黎路遥 2026-09-29：工单负责人要按「此时此刻谁值班」来派；值班看**底色标记**）
-const 值班人员表 = {
-  邓远祥: { userId: 'woFqtuEQAAhOdmpaWCayvanGLTX9fatw', userName: '邓远祥（售后客服）' },
-  柯紫婷: { userId: 'woFqtuEQAAm9VMBHM9Zqm3jl3W6U4y7Q', userName: '柯紫婷（售后客服）' },
-  陈燕玲: { userId: 'woFqtuEQAAAavuSNo5VTWAf2TXPRLOWQ', userName: '陈燕玲（售后客服）' },
-  缪婷婷: { userId: 'woFqtuEQAA25eR-eNXTC4bQoUip-VCiQ', userName: '缪婷婷（售后客服）' },
-  李守耀: { userId: 'woFqtuEQAAcXT3pES1oR41I8G9-a8A0w', userName: '李守耀（售后组长）' },
-};
-
-/** 从排班表有色名单里挑一个售后（挑不到返回 null，绝不瞎猜） */
-function 挑选值班负责人(names, map = 值班人员表) {
-  for (const n of names || []) {
-    for (const key of Object.keys(map)) if (String(n).includes(key)) return map[key];
-  }
-  return null;
-}
-
-const 排班读取工具 = 'D:/桌面/办公软件/20.经验大全/金山在线表格排班表读取/金山在线表格排班表读取.cjs';
-const 排班配置 = 'D:/桌面/办公软件/22.后台售后服务单分析/project-config/wecom-notify.json';
-const 排班输出目录 = 'D:/备份文件夹/排班-最新';
-const 节点模块路径 = 'D:/桌面/办公软件/1.客服超时督办/node_modules';
-
-/** 从 20号 排班表读取工具的 report 里取「当天有底色标记」的人（**底色才是值班标记**，不看班次文字） */
-function 从report取有色姓名(report) {
-  return (report && report['当日有色人员'] || []).map((x) => x['姓名']).filter(Boolean);
-}
 
 /**
- * 读「此刻售后谁值班」：调 20号 工具读金山排班表底色 → 取有色名单 → 交给 挑选值班负责人 过滤成售后。
- * 用户/经理 2026-09-29：「值班要看背景有标记颜色」，看 1号项目 issue #016。
+ * 兼容旧名：从「当日有色人员」里挑售后值班（口径与名单在 28号）。
+ * **不猜**：没带底色 / 同分组多人带底色 / 配置里没 userid ⇒ 返回 null，由调用方停下来问人。
+ * @param {Array<string|{姓名:string,底色?:string}>} names
+ * @param {object} [配置] 不传则读 28号 的 project-config/排班值班配置.json
  */
-function 读此刻值班() {
-  const fsx = require('fs');
-  const cfg = JSON.parse(fsx.readFileSync(排班配置, 'utf8'));
-  if (!cfg.scheduleUrl) throw new Error('排班配置里没有 scheduleUrl');
-  execFileSync(process.execPath, [排班读取工具, '--url', cfg.scheduleUrl, '--date', new Date().toISOString().slice(0, 10), '--out', 排班输出目录], {
-    encoding: 'utf8', maxBuffer: 40 * 1024 * 1024,
-    env: { ...process.env, NODE_PATH: 节点模块路径 },
-  });
-  const report = JSON.parse(fsx.readFileSync(排班输出目录 + '/schedule-report.json', 'utf8'));
-  return 从report取有色姓名(report);
+function 挑选值班负责人(names, 配置) {
+  const 人 = (names || []).map((n) => (typeof n === 'string' ? { 姓名: n, 底色: '' } : n));
+  const 结果 = 值班库.挑值班(人, '售后', 配置 || 排班库.读配置());
+  return 结果.found ? { userId: 结果.userId, userName: 结果.userName } : null;
+}
+
+/** 读「此刻售后谁值班」：由 28号 读排班表底色 + 名单判定（本项目不再自带一份） */
+function 读此刻值班(配置) {
+  const 用配置 = 配置 || 排班库.读配置();
+  const 报告 = 排班库.读排班(undefined, 用配置);
+  const 结果 = 值班库.从报告挑值班(报告, '售后', 用配置);
+  if (!结果.found) throw new Error('按底色挑不到唯一售后值班人：' + 结果.理由 + '（口径=看底色、不猜；见 28.排班与派活/README.md）');
+  return [{ 姓名: 结果.姓名, 底色: 结果.底色 }];
 }
 
 function 解析参数(argv) {
@@ -118,4 +102,4 @@ if (require.main === module) {
     process.exitCode = 2;
   }
 }
-module.exports = { 解析参数, 构造记录, 挑选值班负责人, 从report取有色姓名, 值班人员表, DOCID, SHEET };
+module.exports = { 解析参数, 构造记录, 挑选值班负责人, 读此刻值班, 值班库, 排班库, DOCID, SHEET };

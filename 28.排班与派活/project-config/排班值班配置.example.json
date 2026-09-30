@@ -1,0 +1,20 @@
+{
+  "_说明": "复制成 排班值班配置.json（不入库）。scheduleUrl 可从 22号 project-config/wecom-notify.json 抄。",
+  "scheduleUrl": "https://www.kdocs.cn/l/<排班表分享ID>",
+  "读取工具": "D:/桌面/办公软件/20.经验大全/金山在线表格排班表读取/金山在线表格排班表读取.cjs",
+  "节点模块路径": "D:/桌面/办公软件/1.客服超时督办/node_modules",
+  "输出目录": "D:/备份文件夹/排班-最新",
+  "颜色分组": {
+    "#BDD7EE": "售后",
+    "#E2F0D9": "售前"
+  },
+  "分组名单": {
+    "售后": {
+      "李守耀": { "userId": "<企微userid>", "userName": "李守耀（售后组长）" },
+      "邓远祥": { "userId": "<企微userid>", "userName": "邓远祥（售后客服）" }
+    },
+    "售前": {
+      "韩欢欢": { "userId": "<企微userid>", "userName": "韩欢欢（售前客服）" }
+    }
+  }
+}

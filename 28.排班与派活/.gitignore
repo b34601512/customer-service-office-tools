@@ -1,0 +1,7 @@
+# 只备份源代码：真配置（含排班表链接）、运行产物不入库
+project-config/*.json
+!project-config/*.example.json
+runtime/
+.state/
+node_modules/
+*.log
