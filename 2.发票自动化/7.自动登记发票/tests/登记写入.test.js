@@ -94,21 +94,16 @@ test("云端返回 written:false 时按失败处理，不误报成功", async ()
 // 反向断言：谁把「表②也按①的列写」改回来，这里就会红。
 const { 表列偏移, 映射列字母, 生成写表数据 } = require("../src/发票规则");
 
-test("表列偏移：表①不动，表②（科技/集团）整体 +1", () => {
+test("表列偏移：两表列已一致（用户 2026-09-30 删掉集团表多余 K 空列后），偏移恒为 0", () => {
   assert.strictEqual(表列偏移("德达医疗器械发票登记 --毛叶红"), 0);
-  assert.strictEqual(表列偏移("科技--唐雪梅"), 1);
-  assert.strictEqual(映射列字母("O", "科技--唐雪梅"), "P");
-  assert.strictEqual(映射列字母("U", "科技--唐雪梅"), "V");
-  assert.strictEqual(映射列字母("V", "科技--唐雪梅"), "W");
-  assert.strictEqual(映射列字母("Y", "科技--唐雪梅"), "Z");
-  assert.strictEqual(映射列字母("AA", "科技--唐雪梅"), "AB");
-  assert.strictEqual(映射列字母("AB", "科技--唐雪梅"), "AC");
-  assert.strictEqual(映射列字母("AK", "科技--唐雪梅"), "AL");
-  assert.strictEqual(映射列字母("J", "科技--唐雪梅"), "J");
-  assert.strictEqual(映射列字母("O", "德达医疗器械发票登记 --毛叶红"), "O");
+  assert.strictEqual(表列偏移("科技--唐雪梅"), 0);
+  for (const 列 of ["J", "O", "P", "S", "T", "U", "V", "Y", "AA", "AB", "AC", "AG", "AK"]) {
+    assert.strictEqual(映射列字母(列, "科技--唐雪梅"), 列);
+    assert.strictEqual(映射列字母(列, "德达医疗器械发票登记 --毛叶红"), 列);
+  }
 });
 
-test("生成写表数据：表②要写成 P/V/W/Z/AB/AC/AL，且绝不出现①的 O/U/Y/AA/AK", () => {
+test("生成写表数据：两表列已一致（2026-09-30 删掉集团多余 K 列后），表②与表①同列：O/U/V/Y/AA/AB/AK", () => {
   const 条目 = {
     订单号: "5127724117341157631", 店铺: "天猫6店", 发票类型: "增值税电子普通发票",
     开票金额: 499, 抬头: "天虹数科商业股份有限公司", 税号: "91440300618842912J",
@@ -116,7 +111,7 @@ test("生成写表数据：表②要写成 P/V/W/Z/AB/AC/AL，且绝不出现①
     商品明细: [{ 规格名称: "家用制氧机DH21-A1L（LV）DEDAKJ", 型号: "DH21-A1L", 订购数: "1", 买家支付金额: "499.0" }],
   };
   const 列 = Object.keys(生成写表数据(条目, { 表名: "科技--唐雪梅" }).列).sort().join(",");
-  assert.strictEqual(列, "A,AB,AC,AL,F,G,I,J,P,V,W,Z");
+  assert.strictEqual(列, "A,AA,AB,AK,F,G,I,J,O,U,V,Y");
 });
 
 // 赠品行（订单里的附带赠品）：2026-09-30 用户要求「一并登记，金额 0 元」。
@@ -134,20 +129,20 @@ test("赠品行：明细序号 1/2 取对应明细、金额为 0；序号 0 仍�
     ],
   };
   const 主 = 生成写表数据(条目, { 表名: "科技--唐雪梅" }).列;
-  assert.strictEqual(主.V.值, "DH21-A1L");
-  assert.strictEqual(主.W.值, 1);
-  assert.strictEqual(Number(主.Z.值), 499);
+  assert.strictEqual(主.U.值, "DH21-A1L");
+  assert.strictEqual(主.V.值, 1);
+  assert.strictEqual(Number(主.Y.值), 499);
 
   const 赠1 = 生成写表数据(条目, { 表名: "科技--唐雪梅", 明细序号: 1 }).列;
-  assert.strictEqual(赠1.V.值, "YQD-DK");
-  assert.strictEqual(赠1.W.值, 1);
-  assert.strictEqual(Number(赠1.Z.值), 0);
+  assert.strictEqual(赠1.U.值, "YQD-DK");
+  assert.strictEqual(赠1.V.值, 1);
+  assert.strictEqual(Number(赠1.Y.值), 0);
   assert.strictEqual(赠1.J.值, "5127724117341157631");
 
   const 赠2 = 生成写表数据(条目, { 表名: "科技--唐雪梅", 明细序号: 2 }).列;
-  assert.strictEqual(赠2.V.值, "BYG-DD-2m");
-  assert.strictEqual(赠2.W.值, 2);
-  assert.strictEqual(Number(赠2.Z.值), 0);
+  assert.strictEqual(赠2.U.值, "BYG-DD-2m");
+  assert.strictEqual(赠2.V.值, 2);
+  assert.strictEqual(Number(赠2.Y.值), 0);
 
   // 越界 → 必须报「待人工」，绝不静默拿主商品顶替
   const 越界 = 生成写表数据(条目, { 表名: "科技--唐雪梅", 明细序号: 3 });
@@ -161,7 +156,7 @@ test("赠品行不放查重、但其它闸门照走（明细序号>0 时跳过 c
     调用.push(参数);
     if (参数.checkOnly) return { duplicate: true, row: 10497 };        // 主商品：云端已有 → 必须拒写
     if (参数.probe) return { scriptVersion: "test", lastDataRow: 调用.some((a) => a.allowWrite) ? 10498 : 10497, nextWriteRow: 调用.some((a) => a.allowWrite) ? 10499 : 10498 };
-    return { written: true, row: 10498, writtenColumns: ["V", "W", "Z"], dateColumns: ["A", "AL"], readBack: ["J=5127724117341157631", "V=YQD-DK"] };
+    return { written: true, row: 10498, writtenColumns: ["U", "V", "Y"], dateColumns: ["A", "AK"], readBack: ["J=5127724117341157631", "V=YQD-DK"] };
   };
   const 依赖 = { 跑脚本, 生成写表数据 };
   const 条目 = {
@@ -181,5 +176,5 @@ test("赠品行不放查重、但其它闸门照走（明细序号>0 时跳过 c
   assert.strictEqual(赠结果.状态, "已写入");
   assert.strictEqual(赠结果.行号, 10498);
   assert.ok(!调用.some((a) => a.checkOnly), "赠品行不该跑云端查重（同订单号是预期的）");
-  assert.ok(调用.some((a) => a.allowWrite === true && a.writeCells && Number(a.writeCells.Z) === 0), "赠品金额写 0");
+  assert.ok(调用.some((a) => a.allowWrite === true && a.writeCells && Number(a.writeCells.Y) === 0), "赠品金额写 0");
 });
