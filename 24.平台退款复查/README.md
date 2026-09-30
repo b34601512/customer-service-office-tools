@@ -36,7 +36,7 @@ AI 是**复查秘书**：只读检查「平台已给买家退款 / 可申诉」�
 src/engine/     受控浏览器（browser.js）、日志（log.js）、金山只读（kdocs*.js）
 src/tools/      可组合小工具（probe/dump/order extract/kdocs/ERP 等，单职责 CLI）
 src/orderExtract/  7号 的订单号提取（文本 + xlsx）
-经验/           实战经验（天猫后台采集、金山只读、报表口径、踩坑）
+经验/           **只剩指路** → 真正内容在 `29.售后经验库/`
 project-config/ 店铺清单 stores.json（不入库）、金山市令（不入库）
 runtime/        运行产物（不入库）：浏览器 profile、探针输出、结果清单
 ```
@@ -79,6 +79,6 @@ node src/tools/pdd-appeal-list.js --store pdd02
 - **拼多多（2026-09-27）**：pdd02 74 条 / pdd03 15 条（共 88 个唯一订单），全部「已发货」；复查结果见 `runtime/review/复查报告-pdd-*.md`。
 
 ## 能力来源（别重造）
-- **22号**（后台售后服务单分析）：本项目的 `src/`、`经验/` 直接复刻，含受控浏览器、金山 AirScript、天猫/ERP 探针思路。
+- **22号**（后台售后服务单分析）：本项目的 `src/` 直接复刻（受控浏览器、金山 AirScript、天猫/ERP 探针思路）；两边 `经验/` 都已收拢到 `29.售后经验库/`。
 - **7号**（订单号提取）：`src/orderExtract/`（拼多多/天猫退款编号提取、xlsx 解析）。
 - **4号**（仅退款自动提醒）：管易云 ERP 的 Playwright 实战（登录/订单查询页/全选导出/页面识别常量）。
