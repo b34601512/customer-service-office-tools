@@ -54,3 +54,8 @@ node tools/打码.js --体检
 
 `27.企业微信机器人/src/企微通知.cjs` —— 企微群机器人 webhook 发送的唯一出处（默认预演、≤2048 字节、真 @ 靠手机号）；
 22/24/25 号的 `src/tools/send-wecom-notice.js` 只是薄壳。详见该文件头注释与 `0.木婉清档案/规矩与红线.md` §九。
+
+- 2026-09-30 二次收拢：27号 自己的 `scripts/发群消息.js`（原来是另一份实现，多 markdown/手机号 @/限频提示）也改成薄壳，
+  逻辑（`校验机器人地址`/`造消息体`/`发一条`/`解析群机器人参数`/`跑群机器人命令行`）全并入 `src/企微通知.cjs`。
+  现在**全仓库只有一处 webhook 发送实现**；老的英文导出名（`parseArgs/buildPayload/validateWebhook/maskWebhook/sendOnce`）仍保留兼容。
+- 测试：`27号 npm test`（49 项，含 `tests/企微通知.test.js` 12 项与 `tests/发群消息.test.js` 7 项）。

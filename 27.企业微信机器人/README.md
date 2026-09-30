@@ -184,7 +184,7 @@ node scripts/发群消息.js --text "测试：客服日报已生成" --mention 1
 │   └── 企微通知.cjs             ← ★共享核心：21 号项目的 webhook 通知最终都走这里（22/24/25 号只是薄壳）
 ├── scripts/
 │   ├── 检查企微环境.js           ← 只读体检（node/skill/cli/auth/webhook）
-│   ├── 发群消息.js              ← 群机器人 webhook 发送，默认 dry-run
+│   ├── 发群消息.js              ← 群机器人 webhook 发送，默认 dry-run（逻辑唯一出处：src/企微通知.cjs）
 │   ├── 扫码授权.bat             ← ★新手走这个：双击+手机扫码，完成创建与授权
 │   ├── 手动授权.bat             ← 进阶：API 模式机器人，输入 Bot ID+Secret
 │   ├── 导出机器人凭据.js         ← 从 wecom-cli 本机凭据库导出 Bot ID+Secret（长连接用，不入库）
