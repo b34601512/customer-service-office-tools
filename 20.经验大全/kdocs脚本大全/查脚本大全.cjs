@@ -24,6 +24,7 @@ async function main() {
   console.log(`\n  《AirScript 脚本大全》：${结果.sheet}　共 ${行.length} 行（脚本版本 ${结果.scriptVersion}）`);
   for (const r of 行) {
     console.log(`  第${r.row}行｜${r["项目"]}｜${r["脚本动作"]}｜${r["用途"] || ""}｜${r["状态"] || ""}｜${r["更新时间"] || ""}`);
+    if (r["webhook"]) console.log(`    webhook：${String(r["webhook"]).trim()}`);
   }
   if (要正文) {
     const 目标 = 行[0];
