@@ -130,3 +130,66 @@ test('切店入口持续不可点时按上限重试后报错，不无限重试',
 
   assert.equal(fixture.入口点击次数(), 3);
 });
+
+// ===== 2026-09-30 失败台账规律 #1（切店卡死 5 次）：诊断信息不许再被静默吞掉 =====
+const { 等待目标店铺 } = require('../src/browser/douyinStoreIdentity');
+
+function 创建等待目标店铺页面({ 身份读取错误 = '', 当前店铺 = { storeId: '111111', storeName: '德达医疗康养器械旗舰店' } } = {}) {
+  const header = {
+    count: async () => 1,
+    isVisible: async () => true,
+    waitFor: async () => {},
+    click: async () => {},
+    evaluate: async () => { throw new Error('测试不采集现场'); },
+    locator: (selector) => {
+      if (selector === ':scope [class*="userName"][data-bytereplay-mask="true"]') {
+        if (身份读取错误) return 创建列表([]);
+        return 创建列表([{ isVisible: async () => true, innerText: async () => 当前店铺.storeName }]);
+      }
+      if (selector === ':scope [label="店铺ID"][value]') {
+        return 创建列表([{ getAttribute: async () => 当前店铺.storeId }]);
+      }
+      throw new Error(`未预期的店铺控件选择器：${selector}`);
+    },
+  };
+  const page = {
+    url: () => 'https://fxg.jinritemai.com/ffa/mshop/homepage/index',
+    locator: (selector) => {
+      if (selector === '[class*="headerShopName"]') return { first: () => header };
+      if (selector === 'button:has-text("我知道了")') return { first: () => ({ click: async () => {} }) };
+      throw new Error(`未预期的页面选择器：${selector}`);
+    },
+    context: () => ({ pages: () => [page] }),
+    waitForTimeout: async () => {},
+  };
+  return page;
+}
+
+test('等待目标店铺超时时必须带上最近读取错误，不再静默吞错', async () => {
+  const 页面 = 创建等待目标店铺页面({ 身份读取错误: true });
+
+  await assert.rejects(
+    () => 等待目标店铺(页面, { storeId: '29502951', storeName: 'DEDAKJ医疗器械旗舰店' }, 300),
+    (错误) => /目标=DEDAKJ医疗器械旗舰店\(29502951\)/.test(错误.message)
+      && /最近读取错误=读取抖音当前店铺名称失败/.test(错误.message)
+  );
+});
+
+test('身份一致时立即返回，不进入轮询等待', async () => {
+  const 页面 = 创建等待目标店铺页面({ 当前店铺: { storeId: '29502951', storeName: 'DEDAKJ医疗器械旗舰店' } });
+
+  const 结果 = await 等待目标店铺(页面, { storeId: '29502951', storeName: 'DEDAKJ医疗器械旗舰店' }, 30_000);
+
+  assert.deepEqual(结果.identity, { storeId: '29502951', storeName: 'DEDAKJ医疗器械旗舰店' });
+});
+
+test('切店失败时报错必须带各阶段耗时，能看出卡在哪一段', async () => {
+  const 页面 = 创建等待目标店铺页面({ 当前店铺: { storeId: '162329841', storeName: '德达医疗康养器械旗舰店' } });
+  const 入口 = { isVisible: async () => true, click: async () => { throw new Error('locator.click: Timeout 5000ms exceeded.'); } };
+  页面.getByText = () => ({ count: async () => 1, nth: () => 入口 });
+
+  await assert.rejects(
+    () => 确保抖音目标店铺(页面, { id: 'douyin-store-2', name: '抖音店铺5 DEDAKJ医疗器械旗舰店', platformStoreId: '29502951', platformStoreName: 'DEDAKJ医疗器械旗舰店' }, null, { storeSwitchTimeoutMs: 500 }),
+    (错误) => /切店阶段：读取当前身份=\d+ms/.test(错误.message) && /点击切店入口=失败\(\d+ms\)/.test(错误.message)
+  );
+});

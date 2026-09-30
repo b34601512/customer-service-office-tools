@@ -116,10 +116,16 @@ async function 查找可见切店入口(page) {
 async function 等待唯一可见切店入口(page, timeoutMs = 10000) {
   const deadline = Date.now() + timeoutMs;
   let visible = [];
+  let 上次播报时间 = Date.now();
   while (Date.now() <= deadline) {
     visible = await 查找可见切店入口(page);
     if (visible.length === 1) return visible[0];
     if (visible.length > 1) break;
+    // 2026-09-30：入口迟迟不出现时不能只有沉默，定期播报（禁止静默等待）。
+    if (Date.now() - 上次播报时间 >= 5000) {
+      上次播报时间 = Date.now();
+      打印日志('抖音登录', '切店', `等待「切换组织/店铺」入口出现中（剩 ${Math.max(0, Math.round((deadline - Date.now()) / 1000))}s）`);
+    }
     await page.waitForTimeout(轮询间隔毫秒);
   }
   throw new Error(`抖音切店入口不唯一：识别到 ${visible.length} 个可见“切换组织/店铺”。`);
@@ -229,6 +235,12 @@ async function 点击店铺选项(option, surface = null) {
 async function 等待目标店铺(originPage, 期望, timeoutMs) {
   const deadline = Date.now() + timeoutMs;
   let last = null;
+  // 2026-09-30（失败台账规律 #1，切店卡死 5 次）：这里原来 `catch (_e) {}` 静默吞错，
+  // 超时时日志只有“超时”二字，无法定位（09-30 店铺5 卡死 480s 就是这么丢现场的）。
+  // 现在：保留最近一次读取失败原因 + 定期播报进度（禁止静默等待，铁律 #3）。
+  let 最近读取错误 = '';
+  let 扫描轮次 = 0;
+  let 上次播报时间 = Date.now();
   while (Date.now() <= deadline) {
     for (const p of originPage.context().pages()) {
       // 解决（issues/009）：内层逐页循环也要看截止时间，否则页签一多单轮就拖出几分钟。
@@ -237,33 +249,57 @@ async function 等待目标店铺(originPage, 期望, timeoutMs) {
       if ((await header.count()) === 0 || !await header.isVisible().catch(() => false)) continue;
       try {
         last = await 读取当前抖音店铺身份(p, { 头部等待毫秒: 5000, 编号等待毫秒: 5000, 记录现场: true });
+        最近读取错误 = '';
         if (店铺身份是否一致(last, 期望)) return { page: p, identity: last };
-      } catch (_e) {}
+      } catch (错误) {
+        最近读取错误 = String((错误 && 错误.message) || 错误).split('\n')[0];
+      }
+    }
+    扫描轮次 += 1;
+    if (Date.now() - 上次播报时间 >= 15000) {
+      上次播报时间 = Date.now();
+      const 剩余秒 = Math.max(0, Math.round((deadline - Date.now()) / 1000));
+      打印日志('抖音登录', '切店', `等待目标店铺：已轮询 ${扫描轮次} 轮（剩 ${剩余秒}s），当前=${last ? `${last.storeName}(${last.storeId})` : '未读取到'}${最近读取错误 ? `，最近读取错误=${最近读取错误}` : ''}`);
     }
     await originPage.waitForTimeout(轮询间隔毫秒);
   }
   const actual = last ? `${last.storeName}(${last.storeId})` : '未读取到';
-  throw new Error(`等待抖音目标店铺超时：目标=${期望.storeName}(${期望.storeId})，当前=${actual}。`);
+  throw new Error(`等待抖音目标店铺超时：目标=${期望.storeName}(${期望.storeId})，当前=${actual}${最近读取错误 ? `，最近读取错误=${最近读取错误}` : ''}。`);
 }
 
 async function 确保抖音目标店铺(page, 店铺配置, 报告进度, 选项 = {}) {
   const 期望 = 解析期望店铺身份(店铺配置);
-  const 当前 = await 读取当前抖音店铺身份(page);
+  // 2026-09-30（失败台账规律 #1）：切店全程分阶段计时 + 失败时把阶段表带进报错，
+  // 以后卡死/失败能直接看到“卡在哪一段、各段花了多久”，不再只丢一个总超时。
+  const 阶段记录 = [];
+  const 计时阶段 = async (名称, 动作) => {
+    const 开始 = Date.now();
+    try {
+      const 结果 = await 动作();
+      阶段记录.push(`${名称}=${Date.now() - 开始}ms`);
+      return 结果;
+    } catch (错误) {
+      阶段记录.push(`${名称}=失败(${Date.now() - 开始}ms)`);
+      错误.message = `${错误.message}｜切店阶段：${阶段记录.join('，')}`;
+      throw 错误;
+    }
+  };
+  const 当前 = await 计时阶段('读取当前身份', () => 读取当前抖音店铺身份(page));
   if (店铺身份是否一致(当前, 期望)) return { page, identity: 当前 };
   if (typeof 报告进度 === 'function') 报告进度('切换抖音店铺', `当前=${当前.storeName}(${当前.storeId})，目标=${期望.storeName}(${期望.storeId})`);
   else 打印日志('抖音登录', '切店', `当前=${当前.storeName}(${当前.storeId})，目标=${期望.storeName}(${期望.storeId})`);
-  await 点击切店入口(page);
+  await 计时阶段('点击切店入口', () => 点击切店入口(page));
   await page.waitForTimeout(轮询间隔毫秒);
-  const found = await 跨页查找精确店铺选项(page, 期望);
+  const found = await 计时阶段('查找店铺选项', () => 跨页查找精确店铺选项(page, 期望));
   if (found) {
-    await 点击店铺选项(found.option, page);
+    await 计时阶段('点击店铺选项', () => 点击店铺选项(found.option, page));
   } else {
     if (typeof 报告进度 === 'function') 报告进度('等待人工切店', '未找到目标完整店名的唯一可点项，请在当前页面手动切换，程序会自动续跑');
     else 打印日志('抖音登录', '切店', '未找到目标店铺的唯一可点项，请手动切换，程序将等待...');
     await page.bringToFront().catch(() => {});
   }
   const timeoutMs = Number(选项.storeSwitchTimeoutMs) || 切店超时毫秒;
-  return 等待目标店铺(page, 期望, timeoutMs);
+  return 计时阶段('等待目标店铺', () => 等待目标店铺(page, 期望, timeoutMs));
 }
 
 module.exports = {
