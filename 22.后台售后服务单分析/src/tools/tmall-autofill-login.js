@@ -69,7 +69,8 @@ async function main() {
   const 结果 = 参数.dry ? { 填了: false, 原因: "dry" } : await 填登录(page, 账号, 密码);
   console.log("结果：" + JSON.stringify(结果));
   if (结果.填了) console.log("已填并点登录；**若出现滑块/验证码，请人工完成**（窗口留给你）。");
-  await 浏览器.close().catch(() => {});
+  // 注意：CDP 连上的浏览器**不能 close()**——那会把整个浏览器关掉（2026-09-30 踩过：登录刚填完浏览器就没了）。
+  // 只断开连接即可。
 }
 
 main().catch((e) => { console.log("失败：" + (e && e.message ? e.message : e)); process.exitCode = 1; });
