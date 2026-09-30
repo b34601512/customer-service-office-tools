@@ -28,14 +28,18 @@ async function 写登记行(条目, 依赖, 选项 = {}) {
   if (待人工.length) {
     return { 状态: "拒写", 原因: `条目字段不全：${待人工.join("；")}`, 订单号, 表名 };
   }
+  // 拆两类：文本/数字→writeCells；日期序列号→dateCells（云端会先设日期格式再写，避免显示成 46271 这种裸数字）
   const 列 = {};
+  const 日期列 = {};
   for (const [字母, 项] of Object.entries(数据.列 || {})) {
-    if (项 && 项.值 !== undefined) 列[字母] = 项.值;
+    if (!项 || 项.值 === undefined) continue;
+    if (项.类型 === "日期序列号") 日期列[字母] = 项.值;
+    else 列[字母] = 项.值;
   }
 
   // 闸门 2：逐次授权。没点头就停在这里，把要写的内容原样交回去给人看。
   if (选项.已确认 !== true) {
-    return { 状态: "等授权", 订单号, 表名, 列, 说明: "未写入（需要用户逐次确认后再跑，带 --已确认）" };
+    return { 状态: "等授权", 订单号, 表名, 列, 日期列, 说明: "未写入（需要用户逐次确认后再跑，带 --已确认）" };
   }
 
   // 闸门 3：云端全表查重（走**独立写入脚本**的 checkOnly；只读查询脚本那份不动）。
@@ -44,9 +48,9 @@ async function 写登记行(条目, 依赖, 选项 = {}) {
     return { 状态: "已登记", 订单号, 表名, 命中行: Number(查重.row) || 0, 说明: "该订单号在云端登记表里已存在，拒绝重复写入" };
   }
 
-  // 闸门 4：写入。（可选 row：修复场景专用，云端脚本只允许写空行或同一单号那一行）
+  // 闸门 4：写入。（纯写入一个动作；修错行由人工在金山里改，2026-09-30 用户定）
   const 写入请求 = { orderNo: 订单号, writeCells: 列, allowWrite: true, sheets: [表名] };
-  if (Number(选项.行) > 0) 写入请求.row = Number(选项.行);
+  if (Object.keys(日期列).length) 写入请求.dateCells = 日期列;
   const 写入 = await 跑脚本(写入请求);
   if (!写入 || 写入.written !== true) {
     return { 状态: "写入失败", 订单号, 表名, 返回: 写入 };
@@ -69,11 +73,24 @@ async function 写登记行(条目, 依赖, 选项 = {}) {
     表名,
     行号: 写入.row,
     写入列: 写入.writtenColumns || [],
+    日期列: 写入.dateColumns || [],
     回读: 写入.readBack || [],
   };
 }
 
-module.exports = { 写登记行, 取订单号, 默认表名, 探针 };
+/** 从本机待登记清单里取一单（一条动作 = 一个订单号）。 */
+function 读清单条目(清单路径, 订单号) {
+  const fs = require("fs");
+  if (!fs.existsSync(清单路径)) throw new Error(`没有待登记清单：${清单路径}（先跑 scripts/生成待登记清单.js）`);
+  const 条目 = fs.readFileSync(清单路径, "utf8").trim().split("\n").filter(Boolean)
+    .map((行) => { try { return JSON.parse(行); } catch (_错误) { return null; } })
+    .filter(Boolean)
+    .filter((项) => String(项.订单号 || "").trim() === String(订单号 || "").trim());
+  if (!条目.length) throw new Error(`待登记清单里没有订单号 ${订单号}`);
+  return 条目[条目.length - 1];
+}
+
+module.exports = { 写登记行, 取订单号, 默认表名, 探针, 读清单条目 };
 
 /** 云端探针：只回版本/行数，绝不写。用来确认用户在文档里保存的写入脚本已生效。 */
 async function 探针(依赖, 表名 = 默认表名) {
