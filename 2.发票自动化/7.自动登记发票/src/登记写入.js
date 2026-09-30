@@ -44,8 +44,10 @@ async function 写登记行(条目, 依赖, 选项 = {}) {
     return { 状态: "已登记", 订单号, 表名, 命中行: Number(查重.row) || 0, 说明: "该订单号在云端登记表里已存在，拒绝重复写入" };
   }
 
-  // 闸门 4：写入。
-  const 写入 = await 跑脚本({ orderNo: 订单号, writeCells: 列, allowWrite: true, sheets: [表名] });
+  // 闸门 4：写入。（可选 row：修复场景专用，云端脚本只允许写空行或同一单号那一行）
+  const 写入请求 = { orderNo: 订单号, writeCells: 列, allowWrite: true, sheets: [表名] };
+  if (Number(选项.行) > 0) 写入请求.row = Number(选项.行);
+  const 写入 = await 跑脚本(写入请求);
   if (!写入 || 写入.written !== true) {
     return { 状态: "写入失败", 订单号, 表名, 返回: 写入 };
   }
