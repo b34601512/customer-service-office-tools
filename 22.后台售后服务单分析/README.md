@@ -74,6 +74,7 @@ node src/tools/put-clipboard.js kdocs-scripts/AirScript-只读查询订单号.md
 | 京东售后+纠纷概览 | `node src/tools/jd-aftersale-overview.js --store jd1` | 即将超时/待处理=0 即无漏；纠纷列出待商家处理/执行的单及剩余时间 |
 | 京东自动登录 | `node src/tools/jd-login.js --store jd1` | 凭据运行时读 12号/9号；登录按钮 `button.password__submit` |
 | 拼多多售后概览 | `node src/tools/pdd-aftersale-overview.js --store pdd02` | 「24小时内将逾期订单数」=0 即无漏；投诉预警>0 要处理 |
+| 拼多多「平台同意退款」逐单 | `node src/tools/pdd-platform-refund-orders.js --store pdd02` | 面板「24小时内平台同意退款」= 这工具列出的单数（`operateType:2` 筛选 + 按 closeTime 算近24h）；`actions=[1028]`=超时自动退〘是“我们没处理”的信号 |
 | 拼多多自动登录 | `node src/tools/pdd-login.js --store pdd02` | 默认扫码页 → 先点「账号登录」；凭据读 22号→12号→9号 |
 | 抖店售后概览 | `node src/tools/douyin-aftersale-overview.js --store douyin3` | 「临期待处理/投诉至监管/仲裁」全 0 即无临近超时 |
 | 抖店登录 | 窗口开 `fxg.jinritemai.com/login/common`；手机号自动填（stores.json 的 loginPhone），用户只输验证码 | 别点 open.douyin.com 的 OAuth 授权 |
