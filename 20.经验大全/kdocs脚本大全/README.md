@@ -1,0 +1,37 @@
+# kdocs 脚本大全（金山《AirScript 脚本大全》的本地工具）
+
+用户 2026-09-30 建立：**金山文档《AirScript 脚本大全》** 当所有项目 AirScript 脚本的总台账
+（一行 = 一个脚本：项目｜脚本动作｜用途｜脚本内容全文｜webhook｜目标文档｜状态｜更新时间）。
+
+- 文档：`https://www.kdocs.cn/l/cp2Y5jrJPQos`（表内子表 `工作表1`）
+- 它自己的两个脚本（读/写）也登记在里面；webhook 存在
+  `2.发票自动化/7.自动登记发票/project-config/kdocs-airscript.json`（不入库），键名 `脚本大全_读取` / `脚本大全_写入`
+
+## 本地两个工具（一个脚本一个动作）
+
+```bash
+cd 20.经验大全/kdocs脚本大全
+
+# 读：列全部 / 按项目筛 / 看某脚本正文 / 导出正文到本地
+node 查脚本大全.cjs
+node 查脚本大全.cjs --项目 "7号"
+node 查脚本大全.cjs --动作 write_jituan --正文
+node 查脚本大全.cjs --动作 write_jituan --导出 ./tmp-write_jituan.md
+
+# 写：登记或更新一行（主键 = 项目 + 脚本动作；不加 --已确认 只预览）
+node 登记脚本.cjs --项目 "7号 自动登记发票" --动作 write_jituan \
+  --文件 "../2.发票自动化/7.自动登记发票/project-config/kdocs-scripts/AirScript-登记写入-独立脚本.md" \
+  --用途 "集团表登记写入" --webhook "<同步webhook>" --目标文档 "科技--唐雪梅" --状态 生效 --已确认
+```
+
+## 改脚本的标准流程（用户 2026-09-30 定）
+
+1. 本地改脚本（存在 `2.发票自动化/7.自动登记发票/project-config/kdocs-scripts/`）；
+2. `登记脚本.cjs --已确认` 把**新版全文**登记进大全；
+3. 用户从大全里复制 → 粘到**目标文档**的 AirScript 里 → 保存；
+4. webhook 不变；本机用 `探针.js` 之类确认云端 `scriptVersion` 已更新。
+
+## 注意
+
+- 脚本正文很长会把行撑高 → 用「脚本大全-行高」脚本（参数 `行高/起始行/结束行/取消换行/列宽`）压回去。
+- 令牌：`AirScript-Token`（配置里 `apiToken`，可跨脚本用）；webhook 与令牌**都不入库**。
