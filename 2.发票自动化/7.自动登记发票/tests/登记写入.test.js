@@ -118,3 +118,68 @@ test("生成写表数据：表②要写成 P/V/W/Z/AB/AC/AL，且绝不出现①
   const 列 = Object.keys(生成写表数据(条目, { 表名: "科技--唐雪梅" }).列).sort().join(",");
   assert.strictEqual(列, "A,AB,AC,AL,F,G,I,J,P,V,W,Z");
 });
+
+// 赠品行（订单里的附带赠品）：2026-09-30 用户要求「一并登记，金额 0 元」。
+// 口径：明细序号 0 = 主商品；1/2… = 商品明细里的第 n 条（赠品）→ 金额取该行买家支付金额（通常 0），
+// 且**同订单号是预期的**（不放云端查重），但字段/授权/回读闸门照走。
+test("赠品行：明细序号 1/2 取对应明细、金额为 0；序号 0 仍取开票金额", () => {
+  const 条目 = {
+    订单号: "5127724117341157631", 店铺: "天猫6店", 发票类型: "增值税电子普通发票",
+    开票金额: 499, 抬头: "天虹数科商业股份有限公司", 税号: "91440300618842912J",
+    登记时间: "2026-09-30 10:00:00", 发货日期: "2026-09-06",
+    商品明细: [
+      { 规格名称: "家用制氧机DH21-A1L（LV）DEDAKJ", 型号: "DH21-A1L", 订购数: "1", 买家支付金额: "499.0", 赠品: false },
+      { 规格名称: "氧气袋(DEDAKJ）", 型号: "YQD-DK", 订购数: "1", 买家支付金额: "0", 赠品: true },
+      { 规格名称: "鼻氧管-德达（2米*透明）", 型号: "BYG-DD-2m", 订购数: "2", 买家支付金额: "0", 赠品: true },
+    ],
+  };
+  const 主 = 生成写表数据(条目, { 表名: "科技--唐雪梅" }).列;
+  assert.strictEqual(主.V.值, "DH21-A1L");
+  assert.strictEqual(主.W.值, 1);
+  assert.strictEqual(Number(主.Z.值), 499);
+
+  const 赠1 = 生成写表数据(条目, { 表名: "科技--唐雪梅", 明细序号: 1 }).列;
+  assert.strictEqual(赠1.V.值, "YQD-DK");
+  assert.strictEqual(赠1.W.值, 1);
+  assert.strictEqual(Number(赠1.Z.值), 0);
+  assert.strictEqual(赠1.J.值, "5127724117341157631");
+
+  const 赠2 = 生成写表数据(条目, { 表名: "科技--唐雪梅", 明细序号: 2 }).列;
+  assert.strictEqual(赠2.V.值, "BYG-DD-2m");
+  assert.strictEqual(赠2.W.值, 2);
+  assert.strictEqual(Number(赠2.Z.值), 0);
+
+  // 越界 → 必须报「待人工」，绝不静默拿主商品顶替
+  const 越界 = 生成写表数据(条目, { 表名: "科技--唐雪梅", 明细序号: 3 });
+  assert.ok(越界.待人工.length > 0);
+});
+
+test("赠品行不放查重、但其它闸门照走（明细序号>0 时跳过 checkOnly）", async () => {
+  const { 写登记行 } = require("../src/登记写入");
+  const 调用 = [];
+  const 跑脚本 = async (参数) => {
+    调用.push(参数);
+    if (参数.checkOnly) return { duplicate: true, row: 10497 };        // 主商品：云端已有 → 必须拒写
+    if (参数.probe) return { scriptVersion: "test", lastDataRow: 调用.some((a) => a.allowWrite) ? 10498 : 10497, nextWriteRow: 调用.some((a) => a.allowWrite) ? 10499 : 10498 };
+    return { written: true, row: 10498, writtenColumns: ["V", "W", "Z"], dateColumns: ["A", "AL"], readBack: ["J=5127724117341157631", "V=YQD-DK"] };
+  };
+  const 依赖 = { 跑脚本, 生成写表数据 };
+  const 条目 = {
+    订单号: "5127724117341157631", 店铺: "天猫6店", 发票类型: "增值税电子普通发票",
+    开票金额: 499, 抬头: "天虹数科商业股份有限公司", 税号: "91440300618842912J",
+    登记时间: "2026-09-30 10:00:00", 发货日期: "2026-09-06",
+    商品明细: [
+      { 规格名称: "家用制氧机DH21-A1L（LV）DEDAKJ", 型号: "DH21-A1L", 订购数: "1", 买家支付金额: "499.0", 赠品: false },
+      { 规格名称: "氧气袋(DEDAKJ）", 型号: "YQD-DK", 订购数: "1", 买家支付金额: "0", 赠品: true },
+    ],
+  };
+  const 主结果 = await 写登记行(条目, 依赖, { 表名: "科技--唐雪梅", 已确认: true });
+  assert.strictEqual(主结果.状态, "已登记");
+
+  调用.length = 0;
+  const 赠结果 = await 写登记行(条目, 依赖, { 表名: "科技--唐雪梅", 已确认: true, 明细序号: 1 });
+  assert.strictEqual(赠结果.状态, "已写入");
+  assert.strictEqual(赠结果.行号, 10498);
+  assert.ok(!调用.some((a) => a.checkOnly), "赠品行不该跑云端查重（同订单号是预期的）");
+  assert.ok(调用.some((a) => a.allowWrite === true && a.writeCells && Number(a.writeCells.Z) === 0), "赠品金额必须写 0");
+});

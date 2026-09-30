@@ -43,9 +43,14 @@ async function 写登记行(条目, 依赖, 选项 = {}) {
   }
 
   // 闸门 3：云端全表查重（走**独立写入脚本**的 checkOnly；只读查询脚本那份不动）。
-  const 查重 = await 跑脚本({ orderNo: 订单号, checkOnly: true, sheets: [表名] });
-  if (查重 && 查重.duplicate === true) {
-    return { 状态: "已登记", 订单号, 表名, 命中行: Number(查重.row) || 0, 说明: "该订单号在云端登记表里已存在，拒绝重复写入" };
+  // 例外：**同单多行**（订单里的赠品行，明细序号 > 0）——赠品行与主商品同订单号，是故意重复，不放查重。
+  if ((Number(选项.明细序号) || 0) > 0) {
+    // 赠品行：跳过查重（同单号是预期），但仍走授权/字段/回读闸门
+  } else {
+    const 查重 = await 跑脚本({ orderNo: 订单号, checkOnly: true, sheets: [表名] });
+    if (查重 && 查重.duplicate === true) {
+      return { 状态: "已登记", 订单号, 表名, 命中行: Number(查重.row) || 0, 说明: "该订单号在云端登记表里已存在，拒绝重复写入" };
+    }
   }
 
   // 闸门 4：写入。（纯写入一个动作；修错行由人工在金山里改，2026-09-30 用户定）
@@ -57,6 +62,30 @@ async function 写登记行(条目, 依赖, 选项 = {}) {
   }
   if (Array.isArray(写入.failedColumns) && 写入.failedColumns.length) {
     throw new Error(`写登记行部分列失败：${写入.failedColumns.join("、")}（已写入列：${(写入.writtenColumns || []).join("、")}），必须人工核对第 ${写入.row} 行。`);
+  }
+
+  // 闸门 5：回读校验。
+  //   主商品行：按订单号查，必须恰好 1 行且就是刚写那行。
+  //   赠品行（同订单号）：按订单号查会查到主商品行，所以改验「写入返回的行内回读 + 探针末行 = 刚写那行」。
+  if ((Number(选项.明细序号) || 0) > 0) {
+    const 回读文本 = Array.isArray(写入.readBack) ? 写入.readBack.join("|") : String(写入.readBack || "");
+    if (!回读文本.includes(订单号)) {
+      throw new Error(`赠品行写后回读异常：第 ${写入.row} 行的回读里看不到订单号 ${订单号} → 请人工核对金山表。`);
+    }
+    const 探针 = await 跑脚本({ probe: true, sheets: [表名] });
+    if (Number(探针 && 探针.lastDataRow) !== Number(写入.row)) {
+      throw new Error(`赠品行写后探针异常：云端最后数据行 ${探针 && 探针.lastDataRow} ≠ 刚写的第 ${写入.row} 行 → 请人工核对金山表。`);
+    }
+    return {
+      状态: "已写入",
+      订单号,
+      表名,
+      行号: 写入.row,
+      明细序号: Number(选项.明细序号) || 0,
+      写入列: 写入.writtenColumns || [],
+      日期列: 写入.dateColumns || [],
+      回读: 写入.readBack || [],
+    };
   }
 
   // 闸门 5：回读必须恰好一行，且就是刚写的那一行。
