@@ -89,3 +89,32 @@ test("云端返回 written:false 时按失败处理，不误报成功", async ()
   const 结果 = await 写登记行(齐全条目, 依赖, { 已确认: true });
   assert.equal(结果.状态, "写入失败");
 });
+
+// 两张登记表的列位置不同（2026-09-30 实测）：表②（集团）从 O 列起整体右移一列。
+// 反向断言：谁把「表②也按①的列写」改回来，这里就会红。
+const { 表列偏移, 映射列字母, 生成写表数据 } = require("../src/发票规则");
+
+test("表列偏移：表①不动，表②（科技/集团）整体 +1", () => {
+  assert.strictEqual(表列偏移("德达医疗器械发票登记 --毛叶红"), 0);
+  assert.strictEqual(表列偏移("科技--唐雪梅"), 1);
+  assert.strictEqual(映射列字母("O", "科技--唐雪梅"), "P");
+  assert.strictEqual(映射列字母("U", "科技--唐雪梅"), "V");
+  assert.strictEqual(映射列字母("V", "科技--唐雪梅"), "W");
+  assert.strictEqual(映射列字母("Y", "科技--唐雪梅"), "Z");
+  assert.strictEqual(映射列字母("AA", "科技--唐雪梅"), "AB");
+  assert.strictEqual(映射列字母("AB", "科技--唐雪梅"), "AC");
+  assert.strictEqual(映射列字母("AK", "科技--唐雪梅"), "AL");
+  assert.strictEqual(映射列字母("J", "科技--唐雪梅"), "J");
+  assert.strictEqual(映射列字母("O", "德达医疗器械发票登记 --毛叶红"), "O");
+});
+
+test("生成写表数据：表②要写成 P/V/W/Z/AB/AC/AL，且绝不出现①的 O/U/Y/AA/AK", () => {
+  const 条目 = {
+    订单号: "5127724117341157631", 店铺: "天猫6店", 发票类型: "增值税电子普通发票",
+    开票金额: 499, 抬头: "天虹数科商业股份有限公司", 税号: "91440300618842912J",
+    登记时间: "2026-09-30 10:00:00", 发货日期: "2026-09-06",
+    商品明细: [{ 规格名称: "家用制氧机DH21-A1L（LV）DEDAKJ", 型号: "DH21-A1L", 订购数: "1", 买家支付金额: "499.0" }],
+  };
+  const 列 = Object.keys(生成写表数据(条目, { 表名: "科技--唐雪梅" }).列).sort().join(",");
+  assert.strictEqual(列, "A,AB,AC,AL,F,G,I,J,P,V,W,Z");
+});
