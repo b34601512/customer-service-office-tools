@@ -37,6 +37,20 @@ function 是拼多多待开票列表文本(text) {
   return 正文.includes('订单开票') && 正文.includes('批量导出') && (正文.includes('录入发票') || /暂无数据|没有数据|无数据|共有\s*0\s*条/.test(正文));
 }
 
+// 2026-09-30 根治「读 0 单但实际有单」（09-28 拼多多02店、09-29/09-30 拼多多03店各 1 次）：
+// 后台是 SPA，会先渲染「暂无数据」空态再把列表数据填进来；只看一眼就认「0 单」会把有单读成无单。
+// 空态属于会被数据覆盖的瞬时状态 → 必须连续确认后才认。
+const 空态确认次数 = 2;
+const 空态确认间隔毫秒 = 1500;
+
+function 是拼多多待开票空态文本(text) {
+  const 正文 = String(text || '');
+  return 正文.includes('订单开票')
+    && 正文.includes('批量导出')
+    && !正文.includes('录入发票')
+    && /暂无数据|没有数据|无数据|共有\s*0\s*条/.test(正文);
+}
+
 function 读取拼多多待开票页面状态(url, text) {
   // 解决：业务页面被登录页拦截时立即进入登录等待，不白等列表超时。
   if (是拼多多登录页面(url)) {
@@ -176,6 +190,7 @@ async function 等待拼多多待开票列表或登录页(page, timeoutMs = 120_
   let startedAt = Date.now();
   let 滑块首次出现时间 = 0;
   let 已提示滑块 = false;
+  let 连续空态次数 = 0;
   while (Date.now() - startedAt < timeoutMs) {
     await 关闭拼多多逾期提醒弹窗(page);
     await 关闭拼多多非业务浮层(page);
@@ -198,9 +213,22 @@ async function 等待拼多多待开票列表或登录页(page, timeoutMs = 120_
       continue;
     }
     const state = 读取拼多多待开票页面状态(page.url(), text);
-    if (state === 'ready' || state === 'login') {
+    if (state === 'login') {
       return { state, text, url: page.url() };
     }
+    if (state === 'ready') {
+      // 非空态（已渲染录入发票入口）直接就绪；空态必须连续确认，避免把「数据还没到」读成 0 单。
+      if (!是拼多多待开票空态文本(text)) {
+        return { state, text, url: page.url() };
+      }
+      连续空态次数 += 1;
+      if (连续空态次数 >= 空态确认次数) {
+        return { state, text, url: page.url() };
+      }
+      await 等待短间隔(空态确认间隔毫秒);
+      continue;
+    }
+    连续空态次数 = 0;
     await 等待短间隔(1000);
   }
   throw new Error('等待拼多多待开票列表加载超时。');
@@ -849,6 +877,7 @@ module.exports = {
   读取页面正文,
   等待页面状态,
   是拼多多待开票列表文本,
+  是拼多多待开票空态文本,
   读取拼多多待开票页面状态,
   关闭拼多多逾期提醒弹窗,
   关闭拼多多非业务浮层,
