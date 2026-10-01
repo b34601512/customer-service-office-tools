@@ -11,6 +11,7 @@
    > 企微来新消息了。`cd "D:/桌面/办公软件/27.企业微信机器人" && node scripts/读新消息.cjs` 读全文、逐条处理；
    > 有人 @木婉清 / 单聊 → **可直接回复**（`node scripts/发企微消息.cjs --chat-id "<本次 wecom-cli message aibot sessions list 现取>" --text "…"`，拆条、每条 ≤100 字）；
    > 拿不准 / 碰红线 / 要发给非 @ 的群或他人 → 先问黎路遥；没新消息就安静，不汇报。
+   > 汇报一律**私发黎路遥本人**（不发金牌组/群，2026-10-01 他拍板；群 id 会被发消息脚本拒发）。
 
 2. `MonitorCreate`：命令 `cd "D:/桌面/办公软件/27.企业微信机器人" && node scripts/跟读收件箱.cjs`，
    timeout=0（不设超时），onDone=`监听停了：按本文件第 1.2 步重挂 Monitor，再跑 node scripts/读新消息.cjs 查漏`。

@@ -109,6 +109,7 @@ wecom-cli auth show --status
 **发消息的稳妥写法（2026-09-29 踩坑后固化）**
 1. 先 `wecom-cli message aibot sessions list` 取**本次**会话里的 `chat_id`（不要用手打的）。
 2. **用脚本发，别手拼 JSON**：`node scripts/发企微消息.cjs --chat-id "<本次的id>" --file 正文.md`
+   - **汇总只私发黎路遥本人（2026-10-01 他拍板：不要发到客户群/金牌组）**：群 chat_id（`wr` 开头）**默认拒发**（exit 1）；确需发群得显式 `--允许发群`，且先问他。
    - 它把正文包成 `{"chat_id":…,"msg_type":"markdown","markdown":{"content":"<字符串>"}}` 再调 CLI，并在 `success!=true` 时报错退出；单测 `node --test tests/发企微消息.test.js`。
    - **`--markdown` 收的是「markdown 内容对象」本身**（`{"content":"…"}`），不是整包请求体（`chat_id`+`msg_type`+`markdown`）；整包只在 `--json` 里用。传错时 CLI 会**打印 help 并 exit=2**，别误以为参数没写全（2026-09-29 实例，脚本已修 + 单测锁死）。
    - **正文必须是字符串**：给 `content` 传数组会报 `10003 'content' 类型不匹配，应为字符串`（单元素数组偶尔被 CLI 的 json repair 改成字符串，于是“有时成功有时失败”——2026-09-29 实例：连着几条长汇报静默失败）。
@@ -139,7 +140,7 @@ node scripts/发群消息.js --text "测试：客服日报已生成" --mention 1
 > 群机器人官方参数文档（给 AI 查）：<https://developer.work.weixin.qq.com/document/path/91770>
 
 > ⚠ **2026-09-30 用户拍板：群消息不再走群机器人 webhook，统一由木婉清（本机器人）发** ——
-> `node scripts/发企微消息.cjs --chat-id "<本次 sessions list 现取的群 chat_id>" --text "…"`（默认群「金牌组」）。
+> `node scripts/发企微消息.cjs --chat-id "<本次 sessions list 现取的群 chat_id>" --text "…"`（默认群「金牌组」；**仅限他明确要发的场合**——日常汇报一律私发他；群 id 要加 `--允许发群`）。
 > 木婉清的消息**不能真 @人**，把名字写进正文即可（已拍板 OK）；**要真 @ 就用群机器人 webhook —— 两个机器人各管一段，都有用**（用户 2026-09-30）。
 
 ## 8. 客服主管的 3 个现成用法

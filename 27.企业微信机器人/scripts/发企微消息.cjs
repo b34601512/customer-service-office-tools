@@ -5,7 +5,7 @@
 // 用法：
 //   node scripts/发企微消息.cjs --chat-id "<本次 sessions list 里的 id>" --file 正文.md
 //   node scripts/发企微消息.cjs --chat-id "<id>" --text "一句话"
-//   （加 --dry-run 只打印 payload 不发送）
+//   （加 --dry-run 只打印 payload 不发送；**群 chat_id（wr 开头）默认拒发**，要发群得加 --允许发群并先问人）
 
 const fs = require('fs');
 const path = require('path');
@@ -16,7 +16,7 @@ const 项目根 = path.resolve(__dirname, '..');
 const 默认CLI脚本 = path.join(process.env.APPDATA || '', 'npm', 'node_modules', '@wecom', 'cli', 'bin', 'wecom.js');
 
 function 取参数(argv) {
-  const out = { chatId: '', file: '', text: '', dryRun: false, cli: 默认CLI脚本 };
+  const out = { chatId: '', file: '', text: '', dryRun: false, 允许发群: false, cli: 默认CLI脚本 };
   for (let i = 0; i < argv.length; i += 1) {
     const key = String(argv[i] || '').replace(/^--/, '');
     const next = argv[i + 1];
@@ -24,12 +24,17 @@ function 取参数(argv) {
     if (key === 'file') { out.file = String(next || '').trim(); i += 1; } else
     if (key === 'text') { out.text = String(next || ''); i += 1; } else
     if (key === 'cli') { out.cli = String(next || 'wecom-cli').trim(); i += 1; } else
-    if (key === 'dry-run') { out.dryRun = true; }
+    if (key === 'dry-run') { out.dryRun = true; } else
+    if (key === '允许发群' || key === 'allow-group') {
+      // 无值=true；顺手吃掉后面的 true/1/是，省得被当成野参数
+      out.允许发群 = true;
+      if (/^(true|1|是|yes)$/i.test(String(next || ''))) i += 1;
+    }
   }
   return out;
 }
 
-function 构造载荷({ chatId, content }) {
+function 构造载荷({ chatId, content, 允许发群 = false }) {
   // 反向约束：content 必须是字符串（数组会被服务端 10003 拒掉）。
   if (typeof content !== 'string') {
     throw new Error('正文必须是字符串（markdown.content 不能是数组）');
@@ -37,6 +42,10 @@ function 构造载荷({ chatId, content }) {
   const 文本 = content.trim();
   if (!文本) throw new Error('正文为空，不发空消息');
   if (!chatId) throw new Error('缺少 --chat-id（从本次 sessions list 里取，不要手打历史 id）');
+  // 反向约束（2026-10-01 用户拍板）：汇报只私发黎路遥，**不许发群**（金牌组等）。群 id 是 wr 开头，单聊是 wo 开头。
+  if (!允许发群 && /^wr/i.test(chatId)) {
+    throw new Error('这是群 chat_id（wr 开头）：按规矩汇报只私发人，不发金牌组/任何群；确需发群请加 --允许发群，并先在企微问黎路遥');
+  }
   return { chat_id: chatId, msg_type: 'markdown', markdown: { content: 文本 } };
 }
 
@@ -56,7 +65,7 @@ function 读正文(参数) {
 
 function main() {
   const 参数 = 取参数(process.argv.slice(2));
-  const 载荷 = 构造载荷({ chatId: 参数.chatId, content: 读正文(参数) });
+  const 载荷 = 构造载荷({ chatId: 参数.chatId, content: 读正文(参数), 允许发群: 参数.允许发群 });
   // --markdown 收的是「markdown 内容对象」本身（不是整包请求体）：整包会给 --json 用。
   const json = JSON.stringify(载荷.markdown);
   console.log(`[发企微] 正文 ${Buffer.byteLength(json)} 字节（chat_id 不打印）`);

@@ -27,6 +27,22 @@ test('参数解析：--dry-run 与 --file/--text', () => {
   assert.strictEqual(取参数(['--chat-id', 'x', '--file', 'a.md']).file, 'a.md');
 });
 
+test('反向锁：群 chat_id（wr 开头）默认拒发（2026-10-01 用户：只私发，不发金牌组）', () => {
+  assert.throws(() => 构造载荷({ chatId: 'wrFqtuEQAA328pVY-8VtQdfmDtzEE-OQ', content: 'hi' }), /群|私发/);
+  // 显示写了放行开关才允许
+  const 载荷 = 构造载荷({ chatId: 'wrFakeGroup', content: 'hi', 允许发群: true });
+  assert.strictEqual(载荷.chat_id, 'wrFakeGroup');
+  // 单聊（wo 开头）不受影响
+  assert.strictEqual(构造载荷({ chatId: 'woFakeUser', content: 'hi' }).chat_id, 'woFakeUser');
+});
+
+test('参数解析：--允许发群 开关（无值或 true 都行）', () => {
+  assert.strictEqual(取参数(['--chat-id', 'x', '--允许发群']).允许发群, true);
+  assert.strictEqual(取参数(['--chat-id', 'x', '--允许发群', 'true']).允许发群, true);
+  assert.strictEqual(取参数(['--chat-id', 'x']).允许发群, false);
+  assert.strictEqual(取参数(['--chat-id', 'x', '--allow-group']).允许发群, true);
+});
+
 test('命令行参数：--markdown 传的是内容对象，不是整包请求体（2026-09-29 实例：整包→CLI 打 help、exit=2）', () => {
   const 载荷 = 构造载荷({ chatId: 'woXXXX', content: '你好' });
   const args = 构造CLI参数(载荷, 'C:/x/wecom.js');
