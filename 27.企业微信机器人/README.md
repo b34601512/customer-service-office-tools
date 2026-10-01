@@ -235,3 +235,20 @@ Windows「启动」文件夹 木婉清-企微守护.lnk
 - **日志**：无窗口运行看不到控制台 → 输出落 `.state/daemon.log`（超 2 MB 自动清空）。
 - 手动起（会开黑窗）：`scripts\启动长连接守护.bat`；自检：`node scripts\长连接守护.js --check`。
 - 装法（换机器时照做）：双击 `scripts\静默启动.vbs` 跑一次，再给「启动」文件夹建个指向它的快捷方式。
+
+## 开机监听窗（自动挂监听）—— 2026-10-01 照「赵敏」那套装
+
+```
+Windows「启动」文件夹 木婉清-开机开窗.lnk
+  → 27.企业微信机器人\scripts\open-pi-window.cmd   （纯 ASCII，路径走 %~dp0）
+    → 在仓库根 D:\桌面\办公软件 起 pi，首条指令 = @27.企业微信机器人\boot-prompt.md
+      → 窗口自己：LoopCreate（事件 monitor:output）+ MonitorCreate（跟读收件箱.cjs）
+        → 有新消息就被叫醒、按 boot-prompt.md 处理
+```
+
+- **跟读收件箱**：`node scripts/跟读收件箱.cjs` 挂在 Monitor 上常驻（1.5 秒看一次文件增量，有新行才打印）；
+  打印即触发 `monitor:output` 事件唤醒 AI。只打「时间/单聊群聊/类型/摘要」，**不带内部 ID**；半行等补全、文件轮转自愈。
+- **装/看/卸开机窗**：`node scripts/装开机窗.cjs` / `--看` / `--卸载`（装完自动回读校验目标路径）。
+- **测链路**（不动真实收件箱）：`node scripts/跟读收件箱.cjs --文件 <临时 jsonl>`，往那个文件追加一行看有没有打摘要。
+- 单测：`node --test tests/跟读收件箱.test.js`（摘要无内部 ID + 半行/轮转）。
+- 注意：「守护（收）」+「开窗（醒）」是两条链，都放 Windows「启动」文件夹；换机器后两个都要装。
