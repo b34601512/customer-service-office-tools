@@ -1,7 +1,11 @@
 #!/usr/bin/env node
 // 派活：把一份「任务说明.md」交给一个新的 pi 窗口（任务窗）去干。
-// 约定（2026-10-01 用户拍板）：任务窗**只写回执、不直接发企微**（只有监听窗跟他联系）；任务窗不提交 git。
+// 约定（2026-10-01 用户拍板，照赵敏方式）：
+//   ① 任务窗**只写回执、不直接发企微**（只有监听窗跟他联系）；任务窗不提交 git；
+//   ② **干完就关窗**——本工具派窗时自动挂「关任务窗.cjs --守」守卫：回执落地就关窗、摘登记；
+//   ③ 一个活能拆小块 → 就在这个窗里用「编排」带帮手并行（≤8），别开一堆窗。
 // 用法：node 开任务窗.cjs "任务/2026-10-01-xxx.md" ["工作目录，默认仓库根"]
+// 看/手动关：node 关任务窗.cjs --看 / --关 <pid|任务名>
 // 原理：PowerShell Start-Process 起新控制台窗口（直接 spawn 不会弹新窗口）；
 //       同步等它把窗口拉起再返回——detached 后台跑 powershell，父进程一退它可能被连带清掉，窗口悄悄起不来。
 // 来源：照 `D:\桌面\个人软件\00.赵敏档案\开任务窗.mjs` 移植（2026-10-01，用户让学赵敏）。
@@ -33,12 +37,35 @@ if (!fs.existsSync(pi)) {
 
 // 单引号 PowerShell 字符串：这些路径不含单引号，安全
 const ps = `$p = Start-Process -FilePath '${pi}' -ArgumentList '@${任务文件}' -WorkingDirectory '${工作目录}' -PassThru -ErrorAction Stop; "任务窗进程号：" + $p.Id`;
+let pid = 0;
 try {
-  execFileSync('powershell', ['-NoProfile', '-Command', ps], { stdio: 'inherit' });
+  const 输出 = execFileSync('powershell', ['-NoProfile', '-Command', ps], { encoding: 'utf8' });
+  process.stdout.write(输出);
+  pid = Number((输出.match(/任务窗进程号：(\d+)/) || [])[1] || 0);
 } catch (e) {
   console.log('派活失败：' + String((e && e.message) || e));
   process.exit(1);
 }
 
+// 登记 + 挂守卫（回执落地就关窗）——「干完就关，别攒窗口」
+const 关窗工具 = path.join(本目录, '关任务窗.cjs');
+const 开窗时间 = new Date().toISOString();
+if (pid > 0) {
+  const { 加登记, 回执路径 } = require(关窗工具);
+  加登记({ 任务: 任务文件, 回执: 回执路径(任务文件), pid, 开窗时间, 守卫最久: '4h' });
+  const 守卫参数 = ['--守', '--任务', 任务文件, '--pid', String(pid), '--最久', '4h', '--开窗时间', 开窗时间];
+  const 参数字面量 = 守卫参数.map((x) => `'${x}'`).join(',');
+  const 挂守卫 = `Start-Process -FilePath '${process.execPath}' -ArgumentList ${参数字面量} -WorkingDirectory '${本目录}' -WindowStyle Hidden`;
+  try {
+    execFileSync('powershell', ['-NoProfile', '-Command', 挂守卫], { stdio: 'ignore' });
+    console.log('✓ 已挂守卫：回执一落地就自动关窗（最多守 4 小时；没回执则留着不关）');
+  } catch (e) {
+    console.log('⚠ 守卫没挂上（窗口照开）：' + String((e && e.message) || e));
+  }
+} else {
+  console.log('⚠ 没读到窗口进程号，没登记也没挂守卫；用 `node 关任务窗.cjs --看` 核对');
+}
+
 console.log('✓ 任务窗已派：' + 任务文件);
 console.log('  工作目录：' + 工作目录);
+console.log('  看/关：node 关任务窗.cjs --看 / --关 ' + (pid || '<pid>'));
