@@ -28,6 +28,16 @@ function 解析未学数(text) {
   return m ? Number(m[1]) : 0;
 }
 
+/** 从 `--核对` 输出里读「哪些文件还有真值」：行形如 `   path/to/f.md 里有真值「x」` */
+function 解析含真值文件(text) {
+  const 集 = new Set();
+  for (const 行 of String(text).split("\n")) {
+    const m = 行.match(/^\s*(.+?)\s+里有真值/);
+    if (m) 集.add(m[1].trim());
+  }
+  return [...集];
+}
+
 /** 解析 `-m "信息"`；返回 { 信息, 文件 }；文件必须显式点名 */
 function 解析参数(argv) {
   let 信息 = null;
@@ -62,6 +72,30 @@ function main() {
     跑("node", ["tools/打码.js", "--学"]);
   }
 
+  // 2b) 学完之后：**已入库但含真值**的文件也要补打码（否则本次提交后 `--核对` 仍会红字）。
+  //     安全线：只动「工作区 == HEAD」的文件——有未提交改动的文件一律不碰（那是别的会话正在写的，不能吞）。
+  try {
+    const 核对前 = 跑("node", ["tools/打码.js", "--核对"]);
+    void 核对前;
+  } catch (e) {
+    const 脏文件 = 解析含真值文件(String(e.stdout || ""));
+    const 可补 = [];
+    const 跳过 = [];
+    for (const f of 脏文件) {
+      try {
+        execFileSync("git", ["diff", "--quiet", "HEAD", "--", f], { cwd: 仓库根, stdio: "ignore" });
+        可补.push(f); // 退出 0 = 工作区与 HEAD 一致 → 可以安全补打码
+      } catch { 跳过.push(f); }
+    }
+    if (可补.length) {
+      console.log(`[提交闸门] 有 ${可补.length} 个已入库文件含明文真值 → 先补打码（不碰工作区有改动的文件）`);
+      跑("git", ["add", "--renormalize", "--", ...可补]);
+    }
+    if (跳过.length) {
+      console.log(`[提交闸门] ⚠ 这些文件含真值但工作区有未提交改动，**不自动动**（请人工处理）：${跳过.join("、")}`);
+    }
+  }
+
   // 3) 点名文件：先 add（新文件也要进暂存区），再 --renormalize
   //    （renormalize 只作用于**已跟踪**文件：让过滤器对"已在库里但没打码"的内容重新生效）
   跑("git", ["add", "--", ...文件]);
@@ -88,4 +122,4 @@ if (require.main === module) {
   try { main(); } catch (e) { console.error(`[提交闸门] 失败：${e.message}`); process.exitCode = 2; }
 }
 
-module.exports = { 解析未学数, 解析参数 };
+module.exports = { 解析未学数, 解析参数, 解析含真值文件 };

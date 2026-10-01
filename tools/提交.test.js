@@ -5,7 +5,7 @@ const assert = require("node:assert");
 const fs = require("node:fs");
 const path = require("node:path");
 
-const { 解析未学数, 解析参数 } = require("./提交.js");
+const { 解析未学数, 解析参数, 解析含真值文件 } = require("./提交.js");
 
 test("解析未学数：认得扫描输出里的两种写法", () => {
   assert.equal(解析未学数("合计 53 个真值，其中 8 个还没进对照表。"), 8);
@@ -33,4 +33,24 @@ test("反向断言：脚本源码里不许出现批量 add（git add -A / -u / a
   assert.ok(!/add",\s*"\."/.test(源码), "不许 git add .");
   assert.ok(/--renormalize/.test(源码), "必须用 --renormalize 让打码过滤器重新生效");
   assert.ok(/--学/.test(源码), "扫描出未进对照表的真值时必须先 --学");
+});
+
+// ⑧ 解析 `--核对` 输出：找出「已入库但还有真值」的文件（2026-10-02 补漏：学完新真值后老文件不会自动补打码）
+test("解析含真值文件：从核对输出里提取文件路径（去重、忽略无关行）", () => {
+  const 输出 = [
+    "❌ 提交给 GitHub 的内容里还有真值：",
+    "   0.木婉清档案/任务回执/2026-10-02-探域自动优化-A1.md 里有真值「189****2204」",
+    "   0.木婉清档案/任务回执/2026-10-02-探域自动优化-A1.md 里有真值「173****5072」",
+    "   tools/打码.js 里有真值「万某某」",
+    "（共 3 处；多数是因为还没重新提交这些文件）",
+  ].join("\n");
+  const 文件 = 解析含真值文件(输出);
+  assert.deepEqual(文件, ["0.木婉清档案/任务回执/2026-10-02-探域自动优化-A1.md", "tools/打码.js"]);
+  assert.deepEqual(解析含真值文件("✅ 核对通过：干净"), []);
+});
+
+test("反向断言：补打码只许 renormalize 已入库文件，且不碰工作区有改动的文件", () => {
+  const 源码 = fs.readFileSync(path.join(__dirname, "提交.js"), "utf8");
+  assert.ok(/diff",\s*"--quiet",\s*"HEAD"/.test(源码), "补打码前必须先用 git diff --quiet HEAD 筛掉工作区有改动的文件");
+  assert.ok(/解析含真值文件/.test(源码), "必须用 --核对 的输出定位脏文件");
 });
