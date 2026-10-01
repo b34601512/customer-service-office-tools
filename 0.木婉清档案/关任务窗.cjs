@@ -125,6 +125,7 @@ function 守卫({ 任务, pid, 最久 = 4 * 3600 * 1000, 间隔 = 20000, 宽限 
   const 回执 = 回执路径(任务);
   const 起 = 开窗时间 ? Date.parse(开窗时间) : 现在();
   const 截止 = 起 + 最久;
+  记日志(`守卫上岗 pid=${pid}（${path.basename(String(任务))}）→ 回执：${回执}`);
   function 滴() {
     if (!进程在(pid)) {
       摘登记(pid);

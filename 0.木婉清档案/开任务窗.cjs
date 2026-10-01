@@ -35,13 +35,14 @@ if (!fs.existsSync(pi)) {
   process.exit(1);
 }
 
-// 单引号 PowerShell 字符串：这些路径不含单引号，安全
-const ps = `$p = Start-Process -FilePath '${pi}' -ArgumentList '@${任务文件}' -WorkingDirectory '${工作目录}' -PassThru -ErrorAction Stop; "任务窗进程号：" + $p.Id`;
+// 单引号 PowerShell 字符串：这些路径不含单引号，安全。
+// 注意：PowerShell 输出在中文控制台是 GBK，中文标签会被 execFileSync 读成乱码 → **只回数字**。
+const ps = `$p = Start-Process -FilePath '${pi}' -ArgumentList '@${任务文件}' -WorkingDirectory '${工作目录}' -PassThru -ErrorAction Stop; $p.Id`;
 let pid = 0;
 try {
   const 输出 = execFileSync('powershell', ['-NoProfile', '-Command', ps], { encoding: 'utf8' });
-  process.stdout.write(输出);
-  pid = Number((输出.match(/任务窗进程号：(\d+)/) || [])[1] || 0);
+  pid = Number((输出.match(/(\d+)/) || [])[1] || 0);
+  console.log('任务窗进程号：' + (pid || '（没读到）'));
 } catch (e) {
   console.log('派活失败：' + String((e && e.message) || e));
   process.exit(1);
@@ -53,7 +54,7 @@ const 开窗时间 = new Date().toISOString();
 if (pid > 0) {
   const { 加登记, 回执路径 } = require(关窗工具);
   加登记({ 任务: 任务文件, 回执: 回执路径(任务文件), pid, 开窗时间, 守卫最久: '4h' });
-  const 守卫参数 = ['--守', '--任务', 任务文件, '--pid', String(pid), '--最久', '4h', '--开窗时间', 开窗时间];
+  const 守卫参数 = [关窗工具, '--守', '--任务', 任务文件, '--pid', String(pid), '--最久', '4h', '--开窗时间', 开窗时间];
   const 参数字面量 = 守卫参数.map((x) => `'${x}'`).join(',');
   const 挂守卫 = `Start-Process -FilePath '${process.execPath}' -ArgumentList ${参数字面量} -WorkingDirectory '${本目录}' -WindowStyle Hidden`;
   try {
