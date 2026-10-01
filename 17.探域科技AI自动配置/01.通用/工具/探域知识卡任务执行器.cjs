@@ -2,8 +2,10 @@
 // 默认只检查，不写入；写入必须 --action apply --allow-write true。
 // 业务字段（绑店/范围/启用状态等）默认**不许变**：只有任务文件带 businessPatch + approvedBy（客服主管/经理姓名）
 // 且命令行显式 --allow-business-change true 时，才允许按 businessPatch 改写这些字段（写入后按"补丁后的期望值"回读核对）。
-// 支持两种任务项：①带 id 的原位更新；②不带 id + 带 title 的新建（save），新建默认 stopped（ifOpen:false），
-// 且同标题已存在时不新建、不改写（status=title-conflict，交给调用方决定）。
+// 支持三种任务项：①带 id 的原位更新；②不带 id + 带 title 的新建（save），新建默认 stopped（ifOpen:false），
+// 且同标题已存在时不新建、不改写（status=title-conflict，交给调用方决定）；③带 id + delete:true 的删除（破坏性，见下）。
+// 删除（item.delete=true）为破坏性操作：任务文件必须带 approvedBy（客服主管/经理姓名），命令行必须显式 --allow-delete true；
+// 删前保存完整 detail、写前重读，删后回读「detail 消失 + 全量列表不含该 id」才算 deleted-verified。
 // 不写死公司、店铺、型号、正文、对象ID、账号或本机路径。
 const fs = require('fs');
 const path = require('path');
@@ -110,6 +112,17 @@ function assertBusinessChangeAllowed({ patch, approvedBy, allowFlag }) {
   }
   return true;
 }
+// 红线锁：删除知识卡是不可逆操作，必须有人确认（主管/经理）且显式放行。
+function assertDeleteAllowed({ deleteRequested, approvedBy, allowFlag }) {
+  if (!deleteRequested) return false;
+  if (!String(approvedBy || '').trim()) {
+    throw new Error('删除知识卡（破坏性操作）必须在任务文件里写明 approvedBy（确认的客服主管/经理姓名）');
+  }
+  if (allowFlag !== 'true') {
+    throw new Error('删除知识卡必须显式传入 --allow-delete true（主管/经理确认后才放行）');
+  }
+  return true;
+}
 const EMPTY_SCOPE = () => ({ spu: [], shop: [], rules: [], productGroupId: [], sellerGroup: [], platform: [] });const slug = (v) => String(v).replace(/[^\w\u4e00-\u9fa5.-]+/g, '_').slice(0, 60) || 'card';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -138,6 +151,13 @@ async function main() {
     console.error('[只读] 本次是 check/verify：businessPatch 只用于计算“计划 payload / 期望值”，不写入后台。');
   }
 
+  const deleteItems = task.items.filter(x => x.delete === true);
+  if (deleteItems.length && action === 'apply') {
+    assertDeleteAllowed({ deleteRequested: true, approvedBy: task.approvedBy, allowFlag: arg('allow-delete') });
+  } else if (deleteItems.length) {
+    console.error('[只读] 本次是 check/verify：删除项只做删前核对，不写后台、不删除。');
+  }
+
   const baseUrl = required('base-url').replace(/\/$/, '');
   const profile = required('profile');
   const backupDir = required('backup-dir');
@@ -153,6 +173,7 @@ async function main() {
     runId, action, taskFile, company: task.company || null, scope: task.scope || null,
     approvedBy: task.approvedBy || null,
     businessPatchKeys: businessPatch ? Object.keys(businessPatch) : null,
+    deleteIds: deleteItems.map(x => x.id),
     startedAt: new Date().toISOString(), entries: []
   };
   save(path.join(runDir, 'task.json'), task);
@@ -190,15 +211,103 @@ async function main() {
     let cachedCards = null;
     const listAll = async (force) => {
       if (!cachedCards || force) {
+        // 实测（2026-10-01）：该接口忽略 pageNo/pageIndex，翻页永远返回第一页；分页无效，必须一次拉全。
+        // 拉不全就报错停下（缺失全量时禁止继续判断防重复/消失）。
         const data = await call('/api/kbe/v1/knowledge-card/page', {
-          method: 'POST', body: JSON.stringify({ pageNo: 1, pageSize: 3000 })
+          method: 'POST', body: JSON.stringify({ pageNo: 1, pageSize: 5000 })
         });
-        cachedCards = (data && data.results) || [];
+        const rows = (data && data.results) || [];
+        const total = data && typeof data.total === 'number' ? data.total : rows.length;
+        if (rows.length < total) {
+          throw new Error(`全库未拉全：results=${rows.length} < total=${total}（接口忽略 pageNo，需提高 pageSize）`);
+        }
+        cachedCards = rows;
       }
       return cachedCards;
     };
 
     for (const item of task.items) {
+      // ---------- 删除（item.delete === true；严格顺序：读前 → SHA 对照 → 写前重读 → 删 → 回读） ----------
+      if (item.delete === true) {
+        if (!item.id) throw new Error('删除任务项必须提供 id');
+        const entry = {
+          id: item.id,
+          note: item.note || null,
+          expectedSha256: item.expectedSha256 || null,
+          status: null
+        };
+        let beforeCard = null;
+        try {
+          beforeCard = await detail(item.id);
+        } catch (error) {
+          beforeCard = null;
+          entry.readError = String(error.message || error);
+        }
+        if (!beforeCard) {
+          entry.status = 'already-deleted';
+          journal.entries.push(entry);
+          save(path.join(runDir, 'journal.json'), journal);
+          continue;
+        }
+        entry.title = beforeCard.title || null;
+        entry.currentSha256 = sha(contentOf(beforeCard));
+        entry.currentBusinessSha256 = sha(businessMeta(beforeCard));
+        save(path.join(runDir, `${item.id}-before.json`), beforeCard);
+        if (entry.expectedSha256 && entry.currentSha256 !== entry.expectedSha256) {
+          entry.status = 'sha-conflict';
+          journal.entries.push(entry);
+          save(path.join(runDir, 'journal.json'), journal);
+          continue;
+        }
+        if (action === 'check') {
+          entry.status = 'ready';
+          journal.entries.push(entry);
+          save(path.join(runDir, 'journal.json'), journal);
+          continue;
+        }
+        if (action === 'verify') {
+          entry.status = 'not-deleted';
+          journal.entries.push(entry);
+          save(path.join(runDir, 'journal.json'), journal);
+          continue;
+        }
+        // 写前再读一次，确认没被并行修改。
+        const latest = await detail(item.id);
+        if (!sameContent(contentOf(latest), contentOf(beforeCard)) || stable(businessMeta(latest)) !== stable(businessMeta(beforeCard))) {
+          entry.status = 'prewrite-conflict';
+          journal.entries.push(entry);
+          save(path.join(runDir, 'journal.json'), journal);
+          continue;
+        }
+        entry.response = await call('/api/kbe/v1/knowledge-card/batch-delete', {
+          method: 'POST', body: JSON.stringify({ cardIds: [item.id] })
+        });
+        // 回读：detail 消失 + 全量列表不含该 id，两条都满足才算 verified（删卡可能有索引延迟，短轮询）。
+        let gone = false;
+        let observed = null;
+        for (let attempt = 0; attempt < 5 && !gone; attempt++) {
+          if (attempt) await sleep(3000);
+          let detailStill = false;
+          let detailError = null;
+          try {
+            const d = await detail(item.id);
+            detailStill = !!(d && d.id);
+          } catch (error) {
+            detailStill = false;
+            detailError = String(error.message || error);
+          }
+          const inList = (await listAll(true)).some(c => c.id === item.id);
+          observed = { attempt: attempt + 1, detailStill, detailError, inList };
+          gone = !detailStill && !inList;
+        }
+        entry.deleteReadback = observed;
+        entry.status = gone ? 'deleted-verified' : 'delete-verify-pending';
+        journal.entries.push(entry);
+        save(path.join(runDir, 'journal.json'), journal);
+        if (!gone) throw new Error(`删除后回读未确认消失：${item.id}`);
+        continue;
+      }
+
       // ---------- 新建（无 id，必须有 title） ----------
       if (!item.id) {
         if (!item.title) throw new Error('新增任务项必须提供 title');
@@ -388,5 +497,5 @@ if (require.main === module) {
 
 module.exports = {
   FIELDS, stable, sha, segments, contentOf, sameContent, payloadFrom, businessMeta, checkExpected,
-  mergeBusinessPatch, expectedBusinessAfter, atTarget, assertPatchShape, assertBusinessChangeAllowed, verifyCreated
+  mergeBusinessPatch, expectedBusinessAfter, atTarget, assertPatchShape, assertBusinessChangeAllowed, assertDeleteAllowed, verifyCreated
 };

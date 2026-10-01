@@ -128,3 +128,15 @@ test('⑩b 新建回读：任务书没写 ifOpen（默认停用）→ 回读启�
   const 错 = ex.verifyCreated({ created: { content: [{ content: 'A' }], ifOpen: true, includeCondition: { shop: [] } }, business: {}, after: 'A' });
   assert.equal(错.openOk, false);
 });
+
+// ⑪ 删除红线锁（2026-10-01 C4）：删除卡不可逆，必须「确认人 + --allow-delete true」双条件；
+//    反向断言：任何没有确认人/没有开关的删除调用一律抛错，防止以后被误加回自动删除路径。
+test('⑪ 删除红线锁：删除卡必须「有确认人 + 显式放行」，缺一即拒', () => {
+  assert.throws(() => ex.assertDeleteAllowed({ deleteRequested: true, approvedBy: '', allowFlag: 'true' }), /approvedBy/);
+  assert.throws(() => ex.assertDeleteAllowed({ deleteRequested: true, approvedBy: '   ', allowFlag: 'true' }), /approvedBy/);
+  assert.throws(() => ex.assertDeleteAllowed({ deleteRequested: true, approvedBy: '某主管', allowFlag: 'false' }), /allow-delete/);
+  assert.throws(() => ex.assertDeleteAllowed({ deleteRequested: true, approvedBy: '某主管', allowFlag: undefined }), /allow-delete/);
+  assert.equal(ex.assertDeleteAllowed({ deleteRequested: true, approvedBy: '黎路遥（副经理）', allowFlag: 'true' }), true);
+  assert.equal(ex.assertDeleteAllowed({ deleteRequested: false, approvedBy: '', allowFlag: 'false' }), false);
+  assert.equal(ex.assertDeleteAllowed({}), false);
+});

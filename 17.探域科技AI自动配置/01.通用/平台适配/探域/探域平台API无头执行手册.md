@@ -43,6 +43,13 @@ node .\通用经验\探域API只读调用模板.cjs `
 
 POST请求必须把完整请求体放在本地临时文件，通过 `--body-file` 传入；不要把Cookie或Token写入分享包、聊天或日志。
 
+## 已踩过的接口坑（通用，勿回退）
+
+- `POST /api/kbe/v1/knowledge-card/page` **忽略 pageNo/pageIndex**：翻页永远返回第一页（2026-10-01 实测：8 页返回完全相同的前 500 张）。
+  全量拉取要一次 `pageSize: 5000`，并且 **results < total 就报错停下**（fail-closed）——不许拿「缺了半库」的列表去判断重复/消失。
+- 删除是 `POST /api/kbe/v1/knowledge-card/batch-delete`，body `{cardIds:[…]}`（不存在的 id → “没有可操作的知识卡片”）。
+  **不可逆** → 必须「任务文件里 approvedBy（主管/经理）+ 命令行 --allow-delete true」双确认；删后回读「detail 不存在 **且** 全量列表不含该 id」才算成功。
+
 ## 经验沉淀要求
 
 每个脚本顶部写清：意图、范围、读写级别、验证方式、恢复边界。每次新公司接入，都要保存脱敏的接口证据和本公司私有快照；不要把真实快照回填到通用目录。
