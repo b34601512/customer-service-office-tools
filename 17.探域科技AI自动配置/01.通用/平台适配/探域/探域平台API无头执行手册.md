@@ -49,6 +49,9 @@ POST请求必须把完整请求体放在本地临时文件，通过 `--body-file
   全量拉取要一次 `pageSize: 5000`，并且 **results < total 就报错停下**（fail-closed）——不许拿「缺了半库」的列表去判断重复/消失。
 - 删除是 `POST /api/kbe/v1/knowledge-card/batch-delete`，body `{cardIds:[…]}`（不存在的 id → “没有可操作的知识卡片”）。
   **不可逆** → 必须「任务文件里 approvedBy（主管/经理）+ 命令行 --allow-delete true」双确认；删后回读「detail 不存在 **且** 全量列表不含该 id」才算成功。
+- 接待/拦截类配置：读 `POST /api/shop-config/agent/config/get`、写 `POST /api/shop-config/agent/config/save`（body 形如 `{configs:{"agent.prohibited.words":{item:[…]}}}`）——平台 UI 同款调用**不带 orgId**。
+  ⚠ **带 orgId 读这个配置会返回合成的空「默认配置」**（2026-10-01 实测：真店铺 orgId 与不存在的假 orgId 都返空）——核对配置只认**不带 orgId** 的读取。
+  写后必须回读逐词比对（含顺序），并先做 1 词受控试写；回滚件（before 快照 + 还原脚本）先备好再动。
 
 ## 经验沉淀要求
 
