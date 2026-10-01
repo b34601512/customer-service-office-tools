@@ -29,6 +29,19 @@ function 读新字节(文件, 偏移) {
   return { 偏移: 大小 - Buffer.byteLength(半行, 'utf8'), 行: 切开.filter((行) => 行.trim()) };
 }
 
+/** 收件时间 → 本地 HH:MM（记录里有本地时间字符串，也有 ISO/UTC，得统一；否则显示会差 8 小时）。 */
+function 本地时分(原始) {
+  const 文本 = String(原始 || '');
+  if (/^\d{4}-\d{2}-\d{2}T/.test(文本)) {
+    const 时刻 = new Date(文本);
+    if (!Number.isNaN(时刻.getTime())) {
+      const 补 = (n) => String(n).padStart(2, '0');
+      return `${补(时刻.getHours())}:${补(时刻.getMinutes())}`;
+    }
+  }
+  return 文本.slice(11, 16);
+}
+
 /** 一行收件记录 → 给人看的一行摘要（纯函数，便于单测；不含内部 ID）。 */
 function 摘要行(行) {
   let 记录;
@@ -37,7 +50,7 @@ function 摘要行(行) {
   } catch {
     return '【新消息】收到一条读不出来的记录（去 .state/inbox.jsonl 看原文）';
   }
-  const 时间 = String(记录.at || '').slice(11, 16);
+  const 时间 = 本地时分(记录.at);
   const 谁 = 记录.chattype === 'group' ? '群聊' : 记录.chattype === 'single' ? '单聊' : String(记录.chattype || '会话');
   const 类 = String(记录.kind || 记录.msgtype || '消息');
   const 引用 = 记录.quoteText ? '（含引用）' : '';
@@ -73,4 +86,4 @@ function 主流程() {
 
 if (require.main === module) 主流程();
 
-module.exports = { 读新字节, 摘要行, 取参数, 默认收件箱 };
+module.exports = { 读新字节, 摘要行, 本地时分, 取参数, 默认收件箱 };

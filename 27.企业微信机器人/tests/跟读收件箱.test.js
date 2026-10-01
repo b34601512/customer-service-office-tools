@@ -5,17 +5,24 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const { 读新字节, 摘要行, 取参数, 默认收件箱 } = require('../scripts/跟读收件箱.cjs');
+const { 读新字节, 摘要行, 本地时分, 取参数, 默认收件箱 } = require('../scripts/跟读收件箱.cjs');
+
+test('本地时分：ISO（UTC）要换算成本地时间，不能直接切末尾', () => {
+  // 2026-10-01T05:31:24.272Z 在 GMT+8 就是 13:31（2026-10-01 实踩：显示成 05:31）
+  assert.equal(本地时分('2026-10-01T05:31:24.272Z'), '13:31');
+  assert.equal(本地时分('2026-10-01 09:03:10'), '09:03');  // 已是本地时间的照旧
+  assert.equal(本地时分(''), '');
+});
 
 test('摘要行：单聊文本 → 时间 + 单聊 + 正文，且不泄露内部 ID', () => {
   const 行 = JSON.stringify({
     at: '2026-10-01 09:03:10',
-    msgid: 'm-1', chattype: 'single', chatid: '', fromUserId: 'wo**********************_ilFdnEg',
+    msgid: 'm-1', chattype: 'single', chatid: '', fromUserId: 'wo-fake-id-1',
     kind: 'text', msgtype: 'text', text: '帮我登记发票', note: '', quoteText: '', media: null
   });
   const 摘要 = 摘要行(行);
   assert.match(摘要, /^【新消息】09:03 单聊\[text\] 帮我登记发票$/);
-  assert.doesNotMatch(摘要, /woFqtuEQ|m-1/); // 反向锁：内部 ID 不许打印
+  assert.doesNotMatch(摘要, /wo-fake|m-1/); // 反向锁：内部 ID 不许打印
 });
 
 test('摘要行：群聊带引用与附件 → 标出（含引用）/（附件已存）', () => {
