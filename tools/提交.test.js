@@ -54,3 +54,10 @@ test("反向断言：补打码只许 renormalize 已入库文件，且不碰工�
   assert.ok(/diff",\s*"--quiet",\s*"HEAD"/.test(源码), "补打码前必须先用 git diff --quiet HEAD 筛掉工作区有改动的文件");
   assert.ok(/解析含真值文件/.test(源码), "必须用 --核对 的输出定位脏文件");
 });
+
+test("反向断言：忽略文件只警告跳过、新文件不跑 renormalize（2026-10-02 实测两个坑）", () => {
+  const 源码 = fs.readFileSync(path.join(__dirname, "提交.js"), "utf8");
+  assert.ok(/check-ignore/.test(源码), "被 .gitignore 忽略的文件必须 check-ignore 筛掉（私有目录不该入库）");
+  assert.ok(/cat-file",\s*"-e",\s*`HEAD:\$\{f\}`/.test(源码), "renormalize 前必须确认文件已在 HEAD（新文件会 fatal）");
+  assert.ok(!/git",\s*\["add",\s*"--renormalize",\s*"--",\s*\.\.\.文件\]/.test(源码), "不许对新文件直接 renormalize");
+});

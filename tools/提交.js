@@ -96,13 +96,29 @@ function main() {
     }
   }
 
-  // 3) 点名文件：先 add（新文件也要进暂存区），再 --renormalize
-  //    （renormalize 只作用于**已跟踪**文件：让过滤器对"已在库里但没打码"的内容重新生效）
-  跑("git", ["add", "--", ...文件]);
-  跑("git", ["add", "--renormalize", "--", ...文件]);
+  // 3) 点名文件：先筛掉 .gitignore 忽略的（私有目录不入库，只警告不报错）
+  const 入库 = [];
+  const 忽略 = [];
+  for (const f of 文件) {
+    try {
+      execFileSync("git", ["check-ignore", "-q", "--", f], { cwd: 仓库根, stdio: "ignore" });
+      忽略.push(f); // 退出 0 = 被忽略
+    } catch { 入库.push(f); }
+  }
+  if (忽略.length) console.log(`[提交闸门] ⚠ 这些文件被 .gitignore 忽略，跳过（私有/业务数据不入库）：${忽略.join("、")}`);
+  if (!入库.length) throw new Error("点名文件全被 .gitignore 忽略，没有可提交的内容");
+
+  // 先 add（新文件也要进暂存区）
+  跑("git", ["add", "--", ...入库]);
+  // 再 --renormalize，但**只对已在 HEAD 的文件**（新文件 renormalize 会 fatal: not in 'HEAD'）
+  const 已跟踪 = 入库.filter((f) => {
+    try { execFileSync("git", ["cat-file", "-e", `HEAD:${f}`], { cwd: 仓库根, stdio: "ignore" }); return true; }
+    catch { return false; }
+  });
+  if (已跟踪.length) 跑("git", ["add", "--renormalize", "--", ...已跟踪]);
 
   // 4) 提交
-  const 提交输出 = 跑("git", ["commit", "-m", 信息, "--", ...文件]);
+  const 提交输出 = 跑("git", ["commit", "-m", 信息, "--", ...入库]);
   console.log(提交输出.split("\n")[0]);
 
   // 5) 核对：HEAD 里还有没有真值
