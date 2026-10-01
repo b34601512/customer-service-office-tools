@@ -17,6 +17,7 @@ const 上限分钟 = Number.isFinite(上限参数) && 上限参数 > 0 ? 上限�
 const 起点 = Date.now();
 let 上次大小 = -1;
 let 稳定次数 = 0;
+let 上次心跳分钟 = 0;
 
 const 计时器 = setInterval(() => {
   const 已过分钟 = (Date.now() - 起点) / 60000;
@@ -24,6 +25,11 @@ const 计时器 = setInterval(() => {
     console.error(`[等回执] 等了 ${上限分钟} 分钟还没等到：${path.basename(目标)}`);
     clearInterval(计时器);
     process.exit(2);
+  }
+  // 心跳：Monitor 的「无输出超时」靠输出续命（默认 5 分钟无输出就被杀）——每 60 秒打一行
+  if (Math.floor(已过分钟) > 上次心跳分钟) {
+    上次心跳分钟 = Math.floor(已过分钟);
+    console.log(`[等回执] 还在等（已 ${上次心跳分钟} 分钟）：${path.basename(目标)}`);
   }
   let 大小 = -1;
   try { 大小 = fs.statSync(目标).size; } catch (e) { /* 还没出现 */ }
