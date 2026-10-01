@@ -110,9 +110,17 @@ function assertBusinessChangeAllowed({ patch, approvedBy, allowFlag }) {
   }
   return true;
 }
-const EMPTY_SCOPE = () => ({ spu: [], shop: [], rules: [], productGroupId: [], sellerGroup: [], platform: [] });
-const slug = (v) => String(v).replace(/[^\w\u4e00-\u9fa5.-]+/g, '_').slice(0, 60) || 'card';
+const EMPTY_SCOPE = () => ({ spu: [], shop: [], rules: [], productGroupId: [], sellerGroup: [], platform: [] });const slug = (v) => String(v).replace(/[^\w\u4e00-\u9fa5.-]+/g, '_').slice(0, 60) || 'card';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/** 新建后回读校验（纯函数，好测）：期望值来自**任务书**（business），
+ *  不再硬编码「新建=停用、不绑店」——2026-10-01 发现：任务书写 ifOpen:true / 绑店时，旧硬编码会把正确结果误判成 created-verify-failed。 */
+function verifyCreated({ created, business = {}, after } = {}) {
+  const contentOk = sameContent(contentOf(created), after);
+  const openOk = (created.ifOpen === true) === (business.ifOpen === true);
+  const scopeOk = stable((created.includeCondition || {}).shop || []) === stable((business.includeCondition || {}).shop || []);
+  return { contentOk, openOk, scopeOk };
+}
 
 async function main() {
   const taskFile = required('task');
@@ -265,13 +273,12 @@ async function main() {
           continue;
         }
         save(path.join(runDir, `${slug(created.id)}-created.json`), created);
-        const contentOk = sameContent(contentOf(created), item.after);
-        const openOk = created.ifOpen !== true;
-        const scopeOk = stable((created.includeCondition || {}).shop || []) === stable([]);
+        const 校验 = verifyCreated({ created, business, after: item.after });
+        const { contentOk, openOk, scopeOk } = 校验;
         entry.createdId = created.id;
         entry.afterSha256 = sha(contentOf(created));
-        entry.checks = { contentOk, openOk, scopeOk };
-        entry.status = contentOk && openOk ? 'created-verified' : 'created-verify-failed';
+        entry.checks = 校验;
+        entry.status = contentOk && openOk && scopeOk ? 'created-verified' : 'created-verify-failed';
         journal.entries.push(entry);
         save(path.join(runDir, 'journal.json'), journal);
         if (entry.status !== 'created-verified') throw new Error(`新建后回读不一致：${item.title}`);
@@ -381,5 +388,5 @@ if (require.main === module) {
 
 module.exports = {
   FIELDS, stable, sha, segments, contentOf, sameContent, payloadFrom, businessMeta, checkExpected,
-  mergeBusinessPatch, expectedBusinessAfter, atTarget, assertPatchShape, assertBusinessChangeAllowed
+  mergeBusinessPatch, expectedBusinessAfter, atTarget, assertPatchShape, assertBusinessChangeAllowed, verifyCreated
 };

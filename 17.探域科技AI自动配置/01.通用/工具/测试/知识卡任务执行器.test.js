@@ -108,3 +108,23 @@ test('⑨ 只改绑店（正文不动）时不能被当成 already-target 跳过
   // 正文不同 → 一律不到位
   assert.equal(ex.atTarget({ currentContent: ['旧'], after: ['新'], currentBusiness: ex.businessMeta(afterCard), expectBusiness: expect }), false);
 });
+
+// ⑩ 新建回读校验：期望值跟着任务书走（不再硬编码「新建=停用、不绑店」）
+//    2026-10-01 现场：德达链接卡任务书写了 ifOpen:true + 绑德达店，旧硬编码会把正确结果误判成 created-verify-failed
+test('⑩ 新建回读：任务书要启用+绑店 → 回读一致才算过（不许硬编码停用/空绑店）', () => {
+  const 任务书 = { ifOpen: true, includeCondition: { shop: ['2095398963959042048'] } };
+  const 回读对 = { content: [{ content: 'Q:x\nA:y' }], ifOpen: true, includeCondition: { shop: ['2095398963959042048'] } };
+  const 回读错 = { content: [{ content: 'Q:x\nA:y' }], ifOpen: false, includeCondition: { shop: [] } };
+  const 对 = ex.verifyCreated({ created: 回读对, business: 任务书, after: 'Q:x\nA:y' });
+  assert.deepEqual(对, { contentOk: true, openOk: true, scopeOk: true });
+  const 错 = ex.verifyCreated({ created: 回读错, business: 任务书, after: 'Q:x\nA:y' });
+  assert.equal(错.openOk, false);
+  assert.equal(错.scopeOk, false);
+});
+
+test('⑩b 新建回读：任务书没写 ifOpen（默认停用）→ 回读启用就算不一致', () => {
+  const 对 = ex.verifyCreated({ created: { content: [{ content: 'A' }], ifOpen: false, includeCondition: { shop: [] } }, business: {}, after: 'A' });
+  assert.deepEqual(对, { contentOk: true, openOk: true, scopeOk: true });
+  const 错 = ex.verifyCreated({ created: { content: [{ content: 'A' }], ifOpen: true, includeCondition: { shop: [] } }, business: {}, after: 'A' });
+  assert.equal(错.openOk, false);
+});
