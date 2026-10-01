@@ -12,7 +12,8 @@ if (!目标参数) {
   process.exit(2);
 }
 const 目标 = path.isAbsolute(目标参数) ? 目标参数 : path.join(__dirname, 目标参数);
-const 上限分钟 = Number(process.argv[3] || 120);
+const 上限参数 = Number(process.argv[3]);
+const 上限分钟 = Number.isFinite(上限参数) && 上限参数 > 0 ? 上限参数 : 120;
 const 起点 = Date.now();
 let 上次大小 = -1;
 let 稳定次数 = 0;
