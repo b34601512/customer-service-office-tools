@@ -84,17 +84,77 @@ function 多久(毫秒) {
   return 分 < 60 ? `${分} 分钟` : `${Math.floor(分 / 60)} 小时 ${分 % 60} 分`;
 }
 
+/** 解析扫描输出（纯函数，好测）：pid|MB|HH:mm|命令行 → 只留「任务窗」（命令行带 …\任务\…） */
+function 解析窗口行(文本) {
+  return String(文本 || '')
+    .split(/\r?\n/)
+    .map((行) => 行.trim().replace(/^\uFEFF/, ''))
+    .filter((行) => /^\d+\|/.test(行))
+    .map((行) => {
+      const [pid, mb, 起, ...余] = 行.split('|');
+      const 命令行 = 余.join('|');
+      const 任务 = (命令行.match(/@(.+?\.md)/) || [])[1] || '';
+      return { pid: Number(pid), 内存MB: Number(mb), 开窗: 起, 任务, 命令行 };
+    })
+    .filter((x) => x.命令行.includes('任务' + path.sep) || x.命令行.includes('任务\\'));
+}
+
+/** 扫机器上真实在跑的「任务窗」进程（命令行带 0.木婉清档案\任务\ 的 pi）；监听窗不算。
+ *  2026-10-01 用户：「窗口有点多，处理下」——那天攒了 14 扇（都是回执已落的），所以 --看 一并把残留列出来。
+ *  实现：临时 ps1 + 输出走 UTF-8 文件（中文路径直接走管道会被控制台 GBK 弄乱；嵌套引号也容易崩）。 */
+function 扫机器窗口({ 执行 = null } = {}) {
+  const os = require('os');
+  const 临时目录 = fs.mkdtempSync(path.join(os.tmpdir(), 'close-win-'));
+  const 脚本文件 = path.join(临时目录, '扫.ps1');
+  const 输出文件 = path.join(临时目录, '出.txt');
+  const 脚本 = [
+    '$all = Get-CimInstance Win32_Process',
+    "$pis = $all | Where-Object { $_.Name -eq 'node.exe' -and $_.CommandLine -like '*pi-coding-agent*' }",
+    '$pis | ForEach-Object {',
+    '  $mb = [math]::Round($_.WorkingSetSize/1MB)',
+    '  $t = $_.CreationDate.ToString("HH:mm")',
+    '  "$($_.ProcessId)|$mb|$t|$($_.CommandLine)"',
+    '} | Out-File -FilePath "' + 输出文件 + '" -Encoding utf8',
+  ].join('\n');
+  try {
+    fs.writeFileSync(脚本文件, '﻿' + 脚本, 'utf8'); // BOM：PowerShell 5.1 才会按 UTF-8 读
+    const { execFileSync } = require('child_process');
+    const 跑 = 执行 || ((f) => execFileSync('powershell', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', f], { stdio: 'ignore', windowsHide: true }));
+    跑(脚本文件);
+    const 原始 = fs.readFileSync(输出文件, 'utf8');
+    return 解析窗口行(原始);
+  } catch {
+    return [];
+  } finally {
+    try {
+      fs.rmSync(临时目录, { recursive: true, force: true });
+    } catch {
+      /* 临时目录删不掉不影响 */
+    }
+  }
+}
+
 function 看(输出 = console.log) {
   const 窗口 = 读登记();
   if (窗口.length === 0) {
-    输出('没有登记的任务窗（干净的）。');
-    return 窗口;
+    输出('登记里没有任务窗。');
+  } else {
+    for (const x of 窗口) {
+      const 活 = 进程在(x.pid);
+      const 回执 = fs.existsSync(x.回执 || 回执路径(x.任务)) ? '回执已落' : '回执未落';
+      const 时长 = x.开窗时间 ? 多久(Date.now() - Date.parse(x.开窗时间)) : '?';
+      输出(`${活 ? '●开' : '○关'} pid=${x.pid} ${回执} 开了${时长} ${path.basename(String(x.任务))}`);
+    }
   }
-  for (const x of 窗口) {
-    const 活 = 进程在(x.pid);
-    const 回执 = fs.existsSync(x.回执 || 回执路径(x.任务)) ? '回执已落' : '回执未落';
-    const 时长 = x.开窗时间 ? 多久(Date.now() - Date.parse(x.开窗时间)) : '?';
-    输出(`${活 ? '●开' : '○关'} pid=${x.pid} ${回执} 开了${时长} ${path.basename(String(x.任务))}`);
+  // 机器上真实在跑的任务窗（防「没登记就攒着」）
+  const 机器 = 扫机器窗口();
+  if (机器.length > 0) {
+    输出(`—— 机器上在跑的任务窗 ${机器.length} 扇（回执落了就该关）：`);
+    for (const x of 机器) {
+      const 回执 = x.任务 ? fs.existsSync(path.join(档案目录, '任务回执', path.basename(x.任务))) : false;
+      输出(`  ${回执 ? '✔回执已落' : '…回执未落'} pid=${x.pid} ${x.开窗} ${x.内存MB}MB ${x.任务 ? path.basename(x.任务) : ''}`);
+    }
+    输出('  关：node 关任务窗.cjs --关 <pid>');
   }
   return 窗口;
 }
@@ -172,14 +232,15 @@ if (require.main === module) {
       process.exit(1);
     }
     const 项 = 读登记().find((x) => String(x.pid) === String(键) || x.任务 === 键 || path.basename(String(x.任务)) === 键);
-    if (!项) {
-      console.log(`登记里没有 ${键}（--看 一下）`);
+    const pid = 项 ? 项.pid : Number(键);
+    if (!项 && !Number.isFinite(pid)) {
+      console.log(`登记里没有 ${键}（--看 一下；未登记的窗口可以直接给 pid）`);
       process.exit(1);
     }
-    关窗(项.pid);
-    摘登记(项.pid);
-    记日志(`手动关窗 pid=${项.pid}（${path.basename(String(项.任务))}）`);
-    console.log(`✓ 已关：pid=${项.pid} ${path.basename(String(项.任务))}`);
+    关窗(pid);
+    摘登记(pid);
+    记日志(`手动关窗 pid=${pid}（${项 ? path.basename(String(项.任务)) : '未登记，按 pid 关'}）`);
+    console.log(`✓ 已关：pid=${pid}${项 ? ' ' + path.basename(String(项.任务)) : ''}`);
   } else if (argv.includes('--守')) {
     const 任务 = 取('--任务');
     const pid = 取('--pid');
@@ -204,4 +265,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = { 回执路径, 读登记, 写登记, 加登记, 摘登记, 进程在, 关窗, 看, 扫, 守卫, 解析时长, 登记文件, 日志文件 };
+module.exports = { 回执路径, 读登记, 写登记, 加登记, 摘登记, 进程在, 关窗, 看, 扫, 扫机器窗口, 解析窗口行, 守卫, 解析时长, 登记文件, 日志文件 };

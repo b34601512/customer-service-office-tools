@@ -62,6 +62,20 @@ test('守卫：回执落地 → 关掉窗口进程（真起一个进程试）', 
   }
 });
 
+test('解析扫描输出：只留任务窗（监听窗/赵敏窗不算）', () => {
+  const 文本 = [
+    '111|60|13:45|node pi-coding-agent @D:\\桌面\\办公软件\\0.木婉清档案\\任务\\a.md',
+    '222|259|13:10|node pi-coding-agent @D:\\桌面\\个人软件\\00.赵敏档案\\企微\\boot-prompt.md',
+    '333|257|13:17|node pi-coding-agent',
+    '',
+  ].join('\r\n');
+  const 出 = 关窗.解析窗口行(文本);
+  assert.strictEqual(出.length, 1);
+  assert.strictEqual(出[0].pid, 111);
+  assert.strictEqual(出[0].内存MB, 60);
+  assert.ok(出[0].任务.endsWith('a.md'));
+});
+
 test('反向断言：开任务窗必须挂守卫（别攒窗口）+ 不许自己发企微', () => {
   const 源 = fs.readFileSync(path.join(档案目录, '开任务窗.cjs'), 'utf8');
   assert.match(源, /关任务窗\.cjs/, '开任务窗必须引用关任务窗（干完就关）');
