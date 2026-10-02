@@ -140,3 +140,26 @@ test('⑪ 删除红线锁：删除卡必须「有确认人 + 显式放行」，�
   assert.equal(ex.assertDeleteAllowed({ deleteRequested: false, approvedBy: '', allowFlag: 'false' }), false);
   assert.equal(ex.assertDeleteAllowed({}), false);
 });
+
+// ⑫ 删除后回读判定（2026-10-02 D27）：page 接口删除后 total 计数滞后（results 先减、total 后减），
+//    删除核对不依赖 total，改用「预期行数」口径（expectAfter = 已知卡数 - 1），行数多/少都算未定（fail-closed）。
+//    反向断言：任何把 total 滞后当成「删掉」的宽松判定（只看 id 不在列表）都不允许通过。
+test('⑫ 删除回读：按预期行数判定，total 滞后不影响；行数多/少都不过', () => {
+  const rows = [{ id: 'a' }, { id: 'b' }];
+  // 正常：detail 消失 + 列表不含 c + 行数恰为预期 → 过（此时 total 可能还滞后，例如 total=3）
+  assert.deepEqual(
+    ex.deleteReadbackVerdict({ detailStill: false, rows, id: 'c', expectAfter: 2 }),
+    { inList: false, countOk: true, gone: true }
+  );
+  // 列表仍含目标 id → 不算删掉
+  assert.equal(ex.deleteReadbackVerdict({ detailStill: false, rows: [{ id: 'c' }], id: 'c', expectAfter: 1 }).gone, false);
+  // 行数比预期多 1（有人并行加卡）→ 不算过
+  assert.equal(ex.deleteReadbackVerdict({ detailStill: false, rows: [...rows, { id: 'x' }], id: 'c', expectAfter: 2 }).gone, false);
+  // 行数比预期少 1（有人并行删卡）→ 不算过
+  assert.equal(ex.deleteReadbackVerdict({ detailStill: false, rows: [rows[0]], id: 'c', expectAfter: 2 }).gone, false);
+  // detail 还在 → 不算删掉，即使列表暂时没显示
+  assert.equal(ex.deleteReadbackVerdict({ detailStill: true, rows: [{ id: 'a' }], id: 'c', expectAfter: 1 }).gone, false);
+  // 缺省/异常入参不逗留：空 rows + 期望 0 且 detail 消失才算过
+  assert.equal(ex.deleteReadbackVerdict({ detailStill: false, rows: [], id: 'c', expectAfter: 0 }).gone, true);
+  assert.equal(ex.deleteReadbackVerdict({}).gone, false);
+});

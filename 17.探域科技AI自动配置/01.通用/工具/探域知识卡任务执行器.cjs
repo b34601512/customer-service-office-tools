@@ -6,6 +6,8 @@
 // 且同标题已存在时不新建、不改写（status=title-conflict，交给调用方决定）；③带 id + delete:true 的删除（破坏性，见下）。
 // 删除（item.delete=true）为破坏性操作：任务文件必须带 approvedBy（客服主管/经理姓名），命令行必须显式 --allow-delete true；
 // 删前保存完整 detail、写前重读，删后回读「detail 消失 + 全量列表不含该 id」才算 deleted-verified。
+// 删除核对口径（2026-10-02 D27 修正）：page 接口删除后 total 计数会滞后（results 先减、total 后减，实测约 1~2 分钟），
+// 不能用 rows.length >= total 判全量；改为「预期行数」：本次 run 每次 verified 删除 -1，行数多/少都算未定（fail-closed）。
 // 不写死公司、店铺、型号、正文、对象ID、账号或本机路径。
 const fs = require('fs');
 const path = require('path');
@@ -135,6 +137,17 @@ function verifyCreated({ created, business = {}, after } = {}) {
   return { contentOk, openOk, scopeOk };
 }
 
+/** 删除后回读判定（纯函数，好测）：
+ *  探域 page 接口在卡消失后 total 计数会滞后（results 先减、total 后减），所以删除核对不依赖 total，
+ *  改用「预期行数」：expectAfter = 本次 run 的已知卡数 - 1；只有「detail 消失 + rows 不含该 id + rows.length === expectAfter」才算过。
+ *  rows 比预期多（并行加卡）或比预期少（并行删卡）都算未定，交给调用方继续轮询或报错（fail-closed）。 */
+function deleteReadbackVerdict({ detailStill, rows, id, expectAfter } = {}) {
+  const list = Array.isArray(rows) ? rows : [];
+  const inList = list.some(c => c && c.id === id);
+  const countOk = list.length === expectAfter;
+  return { inList, countOk, gone: !detailStill && !inList && countOk };
+}
+
 async function main() {
   const taskFile = required('task');
   const task = JSON.parse(fs.readFileSync(taskFile, 'utf8'));
@@ -226,6 +239,9 @@ async function main() {
       return cachedCards;
     };
 
+    // 删除核对的「预期行数」基线：第一次真删前拉一次当前行数（不依赖会滞后的 total）。
+    let deleteKnownRows = null;
+
     for (const item of task.items) {
       // ---------- 删除（item.delete === true；严格顺序：读前 → SHA 对照 → 写前重读 → 删 → 回读） ----------
       if (item.delete === true) {
@@ -279,12 +295,24 @@ async function main() {
           save(path.join(runDir, 'journal.json'), journal);
           continue;
         }
+        // 删除前记录计数基线：page 接口的 total 会滞后，只信当次 rows 行数。
+        if (deleteKnownRows == null) {
+          const base = await call('/api/kbe/v1/knowledge-card/page', {
+            method: 'POST', body: JSON.stringify({ pageNo: 1, pageSize: 5000 })
+          });
+          const baseRows = (base && base.results) || [];
+          if (!baseRows.length) throw new Error('删除核对基线拉取为空，停止（fail-closed）');
+          deleteKnownRows = baseRows.length;
+          entry.baseline = { rows: baseRows.length, total: base && base.total != null ? base.total : null, at: new Date().toISOString() };
+        }
         entry.response = await call('/api/kbe/v1/knowledge-card/batch-delete', {
           method: 'POST', body: JSON.stringify({ cardIds: [item.id] })
         });
-        // 回读：detail 消失 + 全量列表不含该 id，两条都满足才算 verified（删卡可能有索引延迟，短轮询）。
+        // 回读：detail 消失 + 列表不含该 id + 行数恰为「已知卡数 - 1」，三条都满足才算 verified
+        // （total 计数会滞后，不参与判定；行数多/少都算未定，短轮询）。
         let gone = false;
         let observed = null;
+        const expectAfter = deleteKnownRows - 1;
         for (let attempt = 0; attempt < 5 && !gone; attempt++) {
           if (attempt) await sleep(3000);
           let detailStill = false;
@@ -296,12 +324,21 @@ async function main() {
             detailStill = false;
             detailError = String(error.message || error);
           }
-          const inList = (await listAll(true)).some(c => c.id === item.id);
-          observed = { attempt: attempt + 1, detailStill, detailError, inList };
-          gone = !detailStill && !inList;
+          const data = await call('/api/kbe/v1/knowledge-card/page', {
+            method: 'POST', body: JSON.stringify({ pageNo: 1, pageSize: 5000 })
+          });
+          const rows = (data && data.results) || [];
+          const verdict = deleteReadbackVerdict({ detailStill, rows, id: item.id, expectAfter });
+          observed = {
+            attempt: attempt + 1, detailStill, detailError, inList: verdict.inList,
+            rowsReturned: rows.length, expectAfter, countOk: verdict.countOk,
+            total: data && data.total != null ? data.total : null
+          };
+          gone = verdict.gone;
         }
         entry.deleteReadback = observed;
         entry.status = gone ? 'deleted-verified' : 'delete-verify-pending';
+        if (gone) deleteKnownRows = expectAfter;
         journal.entries.push(entry);
         save(path.join(runDir, 'journal.json'), journal);
         if (!gone) throw new Error(`删除后回读未确认消失：${item.id}`);
@@ -497,5 +534,6 @@ if (require.main === module) {
 
 module.exports = {
   FIELDS, stable, sha, segments, contentOf, sameContent, payloadFrom, businessMeta, checkExpected,
-  mergeBusinessPatch, expectedBusinessAfter, atTarget, assertPatchShape, assertBusinessChangeAllowed, assertDeleteAllowed, verifyCreated
+  mergeBusinessPatch, expectedBusinessAfter, atTarget, assertPatchShape, assertBusinessChangeAllowed, assertDeleteAllowed, verifyCreated,
+  deleteReadbackVerdict
 };
