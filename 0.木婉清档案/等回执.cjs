@@ -25,6 +25,15 @@ if (!目标参数) {
 }
 const 目标 = path.isAbsolute(目标参数) ? 目标参数 : path.join(__dirname, 目标参数);
 const 起点 = Date.now();
+// 防假阳性（2026-10-02 实例）：同名回执**上一轮已经存在**时，不能一开机就报「回执到了」。
+// 口径：开工时先记下旧文件的大小+mtime；只有「文件不存在 → 后来出现」或「mtime 比开工时更新」才算新一轮的回执。
+let 起点大小 = -1;
+let 起点mtime = 0;
+try {
+  const st = fs.statSync(目标);
+  起点大小 = st.size;
+  起点mtime = st.mtimeMs;
+} catch { /* 开工时还没有：好，直接等它出现 */ }
 let 上次大小 = -1;
 let 稳定次数 = 0;
 let 上次心跳次数 = 0;
@@ -42,8 +51,10 @@ const 计时器 = setInterval(() => {
     console.log(`[等回执] 还在等（已 ${Math.floor(已过分钟)} 分钟）：${path.basename(目标)}`);
   }
   let 大小 = -1;
-  try { 大小 = fs.statSync(目标).size; } catch (e) { /* 还没出现 */ }
-  if (大小 > 0 && 大小 === 上次大小) {
+  let mtime = 0;
+  try { const st = fs.statSync(目标); 大小 = st.size; mtime = st.mtimeMs; } catch (e) { /* 还没出现 */ }
+  const 是新一轮 = 大小 > 0 && (起点大小 < 0 ? true : mtime > 起点mtime);
+  if (是新一轮 && 大小 === 上次大小) {
     稳定次数 += 1;
     if (稳定次数 >= 2) {
       console.log(`[等回执] 出现并稳定：${path.basename(目标)}（${大小} 字节）`);
