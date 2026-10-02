@@ -97,13 +97,14 @@ test('⑧ fail-closed：results < total 必须报错停下；数组输入原样�
   assert.deepEqual(巡检.校验全量([{ id: 1 }]), [{ id: 1 }]);
 });
 
-test('⑨ 运行巡检：同输入同输出（确定性），五类都有计数', () => {
+test('⑨ 运行巡检：同输入同输出（确定性），六类都有计数', () => {
   const cards = [
     卡({ id: 'a', content: [{ content: '加微信号 x' }] }),
     卡({ id: 'b', content: [{ content: '加微信号 x' }] }),
     卡({ id: 'c', ifOpen: false, content: [{ content: '停用正文' }] }),
     卡({ id: 'd', title: 'DEDAKJ 对比', shop: 德达 }),
     卡({ id: 'e', content: [{ content: '活动截至2025年1月1日' }] }),
+    卡({ id: 'f', content: [{ content: '热线400-830-2119' }] }),
   ];
   const r1 = 巡检.运行巡检({ cards, 数据来源: '测试', 判定基准日: new Date(2026, 9, 2) });
   const r2 = 巡检.运行巡检({ cards, 数据来源: '测试', 判定基准日: new Date(2026, 9, 2) });
@@ -113,12 +114,14 @@ test('⑨ 运行巡检：同输入同输出（确定性），五类都有计数'
   assert.equal(r1.类别.停用卡.候选数, 1);
   assert.equal(r1.类别.绑店错位.候选数, 1);
   assert.equal(r1.类别.过期时间词.候选数, 1);
+  assert.equal(r1.类别.电话号一致性.号码数, 1);
+  assert.equal(r1.类别.电话号一致性.异常数, 0);
 });
 
-test('⑩ 渲染 md：五类候选文件都生成且含标题', () => {
+test('⑩ 渲染 md：六类候选文件都生成且含标题', () => {
   const r = 巡检.运行巡检({ cards: [卡({ id: 'a' })], 数据来源: '测试', 判定基准日: new Date(2026, 9, 2) });
   const md = 巡检.渲染md(r);
-  assert.deepEqual(Object.keys(md).sort(), ['停用卡-候选.md', '引流词-候选.md', '绑店错位-候选.md', '过期时间词-候选.md', '重复卡-候选.md'].sort());
+  assert.deepEqual(Object.keys(md).sort(), ['停用卡-候选.md', '引流词-候选.md', '电话号一致性-候选.md', '绑店错位-候选.md', '过期时间词-候选.md', '重复卡-候选.md'].sort());
   for (const [名, 文] of Object.entries(md)) assert.ok(文.startsWith('# '), 名 + ' 缺标题');
 });
 
@@ -126,8 +129,83 @@ test('⑪ 反向断言：脚本不出现任何写接口词，且只调用一个�
   const src = fs.readFileSync(path.join(__dirname, '..', '探域知识卡巡检.cjs'), 'utf8');
   assert.ok(!/apply/i.test(src), '脚本不得出现 apply');
   assert.ok(!/delete/i.test(src), '脚本不得出现 delete');
+  assert.ok(!/batch-delete/i.test(src), '脚本不得出现 batch-delete');
   assert.ok(!/save/i.test(src), '脚本不得出现 save');
   assert.ok(!/config-save/i.test(src), '脚本不得出现 config-save');
+  assert.ok(!/config\/save/i.test(src), '脚本不得出现 config/save');
+  assert.ok(!/save-learn/i.test(src), '脚本不得出现 save-learn');
   const 接口 = [...src.matchAll(/\/api\/[a-zA-Z0-9_\-\/]+/g)].map((m) => m[0]);
   assert.deepEqual([...new Set(接口)], ['/api/kbe/v1/knowledge-card/page']);
+});
+
+test('⑫ 电话号一致性：空格/全角/不同分段归一化后成同一号', () => {
+  const 四 = [
+    卡({ id: 'p1', content: [{ content: '热线 400-830-2 19' }] }),
+    卡({ id: 'p2', content: [{ content: '热线 400-830-219' }] }),
+    卡({ id: 'p3', content: [{ content: '热线 400 830 2119' }] }),
+    卡({ id: 'p4', content: [{ content: '热线 ４００-８３０-２１１９' }] }),
+  ];
+  const x = 巡检.扫电话号一致性(四);
+  assert.equal(x.号码数, 2);
+  const 主 = x.items.find((it) => it.号码 === '4008302119');
+  const 短 = x.items.find((it) => it.号码 === '400830219');
+  assert.ok(主 && 短);
+  assert.equal(主.类别, '400热线');
+  assert.equal(主.位数, 10);
+  assert.deepEqual([...主.卡id].sort(), ['p3', 'p4']);
+  assert.deepEqual([...短.卡id].sort(), ['p1', 'p2']);
+});
+
+test('⑬ 电话号：纯数字与带横线判为同一号；位数 <8 的不算号', () => {
+  const a = 卡({ id: 'a', content: [{ content: '电话4008302119' }] });
+  const b = 卡({ id: 'b', content: [{ content: '电话400-830-2119' }] });
+  const c = 卡({ id: 'c', content: [{ content: '热线400-830-2' }] });
+  const x = 巡检.扫电话号一致性([a, b, c]);
+  assert.equal(x.号码数, 1);
+  assert.deepEqual([...x.items[0].卡id].sort(), ['a', 'b']);
+});
+
+test('⑭ 电话号异常：400 非主号进异常；主号不进；手机 11 位正常', () => {
+  const 主 = 卡({ id: 'm1', content: [{ content: '热线400-830-2119' }] });
+  const 错 = 卡({ id: 'm2', content: [{ content: '热线400-830-119' }] });
+  const 漏 = 卡({ id: 'm3', content: [{ content: '热线400-830-2 19' }] });
+  const 同长 = 卡({ id: 'm4', content: [{ content: '热线400-830-2199' }] });
+  const 机 = 卡({ id: 'm5', content: [{ content: '售后177****4984' }] });
+  const 短机 = 卡({ id: 'm6', content: [{ content: '售后1771585498' }] });
+  const x = 巡检.扫电话号一致性([主, 错, 漏, 同长, 机, 短机]);
+  assert.deepEqual(x.异常.map((e) => e.号码).sort(), ['1771585498', '400830119', '400830219', '4008302199'].sort());
+  const 同长原因 = x.异常.find((e) => e.号码 === '4008302199').原因.join();
+  assert.match(同长原因, /与主号不同/);
+  assert.ok(!同长原因.includes('位数不同'), '同长度不能用「位数不同」当理由');
+  assert.match(x.异常.find((e) => e.号码 === '400830219').原因.join(), /与主号 4008302119 同前缀但位数不同/);
+  assert.match(x.异常.find((e) => e.号码 === '1771585498').原因.join(), /手机号应为 11 位/);
+  assert.equal(x.items.find((it) => it.号码 === '177****4984').类别, '手机号');
+  assert.equal(x.异常.find((e) => e.号码 === '400830219').分隔怪, true);
+});
+
+test('⑮ 电话号分隔异常：空格/点/全角标出；纯横线/纯数字不标', () => {
+  const 空格 = 卡({ id: 's1', content: [{ content: '热线400 830 2119' }] });
+  const 点 = 卡({ id: 's2', content: [{ content: '热线400.830.2119' }] });
+  const 全角 = 卡({ id: 's3', content: [{ content: '热线４００－８３０－２１１９' }] });
+  const 横线 = 卡({ id: 's4', content: [{ content: '热线400-830-2119' }] });
+  const 纯 = 卡({ id: 's5', content: [{ content: '热线4008302119' }] });
+  const x = 巡检.扫电话号一致性([空格, 点, 全角, 横线, 纯]);
+  assert.equal(x.号码数, 1); // 五种写法归一化后是同一个号
+  assert.deepEqual([...new Set(x.分隔异常.map((e) => e.卡id))].sort(), ['s1', 's2', 's3']);
+});
+
+test('⑯ 电话号：编号类数字仍统计，但提示「疑似非电话」', () => {
+  const c = 卡({ id: 'n1', content: [{ content: '验厂报告编号192****4615' }] });
+  const x = 巡检.扫电话号一致性([c]);
+  const it = x.items.find((i) => i.号码 === '192****4615');
+  assert.equal(it.类别, '手机号');
+  assert.equal(it.疑似非电话, true);
+});
+
+test('⑰ 电话号：400-830-2119 与主号一致时不进异常', () => {
+  const c = 卡({ id: 'x', content: [{ content: '全国服务热线：400-830-2119' }] });
+  const x = 巡检.扫电话号一致性([c]);
+  assert.equal(x.号码数, 1);
+  assert.equal(x.异常数, 0);
+  assert.equal(x.分隔异常数, 0);
 });

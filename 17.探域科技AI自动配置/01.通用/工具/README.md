@@ -82,6 +82,7 @@ python .\图片定点编辑器.py `
 
 ## 其他平台工具
 
+- `探域知识卡巡检.cjs`：六类只读巡检（引流词/重复卡/停用卡/绑店错位/过期时间词/电话号一致性；电话号先全角转半角、去分隔符归一化再比对，防「400-830-2 19」这类空格漏扫），一次全库 `page` 读取 + 本地判定，fail-closed（拉不全即报错退出 2）。`node .\探域知识卡巡检.cjs --base-url http://agent.tanyuai.com --profile "<已登录画像>" --browser-channel msedge --playwright-core-path "<playwright-core 路径>" --输出 "<目录>" [--判定基准日 2026-10-02]`；也可 `--输入 <全库.json> --输出 <目录>` 离线复跑。产出 `巡检-汇总.json` + 六类 `候选.md`；用法与口径见脚本头注释与 `测试/探域知识卡巡检.test.js`。
 - `探域只读批量调用.cjs`：一次浏览器会话里跑多条**只读**查询（对账、回读核对、接口探测），默认只允许 GET，POST 需 `--allow-post true`。
 - `探域API只读调用模板.cjs`
 - `探域自定义AgentAPI模板.cjs`
