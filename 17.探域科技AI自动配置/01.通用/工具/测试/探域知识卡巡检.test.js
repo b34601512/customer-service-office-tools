@@ -209,3 +209,33 @@ test('⑰ 电话号：400-830-2119 与主号一致时不进异常', () => {
   assert.equal(x.异常数, 0);
   assert.equal(x.分隔异常数, 0);
 });
+
+test('⑱ 引流词 D10：归一化后识别空格/全角/大小写变体，新词表命中引导句', () => {
+  const v1 = 卡({ id: 'v1', content: [{ content: '可以加 V：abc123 领取教程' }] });
+  const v2 = 卡({ id: 'v2', content: [{ content: '请添加威信：abc' }] });
+  const v3 = 卡({ id: 'v3', content: [{ content: '扫机器背面的码进去咨询' }] });
+  const v4 = 卡({ id: 'v4', content: [{ content: '关注抖音号 abc 看视频' }] });
+  const v5 = 卡({ id: 'v5', content: [{ content: '无需添加微信、关注公众号或扫码跳转站外。' }] });
+  const v6 = 卡({ id: 'v6', content: [{ content: '机器故障代码E2怎么处理？' }] });
+  const items = 巡检.扫引流词([v1, v2, v3, v4, v5, v6]);
+  assert.deepEqual(items.map((x) => x.id).sort(), ['v1', 'v2', 'v3', 'v4', 'v5']);
+  const 命中 = (id) => items.find((x) => x.id === id).命中.map((h) => h.词);
+  assert.ok(命中('v1').includes('加v'));
+  assert.ok(命中('v2').includes('威信'));
+  assert.ok(命中('v3').includes('背面的码') && 命中('v3').includes('码进去'));
+  assert.ok(命中('v4').includes('抖音号'));
+  assert.equal(items.find((x) => x.id === 'v5').疑似反向劝阻, true);
+  const 上下文 = items.find((x) => x.id === 'v1').命中.find((h) => h.词 === '加v').上下文;
+  assert.match(上下文, /加 V/); // 上下文按原文截取（保留空格），便于人工复核
+});
+
+test('⑲ 引流词归一化：全角转半角、去空格/连字符/点、小写；映射长度一致', () => {
+  const a = 巡检.归一化引流文本('加 Ｖ-信.号');
+  assert.equal(a.文本, '加v信号');
+  assert.equal(a.映射.length, a.文本.length);
+  const b = 巡检.归一化引流文本('ＶＸ');
+  assert.equal(b.文本, 'vx');
+  // 裸「码」不入词表：快件码/故障代码等正常语境不出候选
+  const 正常 = 卡({ id: 'ok', content: [{ content: '取件码哪里看？故障代码E1是什么？' }] });
+  assert.equal(巡检.扫引流词([正常]).length, 0);
+});
