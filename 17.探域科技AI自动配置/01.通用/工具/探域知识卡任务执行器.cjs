@@ -225,9 +225,9 @@ async function main() {
     const listAll = async (force) => {
       if (!cachedCards || force) {
         // 实测（2026-10-01）：该接口忽略 pageNo/pageIndex，翻页永远返回第一页；分页无效，必须一次拉全。
-        // 拉不全就报错停下（缺失全量时禁止继续判断防重复/消失）。
+        // 实测（2026-10-03）：库已涨到 7546 张，pageSize=5000 会触发「全库未拉全」而停；pageSize=10000 可拉全（20000 返回 0 行，被限）。
         const data = await call('/api/kbe/v1/knowledge-card/page', {
-          method: 'POST', body: JSON.stringify({ pageNo: 1, pageSize: 5000 })
+          method: 'POST', body: JSON.stringify({ pageNo: 1, pageSize: 10000 })
         });
         const rows = (data && data.results) || [];
         const total = data && typeof data.total === 'number' ? data.total : rows.length;
