@@ -65,7 +65,8 @@ test('守卫：回执落地 → 关掉窗口进程（真起一个进程试）', 
 test('解析扫描输出：只留任务窗（监听窗/赵敏窗不算）', () => {
   const 文本 = [
     '111|60|13:45|node pi-coding-agent @D:\\桌面\\办公软件\\0.木婉清档案\\任务\\a.md',
-    '222|259|13:10|node pi-coding-agent @D:\\桌面\\个人软件\\00.赵敏档案\\企微\\boot-prompt.md',
+    '222|259|13:10|node pi-coding-agent @D:\\桌面\\个人软件\\00.赵敏档案\\任务\\b.md',
+    '444|100|13:12|node pi-coding-agent @D:\\桌面\\个人软件\\00.赵敏档案\\企微\\boot-prompt.md',
     '333|257|13:17|node pi-coding-agent',
     '',
   ].join('\r\n');
