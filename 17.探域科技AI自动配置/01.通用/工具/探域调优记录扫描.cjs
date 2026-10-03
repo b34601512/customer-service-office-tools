@@ -9,8 +9,10 @@
 //     --scan [--since "2026-10-03 17:00:00"] [--until "…"] [--shops "id1,id2" | --all] \
 //     [--actionable-only] [--out-dir "<证据目录>"]
 //   node 探域调优记录扫描.cjs ... --review "id1,id2" [--commit] [--shop <thirdShopId>]
+//   node 探域调优记录扫描.cjs ... --review "id1,id2" --verify --shop <thirdShopId>   （只读核对已标记状态）
 //
 // 说明：--scan 只读；--review 默认 dry-run，加 --commit 才写（一次一条；写后回读 reviewStatus 必须=2）。
+//       回读改为「等列表缓存刷新（首读等 60s）→ 一次拉列表批量核对」，避免逐条立即回读误报 ✗（2026-10-03 实测）。
 //       增量建议：每轮只拉上次检查之后的时间窗（如最近 10~30 分钟），历史积压另按窗口分批。
 'use strict';
 const fs = require('fs');
@@ -90,25 +92,37 @@ async function main() {
     if (process.argv.includes('--review')) {
       const ids = (argument('--review', '') || '').split(',').map(s => s.trim()).filter(Boolean);
       const 提交 = process.argv.includes('--commit');
+      const 只看 = process.argv.includes('--verify');
       const 单店 = argument('--shop');
       if (!ids.length) throw new Error('--review 需要 id 列表');
-      if (提交 && !单店) throw new Error('--review --commit 需要 --shop <thirdShopId>（标记要带店铺）');
+      if ((提交 || 只看) && !单店) throw new Error('--review --commit/--verify 需要 --shop <thirdShopId>');
+      if (只看) {
+        console.log(`只读核对 ${ids.length} 条`);
+        const 状态 = await 回读一批(page, ids, 单店, { 立即: true });
+        for (const id of ids) console.log(`  ${String(状态.get(id)) === '2' ? '✓' : '✗'} ${id} 回读=${状态.get(id) ?? '(未找到)'}`);
+        return;
+      }
       console.log(`待标记 ${ids.length} 条${提交 ? '' : '（dry-run，加 --commit 才写）'}`);
       const 记录 = [];
+      if (!提交) {
+        for (const id of ids) console.log(`  · ${id}`);
+        return;
+      }
       for (const id of ids) {
-        if (!提交) { console.log(`  · ${id}`); continue; }
         const w = await 页面内(page, '/api/im/agent-trace/review', 'POST', { cardId: id, thirdShopId: 单店 });
-        const ok = w.httpStatus === 200 && w.json?.code === 1;
-        const 回读 = await 读记录状态(page, id, 单店);
-        记录.push({ id, 写响应: w.json?.msg, 回读reviewStatus: 回读 });
-        console.log(`  ${ok && String(回读) === '2' ? '✓' : '✗'} ${id} 写=${w.json?.msg || ''} 回读=${回读}`);
+        记录.push({ id, 写响应: w.json?.msg, httpStatus: w.httpStatus, code: w.json?.code });
       }
-      if (提交) {
-        fs.mkdirSync(outDir, { recursive: true });
-        const f = path.join(outDir, `调优记录标记-${Date.now()}.json`);
-        fs.writeFileSync(f, JSON.stringify({ 时间: new Date().toISOString(), 记录 }, null, 1));
-        console.log('证据：' + f);
+      // 写后回读：逐条立即回读会撞列表缓存滞后（2026-10-03 实测全部误报 ✗），改为「等缓存刷新 → 一次拉列表批量核对」。
+      const 状态 = await 回读一批(page, ids, 单店);
+      for (const r of 记录) {
+        r.回读reviewStatus = 状态.get(r.id) ?? null;
+        const ok = r.httpStatus === 200 && r.code === 1;
+        console.log(`  ${ok && String(r.回读reviewStatus) === '2' ? '✓' : '✗'} ${r.id} 写=${r.写响应 || ''} 回读=${r.回读reviewStatus ?? '(未找到)'}`);
       }
+      fs.mkdirSync(outDir, { recursive: true });
+      const f = path.join(outDir, `调优记录标记-${Date.now()}.json`);
+      fs.writeFileSync(f, JSON.stringify({ 时间: new Date().toISOString(), 店铺: 单店, 记录 }, null, 1));
+      console.log('证据：' + f);
       return;
     }
 
@@ -149,15 +163,19 @@ async function main() {
   }
 }
 
-/** 标记后回读该条 reviewStatus（用列表按 id 过滤，避免再猜接口）。 */
-async function 读记录状态(page, id, thirdShopId) {
-  for (let i = 0; i < 3; i++) {
+/** 批量回读一组记录的 reviewStatus：写后等列表缓存刷新，一次拉列表核对；未全到 2 时按 30s 间隔再等（上限 5 次）。 */
+async function 回读一批(page, ids, thirdShopId, 选项 = {}) {
+  const 结果 = new Map();
+  for (let attempt = 0; attempt < 5; attempt++) {
+    await new Promise(r => setTimeout(r, attempt > 0 ? 30000 : (选项.立即 ? 0 : 60000)));
     const rows = await 拉记录(page, thirdShopId, '2000-01-01 00:00:00', 现在());
-    const 命中 = rows.find(x => String(x.id) === String(id));
-    if (命中) return 命中.reviewStatus;
-    await new Promise(r => setTimeout(r, 2000));
+    for (const id of ids) {
+      const 命中 = rows.find(x => String(x.id) === String(id));
+      if (命中) 结果.set(id, 命中.reviewStatus);
+    }
+    if (ids.every(id => String(结果.get(id)) === '2')) break;
   }
-  return '(回读未找到)';
+  return 结果;
 }
 
 if (require.main === module) {
