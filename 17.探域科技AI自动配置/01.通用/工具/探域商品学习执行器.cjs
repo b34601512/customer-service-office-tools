@@ -236,11 +236,16 @@ async function main() {
     const 未成 = 模式 === 'learn'
       ? 逐项.filter(r => !(r.在学习名单 || r.状态后 === 2))
       : 逐项.filter(r => !(r.在禁用名单 || r.状态后 === 3));
-    const 有丢失 = 店diff.filter(d => d.丢失数 > 0);
-    const 核验未通过 = 未成.length > 0 || 有丢失.length > 0;
-    console.log(`核验计数：实做=${实做.length} 未成=${未成.length} 有丢失=${有丢失.length}`);
+    // learn：名单里原有商品不许丢；unlearn：从学习名单消失是预期，丢的必须恰好等于该店实做数（多丢=误伤、少丢=没禁掉）
+    const 丢失异常 = 店diff.filter(d => {
+      if (模式 === 'learn') return d.丢失数 > 0;
+      const 该店实做 = 实做.filter(x => String(x.thirdShopId) === String(d.thirdShopId)).length;
+      return d.丢失数 !== 该店实做 || d.新增数 > 0;
+    });
+    const 核验未通过 = 未成.length > 0 || 丢失异常.length > 0;
+    console.log(`核验计数：实做=${实做.length} 未成=${未成.length} 丢失异常=${丢失异常.length}`);
     if (核验未通过) {
-      console.error('⚠ 回读核验未通过：', JSON.stringify({ 未成, 有丢失 }));
+      console.error('⚠ 回读核验未通过：', JSON.stringify({ 未成, 丢失异常 }));
       process.exitCode = 4;
     } else {
       console.log(`✅ ${动作}回读核验通过（${实做.length} 个）`);
