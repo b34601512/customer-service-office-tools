@@ -5,7 +5,9 @@
 //
 // 用法：
 //   node 探域建卡.cjs --payload "建卡载荷.json" --base-url http://agent.tanyuai.com \
-//     --profile "登录画像路径" [--browser-channel msedge] [--build "title|店铺id1,店铺id2|正文文件.txt"] [--out 回读结果.json]
+//     --profile "登录画像路径" [--browser-channel msedge] [--build "title|店铺id1,店铺id2|正文文件.txt"] [--out 回读结果.json] [--dry-run]
+//
+//   注意：--dry-run 只要出现就生效（裸参数也算），不会写库；不传该参数才会真写。
 //
 // 载荷格式（--payload）：
 //   { "title": "...", "content": ["段落1", "段落2"], "thirdShopIds": ["2095398963959042048"] }
@@ -23,7 +25,12 @@ function required(name) {
   return value;
 }
 
-const 空条件 = () => ({ spu: [], shop: [], rules: [], productGroupId: [], sellerGroup: [], platform: [] });
+function 空条件() { return { spu: [], shop: [], rules: [], productGroupId: [], sellerGroup: [], platform: [] }; }
+
+/** 是否 dry-run：只要命令行出现 --dry-run 就算（裸参数/带值都生效，保守方向=只读）。 */
+function 是否dryRun(argv = process.argv) {
+  return argv.includes('--dry-run');
+}
 
 /** 构造建卡载荷（纯函数，便于单测）：content 段落自动补 index（探域要求从 1 开始）。 */
 function 构造建卡载荷({ title, content, thirdShopIds, ifBelievable = true, ifOpen = true }) {
@@ -66,7 +73,7 @@ async function main() {
     : JSON.parse(fs.readFileSync(required('--payload'), 'utf8'));
   const 载荷 = payload instanceof Object && payload.content && typeof payload.content[0] === 'string' ? 构造建卡载荷(payload) : payload;
 
-  if (argument('--dry-run')) {
+  if (是否dryRun()) {
     console.log('[dry-run] 载荷：' + JSON.stringify(载荷, null, 1));
     return;
   }
@@ -122,4 +129,4 @@ async function main() {
 if (require.main === module) {
   main().catch(error => { console.error(error.stack); process.exitCode = 1; });
 }
-module.exports = { 构造建卡载荷, 从参数拼装 };
+module.exports = { 构造建卡载荷, 从参数拼装, 是否dryRun };

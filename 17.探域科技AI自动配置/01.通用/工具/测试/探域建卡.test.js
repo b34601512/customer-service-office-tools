@@ -37,3 +37,12 @@ test('--build 拼装：标题|店铺|正文 三段式；空正文必须报错（
   assert.equal(p.content[0].content, '正文甲');
   assert.throws(() => 从参数拼装({ build: `标题A|${DK}|` }), /content/);
 });
+
+// 2026-10-03 反向断言：裸 --dry-run 曾被当 falsy 直接写库（实测一次），修复为「出现即只读」。
+test('dry-run：裸参数/带值都算只读；不传才允许写', () => {
+  const { 是否dryRun } = require('../探域建卡.cjs');
+  assert.equal(是否dryRun(['node', 'x', '--payload', 'p.json']), false);
+  assert.equal(是否dryRun(['node', 'x', '--payload', 'p.json', '--dry-run']), true);
+  assert.equal(是否dryRun(['node', 'x', '--payload', 'p.json', '--dry-run', 'true']), true);
+  assert.equal(是否dryRun(['node', 'x', '--payload', 'p.json', '--dry-run', 'false']), true); // 保守：出现即只读
+});
