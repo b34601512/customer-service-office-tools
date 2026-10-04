@@ -50,6 +50,7 @@ POST请求必须把完整请求体放在本地临时文件，通过 `--body-file
 - 删除是 `POST /api/kbe/v1/knowledge-card/batch-delete`，body `{cardIds:[…]}`（不存在的 id → “没有可操作的知识卡片”）。
   **不可逆** → 必须「任务文件里 approvedBy（主管/经理）+ 命令行 --allow-delete true」双确认；删后回读「detail 不存在 **且** 全量列表不含该 id」才算成功。
 - 接待/拦截类配置：读 `POST /api/shop-config/agent/config/get`、写 `POST /api/shop-config/agent/config/save`（body 形如 `{configs:{"agent.prohibited.words":{item:[…]}}}`）——平台 UI 同款调用**不带 orgId**。
+- **多发消息相关开关**（2026-10-04 实测，8 店一致）：`agent.market.productSale`=商品卖点推送（买家问券也可能追发一条无关卖点 → 已关）；`agent.market.exclusionWelcome`=欢迎语排除；`agent.reception.guaranteedReply`=`{enable,ifLimit,limit:5,triggerCon:30,speeches:[亲亲稍等…]}` 保底回复；`agent.reception.mode`/`agent.reception.base`/`agent.reception.reply`=接待模式/称呼/前后缀。写单键即可（merge，不会清掉其他键；写后仍要回读 + 抽查副作用）。
   ⚠ **带 orgId 读这个配置会返回合成的空「默认配置」**（2026-10-01 实测：真店铺 orgId 与不存在的假 orgId 都返空）——核对配置只认**不带 orgId** 的读取。
   写后必须回读逐词比对（含顺序），并先做 1 词受控试写；回滚件（before 快照 + 还原脚本）先备好再动。
 
