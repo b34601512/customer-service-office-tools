@@ -8,6 +8,8 @@
 // 删前保存完整 detail、写前重读，删后回读「detail 消失 + 全量列表不含该 id」才算 deleted-verified。
 // 删除核对口径（2026-10-02 D27 修正）：page 接口删除后 total 计数会滞后（results 先减、total 后减，实测约 1~2 分钟），
 // 不能用 rows.length >= total 判全量；改为「预期行数」：本次 run 每次 verified 删除 -1，行数多/少都算未定（fail-closed）。
+// 2026-10-04 修正：库已 7551 > 5000，删除核对基线与回读的 pageSize 必须同步改为 10000（与 listAll 一致），
+// 否则 rows 被截断在 5000 → 「预期行数」永不匹配、deleted-verified 无法达成（本文末有静态测试锁死）。
 // 不写死公司、店铺、型号、正文、对象ID、账号或本机路径。
 const fs = require('fs');
 const path = require('path');
@@ -298,7 +300,8 @@ async function main() {
         // 删除前记录计数基线：page 接口的 total 会滞后，只信当次 rows 行数。
         if (deleteKnownRows == null) {
           const base = await call('/api/kbe/v1/knowledge-card/page', {
-            method: 'POST', body: JSON.stringify({ pageNo: 1, pageSize: 5000 })
+            // pageSize 必须 10000：库 >5000 时 5000 会截断 rows，导致预期行数永不匹配（2026-10-04 修正）
+            method: 'POST', body: JSON.stringify({ pageNo: 1, pageSize: 10000 })
           });
           const baseRows = (base && base.results) || [];
           if (!baseRows.length) throw new Error('删除核对基线拉取为空，停止（fail-closed）');
@@ -325,7 +328,7 @@ async function main() {
             detailError = String(error.message || error);
           }
           const data = await call('/api/kbe/v1/knowledge-card/page', {
-            method: 'POST', body: JSON.stringify({ pageNo: 1, pageSize: 5000 })
+            method: 'POST', body: JSON.stringify({ pageNo: 1, pageSize: 10000 })
           });
           const rows = (data && data.results) || [];
           const verdict = deleteReadbackVerdict({ detailStill, rows, id: item.id, expectAfter });

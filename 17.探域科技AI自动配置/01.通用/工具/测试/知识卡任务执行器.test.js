@@ -163,3 +163,14 @@ test('⑫ 删除回读：按预期行数判定，total 滞后不影响；行数�
   assert.equal(ex.deleteReadbackVerdict({ detailStill: false, rows: [], id: 'c', expectAfter: 0 }).gone, true);
   assert.equal(ex.deleteReadbackVerdict({}).gone, false);
 });
+
+// ⑬ 删除核对的分页上限必须与 listAll 一致（2026-10-04 漏改修复）：
+//    库已 7551 > 5000；若删除路径还用 pageSize=5000，rows 被截断在 5000，
+//    「预期行数」永不匹配 → deleted-verified 永不可达。此处用静态断言锁死。
+test('⑬ 删除核对两个分页拉取必须用 pageSize=10000，不得退回 5000', () => {
+  const src = require('fs').readFileSync(require('path').join(__dirname, '..', '探域知识卡任务执行器.cjs'), 'utf8');
+  const 五千 = src.match(/pageSize:\s*5000/g) || [];
+  const 一万 = src.match(/pageSize:\s*10000/g) || [];
+  assert.equal(五千.length, 0, `仍存在 ${五千.length} 处 pageSize=5000（库 >5000 会截断 rows）`);
+  assert.ok(一万.length >= 3, `pageSize=10000 应至少 3 处（listAll + 删除基线 + 删除回读），实际 ${一万.length}`);
+});
