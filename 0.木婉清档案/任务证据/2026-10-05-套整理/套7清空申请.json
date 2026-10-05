@@ -1,0 +1,23 @@
+{
+ "set7": {
+  "phrase_set_id": "c1e81eb0-4aaa-5cf3-a351-2ee01f4c2224",
+  "phrase_set": 7,
+  "scope": "team",
+  "name": "第7套话术",
+  "revision": 1,
+  "created_origin": "unknown",
+  "last_modified_origin": "unknown"
+ },
+ "clear_result": {
+  "outcome": "PENDING_HUMAN_APPROVAL",
+  "approval_id": "8370933c-ee33-460f-8030-e4830b25f964",
+  "phrase_set_id": "c1e81eb0-4aaa-5cf3-a351-2ee01f4c2224",
+  "object_type": "phrase_set",
+  "scope": "team",
+  "expected_revision": 1,
+  "expires_at": 1791263906,
+  "target_fingerprint": "72761dfd402283d7d00b0cb026c996d940305f31fb4e9b97d4b890d635e2f968",
+  "affected_count": 7,
+  "operation_id": "6a7f1f1e-379f-4a39-96b4-0e0205300f5f"
+ }
+}

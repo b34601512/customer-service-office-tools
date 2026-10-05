@@ -1,0 +1,283 @@
+[
+ {
+  "name": "参数",
+  "id": "9e7599b9-2e34-499b-87a4-d2d34a3c29e8",
+  "to": 1,
+  "outcome": "COMMITTED"
+ },
+ {
+  "name": "便携制氧",
+  "id": "9c800c7e-eec5-4163-b86b-52cb27f56cd6",
+  "to": 1,
+  "outcome": "COMMITTED"
+ },
+ {
+  "name": "浓度",
+  "id": "55cde42a-b1c9-47a3-8d28-c8f1f61331b9",
+  "to": 1,
+  "outcome": "COMMITTED"
+ },
+ {
+  "name": "雾化",
+  "id": "c35495da-5103-42d3-ae74-44b5a5848d5d",
+  "to": 1,
+  "outcome": "COMMITTED"
+ },
+ {
+  "name": "血氧仪",
+  "id": "f41e881a-cd76-481f-8e0b-f249c8b04350",
+  "to": 1,
+  "outcome": "COMMITTED"
+ },
+ {
+  "name": "品牌",
+  "id": "ad7280f5-0ff4-4d11-b064-8462c6139daa",
+  "to": 1,
+  "outcome": "COMMITTED"
+ },
+ {
+  "name": "流量",
+  "id": "b220f902-481e-47d5-a259-e2cd9ace20e8",
+  "to": 1,
+  "outcome": "COMMITTED"
+ },
+ {
+  "name": "氧气瓶",
+  "id": "7a2b3193-bfa9-4ffe-ae8d-7f07b1543d1a",
+  "to": 1,
+  "outcome": "COMMITTED"
+ },
+ {
+  "name": "配件",
+  "id": "93c2987c-aee3-4b99-a854-716ac5149d7e",
+  "to": 1,
+  "outcome": "COMMITTED"
+ },
+ {
+  "name": "付款",
+  "id": "76c4655f-4b24-4efb-8f21-f95a0553f4b4",
+  "to": 2,
+  "outcome": "COMMITTED"
+ },
+ {
+  "name": "补差",
+  "id": "2ac6166e-6496-4bd4-8eb7-425cae11b9b9",
+  "to": 2,
+  "outcome": "COMMITTED"
+ },
+ {
+  "name": "运费",
+  "id": "8fd1de1f-8e22-465a-97ae-954211734cb8",
+  "to": 2,
+  "outcome": "COMMITTED"
+ },
+ {
+  "name": "发票",
+  "id": "a30742f8-6592-4112-b27e-38bd4352f963",
+  "to": 2,
+  "outcome": "COMMITTED"
+ },
+ {
+  "name": "核实",
+  "id": "725e2f4b-1648-46bb-9943-d58b664a1bf7",
+  "to": 2,
+  "outcome": "COMMITTED"
+ },
+ {
+  "name": "发货",
+  "id": "af310791-5464-42a2-b519-31274f101531",
+  "to": 3,
+  "outcome": "COMMITTED"
+ },
+ {
+  "name": "前流",
+  "id": "9183ade6-5470-434e-9742-fbe93199b12e",
+  "to": 3,
+  "outcome": "COMMITTED"
+ },
+ {
+  "name": "后流",
+  "id": "cfb5e506-4f28-4109-83de-8769aee749f4",
+  "to": 3,
+  "outcome": "COMMITTED"
+ },
+ {
+  "name": "补发",
+  "id": "a4a9a56d-f7bc-4c50-a774-f73dc036d9d0",
+  "to": 3,
+  "outcome": "COMMITTED"
+ },
+ {
+  "name": "售后",
+  "id": "fea12a29-555c-4c58-90d7-8c84e9544d21",
+  "to": 4,
+  "outcome": "COMMITTED"
+ },
+ {
+  "name": "退货",
+  "id": "e55dd7e6-55dd-44be-93a7-f911ab18336e",
+  "to": 4,
+  "outcome": "COMMITTED"
+ },
+ {
+  "name": "换货",
+  "id": "bb75f13d-b667-4bf5-bee4-3f4fd173df70",
+  "to": 4,
+  "outcome": "COMMITTED"
+ },
+ {
+  "name": "退款",
+  "id": "bb9dd47c-52a1-434c-b306-582b91622324",
+  "to": 4,
+  "outcome": "COMMITTED"
+ },
+ {
+  "name": "维修",
+  "id": "e3247eb2-8b5d-420a-98e8-1b93ca908e0d",
+  "to": 5,
+  "outcome": "COMMITTED"
+ },
+ {
+  "name": "过滤器",
+  "id": "6ad93ab4-f712-4dd5-a9bb-0d3419cbf227",
+  "to": 5,
+  "outcome": "COMMITTED"
+ },
+ {
+  "name": "噪音",
+  "id": "74c2e05c-018c-413d-a879-2988684a3558",
+  "to": 5,
+  "outcome": "COMMITTED"
+ },
+ {
+  "name": "故障",
+  "id": "e69ae99b-ee6c-45dd-8fb2-c4847968977e",
+  "to": 5,
+  "outcome": "COMMITTED"
+ },
+ {
+  "name": "延保",
+  "id": "a97daebd-0f10-4849-81ca-6e983b7382ba",
+  "to": 6,
+  "outcome": "COMMITTED"
+ },
+ {
+  "name": "质保",
+  "id": "9ca5053a-a247-4c4f-89d2-507e50346533",
+  "to": 6,
+  "outcome": "COMMITTED"
+ },
+ {
+  "name": "使用教程",
+  "id": "ad8d937f-9e5b-462d-9f12-41904def8e58",
+  "to": 8,
+  "outcome": "COMMITTED"
+ },
+ {
+  "name": "400",
+  "id": "9c965913-ac0c-49ca-8b57-d9e7f78c2497",
+  "to": 8,
+  "outcome": "COMMITTED"
+ },
+ {
+  "name": "AI",
+  "id": "bb8b1af5-542e-41e0-acb5-7a0cda3e01c8",
+  "to": 8,
+  "outcome": "COMMITTED"
+ },
+ {
+  "name": "投诉",
+  "id": "8ac24090-be3b-4b24-af82-d7cecddf0b50",
+  "to": 9,
+  "outcome": "COMMITTED"
+ },
+ {
+  "name": "自营店",
+  "id": "7e89b1cf-81d0-4a71-b0a9-f7b3acf03699",
+  "to": 9,
+  "outcome": "COMMITTED"
+ },
+ {
+  "name": "拼多多",
+  "id": "b4c466ff-4f98-4057-9612-80366503bebc",
+  "to": 9,
+  "outcome": "COMMITTED"
+ },
+ {
+  "name": "回访",
+  "id": "512291d0-eb83-4f18-af87-bb3ca804ee0b",
+  "to": 9,
+  "outcome": "COMMITTED"
+ },
+ {
+  "name": "满意度",
+  "id": "9c332fcb-84a5-4e87-a8e0-f732861c3efd",
+  "to": 9,
+  "outcome": "COMMITTED"
+ },
+ {
+  "name": "猫3",
+  "id": "8c787ca2-c273-4b30-8673-5b9958d6bac7",
+  "to": 9,
+  "outcome": "COMMITTED"
+ },
+ {
+  "name": "有赞",
+  "id": "9d13872b-7782-428e-a75f-349d47346ec2",
+  "to": 9,
+  "outcome": "COMMITTED"
+ },
+ {
+  "name": "工单",
+  "id": "668290c5-0201-4fd8-80e6-c2463ea77b85",
+  "to": 9,
+  "outcome": "COMMITTED"
+ },
+ {
+  "step": "个护2条→其他",
+  "outcome": null,
+  "items": 50
+ },
+ {
+  "name": "其他",
+  "id": "5bd7ffac-e575-4372-894a-adafefe04909",
+  "to": 8,
+  "outcome": "COMMITTED"
+ },
+ {
+  "step": "rename set0",
+  "outcome": "COMMITTED"
+ },
+ {
+  "step": "rename set1",
+  "outcome": "COMMITTED"
+ },
+ {
+  "step": "rename set2",
+  "outcome": "COMMITTED"
+ },
+ {
+  "step": "rename set3",
+  "outcome": "COMMITTED"
+ },
+ {
+  "step": "rename set4",
+  "outcome": "COMMITTED"
+ },
+ {
+  "step": "rename set5",
+  "outcome": "COMMITTED"
+ },
+ {
+  "step": "rename set6",
+  "outcome": "COMMITTED"
+ },
+ {
+  "step": "rename set8",
+  "outcome": "COMMITTED"
+ },
+ {
+  "step": "rename set9",
+  "outcome": "COMMITTED"
+ }
+]
