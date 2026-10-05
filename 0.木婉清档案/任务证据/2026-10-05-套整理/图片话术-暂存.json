@@ -1,0 +1,23 @@
+[
+ {
+  "set": 0,
+  "stage1": "bdde1a47-fbfa-4214-8403-03329ed2e52d",
+  "stage2": "3062daaa-0da8-4ebc-9c8a-54ba414cf142",
+  "moved": 11,
+  "outcome": "COMMITTED"
+ },
+ {
+  "set": 1,
+  "stage1": "cc93bec6-500f-4e95-9826-437ad770f642",
+  "stage2": "5c436e40-15d8-4036-9f32-18dfb62e8c1e",
+  "moved": 4,
+  "outcome": "COMMITTED"
+ },
+ {
+  "set": 2,
+  "stage1": "3442dad1-18c4-4a36-8d70-c86ccbc5c243",
+  "stage2": "fddd897b-e9b0-4b91-ac6a-fa60b8a5a3b9",
+  "moved": 9,
+  "outcome": "COMMITTED"
+ }
+]

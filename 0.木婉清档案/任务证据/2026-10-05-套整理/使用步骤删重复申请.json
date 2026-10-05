@@ -1,0 +1,102 @@
+{
+ "deleted": [
+  "德达Q1/Q2使用方法操作图示使用教程",
+  "2AW使用方法美规操作图解使用教程",
+  "Q10L使用方法操作图解使用教程",
+  "Y5W使用方法使用教程使用教程",
+  "2SW使用方法美版制氧机使用教程",
+  "Q5L使用方法操作图解使用教程",
+  "Y300W使用方法操作图示使用教程",
+  "2AW使用方法操作图解使用教程",
+  "Y5AW使用方法操作图解使用教程",
+  "Q3L使用方法操作图解使用教程",
+  "C1使用方法操作图解使用教程",
+  "1SW使用方法操作图解使用教程",
+  "1A使用方法操作图示使用教程",
+  "1LW使用方法操作图使用教程",
+  "A1使用方法操作图解使用教程",
+  "DEDAKJQ1/Q2使用方法操作图示使用教程",
+  "Y5L使用方法使用教程使用教程"
+ ],
+ "result": {
+  "outcome": "PENDING_HUMAN_APPROVAL",
+  "approval_id": "58385baf-6100-4a74-a3ab-0abf4f889bb4",
+  "batch_id": "c9ac46be-7d31-4b8b-a3b6-a4793af5f3ff",
+  "object_type": "phrase_batch",
+  "scope": "team",
+  "expected_revision": 1,
+  "expires_at": 1791267393,
+  "members": [
+   {
+    "phrase_id": "14360c85-b8bd-4443-8674-fa4bed7a2936",
+    "expected_revision": 4
+   },
+   {
+    "phrase_id": "35975213-f794-4652-9b38-81c5d7f1fc54",
+    "expected_revision": 4
+   },
+   {
+    "phrase_id": "363f7311-3bfd-458a-989e-fd58e62d7c7b",
+    "expected_revision": 4
+   },
+   {
+    "phrase_id": "5123ce57-8e26-4eee-836f-d3483eb9cfd2",
+    "expected_revision": 4
+   },
+   {
+    "phrase_id": "6619fdcc-d46c-4433-85b0-e1e9aaf27978",
+    "expected_revision": 4
+   },
+   {
+    "phrase_id": "68c8531c-58e7-4b81-8515-ebcecfccd6f3",
+    "expected_revision": 4
+   },
+   {
+    "phrase_id": "68e6639c-0df0-4e32-917e-6613fae95ba0",
+    "expected_revision": 4
+   },
+   {
+    "phrase_id": "8ba58235-f355-40bc-8cdb-aeedaf80e0ee",
+    "expected_revision": 4
+   },
+   {
+    "phrase_id": "8e11c63e-4564-44b7-821d-71c48a7ba678",
+    "expected_revision": 4
+   },
+   {
+    "phrase_id": "978d5960-9edb-4d32-b1bf-8c67dd15df4d",
+    "expected_revision": 4
+   },
+   {
+    "phrase_id": "9793170a-bb36-4447-93bf-322cfb8c8594",
+    "expected_revision": 4
+   },
+   {
+    "phrase_id": "ab555e40-150d-44b3-b46a-98f1c80c51d0",
+    "expected_revision": 4
+   },
+   {
+    "phrase_id": "d23d3e77-e8b3-4db4-9eef-8410901427f1",
+    "expected_revision": 4
+   },
+   {
+    "phrase_id": "d4803667-e043-454e-8385-05e5df23cdb6",
+    "expected_revision": 4
+   },
+   {
+    "phrase_id": "d63413e9-98d2-4936-9b50-1241fe6c23ba",
+    "expected_revision": 4
+   },
+   {
+    "phrase_id": "ed886cc2-9eb5-45b9-9845-8c99a7c068af",
+    "expected_revision": 4
+   },
+   {
+    "phrase_id": "fbbcabc5-05a1-4320-869e-42290f05e17e",
+    "expected_revision": 4
+   }
+  ],
+  "affected_count": 17,
+  "operation_id": "c9ac46be-7d31-4b8b-a3b6-a4793af5f3ff"
+ }
+}
