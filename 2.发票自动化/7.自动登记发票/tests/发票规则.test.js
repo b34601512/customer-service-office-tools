@@ -159,6 +159,18 @@ test("提取型号：去掉括号里的容量/说明（登记表 U 列口径）"
   assert.equal(提取型号("保险丝"), "保险丝");
 });
 
+test("规范型号：尾缀品牌名 DEDAKJ 要剥掉（2026-10-05 实测 DH21-A1（9L）DEDAKJ 写成 DH21-A1DEDAKJ）", () => {
+  const { 规范型号 } = require("../src/发票规则");
+  // 主品：规格名里的品牌尾缀不能粘进型号（表里口径 DH21-A1 / DH21-A1L）
+  assert.equal(规范型号("家用制氧机DH21-A1DEDAKJ", "家用制氧机DH21-A1（9L）DEDAKJ", false), "DH21-A1");
+  assert.equal(规范型号("家用制氧机DH21-A1LDEDAKJ", "家用制氧机DH21-A1L（LV）DEDAKJ", false), "DH21-A1L");
+  // 中文尾缀后面接品牌名（旧口径就能取对，防回归）
+  assert.equal(规范型号("DY22-Q5A蓝色DEDAKJ新国标静音款", "DY22-Q5A 蓝色（中文）DEDAKJ 新国标静音款", false), "DY22-Q5A");
+  // 赠品仍按关键词映射到表里写法
+  assert.equal(规范型号("氧气袋", "氧气袋(DEDAKJ）", true), "YQD");
+  assert.equal(规范型号("鼻氧管-德达", "鼻氧管-德达（2米*透明）", true), "YY-XYG");
+});
+
 test("登记表口径：店铺补 0、票种归一", () => {
   const { 登记表店铺名, 登记表票种 } = require("../src/发票规则");
   assert.equal(登记表店铺名("拼多多2店"), "拼多多02店");
