@@ -6,9 +6,11 @@
 //   node src/tools/今天谁值班.cjs --group 售前            # 换分组
 //   node src/tools/今天谁值班.cjs --group 全部 --json     # 机器读（全部有配置的分组）
 //   node src/tools/今天谁值班.cjs --date 2026-09-30 --json
+//   node src/tools/今天谁值班.cjs --at 20:00            # 指定「此时此刻」（默认=现在）
 //   node src/tools/今天谁值班.cjs --cached                # 用上次落盘的报告（不重新读表）
 //
-// 退出码：0 挑到；3 读不到 / 分不清（按口径：停下来问人，不许猜）；2 读表或配置出错。
+// 口径：候选 = 带底色 ∩ 组名单 ∩ 此刻在班次时间窗口内（黎路遥 09-29 底色 / 10-01、10-05 此时此刻）；
+// 窗口内没人 ⇒ 退出码 3（停下问人，不许猜）。
 const { 读排班, 读配置, 读已有报告, 今天 } = require("../lib/排班读取");
 const { 从报告挑值班 } = require("../lib/值班");
 
@@ -18,6 +20,7 @@ function 解析参数(argv) {
     const a = argv[i];
     if (a === "--group") 出.group = argv[++i];
     else if (a === "--date") 出.date = argv[++i];
+    else if (a === "--at") 出.at = argv[++i];
     else if (a === "--json") 出.json = true;
     else if (a === "--cached") 出.cached = true;
   }
@@ -30,14 +33,17 @@ function main() {
   const 日期 = 参数.date || 今天();
   const 报告 = 参数.cached ? 读已有报告(配置) : 读排班(日期, 配置);
   const 分组们 = 参数.group === "全部" ? Object.values(配置.颜色分组 || {}) : [参数.group];
+  const 现在 = 参数.at ? new Date(`${日期}T${String(参数.at).trim()}:00`) : new Date();
+  if (Number.isNaN(现在.getTime())) throw new Error(`--at 格式不对：${参数.at}（要 HH:MM）`);
+  const 时刻 = `${String(现在.getHours()).padStart(2, "0")}:${String(现在.getMinutes()).padStart(2, "0")}`;
 
-  const 结果 = 分组们.map((组) => ({ 分组: 组, ...从报告挑值班(报告, 组, 配置) }));
+  const 结果 = 分组们.map((组) => ({ 分组: 组, ...从报告挑值班(报告, 组, 配置, { 当前时间: 现在 }) }));
   if (参数.json) {
-    console.log(JSON.stringify({ 日期: 报告.日期 || 日期, 有色人员: (报告["当日有色人员"] || []).map((x) => x.姓名), 值班: 结果 }, null, 1));
+    console.log(JSON.stringify({ 日期: 报告.日期 || 日期, 判定时刻: 时刻, 有色人员: (报告["当日有色人员"] || []).map((x) => x.姓名), 值班: 结果 }, null, 1));
   } else {
     for (const r of 结果) {
-      if (r.found) console.log(`${报告.日期 || 日期} ${r.分组}值班：${r.userName}（${r.理由}）`);
-      else console.log(`${报告.日期 || 日期} ${r.分组}值班：**没挑到** —— ${r.理由}`);
+      if (r.found) console.log(`${报告.日期 || 日期}（${时刻}）${r.分组}值班：${r.userName}（${r.理由}）`);
+      else console.log(`${报告.日期 || 日期}（${时刻}）${r.分组}值班：**没挑到** —— ${r.理由}`);
     }
     const 有色 = (报告["当日有色人员"] || []).map((x) => `${x.姓名}(${x.底色})`).join("、");
     console.log(`当日有色人员：${有色 || "无"}`);

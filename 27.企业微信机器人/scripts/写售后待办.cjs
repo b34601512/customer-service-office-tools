@@ -40,13 +40,14 @@ const 优先级选项 = { 一般: { id: 'oonpZv', text: '一般' } };
 
 /**
  * 兼容旧名：从「当日有色人员」里挑售后值班（口径与名单在 28号）。
- * **不猜**：没带底色 / 同分组多人带底色 / 配置里没 userid ⇒ 返回 null，由调用方停下来问人。
- * @param {Array<string|{姓名:string,底色?:string}>} names
+ * **不猜**：没带底色 / 同分组多人带底色 / **带底色但此刻不在其班次时段** / 配置里没 userid ⇒ 返回 null，由调用方停下来问人。
+ * @param {Array<string|{姓名:string,底色?:string,班次?:string}>} names
  * @param {object} [配置] 不传则读 28号 的 project-config/排班值班配置.json
+ * @param {{当前时间?:Date}} [选项] 判定时刻（默认=现在；单测传固定时刻）
  */
-function 挑选值班负责人(names, 配置) {
+function 挑选值班负责人(names, 配置, 选项) {
   const 人 = (names || []).map((n) => (typeof n === 'string' ? { 姓名: n, 底色: '' } : n));
-  const 结果 = 值班库.挑值班(人, '售后', 配置 || 排班库.读配置());
+  const 结果 = 值班库.挑值班(人, '售后', 配置 || 排班库.读配置(), 选项);
   return 结果.found ? { userId: 结果.userId, userName: 结果.userName } : null;
 }
 
@@ -55,8 +56,9 @@ function 读此刻值班(配置) {
   const 用配置 = 配置 || 排班库.读配置();
   const 报告 = 排班库.读排班(undefined, 用配置);
   const 结果 = 值班库.从报告挑值班(报告, '售后', 用配置);
-  if (!结果.found) throw new Error('按底色挑不到唯一售后值班人：' + 结果.理由 + '（口径=看底色、不猜；见 28.排班与派活/README.md）');
-  return [{ 姓名: 结果.姓名, 底色: 结果.底色 }];
+  if (!结果.found) throw new Error('按「底色＋此时此刻在班次」挑不到唯一售后值班人：' + 结果.理由 + '（口径与名单在 28.排班与派活；不猜，停下问人）');
+  const 人 = (报告['当日有色人员'] || []).find((x) => x.姓名 === 结果.姓名) || {};
+  return [{ 姓名: 结果.姓名, 底色: 结果.底色, 班次: 人.班次 }];
 }
 
 function 解析参数(argv) {
@@ -93,7 +95,7 @@ function 构造记录({ content, ownerId, ownerName, deadline, 优先级 }) {
 function 写({ content, ownerId, ownerName, ownerAuto, deadline, 优先级, dryRun }) {
   if (ownerAuto) {
     const 值班 = 挑选值班负责人(读此刻值班());
-    if (!值班) throw new Error('排班表读不到认识的值班人，请显式传 --owner <userid>（不猜）');
+    if (!值班) throw new Error('排班表挑不到（此刻）在班的值班人，请显式传 --owner <userid>（不猜）');
     ownerId = 值班.userId;
     ownerName = 值班.userName;
   }
