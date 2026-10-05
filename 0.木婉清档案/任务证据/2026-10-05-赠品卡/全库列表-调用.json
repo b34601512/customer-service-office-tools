@@ -1,0 +1,3 @@
+[
+  { "name": "全库列表(查重)", "endpoint": "/api/kbe/v1/knowledge-card/page", "method": "POST", "body": { "pageNo": 1, "pageSize": 10000 } }
+]

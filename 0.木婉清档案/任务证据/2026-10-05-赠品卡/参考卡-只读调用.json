@@ -1,0 +1,3 @@
+[
+  { "name": "参考卡-DEDAKJ赠品卡", "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6abb71abe4bec54754824a42", "method": "GET" }
+]
