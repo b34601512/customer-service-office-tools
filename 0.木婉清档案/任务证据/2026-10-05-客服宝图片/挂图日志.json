@@ -1,0 +1,161 @@
+[
+ {
+  "file": "1A使用方法操作图示使用教程.png",
+  "phrase": "1A使用方法操作图示使用教程",
+  "cat": "家用制氧机使用方法",
+  "ok": true,
+  "outcome": "SKIP_ALREADY"
+ },
+ {
+  "file": "1LW使用方法操作图使用教程.png",
+  "phrase": "1LW使用方法操作图使用教程",
+  "cat": "家用制氧机使用方法",
+  "ok": true,
+  "outcome": "SKIP_ALREADY"
+ },
+ {
+  "file": "1SW使用方法操作图解使用教程.png",
+  "phrase": "1SW使用方法操作图解使用教程",
+  "cat": "家用制氧机使用方法",
+  "ok": true,
+  "outcome": "COMMITTED",
+  "file_id_map": {
+   "f5c702be-696f-45d1-b269-6989f68f2e9a": "fa7bd1ec-5756-4983-9eb2-42737b1e4d02"
+  }
+ },
+ {
+  "file": "2AW使用方法操作图解使用教程.png",
+  "phrase": "2AW使用方法操作图解使用教程",
+  "cat": "家用制氧机使用方法",
+  "ok": true,
+  "outcome": "COMMITTED",
+  "file_id_map": {
+   "141573dd-4369-4642-aff0-d481bfad2d26": "a2a08719-9812-4e25-9cdc-5216f740d83d"
+  }
+ },
+ {
+  "file": "A1使用方法操作图解使用教程.png",
+  "phrase": "A1使用方法操作图解使用教程",
+  "cat": "家用制氧机使用方法",
+  "ok": true,
+  "outcome": "COMMITTED",
+  "file_id_map": {
+   "d653a87f-aaf3-4873-aab1-e09830c47117": "815adc50-3020-4648-a573-fe00f37d7402"
+  }
+ },
+ {
+  "file": "C1使用方法操作图解使用教程.png",
+  "phrase": "C1使用方法操作图解使用教程",
+  "cat": "家用制氧机使用方法",
+  "ok": true,
+  "outcome": "COMMITTED",
+  "file_id_map": {
+   "51a2edce-c416-4840-8c2c-69673b86a233": "b66a1aab-c147-4916-859d-2e3f67f166e2"
+  }
+ },
+ {
+  "file": "MY-5C使用方法？怎么使用？.png",
+  "phrase": "MY-5C使用方法？怎么使用？",
+  "cat": "便携制氧机使用方法",
+  "ok": true,
+  "outcome": "COMMITTED",
+  "file_id_map": {
+   "1caf55a2-21fb-4890-8f3a-68dc2c825451": "138628e2-64ee-408f-8225-cd3b9775647c"
+  }
+ },
+ {
+  "file": "Q10L使用方法操作图解使用教程.png",
+  "phrase": "Q10L使用方法操作图解使用教程",
+  "cat": "医用制氧机使用方法",
+  "ok": true,
+  "outcome": "COMMITTED",
+  "file_id_map": {
+   "1ce1b331-0f9a-409c-a290-838d944018e2": "0564b102-3330-40b4-969d-bc5c9c0eafcc"
+  }
+ },
+ {
+  "file": "Q1Q2使用方法操作图示使用教程.png",
+  "phrase": "Q1/Q2使用方法操作图示使用教程",
+  "cat": "家用制氧机使用方法",
+  "ok": true,
+  "outcome": "COMMITTED",
+  "file_id_map": {
+   "a0f0a6d0-34c0-4412-93f3-16be295a7b1c": "5a822a91-0315-4e4e-9bdc-ccc00b9baec8"
+  }
+ },
+ {
+  "file": "Q3L使用方法操作图解使用教程.png",
+  "phrase": "Q3L使用方法操作图解使用教程",
+  "cat": "医用制氧机使用方法",
+  "ok": true,
+  "outcome": "COMMITTED",
+  "file_id_map": {
+   "6310413d-7f56-4558-a188-82baf2642200": "72adeebc-1b78-4b10-b893-d44ae736e841"
+  }
+ },
+ {
+  "file": "Q5L使用方法操作图解使用教程.png",
+  "ok": false,
+  "why": "无对应"
+ },
+ {
+  "file": "Y105Y106便携制氧机使用图示.png",
+  "phrase": "Y105/Y106便携制氧机使用图示",
+  "cat": "便携制氧机使用方法",
+  "ok": true,
+  "outcome": "COMMITTED",
+  "file_id_map": {
+   "8e4143be-6201-45aa-9f3a-327b14dd3944": "a30fd868-7dd0-4983-ac6d-b3dc264d9947"
+  }
+ },
+ {
+  "file": "Y300W使用方法操作图示使用教程.png",
+  "phrase": "Y300W使用方法操作图示使用教程",
+  "cat": "医用制氧机使用方法",
+  "ok": true,
+  "outcome": "COMMITTED",
+  "file_id_map": {
+   "01c8edba-161a-4354-bfcf-98a987d90ae1": "51d4f371-a191-4520-bb40-3c6143e1a005"
+  }
+ },
+ {
+  "file": "Y5AW使用方法操作图解使用教程.png",
+  "phrase": "Y5AW使用方法操作图解使用教程",
+  "cat": "医用制氧机使用方法",
+  "ok": true,
+  "outcome": "COMMITTED",
+  "file_id_map": {
+   "054dfdb5-0ba2-405c-b31a-1b82f88f8363": "62558377-55ac-4070-9c0b-41189a9adc9d"
+  }
+ },
+ {
+  "file": "Y5L使用方法使用教程使用教程.png",
+  "phrase": "Y5L使用方法使用教程使用教程",
+  "cat": "医用制氧机使用方法",
+  "ok": true,
+  "outcome": "COMMITTED",
+  "file_id_map": {
+   "eb042759-e5e6-41cf-ad5b-865b7a8d8620": "9afa7b75-235c-4851-9235-aa39a4d4a74e"
+  }
+ },
+ {
+  "file": "Y5W使用方法使用教程使用教程.png",
+  "phrase": "Y5W使用方法使用教程使用教程",
+  "cat": "医用制氧机使用方法",
+  "ok": true,
+  "outcome": "COMMITTED",
+  "file_id_map": {
+   "26b2040e-43aa-496e-8ca4-d5793d60db7f": "755327fc-7ffb-4a2f-b14a-5e5b094c116f"
+  }
+ },
+ {
+  "file": "YS-8Y使用图示，怎么使用？使用方法.png",
+  "phrase": "YS-8Y使用图示，怎么使用？使用方法",
+  "cat": "便携制氧机使用方法",
+  "ok": true,
+  "outcome": "COMMITTED",
+  "file_id_map": {
+   "f68c0182-c9ce-4e82-b77a-56297a911a02": "5e8e0a8d-4ea7-40e7-9a21-02d8330006be"
+  }
+ }
+]
