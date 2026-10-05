@@ -1,0 +1,16 @@
+[
+ {
+  "name": "催付",
+  "category_id": "01ec5c0a-8a14-42cd-9bd9-a50369e5d5ca",
+  "outcome": "PENDING_HUMAN_APPROVAL",
+  "approval_id": "642c56e5-f792-4547-89a3-75439e3f0deb",
+  "error": null
+ },
+ {
+  "name": "小蟹",
+  "category_id": "279b70cb-37d0-4c10-888f-bf5c7a311f3a",
+  "outcome": "PENDING_HUMAN_APPROVAL",
+  "approval_id": "c2bf99fa-8194-4677-9be9-7de208458c09",
+  "error": null
+ }
+]
