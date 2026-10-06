@@ -1,0 +1,48 @@
+{
+  "runId": "2026-10-06T11-22-38-719Z",
+  "action": "apply",
+  "taskFile": "T-6a9a3c47644e354d71a3f9b5.json",
+  "company": "德达医疗（8店探域）",
+  "scope": "P7-2：补「不能据此判断血氧是否正常」+「用氧以医生要求为准」（10-06 风格【医疗约束】：不得按血氧读数判断）；原防公式/防档位句保留",
+  "approvedBy": "黎路遥 2026-10-06 18:55 批准 P3–P7（P7 医疗/时效边界卡改写）",
+  "businessPatchKeys": null,
+  "deleteIds": [],
+  "startedAt": "2026-10-06T11:22:38.719Z",
+  "entries": [
+    {
+      "id": "6a9a3c47644e354d71a3f9b5",
+      "note": "P7-2：补「不能据此判断血氧是否正常」+「用氧以医生要求为准」（10-06 风格【医疗约束】：不得按血氧读数判断）；原防公式/防档位句保留",
+      "currentSha256": "e34b8db04ad90dfbc88af5ada30f4f217725f17c2f82ec04e84bf1552356bb83",
+      "expectedDiffs": [],
+      "status": "verified",
+      "businessPatch": "unchanged",
+      "expectBusinessSha256": "aa97f3cd89dcac5694f36773a0131903507c4c38d4d0f6958270b6977fb4b7cb",
+      "approvedBy": "黎路遥 2026-10-06 18:55 批准 P3–P7（P7 医疗/时效边界卡改写）",
+      "response": true,
+      "afterSha256": "8b84ced7b8b655809ecde8c14a71bdacf2c0935c79c6aa3b48b981ec6aa174df",
+      "scopeShop": {
+        "before": [
+          {
+            "thirdShopId": "2095398963959042048",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2104457457798483968",
+            "cids": []
+          }
+        ],
+        "after": [
+          {
+            "thirdShopId": "2095398963959042048",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2104457457798483968",
+            "cids": []
+          }
+        ]
+      }
+    }
+  ],
+  "finishedAt": "2026-10-06T11:22:43.958Z"
+}

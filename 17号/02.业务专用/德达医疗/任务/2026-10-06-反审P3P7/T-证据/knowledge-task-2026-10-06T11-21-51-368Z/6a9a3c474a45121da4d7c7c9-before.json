@@ -1,0 +1,59 @@
+{
+  "id": "6a9a3c474a45121da4d7c7c9",
+  "title": "吸氧建议/慢阻肺/慢阻肺吸氧时长如何控制？",
+  "content": [
+    {
+      "id": "6abb3ae1e4bec54754823216",
+      "content": "Q:慢阻肺吸氧时长如何控制？\nA:您好亲亲～慢阻肺患者的吸氧时间因人而异哦～  \n轻中度患者一般可采用间歇吸氧，比如每次30分钟左右、间隔1～2小时再吸；  \n但重度或二型呼吸衰竭患者，多数需要每天持续吸氧数小时甚至更久，  \n具体吸氧时间和频率应根据血氧饱和度和医生建议来调整。  \n\n建议使用血氧仪监测，保持血氧在90%-93%之间最安全有效，  \n并严格遵循医生的指导哈～😊  ",
+      "knowledgeDigest": "c94b7c3bd2bac00dc170c8409a136a04",
+      "chunkLength": null,
+      "chunkLearnStatus": "FINISH",
+      "index": 1
+    }
+  ],
+  "labels": [],
+  "labelInfos": null,
+  "ifBelievable": true,
+  "ifLearning": false,
+  "ifOpen": true,
+  "version": "V2",
+  "type": "SHOP",
+  "includeCondition": {
+    "spu": [],
+    "shop": [
+      {
+        "thirdShopId": "2095398963959042048",
+        "cids": []
+      },
+      {
+        "thirdShopId": "2104457457798483968",
+        "cids": []
+      }
+    ],
+    "rules": [],
+    "productGroupId": [],
+    "sellerGroup": [],
+    "platform": []
+  },
+  "excludeCondition": {
+    "spu": [],
+    "shop": [],
+    "rules": [],
+    "productGroupId": [],
+    "sellerGroup": [],
+    "platform": []
+  },
+  "timeliness": null,
+  "cycleTimeliness": null,
+  "orderStatus": [
+    "PRE_SALE",
+    "AFTER_SALE"
+  ],
+  "lastUpdatedAt": "2026-09-29 12:13:21",
+  "createdAt": "2026-09-04 11:34:31",
+  "source": null,
+  "productCondition": null,
+  "ifOpenSync": null,
+  "ifHasUrl": false,
+  "urlInfos": []
+}

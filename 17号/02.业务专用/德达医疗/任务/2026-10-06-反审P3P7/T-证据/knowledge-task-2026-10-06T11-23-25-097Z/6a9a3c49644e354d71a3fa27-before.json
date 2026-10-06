@@ -1,0 +1,59 @@
+{
+  "id": "6a9a3c49644e354d71a3fa27",
+  "title": "浓度/低浓度低流量吸氧/吸入浓度这么低有用吗？",
+  "content": [
+    {
+      "id": "6ac4da07e4bec547548370ca",
+      "content": "Q:吸入浓度这么低有用吗？\nA:亲，您这个问题很专业哦，其实日常吸氧不是越高浓度越好～具体需要多大流量、用多长时间，要由医生根据个人情况来定，不能按血氧读数自行判断哦～\n\n如果吸氧浓度过高，反而有氧中毒风险；机器输出的浓度是经过设计的，按医生要求的流量使用就好～用氧以医生要求为准，先咨询医生更稳妥哈～😊",
+      "knowledgeDigest": "c901e0d6e7b272c5c8a02885e0bf89ff",
+      "chunkLength": null,
+      "chunkLearnStatus": "FINISH",
+      "index": 1
+    }
+  ],
+  "labels": [],
+  "labelInfos": null,
+  "ifBelievable": true,
+  "ifLearning": false,
+  "ifOpen": true,
+  "version": "V2",
+  "type": "SHOP",
+  "includeCondition": {
+    "spu": [],
+    "shop": [
+      {
+        "thirdShopId": "2095398963959042048",
+        "cids": []
+      },
+      {
+        "thirdShopId": "2104457457798483968",
+        "cids": []
+      }
+    ],
+    "rules": [],
+    "productGroupId": [],
+    "sellerGroup": [],
+    "platform": []
+  },
+  "excludeCondition": {
+    "spu": [],
+    "shop": [],
+    "rules": [],
+    "productGroupId": [],
+    "sellerGroup": [],
+    "platform": []
+  },
+  "timeliness": null,
+  "cycleTimeliness": null,
+  "orderStatus": [
+    "PRE_SALE",
+    "AFTER_SALE"
+  ],
+  "lastUpdatedAt": "2026-10-06 19:22:47",
+  "createdAt": "2026-09-04 11:34:33",
+  "source": null,
+  "productCondition": null,
+  "ifOpenSync": null,
+  "ifHasUrl": false,
+  "urlInfos": []
+}

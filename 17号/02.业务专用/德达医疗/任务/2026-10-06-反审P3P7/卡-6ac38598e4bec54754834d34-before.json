@@ -1,0 +1,86 @@
+{
+  "id": "6ac38598e4bec54754834d34",
+  "title": "德达官方旗舰店 赠品与活动（本店专属）",
+  "content": [
+    {
+      "id": "6ac38598e4bec54754834d35",
+      "content": "Q:下单送什么赠品？ A:下单即送吸氧管、过滤器+过滤棉；雾化款加送雾化套装；吸氧面罩每天前100名下单用户赠；部分型号加赠血氧仪（款式随机）、发热护膝、车载配件等（以商品详情页为准）。",
+      "knowledgeDigest": "4fcfd8101c7e9255933dd76628936a53",
+      "chunkLength": null,
+      "chunkLearnStatus": "FINISH",
+      "index": 1
+    },
+    {
+      "id": "6ac38598e4bec54754834d36",
+      "content": "Q:晒单/晒图送什么？ A:确认收货后晒图送氧气袋或额温枪（二选一）；氧气袋为42L大容量、可外出携带应急使用。具体赠品以商品详情页为准。",
+      "knowledgeDigest": "2f6c35cfd9d0949f4898491d857b11a3",
+      "chunkLength": null,
+      "chunkLearnStatus": "FINISH",
+      "index": 2
+    },
+    {
+      "id": "6ac38598e4bec54754834d37",
+      "content": "说明：吸氧面罩每天前100名、名额有限；赠品数量有限、款式随机、送完即止。",
+      "knowledgeDigest": "85fa68559968018ca8b59480bd59a927",
+      "chunkLength": null,
+      "chunkLearnStatus": "FINISH",
+      "index": 3
+    },
+    {
+      "id": "6ac38598e4bec54754834d38",
+      "content": "物流与售后：送货上门、24小时发货、快至今天/明天达（当日/次日达）；支持7天免费试用；核心部件（压缩机）5年质保+终身服务/终身维修（部分型号为2年质保+终身服务，以详情页为准）。",
+      "knowledgeDigest": "e94b2cdce4f0b7c996b855fa0e6cef99",
+      "chunkLength": null,
+      "chunkLearnStatus": "FINISH",
+      "index": 4
+    },
+    {
+      "id": "6ac38598e4bec54754834d39",
+      "content": "说明：赠品与活动以商品详情页/下单页为准；不同型号赠品不同，下单前请先与客服确认；赠品、配件仅限三包服务，不予折现；厂家可能在不提前通知的情况下调整包装、附件与赠品，图片仅供参考，以实物为准。",
+      "knowledgeDigest": "a340027134ef9becffe909a16a4e81c3",
+      "chunkLength": null,
+      "chunkLearnStatus": "FINISH",
+      "index": 5
+    }
+  ],
+  "labels": [],
+  "labelInfos": null,
+  "ifBelievable": true,
+  "ifLearning": false,
+  "ifOpen": true,
+  "version": "V2",
+  "type": "SHOP",
+  "includeCondition": {
+    "spu": [],
+    "shop": [
+      {
+        "thirdShopId": "2748947402403971286",
+        "cids": []
+      }
+    ],
+    "rules": [],
+    "productGroupId": [],
+    "sellerGroup": [],
+    "platform": []
+  },
+  "excludeCondition": {
+    "spu": [],
+    "shop": [],
+    "rules": [],
+    "productGroupId": [],
+    "sellerGroup": [],
+    "platform": []
+  },
+  "timeliness": null,
+  "cycleTimeliness": null,
+  "orderStatus": [
+    "PRE_SALE"
+  ],
+  "lastUpdatedAt": "2026-10-05 19:10:16",
+  "createdAt": "2026-10-05 19:10:16",
+  "source": null,
+  "productCondition": null,
+  "ifOpenSync": null,
+  "ifHasUrl": false,
+  "urlInfos": []
+}

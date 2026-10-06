@@ -1,0 +1,45 @@
+{
+  "id": "6a9a3c49644e354d71a3fa2a",
+  "title": "浓度/低浓度低流量吸氧/低流量低浓度计算公式",
+  "content": [
+    {
+      "content": "Q:低流量低浓度计算公式\nA:亲亲～人体实际吸入的氧浓度受供氧接口、呼吸状态等多种因素影响，不能靠固定公式准确推算，我们也不便按公式帮您计算哦～\n\n请以医生规定的供氧方式和流量为准使用设备，不要按公式或档位自行判断吸氧浓度是否合适；如果对用量有疑问，建议先咨询医生哈～😊"
+    }
+  ],
+  "labels": [],
+  "ifBelievable": true,
+  "type": "SHOP",
+  "ifOpen": true,
+  "includeCondition": {
+    "spu": [],
+    "shop": [
+      {
+        "thirdShopId": "2095398963959042048",
+        "cids": []
+      },
+      {
+        "thirdShopId": "2104457457798483968",
+        "cids": []
+      }
+    ],
+    "rules": [],
+    "productGroupId": [],
+    "sellerGroup": [],
+    "platform": []
+  },
+  "excludeCondition": {
+    "spu": [],
+    "shop": [],
+    "rules": [],
+    "productGroupId": [],
+    "sellerGroup": [],
+    "platform": []
+  },
+  "timeliness": null,
+  "cycleTimeliness": null,
+  "orderStatus": [
+    "PRE_SALE",
+    "AFTER_SALE"
+  ],
+  "lastUpdatedAt": "2026-09-29 12:12:41"
+}

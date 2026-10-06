@@ -1,0 +1,59 @@
+{
+  "id": "6a9a3c49644e354d71a3fa2a",
+  "title": "浓度/低浓度低流量吸氧/低流量低浓度计算公式",
+  "content": [
+    {
+      "id": "6abb3ab9e4bec547548231d2",
+      "content": "Q:低流量低浓度计算公式\nA:亲亲～吸氧浓度是有对应公式计算的哈🧮\n\n计算公式是：FiO₂(%) ≈ 21% + 4 × 氧流量(L/min)  \n也就是说，每升氧气大约能提升4%的吸氧浓度～\n注意：这里的氧流量是指出氧浓度能达90%以上的流量档位。\n\n比如您调节氧气流量到 【2升/分钟（出氧浓度≥90%）】，  \n那吸氧浓度大约是：21% + 4×2 = 【29%】\n\nFiO₂就是我们说的吸入气体中氧气浓度哦～  ",
+      "knowledgeDigest": "1f6e2b33e781efdfac82ed14b8b9bab0",
+      "chunkLength": null,
+      "chunkLearnStatus": "FINISH",
+      "index": 1
+    }
+  ],
+  "labels": [],
+  "labelInfos": null,
+  "ifBelievable": true,
+  "ifLearning": false,
+  "ifOpen": true,
+  "version": "V2",
+  "type": "SHOP",
+  "includeCondition": {
+    "spu": [],
+    "shop": [
+      {
+        "thirdShopId": "2095398963959042048",
+        "cids": []
+      },
+      {
+        "thirdShopId": "2104457457798483968",
+        "cids": []
+      }
+    ],
+    "rules": [],
+    "productGroupId": [],
+    "sellerGroup": [],
+    "platform": []
+  },
+  "excludeCondition": {
+    "spu": [],
+    "shop": [],
+    "rules": [],
+    "productGroupId": [],
+    "sellerGroup": [],
+    "platform": []
+  },
+  "timeliness": null,
+  "cycleTimeliness": null,
+  "orderStatus": [
+    "PRE_SALE",
+    "AFTER_SALE"
+  ],
+  "lastUpdatedAt": "2026-09-29 12:12:41",
+  "createdAt": "2026-09-04 11:34:33",
+  "source": null,
+  "productCondition": null,
+  "ifOpenSync": null,
+  "ifHasUrl": false,
+  "urlInfos": []
+}

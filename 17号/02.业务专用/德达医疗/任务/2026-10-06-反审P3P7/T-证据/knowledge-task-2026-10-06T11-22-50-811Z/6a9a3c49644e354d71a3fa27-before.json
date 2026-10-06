@@ -1,0 +1,59 @@
+{
+  "id": "6a9a3c49644e354d71a3fa27",
+  "title": "浓度/低浓度低流量吸氧/吸入浓度这么低有用吗？",
+  "content": [
+    {
+      "id": "6abb3ab9e4bec547548231d3",
+      "content": "Q:吸入浓度这么低有用吗？\nA:亲，您这个问题很专业哦，其实日常吸氧不是越高浓度越好～\n\n我们吸氧的目标是让血氧饱和度维持在95%以上（慢阻肺除外），就像喝水，喝饱了就行，不一定非要喝几升水～\n\n如果吸氧浓度过高，反而有氧中毒风险，所以机器输出的浓度是经过科学设计的，既能补充所需，也更安全哦～",
+      "knowledgeDigest": "b613727c3ab06bba7cacd1274b6b1d06",
+      "chunkLength": null,
+      "chunkLearnStatus": "FINISH",
+      "index": 1
+    }
+  ],
+  "labels": [],
+  "labelInfos": null,
+  "ifBelievable": true,
+  "ifLearning": false,
+  "ifOpen": true,
+  "version": "V2",
+  "type": "SHOP",
+  "includeCondition": {
+    "spu": [],
+    "shop": [
+      {
+        "thirdShopId": "2095398963959042048",
+        "cids": []
+      },
+      {
+        "thirdShopId": "2104457457798483968",
+        "cids": []
+      }
+    ],
+    "rules": [],
+    "productGroupId": [],
+    "sellerGroup": [],
+    "platform": []
+  },
+  "excludeCondition": {
+    "spu": [],
+    "shop": [],
+    "rules": [],
+    "productGroupId": [],
+    "sellerGroup": [],
+    "platform": []
+  },
+  "timeliness": null,
+  "cycleTimeliness": null,
+  "orderStatus": [
+    "PRE_SALE",
+    "AFTER_SALE"
+  ],
+  "lastUpdatedAt": "2026-09-29 12:12:41",
+  "createdAt": "2026-09-04 11:34:33",
+  "source": null,
+  "productCondition": null,
+  "ifOpenSync": null,
+  "ifHasUrl": false,
+  "urlInfos": []
+}

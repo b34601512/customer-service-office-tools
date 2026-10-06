@@ -1,0 +1,45 @@
+{
+  "id": "6a9a3c474a45121da4d7c7c9",
+  "title": "吸氧建议/慢阻肺/慢阻肺吸氧时长如何控制？",
+  "content": [
+    {
+      "content": "Q:慢阻肺吸氧时长如何控制？\nA:您好亲亲～慢阻肺患者的吸氧时长、流量和频次需要由医生根据具体病情制定，不同情况差异很大，我们无法给出统一建议哦～  \n请严格按照医生要求的时长和流量使用，并定期复诊调整；如需使用血氧仪，监测结果也请交给医生判断，用氧以医生要求为准哈～😊"
+    }
+  ],
+  "labels": [],
+  "ifBelievable": true,
+  "type": "SHOP",
+  "ifOpen": true,
+  "includeCondition": {
+    "spu": [],
+    "shop": [
+      {
+        "thirdShopId": "2095398963959042048",
+        "cids": []
+      },
+      {
+        "thirdShopId": "2104457457798483968",
+        "cids": []
+      }
+    ],
+    "rules": [],
+    "productGroupId": [],
+    "sellerGroup": [],
+    "platform": []
+  },
+  "excludeCondition": {
+    "spu": [],
+    "shop": [],
+    "rules": [],
+    "productGroupId": [],
+    "sellerGroup": [],
+    "platform": []
+  },
+  "timeliness": null,
+  "cycleTimeliness": null,
+  "orderStatus": [
+    "PRE_SALE",
+    "AFTER_SALE"
+  ],
+  "lastUpdatedAt": "2026-09-29 12:13:21"
+}

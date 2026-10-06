@@ -1,0 +1,45 @@
+{
+  "id": "6a9a3c47644e354d71a3f9b5",
+  "title": "吸氧建议/慢阻肺/不是要低浓度低流量吗？",
+  "content": [
+    {
+      "content": "Q:不是要低浓度低流量吗？\nA:机器出口氧浓度和人体实际吸入氧浓度不是同一指标；实际吸入情况还受供氧接口、呼吸状态等因素影响，不能用固定换算表或简易公式准确推算个人吸入浓度，也不能据此判断您的血氧是否正常。请按照医生规定的供氧方式和流量使用设备；用氧以医生要求为准，不要因混入空气就判断某一档位一定安全。"
+    }
+  ],
+  "labels": [],
+  "ifBelievable": true,
+  "type": "SHOP",
+  "ifOpen": true,
+  "includeCondition": {
+    "spu": [],
+    "shop": [
+      {
+        "thirdShopId": "2095398963959042048",
+        "cids": []
+      },
+      {
+        "thirdShopId": "2104457457798483968",
+        "cids": []
+      }
+    ],
+    "rules": [],
+    "productGroupId": [],
+    "sellerGroup": [],
+    "platform": []
+  },
+  "excludeCondition": {
+    "spu": [],
+    "shop": [],
+    "rules": [],
+    "productGroupId": [],
+    "sellerGroup": [],
+    "platform": []
+  },
+  "timeliness": null,
+  "cycleTimeliness": null,
+  "orderStatus": [
+    "PRE_SALE",
+    "AFTER_SALE"
+  ],
+  "lastUpdatedAt": "2026-09-29 12:12:25"
+}

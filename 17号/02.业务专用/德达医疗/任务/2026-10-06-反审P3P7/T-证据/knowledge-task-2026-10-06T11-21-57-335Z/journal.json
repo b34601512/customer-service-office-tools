@@ -1,0 +1,24 @@
+{
+  "runId": "2026-10-06T11-21-57-335Z",
+  "action": "check",
+  "taskFile": "T-6a9a3c49644e354d71a3fa27.json",
+  "company": "德达医疗（8店探域）",
+  "scope": "P7-4：删「血氧饱和度维持在95%以上」目标值（10-06 风格【医疗约束】：不得按血氧读数判断）→ 保留「不是越高越好/氧中毒风险」通用提示 + 交医生",
+  "approvedBy": "黎路遥 2026-10-06 18:55 批准 P3–P7（P7 医疗/时效边界卡改写）",
+  "businessPatchKeys": null,
+  "deleteIds": [],
+  "startedAt": "2026-10-06T11:21:57.335Z",
+  "entries": [
+    {
+      "id": "6a9a3c49644e354d71a3fa27",
+      "note": "P7-4：删「血氧饱和度维持在95%以上」目标值（10-06 风格【医疗约束】：不得按血氧读数判断）→ 保留「不是越高越好/氧中毒风险」通用提示 + 交医生",
+      "currentSha256": "5232f766a95dcb05cbe06a0fc015c28d6ea97bc62234f319b5997468e8e42adb",
+      "expectedDiffs": [],
+      "status": "ready",
+      "businessPatch": "unchanged",
+      "expectBusinessSha256": "a32eec8eecbd0c06b6888435d99c8c68f5aff5e70de5196285ef575e2a1046ab",
+      "approvedBy": "黎路遥 2026-10-06 18:55 批准 P3–P7（P7 医疗/时效边界卡改写）"
+    }
+  ],
+  "finishedAt": "2026-10-06T11:22:01.887Z"
+}

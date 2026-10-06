@@ -1,0 +1,48 @@
+{
+  "runId": "2026-10-06T11-22-56-316Z",
+  "action": "apply",
+  "taskFile": "T-6a9a3c49644e354d71a3fa2a.json",
+  "company": "德达医疗（8店探域）",
+  "scope": "P7-5：删 FiO₂ 计算公式与算例（与 6a9a3c47644e354d71a3f9b5「不能用公式推算」冲突；10-06 风格【医疗约束】不给档位建议）→ 交医生",
+  "approvedBy": "黎路遥 2026-10-06 18:55 批准 P3–P7（P7 医疗/时效边界卡改写）",
+  "businessPatchKeys": null,
+  "deleteIds": [],
+  "startedAt": "2026-10-06T11:22:56.316Z",
+  "entries": [
+    {
+      "id": "6a9a3c49644e354d71a3fa2a",
+      "note": "P7-5：删 FiO₂ 计算公式与算例（与 6a9a3c47644e354d71a3f9b5「不能用公式推算」冲突；10-06 风格【医疗约束】不给档位建议）→ 交医生",
+      "currentSha256": "6ed3127563134ddf9d4bf6073b3cf9479173a08eed2b64c2bf3e9db6cab86737",
+      "expectedDiffs": [],
+      "status": "verified",
+      "businessPatch": "unchanged",
+      "expectBusinessSha256": "2759ae5b5d8276eba34a9d055f45b129bba1b18c82b056f876555d9813b82933",
+      "approvedBy": "黎路遥 2026-10-06 18:55 批准 P3–P7（P7 医疗/时效边界卡改写）",
+      "response": true,
+      "afterSha256": "ed542c05b4f896d606dc52e66f38f660ac98ff168aa6376b4cb15551d2f15034",
+      "scopeShop": {
+        "before": [
+          {
+            "thirdShopId": "2095398963959042048",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2104457457798483968",
+            "cids": []
+          }
+        ],
+        "after": [
+          {
+            "thirdShopId": "2095398963959042048",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2104457457798483968",
+            "cids": []
+          }
+        ]
+      }
+    }
+  ],
+  "finishedAt": "2026-10-06T11:23:01.361Z"
+}

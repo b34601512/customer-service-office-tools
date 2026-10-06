@@ -1,0 +1,55 @@
+{
+  "id": "6ac0d595e1041c390582eafa",
+  "title": "发货/物流时效，京东仓发货多久能到？",
+  "content": [
+    {
+      "id": "6ac48c83e1041c3905832fb9",
+      "content": "Q：京东仓发货多久能到？\nA：亲亲～咱们这款是【京东仓库就近发货】的哦～一般是【次日达】，快的话当天都有可能收到📦 方便的话发我一下您的收货地址（省、市、区/县、街/镇），我这边帮您查一下预计的送达时效哈～😊\n到货时间参考：快的话上午买下午到，一般非偏远地区次日达；您也可以点进商品页、选好收货地址后，页面上方会自动显示预计送达时间，具体以下单页/商品页显示的预计送达时间为准哈～😊",
+      "knowledgeDigest": "095c6d2fa22194afd574cb50619eb129",
+      "chunkLength": null,
+      "chunkLearnStatus": "FINISH",
+      "index": 1
+    }
+  ],
+  "labels": [],
+  "labelInfos": null,
+  "ifBelievable": true,
+  "ifLearning": false,
+  "ifOpen": true,
+  "version": "V2",
+  "type": "SHOP",
+  "includeCondition": {
+    "spu": [],
+    "shop": [
+      {
+        "thirdShopId": "2748947402403971286",
+        "cids": []
+      }
+    ],
+    "rules": [],
+    "productGroupId": [],
+    "sellerGroup": [],
+    "platform": []
+  },
+  "excludeCondition": {
+    "spu": [],
+    "shop": [],
+    "rules": [],
+    "productGroupId": [],
+    "sellerGroup": [],
+    "platform": []
+  },
+  "timeliness": null,
+  "cycleTimeliness": null,
+  "orderStatus": [
+    "PRE_SALE",
+    "SALE"
+  ],
+  "lastUpdatedAt": "2026-10-06 13:52:03",
+  "createdAt": "2026-10-03 18:14:45",
+  "source": null,
+  "productCondition": null,
+  "ifOpenSync": null,
+  "ifHasUrl": false,
+  "urlInfos": []
+}

@@ -1,0 +1,86 @@
+{
+  "id": "6abb71abe4bec54754824a42",
+  "title": "DEDAKJ 赠品与活动（本店专属）",
+  "content": [
+    {
+      "id": "6ac1c382e1041c390582f4ae",
+      "content": "Q:下单送什么赠品？ A:官方直营，多重豪礼下单就送：①价值99元氧气袋(42L)*1——【每天下单前50名】可送，需联系客服确认备注；②吸氧大礼包——随单送，不同型号配件礼包有区别（含遥控器、鼻吸管/吸氧管、过滤套装、电源线、雾化面罩、雾化连接管、雾化杯、口含器）；③价值199元血氧仪——【收货后晒图送】，款式随机；④价值59元无菌吸氧面罩——【收货后晒图送】。",
+      "knowledgeDigest": "937b2f0e0f85164162940fe7e8495056",
+      "chunkLength": null,
+      "chunkLearnStatus": "FINISH",
+      "index": 1
+    },
+    {
+      "id": "6ac1c382e1041c390582f4af",
+      "content": "Q:现在有什么活动？ A:活动主题「喜迎国庆佳节 下单送豪礼」，活动时间 9月24号—10月7号；期间晒图活动赠送血氧仪，另送吸氧大礼包。（活动以店铺公告为准，已过期或型号不同时先与客服确认再答复买家。）",
+      "knowledgeDigest": "c5a55578d8c3c951c99c8511222882e8",
+      "chunkLength": null,
+      "chunkLearnStatus": "FINISH",
+      "index": 2
+    },
+    {
+      "id": "6ac1c382e1041c390582f4b0",
+      "content": "物流：顺丰24小时速发（需联系客服备注）。",
+      "knowledgeDigest": "2f0dde8746a149eb4d1fdb455116c18f",
+      "chunkLength": null,
+      "chunkLearnStatus": "FINISH",
+      "index": 3
+    },
+    {
+      "id": "6ac1c382e1041c390582f4b1",
+      "content": "三包：配件、赠品仅限三包服务——自签收日起 7 天内有质量问题包修包退包换；15 天内可维修或换货处理；【赠品、配件不予折现】。",
+      "knowledgeDigest": "13c735210575737b2d1afcb2f8c97c91",
+      "chunkLength": null,
+      "chunkLearnStatus": "FINISH",
+      "index": 4
+    },
+    {
+      "id": "6ac1c382e1041c390582f4b2",
+      "content": "说明：厂家可能在无提前通知的情况下更改包装、产地、附件与赠品；本店保证原厂正品、与市场主流新品一致，图片仅供参考，以实物为准。",
+      "knowledgeDigest": "ef3bea0e38839ee58708581cc3c69268",
+      "chunkLength": null,
+      "chunkLearnStatus": "FINISH",
+      "index": 5
+    }
+  ],
+  "labels": [],
+  "labelInfos": null,
+  "ifBelievable": true,
+  "ifLearning": false,
+  "ifOpen": true,
+  "version": "V2",
+  "type": "SHOP",
+  "includeCondition": {
+    "spu": [],
+    "shop": [
+      {
+        "thirdShopId": "2104457457798483968",
+        "cids": []
+      }
+    ],
+    "rules": [],
+    "productGroupId": [],
+    "sellerGroup": [],
+    "platform": []
+  },
+  "excludeCondition": {
+    "spu": [],
+    "shop": [],
+    "rules": [],
+    "productGroupId": [],
+    "sellerGroup": [],
+    "platform": []
+  },
+  "timeliness": null,
+  "cycleTimeliness": null,
+  "orderStatus": [
+    "PRE_SALE"
+  ],
+  "lastUpdatedAt": "2026-10-04 11:09:54",
+  "createdAt": "2026-09-29 16:07:07",
+  "source": null,
+  "productCondition": null,
+  "ifOpenSync": null,
+  "ifHasUrl": false,
+  "urlInfos": []
+}
