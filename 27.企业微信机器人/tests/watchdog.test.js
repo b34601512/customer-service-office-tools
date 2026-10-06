@@ -14,6 +14,8 @@ const {
 } = require("../src/watchdog");
 
 const cfg = DEFAULT_CONFIG;
+// 群静默默认阈值 2026-10-06 放宽到 720min；这几条测试关心的是「达阈值后的行为」，用紧凑阈值跑，不受默认值调整影响。
+const cfgTight = mergeConfig(DEFAULT_CONFIG, { groupSilentMin: 120 });
 const NOON = new Date(2026, 9, 6, 12, 0, 0).getTime(); // 2026-10-06 12:00 本地
 const MIN = 60 * 1000;
 
@@ -39,10 +41,10 @@ function snapshot(opts = {}) {
 
 test("群静默但单聊正常：连续 2 次后报警（单聊不掩蔽群）", () => {
   const snap = snapshot({ groupLastAt: NOON - 200 * MIN, singleLastAt: NOON - 5 * MIN });
-  const first = evaluate(snap, emptyState(), cfg, NOON);
+  const first = evaluate(snap, emptyState(), cfgTight, NOON);
   assert.equal(first.strikes.group, 1);
   assert.equal(first.toAlert.length, 0, "第 1 次只累计，不报警");
-  const second = evaluate(snap, first.nextState, cfg, NOON + 5 * MIN);
+  const second = evaluate(snap, first.nextState, cfgTight, NOON + 5 * MIN);
   assert.ok(second.toAlert.some((a) => a.key === "group"), "第 2 次应报群聊");
   assert.equal(second.conditions.single.hit, false, "单聊正常不应被报");
 });
@@ -93,7 +95,7 @@ test("晚上防误报：群静默 200 分钟 + 单聊也 100 分钟没消息（�
 test("消息静默（群静默+单聊活跃）达阈值：报警但**不重启**守护（2026-10-06 误报收严）", () => {
   const snap = snapshot({ groupLastAt: NOON - 200 * MIN, singleLastAt: NOON - 5 * MIN });
   const state = { strikes: { group: 1 }, active: {}, restarts: [] };
-  const r = evaluate(snap, state, cfg, NOON);
+  const r = evaluate(snap, state, cfgTight, NOON);
   assert.ok(r.toAlert.some((a) => a.key === "group"), "群静默应报警");
   assert.equal(r.restart.needed, false, "消息静默类不许自动重启守护（只报警）");
 });
@@ -129,13 +131,13 @@ test("重启节流：10 分钟内刚重启过 → 抑制重启", () => {
 
 test("恢复后：把 active 告警收掉，产出 [已解决] 信号", () => {
   const bad = snapshot({ groupLastAt: NOON - 200 * MIN, singleLastAt: NOON - 5 * MIN });
-  let r = evaluate(bad, emptyState(), cfg, NOON);
-  r = evaluate(bad, r.nextState, cfg, NOON + 5 * MIN);
+  let r = evaluate(bad, emptyState(), cfgTight, NOON);
+  r = evaluate(bad, r.nextState, cfgTight, NOON + 5 * MIN);
   assert.ok(r.active.group, "先进入告警中状态");
 
   const now2 = NOON + 10 * MIN;
   const good = snapshot({ groupLastAt: now2 - 1 * MIN, singleLastAt: now2 - 2 * MIN });
-  const r2 = evaluate(good, r.nextState, cfg, now2);
+  const r2 = evaluate(good, r.nextState, cfgTight, now2);
   assert.ok(r2.toResolve.some((x) => x.key === "group"));
   assert.equal(r2.active.group, undefined);
   assert.equal(r2.ok, true);

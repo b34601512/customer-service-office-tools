@@ -29,7 +29,7 @@ const DEFAULT_CONFIG = Object.freeze({
   workStartMin: 9 * 60,
   workEndMin: 22 * 60,
   // 静默阈值（分钟）
-  groupSilentMin: 180,   // 群聊：只有被 @ 才有消息，阈值放宽
+  groupSilentMin: 720,   // 群聊：只有被 @ 才有消息；2026-10-06 按黎路遥「按你建议」放宽到 12 小时（原 180 夜里反复误报）
   singleSilentMin: 120,  // 单聊：消息密，2 小时异常
   bothSilentMin: 120,    // 两个通道都静默：强信号（连接大概率死了）
   recentMin: 60,         // "最近有消息"的窗口
