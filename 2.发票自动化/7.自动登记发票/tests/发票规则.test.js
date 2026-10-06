@@ -171,6 +171,16 @@ test("规范型号：尾缀品牌名 DEDAKJ 要剥掉（2026-10-05 实测 DH21-A
   assert.equal(规范型号("鼻氧管-德达", "鼻氧管-德达（2米*透明）", true), "YY-XYG");
 });
 
+test("规范型号：型号后面粘中文/仓库名不能截错（2026-10-06 实测 DE-2SW01 湖南 被写成 SW01）", () => {
+  const { 规范型号 } = require("../src/发票规则");
+  // ERP 型号「DE-2SW01湖南」= 规格名「DE-2SW01 湖南」；表里口径（表① 第 1837/1842 行）U=DE-2SW01
+  assert.equal(规范型号("DE-2SW01湖南", "DE-2SW01 湖南", false), "DE-2SW01");
+  assert.equal(规范型号("DE-2SW01", "DE-2SW01 湖南", false), "DE-2SW01");
+  assert.equal(规范型号("DE-1SW01湖南", "DE-1SW01 湖南", false), "DE-1SW01");
+  // 反例：纯中文型号没有 ASCII 开头码时不能被吞成空
+  assert.equal(规范型号("纯正弦波逆变器", "纯正弦波逆变器", false), "纯正弦波逆变器");
+});
+
 test("登记表口径：店铺补 0、票种归一", () => {
   const { 登记表店铺名, 登记表票种 } = require("../src/发票规则");
   assert.equal(登记表店铺名("拼多多2店"), "拼多多02店");
