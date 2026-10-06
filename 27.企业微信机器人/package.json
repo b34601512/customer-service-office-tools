@@ -8,7 +8,10 @@
     "check": "node scripts/检查企微环境.js",
     "导出凭据": "node scripts/导出机器人凭据.js",
     "守护": "node scripts/长连接守护.js",
-    "守护:自检": "node scripts/长连接守护.js --check"
+    "守护:自检": "node scripts/长连接守护.js --check",
+    "看门狗": "node scripts/企微看门狗.js",
+    "看门狗:装": "node scripts/装企微看门狗.cjs",
+    "看门狗:卸": "node scripts/装企微看门狗.cjs --remove"
   },
   "dependencies": {
     "@wecom/aibot-node-sdk": "^1.0.7"

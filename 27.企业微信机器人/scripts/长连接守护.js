@@ -20,6 +20,7 @@ const CRED_PATH = path.join(ROOT, "project-config", "aibot-credentials.local.jso
 const STATE_DIR = path.join(ROOT, ".state");
 const INBOX_PATH = path.join(STATE_DIR, "inbox.jsonl");
 const PID_PATH = path.join(STATE_DIR, "daemon.pid");
+const CONN_EVENTS_PATH = path.join(STATE_DIR, "连接事件.jsonl");
 
 const args = new Set(process.argv.slice(2));
 const CHECK_ONLY = args.has("--check");
@@ -40,6 +41,18 @@ function loadCredentials() {
 function appendRecord(record) {
   fs.mkdirSync(STATE_DIR, { recursive: true });
   fs.appendFileSync(INBOX_PATH, JSON.stringify(record) + "\n", "utf8");
+}
+
+/** 连接级探针（2026-10-06 新增，只观察不改连接行为）：认证/断开/重连事件落时间戳文件，供独立看门狗判断。 */
+function appendConnEvent(event, detail) {
+  try {
+    fs.mkdirSync(STATE_DIR, { recursive: true });
+    fs.appendFileSync(
+      CONN_EVENTS_PATH,
+      JSON.stringify({ at: new Date().toISOString(), event, detail: detail ? String(detail).slice(0, 300) : "" }) + "\n",
+      "utf8"
+    );
+  } catch {}
 }
 
 const seenMsgIds = new Set(); // 排重（SDK 官方建议按 msgid 排重）
@@ -115,6 +128,7 @@ async function main() {
   wsClient = client;
 
   client.on("authenticated", () => {
+    appendConnEvent("authenticated", "");
     log(CHECK_ONLY ? "AUTH_OK：长连接认证并订阅成功" : "长连接认证并订阅成功（只收不回）");
     if (CHECK_ONLY) {
       client.disconnect();
@@ -131,8 +145,16 @@ async function main() {
   client.on("event.template_card_event", (frame) => handleFrame("template_card_event", frame));
   client.on("event.feedback_event", (frame) => handleFrame("feedback_event", frame));
 
-  client.on("error", (error) => log("连接错误：" + (error && error.message ? error.message : String(error))));
-  client.on("disconnected", () => log("连接断开（SDK 会自动重连）"));
+  client.on("error", (error) => {
+    log("连接错误：" + (error && error.message ? error.message : String(error)));
+    appendConnEvent("error", error && error.message ? error.message : String(error));
+  });
+  client.on("disconnected", (reason) => {
+    // 2026-10-06 修正：被新连接顶掉时 SDK 不会自动重连（isManualClose=true），旧文案"SDK 会自动重连"是错的。
+    log("连接断开：" + (reason || "未提供原因"));
+    appendConnEvent("disconnected", reason);
+  });
+  client.on("reconnecting", (attempt) => appendConnEvent("reconnecting", "第 " + attempt + " 次"));
 
   client.connect();
 
