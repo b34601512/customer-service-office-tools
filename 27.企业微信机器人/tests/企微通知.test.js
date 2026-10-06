@@ -80,9 +80,11 @@ test('打码机器人地址：key 不泄露', () => {
   assert.ok(打码.includes('******'));
 });
 
-test('造消息体：markdown 不带 @；text 带 @；空内容拒绝', () => {
+test('造消息体：markdown 不带 @；text 带 @（手机号/userid）；空内容拒绝', () => {
   assert.deepEqual(共享.造消息体({ 类型: 'markdown', 内容: '# 标题', 提及手机号: ['13800000000'] }), { msgtype: 'markdown', markdown: { content: '# 标题' } });
   assert.deepEqual(共享.造消息体({ 类型: 'text', 内容: '内容', 提及手机号: ['13800000000'] }), { msgtype: 'text', text: { content: '内容', mentioned_mobile_list: ['13800000000'] } });
+  assert.deepEqual(共享.造消息体({ 类型: 'text', 内容: '内容', 提及成员: ['woABC'] }), { msgtype: 'text', text: { content: '内容', mentioned_list: ['woABC'] } });
+  assert.deepEqual(共享.造消息体({ 类型: 'text', 内容: '内容', 提及手机号: ['13800000000'], 提及成员: ['woABC'] }), { msgtype: 'text', text: { content: '内容', mentioned_mobile_list: ['13800000000'], mentioned_list: ['woABC'] } });
   assert.throws(() => 共享.造消息体({ 类型: 'text', 内容: '   ' }), /内容为空/);
 });
 

@@ -7,7 +7,8 @@
  *
  * ⚠ 口径（用户 2026-09-30）：**群消息统一由「木婉清」（27号 aibot）发**
  *     `cd 27.企业微信机器人 && node scripts/发企微消息.cjs --chat-id "<本次 sessions list 现取的群 chat_id>" --text "…"`
- *     木婉清的消息**不能真 @人**（正文写名字）；只有确实需要真 @ 时才回退到本模块（webhook + mentioned_mobile_list）。
+ *     木婉清的消息**不能真 @人**（正文写名字）；只有确实需要真 @ 时才回退到本模块
+ *     （webhook + mentioned_list 按 userid（推荐，不需要通讯录权限）/ mentioned_mobile_list 按手机号）。
  *
  * 配置（各项目自己的 `project-config/wecom-notify.json`，不入库）：
  *   { "webhookUrl": "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=…", "members": { "缪某某": "138…" } }
@@ -90,13 +91,14 @@ function 打码机器人地址(rawUrl) {
   }
 }
 
-/** 造消息体：text（可带 @手机号）或 markdown（不支持 @） */
-function 造消息体({ 类型 = 'text', 内容, 提及手机号 = [] } = {}) {
+/** 造消息体：text（可带 @手机号 / @userid）或 markdown（不支持 @） */
+function 造消息体({ 类型 = 'text', 内容, 提及手机号 = [], 提及成员 = [] } = {}) {
   const content = String(内容 || '').trim();
   if (!content) throw new Error('消息内容为空，nothing to send');
   if (类型 === 'markdown') return { msgtype: 'markdown', markdown: { content } };
   const payload = { msgtype: 'text', text: { content } };
   if ((提及手机号 || []).length > 0) payload.text.mentioned_mobile_list = 提及手机号;
+  if ((提及成员 || []).length > 0) payload.text.mentioned_list = 提及成员;
   return payload;
 }
 
@@ -135,7 +137,7 @@ async function 发一条({ webhookUrl, 消息体, fetchImpl = globalThis.fetch, 
 
 /** 解析群机器人 CLI 参数（27号 「发群消息.js」的那套开关） */
 function 解析群机器人参数(argv) {
-  const options = { text: '', textFile: '', mention: [], type: 'text', webhook: '', send: false };
+  const options = { text: '', textFile: '', mention: [], mentionUsers: [], type: 'text', webhook: '', send: false };
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
     const next = () => {
@@ -146,6 +148,7 @@ function 解析群机器人参数(argv) {
     if (arg === '--text') options.text = next();
     else if (arg === '--text-file') options.textFile = next();
     else if (arg === '--mention') options.mention = next().split(',').map((item) => item.trim()).filter(Boolean);
+    else if (arg === '--mention-user') options.mentionUsers = next().split(',').map((item) => item.trim()).filter(Boolean);
     else if (arg === '--type') {
       options.type = next().trim().toLowerCase();
       if (!['text', 'markdown'].includes(options.type)) throw new Error('--type 只支持 text 或 markdown');
@@ -176,13 +179,14 @@ async function 跑群机器人命令行({ argv = [], env = process.env, fetchImp
   const options = 解析群机器人参数(argv);
   if (options.help) {
     输出(`用法：
-  node scripts/发群消息.js --text "内容" [--mention 手机号,手机号] [--type text|markdown]
+  node scripts/发群消息.js --text "内容" [--mention 手机号,手机号] [--mention-user userid,userid] [--type text|markdown]
   node scripts/发群消息.js --text-file 报告.txt --send
 
 选项：
   --text          消息正文（与 --text-file 二选一）
   --text-file     从文件读正文（适合日报/报告）
-  --mention       逗号分隔的手机号，仅 text 类型有效（企微按手机号 @人）
+  --mention       逗号分隔的手机号，仅 text 类型有效（企微按手机号 @人；需通讯录权限）
+  --mention-user  逗号分隔的企微 userid（真 @，不需要通讯录权限；可与 --mention 同用）
   --type          text（默认）或 markdown
   --webhook       群机器人地址；不传则读环境变量 WECOM_WEBHOOK_URL
   --send          真正发送；不传只预览（默认 dry-run）
@@ -191,7 +195,7 @@ async function 跑群机器人命令行({ argv = [], env = process.env, fetchImp
   }
   if (options.text && options.textFile) throw new Error('--text 与 --text-file 只能二选一');
   const content = 读正文(options);
-  const payload = 造消息体({ 类型: options.type, 内容: content, 提及手机号: options.mention });
+  const payload = 造消息体({ 类型: options.type, 内容: content, 提及手机号: options.mention, 提及成员: options.mentionUsers });
   const rawWebhook = 取群机器人地址(options, env);
   校验机器人地址(rawWebhook);
 
@@ -207,8 +211,8 @@ async function 跑群机器人命令行({ argv = [], env = process.env, fetchImp
 }
 
 /** 真发一条文本（返回企微原始响应；errcode≠0 抛错） */
-async function 发送({ webhookUrl, text, 提及手机号 = [], fetchImpl = fetch }) {
-  const 消息体 = 造消息体({ 类型: 'text', 内容: text, 提及手机号 });
+async function 发送({ webhookUrl, text, 提及手机号 = [], 提及成员 = [], fetchImpl = fetch }) {
+  const 消息体 = 造消息体({ 类型: 'text', 内容: text, 提及手机号, 提及成员 });
   return 发一条({ webhookUrl, 消息体, fetchImpl });
 }
 
