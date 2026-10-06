@@ -55,6 +55,10 @@ function isDouyinStoreIdentityMatched(actualIdentity, expectedIdentity) {
 //   新版：改成 CSS Modules 哈希类名（实测 index_shopName__xxxx，纯店名，无「旗舰店/正常营业」尾巴）。
 // 逐个候选试，取「恰好 1 个可见」的那个，保持原有唯一性约束。
 const DOUYIN_STORE_NAME_SELECTORS = [
+  // 新版（2026-10-06 实测 DOM）：店名节点仍是 data-bytereplay-mask="true"，
+  // 但不再挂在顶部直接子节点，而是嵌在 headerShopName > shopDetails > shopTitle 里面（class=index_userName__xxxx）。
+  ':scope [data-bytereplay-mask="true"]',
+  // 旧版：直接子节点。
   ':scope > [data-bytereplay-mask="true"]',
   ":scope [class*='shopName']"
 ];
