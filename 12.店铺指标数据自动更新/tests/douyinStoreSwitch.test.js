@@ -1,5 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
+const { DOUYIN_SHOP_HEADER_SELECTOR } = require("../src/platforms/douyin/douyinSelectors");
 const {
   runAfterDismissingBlockingPopups
 } = require("../src/shared/blockingPopupEngine");
@@ -191,7 +192,7 @@ test("抖音切店入口延迟挂载时等待并重用同一店铺头部", async
   };
   const page = {
     locator(selector) {
-      if (selector === ".headerShopName") {
+      if (selector === DOUYIN_SHOP_HEADER_SELECTOR) {
         return {
           first() {
             return {

@@ -1,6 +1,7 @@
 const appConfig = require("../../config/appConfig");
 const { runAfterDismissingBlockingPopups } = require("../../shared/blockingPopupEngine");
 const { requireHeadedBrowser } = require("../../engine/browserAutomationScope");
+const { DOUYIN_SHOP_HEADER_SELECTOR } = require("./douyinSelectors");
 
 const DOUYIN_POLL_INTERVAL_MS = appConfig.douyin.pageReadyPollIntervalMs;
 const DOUYIN_STORE_SWITCH_TIMEOUT_MS = appConfig.douyin.storeSwitchTimeoutMs;
@@ -99,7 +100,7 @@ async function ensureDouyinStoreMenuOpenWithoutPopupHandling(page, existingShopH
     throw new Error(`抖音切店入口不唯一：识别到 ${visibleSwitchEntries.length} 个可见“切换组织/店铺”。`);
   }
 
-  const shopHeader = existingShopHeader || page.locator(".headerShopName").first();
+  const shopHeader = existingShopHeader || page.locator(DOUYIN_SHOP_HEADER_SELECTOR).first();
   await shopHeader.waitFor({ state: "visible", timeout: 15000 });
 
   const deadline = Date.now() + 12000;
@@ -159,7 +160,7 @@ async function clickDouyinSwitchStoreEntry(page) {
 }
 
 async function readCurrentDouyinStoreIdentity(page) {
-  const shopHeader = page.locator(".headerShopName").first();
+  const shopHeader = page.locator(DOUYIN_SHOP_HEADER_SELECTOR).first();
   await shopHeader.waitFor({ state: "visible", timeout: 15000 });
   const storeName = await readDouyinStoreName(shopHeader);
   await ensureDouyinStoreMenuOpen(page, shopHeader);
@@ -230,7 +231,7 @@ async function waitForExpectedDouyinStore(originPage, expectedIdentity, timeoutM
   let lastStoreName = "";
   while (Date.now() <= deadline) {
     for (const candidatePage of originPage.context().pages()) {
-      const header = candidatePage.locator(".headerShopName").first();
+      const header = candidatePage.locator(DOUYIN_SHOP_HEADER_SELECTOR).first();
       if ((await header.count()) === 0 || !await header.isVisible().catch(() => false)) continue;
       try {
         const storeName = await readDouyinStoreName(header);

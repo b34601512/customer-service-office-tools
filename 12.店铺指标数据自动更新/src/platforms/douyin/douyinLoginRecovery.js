@@ -1,4 +1,5 @@
 const appConfig = require("../../config/appConfig");
+const { DOUYIN_SHOP_HEADER_SELECTOR } = require("./douyinSelectors");
 const { requireHeadedBrowser } = require("../../engine/browserAutomationScope");
 
 function readDouyinPageText(page) {
@@ -23,7 +24,7 @@ function listDouyinBrowserPages(browser) {
 }
 
 async function isDouyinMerchantHomePage(page) {
-  const shopHeader = page.locator(".headerShopName").first();
+  const shopHeader = page.locator(DOUYIN_SHOP_HEADER_SELECTOR).first();
   if ((await shopHeader.count()) === 0 || !await shopHeader.isVisible().catch(() => false)) {
     return false;
   }
