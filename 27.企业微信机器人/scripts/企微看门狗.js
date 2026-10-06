@@ -419,4 +419,4 @@ main().catch((err) => {
   process.exitCode = 1;
 });
 
-module.exports = { alertTag, SILENCE_ALERT_KEYS };
+module.exports = { alertTag };
