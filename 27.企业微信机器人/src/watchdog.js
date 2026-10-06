@@ -352,7 +352,19 @@ function formatLocal(ms) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 }
 
+
+// 消息静默类告警用 [通知]（赵敏 2026-10-06 建议、黎路遥已采纳）：
+// 只有确定性故障（守护不在 / 长线断开未恢复）才用 [故障]。
+const SILENCE_ALERT_KEYS = new Set(["group", "single", "both"]);
+
+function alertTag(alertKeys) {
+  const keys = Array.isArray(alertKeys) ? alertKeys : [];
+  return keys.some((k) => !SILENCE_ALERT_KEYS.has(k)) ? "[故障]" : "[通知]";
+}
+
 module.exports = {
+  alertTag,
+  SILENCE_ALERT_KEYS,
   DEFAULT_CONFIG,
   CONDITION_KEYS,
   mergeConfig,

@@ -231,12 +231,18 @@ const RESOLVE_DESC = {
   single: "单聊恢复收发"
 };
 
+const { alertTag: alertTagForKeys } = require("../src/watchdog");
+
+function alertTag(result) {
+  return alertTagForKeys((result?.toAlert || []).map((a) => a.key));
+}
+
 function alertBody(result, cfg, restartNote) {
   const lines = [];
-  lines.push(`【木婉清】[故障]${cfg.testTag ? `（${cfg.testTag}）` : ""}`);
+  lines.push(`【木婉清】${alertTag(result)}${cfg.testTag ? `（${cfg.testTag}）` : ""}`);
   lines.push(formatJst(result.nowMs));
   lines.push("");
-  lines.push("企微长连接守护异常（看门狗巡检）：");
+  lines.push(`${alertTag(result) === "[故障]" ? "企微长连接守护异常" : "企微消息静默提醒"}（看门狗巡检）：`);
   for (const a of result.toAlert) {
     const desc = ALERT_DESC[a.key] ? ALERT_DESC[a.key](a.detail) : `${a.key}：${a.detail}`;
     lines.push(`- ${desc}`);
@@ -378,7 +384,7 @@ async function main() {
       if (result.toAlert.length) {
         const text = alertBody(result, cfg, restartNote);
         const r = postBoard(cfg, text);
-        if (r.ok) log(`留言板已写[故障]：${r.out}`);
+        if (r.ok) log(`留言板已写${alertTag(result)}：${r.out}`);
         else { enqueue(stateDir, cfg, text); log(`留言板写入失败：${r.err}（已存待发队列）`); }
       } else if (result.toResolve.length) {
         const text = resolveBody(result, cfg);
@@ -412,3 +418,5 @@ main().catch((err) => {
   console.error("看门狗异常：" + (err && err.message ? err.message : err));
   process.exitCode = 1;
 });
+
+module.exports = { alertTag, SILENCE_ALERT_KEYS };
