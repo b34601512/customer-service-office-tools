@@ -173,3 +173,6 @@ tools/git-secret-store.json.bak
 
 # 项目私有配置：只留本机、不入库（仓库公开；例：企微智能表格 docid）
 **/project-config/*.local.json
+
+# 探域全库快照（含客户电话等真值，只留本机，不入公共仓库）
+*全库*.json

@@ -1,0 +1,103 @@
+{
+  "id": "6abb4405908ac50ae9029a0c",
+  "title": null,
+  "content": [
+    {
+      "id": "6ac1ac78e4bec5475483208c",
+      "content": "【2SW静音雾化款】\n- 功能参数：9L流量可调，96%高氧浓度（2L时），36分贝静音制氧",
+      "knowledgeDigest": "e4df37075d6f0431d136d21b1d141694",
+      "chunkLength": null,
+      "chunkLearnStatus": "FINISH",
+      "index": 1
+    },
+    {
+      "id": "6ac1ac78e4bec5475483208d",
+      "content": "【2SW静音雾化款】\n- 核心功能：智能定时、故障报警、累计时长、高清大屏；2升氧浓度可达96%；非进口分子筛；静音制氧、负离子净化、一键呼救、10级过滤系统；365天持续供氧、语音播报、紫外灭菌、无线遥控、制氧雾化、监测血氧(血氧仪)",
+      "knowledgeDigest": "c02921936924b6684d135ea96db3c1b3",
+      "chunkLength": null,
+      "chunkLearnStatus": "FINISH",
+      "index": 2
+    },
+    {
+      "id": "6ac1ac78e4bec5475483208e",
+      "content": "【2SW静音雾化款】\n- 物流售后：顺丰发货，全国联保，使用过程中问题可随时咨询客服解决",
+      "knowledgeDigest": "f3c00439502cf2185e75f46709e68788",
+      "chunkLength": null,
+      "chunkLearnStatus": "FINISH",
+      "index": 3
+    },
+    {
+      "id": "6ac1ac78e4bec5475483208f",
+      "content": "【2SW静音雾化款】\n- 赠品：送吸氧大礼包，包含保险丝、遥控器、吸氧管、电源线、雾化杯、雾化面罩、雾化导管（雾化套装仅限雾化版赠送）",
+      "knowledgeDigest": "c3e390541cfb808c1490378a70c835ac",
+      "chunkLength": null,
+      "chunkLearnStatus": "FINISH",
+      "index": 4
+    },
+    {
+      "id": "6ac1ac78e4bec54754832090",
+      "content": "⚠️浓度口径说明（必读）：文中「9升/9L」指每分钟出气量（气流）可调到 9L，**不等于 9L 时仍是高浓度**。1升机浓度随流量递减：1L≈96%、2L≈70%、3L≈60%、4L≈50%、5L≈45%、6L≈40%、7L≈35%、8L≈32%、9L≈30%；2升机从 2L≈96% 起递减；3升机在 1-3L、5升机在 1-5L、10升机在 1-10L 内可维持≈96%。「几升机」的定义＝氧浓度≥90% 时能达到的最大流量（如\"1升机\"＝90%以上浓度时最大 1L/min）。浓度受气压、湿度、温度影响，以机器实时显示为准。",
+      "knowledgeDigest": "2e729110ba5d1a399bbedbc82cfb5612",
+      "chunkLength": null,
+      "chunkLearnStatus": "FINISH",
+      "index": 5
+    }
+  ],
+  "labels": [
+    "SKU详情"
+  ],
+  "labelInfos": [
+    {
+      "label": "SKU详情",
+      "value": "SKU详情"
+    }
+  ],
+  "ifBelievable": true,
+  "ifLearning": false,
+  "ifOpen": true,
+  "version": "V2",
+  "type": "PRODUCT",
+  "includeCondition": {
+    "spu": [
+      {
+        "thirdShopId": "2104457457798483968",
+        "spuId": "454609107724",
+        "skuIds": [
+          "1970503568559"
+        ]
+      }
+    ],
+    "shop": [],
+    "rules": [],
+    "productGroupId": [],
+    "sellerGroup": [],
+    "platform": []
+  },
+  "excludeCondition": {
+    "spu": [],
+    "shop": [],
+    "rules": [],
+    "productGroupId": [],
+    "sellerGroup": [],
+    "platform": []
+  },
+  "timeliness": null,
+  "cycleTimeliness": null,
+  "orderStatus": [],
+  "lastUpdatedAt": "2026-10-04 09:31:36",
+  "createdAt": "2026-09-29 12:52:21",
+  "source": {
+    "type": "SKU_DETAIL",
+    "value": "https://img.pddpic.com/mms-goods-image/2026-06-01/be80dd1d-25c0-400d-9cf1-6f08343aa54d.jpeg"
+  },
+  "productCondition": {
+    "thirdShopId": "2104457457798483968",
+    "spuId": "454609107724",
+    "skuIds": [
+      "1970503568559"
+    ]
+  },
+  "ifOpenSync": true,
+  "ifHasUrl": false,
+  "urlInfos": []
+}

@@ -1,0 +1,23 @@
+{
+  "runId": "2026-10-06T10-24-48-162Z",
+  "action": "verify",
+  "taskFile": "T-6abb4427908ac50ae9029a18.json",
+  "company": "德达医疗（8店探域）",
+  "scope": "P1-2：规格表 5 行规格名去掉「顺丰速发」时效承诺（124口径#2）；「顺丰发货/365天持续供氧/医院同款」等按 10-04 复核记录与 124 口径内保留",
+  "approvedBy": "黎路遥 2026-10-06 批准 P1（P2 同批）",
+  "businessPatchKeys": null,
+  "deleteIds": [],
+  "startedAt": "2026-10-06T10:24:48.162Z",
+  "entries": [
+    {
+      "id": "6abb4427908ac50ae9029a18",
+      "note": "P1-2：规格表 5 行规格名去掉「顺丰速发」时效承诺（124口径#2）；「顺丰发货/365天持续供氧/医院同款」等按 10-04 复核记录与 124 口径内保留",
+      "currentSha256": "0f865cb87b3446de6d423a481752a8432117b61354568094744405dc989fe4d0",
+      "expectedDiffs": [],
+      "status": "already-target",
+      "businessPatch": "unchanged",
+      "expectBusinessSha256": "b7dcf9461e5f50aa574f30895f7a9fe42a446a72fd470f9ff5e50ed1d939c376"
+    }
+  ],
+  "finishedAt": "2026-10-06T10:24:55.180Z"
+}

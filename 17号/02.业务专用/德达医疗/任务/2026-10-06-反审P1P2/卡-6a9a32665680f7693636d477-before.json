@@ -1,0 +1,75 @@
+{
+  "id": "6a9a32665680f7693636d477",
+  "title": null,
+  "content": [
+    {
+      "id": "6ac45d31e4bec54754835716",
+      "content": "## 德达C系列制氧机\n该款制氧机采用新型加湿装置，无需手动加水（区别于传统加水制氧机），如需外接湿化水箱可联系客服另外配置。\n使用步骤：\n1. 插上电源，按下机器开关【I】\n2. 将吸氧管连接机器（连接出氧口）\n3. 正确佩戴吸氧管\n4. 点击开关，直接吸氧（显示屏可显示出氧量1 L/min、氧浓度96%（仅1L/min工况））\n\nC1系列（含C1L）仅1L/min时为96%高浓度工况，调大流量档位后氧浓度会下降；9L只代表气流大小，不代表9L/min时仍有96%氧浓度，其他档位不保证该高浓度。",
+      "knowledgeDigest": "5a11822215f953c93d54d0344e60972e",
+      "chunkLength": null,
+      "chunkLearnStatus": "FINISH",
+      "index": 1
+    },
+    {
+      "id": "6ac45d31e4bec54754835717",
+      "content": "⚠️浓度口径说明（必读）：文中「9升/9L」指每分钟出气量（气流）可调到 9L，**不等于 9L 时仍是高浓度**。1升机浓度随流量递减：1L≈96%、2L≈70%、3L≈60%、4L≈50%、5L≈45%、6L≈40%、7L≈35%、8L≈32%、9L≈30%；2升机从 2L≈96% 起递减；3升机在 1-3L、5升机在 1-5L、10升机在 1-10L 内可维持≈96%。「几升机」的定义＝氧浓度≥90% 时能达到的最大流量（如\"1升机\"＝90%以上浓度时最大 1L/min）。浓度受气压、湿度、温度影响，以机器实时显示为准。",
+      "knowledgeDigest": "2e729110ba5d1a399bbedbc82cfb5612",
+      "chunkLength": null,
+      "chunkLearnStatus": "FINISH",
+      "index": 2
+    }
+  ],
+  "labels": [
+    "商品详情"
+  ],
+  "labelInfos": [
+    {
+      "label": "商品详情",
+      "value": "商品详情"
+    }
+  ],
+  "ifBelievable": true,
+  "ifLearning": false,
+  "ifOpen": true,
+  "version": "V2",
+  "type": "PRODUCT",
+  "includeCondition": {
+    "spu": [
+      {
+        "thirdShopId": "2095398963959042048",
+        "spuId": "446872879403",
+        "skuIds": []
+      }
+    ],
+    "shop": [],
+    "rules": [],
+    "productGroupId": [],
+    "sellerGroup": [],
+    "platform": []
+  },
+  "excludeCondition": {
+    "spu": [],
+    "shop": [],
+    "rules": [],
+    "productGroupId": [],
+    "sellerGroup": [],
+    "platform": []
+  },
+  "timeliness": null,
+  "cycleTimeliness": null,
+  "orderStatus": [],
+  "lastUpdatedAt": "2026-10-06 10:30:09",
+  "createdAt": "2026-09-04 10:52:22",
+  "source": {
+    "type": "PRODUCT_DETAIL",
+    "value": "https://img.pddpic.com/mms-material-img/2024-08-23/9137a34c-f796-402b-8bce-74d3963dbe43.jpeg"
+  },
+  "productCondition": {
+    "thirdShopId": "2095398963959042048",
+    "spuId": "446872879403",
+    "skuIds": []
+  },
+  "ifOpenSync": true,
+  "ifHasUrl": false,
+  "urlInfos": []
+}

@@ -1,0 +1,23 @@
+{
+  "runId": "2026-10-06T10-24-39-241Z",
+  "action": "verify",
+  "taskFile": "T-6abe23359bb5d85e7b8b10af.json",
+  "company": "德达医疗（8店探域）",
+  "scope": "P1-1：去「1台顶4台」夸大词（124口径#4）；「顺丰24小时速发」改「物流：顺丰发货，具体以实际物流为准」（124口径#2）；保价句（10-06 12:42 已批准）原样保留",
+  "approvedBy": "黎路遥 2026-10-06 批准 P1（P2 同批）",
+  "businessPatchKeys": null,
+  "deleteIds": [],
+  "startedAt": "2026-10-06T10:24:39.241Z",
+  "entries": [
+    {
+      "id": "6abe23359bb5d85e7b8b10af",
+      "note": "P1-1：去「1台顶4台」夸大词（124口径#4）；「顺丰24小时速发」改「物流：顺丰发货，具体以实际物流为准」（124口径#2）；保价句（10-06 12:42 已批准）原样保留",
+      "currentSha256": "a71dfefbfdb8f6367837a821ec61797bd603d0728b277cb5b70998a4b39c09b1",
+      "expectedDiffs": [],
+      "status": "already-target",
+      "businessPatch": "unchanged",
+      "expectBusinessSha256": "10be7f43a9f8155d1f7d76c90f2ab0890fb77d7d90916a4936484ecc3b5fe493"
+    }
+  ],
+  "finishedAt": "2026-10-06T10:24:46.438Z"
+}

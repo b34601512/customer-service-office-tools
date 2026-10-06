@@ -1,0 +1,21 @@
+{
+ "时间": "2026-10-06T10:17:01.290Z",
+ "缺卡": [
+  {
+   "id": "6abe23359bb5d85e7b8b10aa",
+   "inList": false,
+   "http": 200,
+   "code": 0,
+   "msg": "知识卡片不存在",
+   "detail": null
+  },
+  {
+   "id": "6ab9e9e14b0d3739f15c8975",
+   "inList": false,
+   "http": 200,
+   "code": 0,
+   "msg": "知识卡片不存在",
+   "detail": null
+  }
+ ]
+}

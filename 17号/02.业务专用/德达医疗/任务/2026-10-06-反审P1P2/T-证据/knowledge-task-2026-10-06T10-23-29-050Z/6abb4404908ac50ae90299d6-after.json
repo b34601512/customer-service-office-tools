@@ -1,0 +1,83 @@
+{
+  "id": "6abb4404908ac50ae90299d6",
+  "title": null,
+  "content": [
+    {
+      "id": "6ac4cc22e1041c3905833d84",
+      "content": "【注意事项】\n- 因厂家可能无提前通知更改产品包装、产地或附件、赠品，不能确保收到的货物与商城图片、产地、附件、配件、赠品说明完全一致，但保证为原厂正品且与当时市场主流新品一致，图片仅供参考，具体以实物为准。",
+      "knowledgeDigest": "fe7d0281900ef795505937d16f969122",
+      "chunkLength": null,
+      "chunkLearnStatus": "WAIT",
+      "index": 1
+    },
+    {
+      "id": "6ac4cc22e1041c3905833d85",
+      "content": "【特别敬告】\n- 氧浓度会因当地气温、气压、空气质量等因素变化，数值不固定，在范围内均属正常情况。\n- 制氧机适用于氧气补充，不作为生命支持和生命延续。急需氧者及重症病人必须配置其他备用供氧装置（如：氧气瓶、氧气袋等）。\n- 个人、家庭使用高纯度氧气时应遵从专业医生指导。",
+      "knowledgeDigest": "85d549205db731667e8ae23d644e968c",
+      "chunkLength": null,
+      "chunkLearnStatus": "WAIT",
+      "index": 2
+    },
+    {
+      "id": "6ac4cc22e1041c3905833d86",
+      "content": "【特殊注意事项】\n- 氧气机禁止倒置或横卧。\n- 氧气机使用时，避免吸氧管折弯，否则水箱会溢水。\n- 氧气是助燃气体，使用时禁止吸烟并远离火源，以免发生火灾危险。\n- 不可频繁启、闭氧气机，关机3-5分钟后可再开机，以免影响压缩机使用寿命。\n- 氧气机应放置在室内通风处，避免阳光直射，四周距离墙壁及其他物体应在30CM以上。\n- 机器侧面进气孔和背面透气孔禁止堆放杂物，防止进气、排气堵塞引起温度过高而造成停机或氧浓度下降。\n- 制氧机不得置于以下环境中：热源及明暗火源附近、潮湿、有烟雾、污染、温度过高或过低的环境。",
+      "knowledgeDigest": "41fe0c0b638001e274a930872d2d2458",
+      "chunkLength": null,
+      "chunkLearnStatus": "WAIT",
+      "index": 3
+    }
+  ],
+  "labels": [
+    "商品详情"
+  ],
+  "labelInfos": [
+    {
+      "label": "商品详情",
+      "value": "商品详情"
+    }
+  ],
+  "ifBelievable": true,
+  "ifLearning": true,
+  "ifOpen": true,
+  "version": "V2",
+  "type": "PRODUCT",
+  "includeCondition": {
+    "spu": [
+      {
+        "thirdShopId": "2104457457798483968",
+        "spuId": "454609107724",
+        "skuIds": []
+      }
+    ],
+    "shop": [],
+    "rules": [],
+    "productGroupId": [],
+    "sellerGroup": [],
+    "platform": []
+  },
+  "excludeCondition": {
+    "spu": [],
+    "shop": [],
+    "rules": [],
+    "productGroupId": [],
+    "sellerGroup": [],
+    "platform": []
+  },
+  "timeliness": null,
+  "cycleTimeliness": null,
+  "orderStatus": [],
+  "lastUpdatedAt": "2026-10-06 18:23:30",
+  "createdAt": "2026-09-29 12:52:20",
+  "source": {
+    "type": "PRODUCT_DETAIL",
+    "value": "https://img.pddpic.com/garner-api-new/35c77005eece1a4f2aced18856cce4d4.jpeg"
+  },
+  "productCondition": {
+    "thirdShopId": "2104457457798483968",
+    "spuId": "454609107724",
+    "skuIds": []
+  },
+  "ifOpenSync": true,
+  "ifHasUrl": false,
+  "urlInfos": []
+}
