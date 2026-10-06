@@ -50,19 +50,30 @@ function isDouyinStoreIdentityMatched(actualIdentity, expectedIdentity) {
     normalizeDouyinStoreName(actualIdentity?.storeName) === normalizeDouyinStoreName(expectedIdentity?.storeName);
 }
 
+// 店名节点的候选选择器（2026-10-06 改版）：
+//   旧版：店铺名是带 data-bytereplay-mask="true" 的直接子节点；
+//   新版：改成 CSS Modules 哈希类名（实测 index_shopName__xxxx，纯店名，无「旗舰店/正常营业」尾巴）。
+// 逐个候选试，取「恰好 1 个可见」的那个，保持原有唯一性约束。
+const DOUYIN_STORE_NAME_SELECTORS = [
+  ':scope > [data-bytereplay-mask="true"]',
+  ":scope [class*='shopName']"
+];
+
 async function readDouyinStoreName(shopHeader) {
-  const storeNameCandidates = shopHeader.locator(':scope > [data-bytereplay-mask="true"]');
-  const visibleStoreNameCandidates = [];
-  for (let index = 0; index < await storeNameCandidates.count(); index += 1) {
-    const candidate = storeNameCandidates.nth(index);
-    if (await candidate.isVisible().catch(() => false)) visibleStoreNameCandidates.push(candidate);
+  for (const selector of DOUYIN_STORE_NAME_SELECTORS) {
+    const storeNameCandidates = shopHeader.locator(selector);
+    const visibleStoreNameCandidates = [];
+    for (let index = 0; index < await storeNameCandidates.count(); index += 1) {
+      const candidate = storeNameCandidates.nth(index);
+      if (await candidate.isVisible().catch(() => false)) visibleStoreNameCandidates.push(candidate);
+    }
+    if (visibleStoreNameCandidates.length !== 1) continue;
+    const storeName = (await visibleStoreNameCandidates[0].innerText()).replace(/\s+/g, " ").trim();
+    if (storeName) return storeName;
   }
-  if (visibleStoreNameCandidates.length !== 1) {
-    throw new Error(`读取抖音当前店铺名称失败：顶部识别到 ${visibleStoreNameCandidates.length} 个可见纯店名节点。`);
-  }
-  const storeName = (await visibleStoreNameCandidates[0].innerText()).replace(/\s+/g, " ").trim();
-  if (!storeName) throw new Error("读取抖音当前店铺名称失败：顶部纯店名为空。");
-  return storeName;
+  throw new Error(
+    `读取抖音当前店铺名称失败：顶部未识别到唯一的可见店名节点（已试 ${DOUYIN_STORE_NAME_SELECTORS.length} 种选择器）。`
+  );
 }
 
 async function findVisibleDouyinSwitchStoreEntries(page) {
