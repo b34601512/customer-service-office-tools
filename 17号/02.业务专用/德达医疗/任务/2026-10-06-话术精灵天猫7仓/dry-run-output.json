@@ -1,0 +1,1 @@
+{"api_version": 1, "request_id": "40828f8d-b914-44ab-93a3-0f64eafe3c23", "operation_id": "6819f983-cc42-4ce3-92b5-ff93d640c8c1", "ok": true, "data": {"outcome": "PREVIEW", "command": "phrase.update", "scope": "team", "target_scope": "team", "human_approval_required": false, "execution_will_revalidate": true}}

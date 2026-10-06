@@ -1,0 +1,55 @@
+{
+  "id": "6a9a3c4f4a45121da4d7c937",
+  "title": "礼品/礼品分开发/怎么拆分了两个包裹？2个",
+  "content": [
+    {
+      "id": "6ac32caee4bec54754833fc9",
+      "content": "Q:怎么拆分了两个包裹？2个\nA:本店赠品活动仅适用于德达医疗本店旗舰店订单，不适用于其他平台或其他店铺。详情页未限定型号时，本店各型号均可参与额外赠品活动，C1也可参与；标配配件与活动赠品分开核对。如需赠品与主机同步发出，请提供订单号由我们核对安排；是否分包、发货仓库及时间以实际记录为准，不预先承诺已安排。",
+      "knowledgeDigest": "14c16d9d25612c690624a13c9962e252",
+      "chunkLength": null,
+      "chunkLearnStatus": "WAIT",
+      "index": 1
+    }
+  ],
+  "labels": [],
+  "labelInfos": null,
+  "ifBelievable": true,
+  "ifLearning": true,
+  "ifOpen": true,
+  "version": "V2",
+  "type": "SHOP",
+  "includeCondition": {
+    "spu": [],
+    "shop": [
+      {
+        "thirdShopId": "2095398963959042048",
+        "cids": []
+      }
+    ],
+    "rules": [],
+    "productGroupId": [],
+    "sellerGroup": [],
+    "platform": []
+  },
+  "excludeCondition": {
+    "spu": [],
+    "shop": [],
+    "rules": [],
+    "productGroupId": [],
+    "sellerGroup": [],
+    "platform": []
+  },
+  "timeliness": null,
+  "cycleTimeliness": null,
+  "orderStatus": [
+    "SALE",
+    "AFTER_SALE"
+  ],
+  "lastUpdatedAt": "2026-10-05 12:50:54",
+  "createdAt": "2026-09-04 11:34:39",
+  "source": null,
+  "productCondition": null,
+  "ifOpenSync": null,
+  "ifHasUrl": false,
+  "urlInfos": []
+}

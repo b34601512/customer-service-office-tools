@@ -1,0 +1,54 @@
+{
+  "id": "6a9a3c4f4a45121da4d7c94d",
+  "title": "晒图/发货后/差评也可以送礼品吗？",
+  "content": [
+    {
+      "id": "6ac32cb1e4bec54754833fd7",
+      "content": "Q:差评也可以送礼品吗？\nA:本店赠品活动仅适用于德达医疗本店旗舰店订单，不适用于其他平台或其他店铺。详情页未限定型号时，本店各型号均可参与额外赠品活动，C1也可参与；标配配件与活动赠品分开核对。参与晒单活动不限制评价好坏，请真实评价，不以修改或删除差评换取赠品。具体领取及发货安排由我们核对。\n【德达医疗本店旗舰店赠品活动】\n仅适用于德达医疗本店旗舰店订单，不适用于其他平台或其他店铺。详情页未限定型号时，本店各型号均按以下规则执行，C1也可参与。\n\n下单赠品：\n- 标配吸氧管1根。\n- 过滤器＋过滤棉1份。\n- 雾化版本指C1L，赠雾化套装1套；C1不带雾化，不赠雾化套装。\n- 吸氧面罩：前100名下单赠1个；客户咨询时可联系客服登记，未核对订单前不说已经登记或寄出。该活动没有限定型号。\n\n收货晒单赠品：\n收货后真实晒单，文字10字以上，联系客服登记；以下四选一，不叠加：42L氧气袋1个、血氧仪1个、鼻吸管1份、过滤器＋过滤棉1份。\n\n付邮领取：\n每3个月可领取终身吸氧管4根，邮费13元由买家承担；需提供本店订单，由客服核对领取记录。\n\n标配配件、下单赠品、晒单赠品和付邮领取活动分别核对，不把不同活动合并承诺。",
+      "knowledgeDigest": "0a20f0792ab7989763071ab772520d6a",
+      "chunkLength": null,
+      "chunkLearnStatus": "WAIT",
+      "index": 1
+    }
+  ],
+  "labels": [],
+  "labelInfos": null,
+  "ifBelievable": true,
+  "ifLearning": true,
+  "ifOpen": true,
+  "version": "V2",
+  "type": "SHOP",
+  "includeCondition": {
+    "spu": [],
+    "shop": [
+      {
+        "thirdShopId": "2095398963959042048",
+        "cids": []
+      }
+    ],
+    "rules": [],
+    "productGroupId": [],
+    "sellerGroup": [],
+    "platform": []
+  },
+  "excludeCondition": {
+    "spu": [],
+    "shop": [],
+    "rules": [],
+    "productGroupId": [],
+    "sellerGroup": [],
+    "platform": []
+  },
+  "timeliness": null,
+  "cycleTimeliness": null,
+  "orderStatus": [
+    "AFTER_SALE"
+  ],
+  "lastUpdatedAt": "2026-10-05 12:50:57",
+  "createdAt": "2026-09-04 11:34:39",
+  "source": null,
+  "productCondition": null,
+  "ifOpenSync": null,
+  "ifHasUrl": false,
+  "urlInfos": []
+}

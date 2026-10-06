@@ -1,0 +1,274 @@
+{
+  "runId": "2026-10-05T04-50-42-996Z",
+  "action": "check",
+  "taskFile": "V3-改法-任务.json",
+  "company": "德达医疗",
+  "scope": "探域知识卡-仅正文「参加」→「参与」",
+  "approvedBy": "黎路遥（副经理；2026-10-05 12:44「A：26张全改」）",
+  "businessPatchKeys": null,
+  "deleteIds": [],
+  "startedAt": "2026-10-05T04:50:42.997Z",
+  "entries": [
+    {
+      "id": "6a9a32535680f7693636d3dc",
+      "note": "参加改参与（2026-10-05 黎路遥选 A：26 张全改）：仅把正文里每个「参加」替换为「参与」（66 处，含「不参加」→「不参与」），其余一字不动；ifBelievable/标题/绑店/ifOpen/orderStatus 一律不动。",
+      "currentSha256": "0eb0fb872070371db39f68b80aae30b4f4e80a86291bc47e2a6ce048e1438181",
+      "expectedDiffs": [],
+      "status": "ready",
+      "businessPatch": "unchanged",
+      "expectBusinessSha256": "d7456971fa3b508cdc62fabb52364f38814af7705fbb2b02919310be3aa80876",
+      "approvedBy": "黎路遥（副经理；2026-10-05 12:44「A：26张全改」）"
+    },
+    {
+      "id": "6a9a32535680f7693636d3d8",
+      "note": "参加改参与（2026-10-05 黎路遥选 A：26 张全改）：仅把正文里每个「参加」替换为「参与」（66 处，含「不参加」→「不参与」），其余一字不动；ifBelievable/标题/绑店/ifOpen/orderStatus 一律不动。",
+      "currentSha256": "62d745f9925e3906e5d38f5417576f28831a1481582c044233430751638ce305",
+      "expectedDiffs": [],
+      "status": "ready",
+      "businessPatch": "unchanged",
+      "expectBusinessSha256": "c0d9738fbcddd0e01f35b592dadbc7f1d545a1957e1fd0cce981ff32625328ac",
+      "approvedBy": "黎路遥（副经理；2026-10-05 12:44「A：26张全改」）"
+    },
+    {
+      "id": "6a9a5a0fb952375ec0322ed9",
+      "note": "参加改参与（2026-10-05 黎路遥选 A：26 张全改）：仅把正文里每个「参加」替换为「参与」（66 处，含「不参加」→「不参与」），其余一字不动；ifBelievable/标题/绑店/ifOpen/orderStatus 一律不动。",
+      "currentSha256": "d72e3eaa44107c7300d092d894008cf43ec3cad4f7652e11ba31d13fa6ca5861",
+      "expectedDiffs": [],
+      "status": "ready",
+      "businessPatch": "unchanged",
+      "expectBusinessSha256": "5ea60ed8c7c858f704f469f9e6be299eb35557abc8d8abf1a73a19d9b8a8073c",
+      "approvedBy": "黎路遥（副经理；2026-10-05 12:44「A：26张全改」）"
+    },
+    {
+      "id": "6a9a5a0eb952375ec0322e64",
+      "note": "参加改参与（2026-10-05 黎路遥选 A：26 张全改）：仅把正文里每个「参加」替换为「参与」（66 处，含「不参加」→「不参与」），其余一字不动；ifBelievable/标题/绑店/ifOpen/orderStatus 一律不动。",
+      "currentSha256": "a438f37aa9157aba8fbf6bae48bdfa5ba1d841151be62ce352e37d4cf6443116",
+      "expectedDiffs": [],
+      "status": "ready",
+      "businessPatch": "unchanged",
+      "expectBusinessSha256": "7730b239fd5fa80790ef42a386543267f6e31db5d4a0aa2420c6e429fa39e774",
+      "approvedBy": "黎路遥（副经理；2026-10-05 12:44「A：26张全改」）"
+    },
+    {
+      "id": "6a9a3c4f4a45121da4d7c93e",
+      "note": "参加改参与（2026-10-05 黎路遥选 A：26 张全改）：仅把正文里每个「参加」替换为「参与」（66 处，含「不参加」→「不参与」），其余一字不动；ifBelievable/标题/绑店/ifOpen/orderStatus 一律不动。",
+      "currentSha256": "34ab573e9d076b0f774f8bc3c571a07c954a9ed027d1bfe759d48bd4808a942f",
+      "expectedDiffs": [],
+      "status": "ready",
+      "businessPatch": "unchanged",
+      "expectBusinessSha256": "4ec2112b40f93f9a2512dd690a5931e230346f8254ca379260142f372d772041",
+      "approvedBy": "黎路遥（副经理；2026-10-05 12:44「A：26张全改」）"
+    },
+    {
+      "id": "6a9a3c3f4a45121da4d7c677",
+      "note": "参加改参与（2026-10-05 黎路遥选 A：26 张全改）：仅把正文里每个「参加」替换为「参与」（66 处，含「不参加」→「不参与」），其余一字不动；ifBelievable/标题/绑店/ifOpen/orderStatus 一律不动。",
+      "currentSha256": "b4c1f80f50f7970b167df6d7b154a87b7453c3d0c81d7e25f3bc382c30b1db2e",
+      "expectedDiffs": [],
+      "status": "ready",
+      "businessPatch": "unchanged",
+      "expectBusinessSha256": "7fd59c3aaddaa66177050ae3b7dabca978c62d53e306453b78035bf90b9530a3",
+      "approvedBy": "黎路遥（副经理；2026-10-05 12:44「A：26张全改」）"
+    },
+    {
+      "id": "6a9a3c4f644e354d71a3fb22",
+      "note": "参加改参与（2026-10-05 黎路遥选 A：26 张全改）：仅把正文里每个「参加」替换为「参与」（66 处，含「不参加」→「不参与」），其余一字不动；ifBelievable/标题/绑店/ifOpen/orderStatus 一律不动。",
+      "currentSha256": "9b7db7edf378bf5b1ac46badb2cda5a5c3c073aadfa301223ea7b49948a809ba",
+      "expectedDiffs": [],
+      "status": "ready",
+      "businessPatch": "unchanged",
+      "expectBusinessSha256": "9a05121505c487e84447a5189d85b13df3fb364e1dd72aa0a554d3467fc40cb4",
+      "approvedBy": "黎路遥（副经理；2026-10-05 12:44「A：26张全改」）"
+    },
+    {
+      "id": "6a9a3c4f644e354d71a3fb20",
+      "note": "参加改参与（2026-10-05 黎路遥选 A：26 张全改）：仅把正文里每个「参加」替换为「参与」（66 处，含「不参加」→「不参与」），其余一字不动；ifBelievable/标题/绑店/ifOpen/orderStatus 一律不动。",
+      "currentSha256": "da9ff4e53c102601535ef130108aae73fec765ed2f5d87c4fb01be6f11ac115e",
+      "expectedDiffs": [],
+      "status": "ready",
+      "businessPatch": "unchanged",
+      "expectBusinessSha256": "b1499d97242204bfc0d25baa572dc765199c0c32d51fb0e65fbd5c1fa4ded4c8",
+      "approvedBy": "黎路遥（副经理；2026-10-05 12:44「A：26张全改」）"
+    },
+    {
+      "id": "6a9a3c4f4a45121da4d7c937",
+      "note": "参加改参与（2026-10-05 黎路遥选 A：26 张全改）：仅把正文里每个「参加」替换为「参与」（66 处，含「不参加」→「不参与」），其余一字不动；ifBelievable/标题/绑店/ifOpen/orderStatus 一律不动。",
+      "currentSha256": "8339d3da0140f33872609f45e59290438145beb9243b1a0e8d78522e6d5dd4a9",
+      "expectedDiffs": [],
+      "status": "ready",
+      "businessPatch": "unchanged",
+      "expectBusinessSha256": "ec2322e4b09b67a7e4e6b8a32c65cbf057457c70777e306b2de743012151758c",
+      "approvedBy": "黎路遥（副经理；2026-10-05 12:44「A：26张全改」）"
+    },
+    {
+      "id": "6a9a3c4d644e354d71a3fadf",
+      "note": "参加改参与（2026-10-05 黎路遥选 A：26 张全改）：仅把正文里每个「参加」替换为「参与」（66 处，含「不参加」→「不参与」），其余一字不动；ifBelievable/标题/绑店/ifOpen/orderStatus 一律不动。",
+      "currentSha256": "d7ed250234842ff1caa27846093df9cb81c5d9050c06933727f1dcdae3fe9396",
+      "expectedDiffs": [],
+      "status": "ready",
+      "businessPatch": "unchanged",
+      "expectBusinessSha256": "686351404c2c3a493a12ea790575266a2b5b7ce461ee8f1ac26daec4bb6ea37d",
+      "approvedBy": "黎路遥（副经理；2026-10-05 12:44「A：26张全改」）"
+    },
+    {
+      "id": "6a9a3c38644e354d71a3f71c",
+      "note": "参加改参与（2026-10-05 黎路遥选 A：26 张全改）：仅把正文里每个「参加」替换为「参与」（66 处，含「不参加」→「不参与」），其余一字不动；ifBelievable/标题/绑店/ifOpen/orderStatus 一律不动。",
+      "currentSha256": "f5064da4449d14b9a2dd7f945513214d84c9e8c87016149b2ea6f774f0635eb5",
+      "expectedDiffs": [],
+      "status": "ready",
+      "businessPatch": "unchanged",
+      "expectBusinessSha256": "8dc55faa23f6437b25bd2321d99094e50e28c1b45ec8e1bba47cab10f8f6940a",
+      "approvedBy": "黎路遥（副经理；2026-10-05 12:44「A：26张全改」）"
+    },
+    {
+      "id": "6a9a3c4f644e354d71a3fb2a",
+      "note": "参加改参与（2026-10-05 黎路遥选 A：26 张全改）：仅把正文里每个「参加」替换为「参与」（66 处，含「不参加」→「不参与」），其余一字不动；ifBelievable/标题/绑店/ifOpen/orderStatus 一律不动。",
+      "currentSha256": "8a7e8aa57d02f97ff89e501078d447369694f5584d2ef60a50dc99204ada1469",
+      "expectedDiffs": [],
+      "status": "ready",
+      "businessPatch": "unchanged",
+      "expectBusinessSha256": "9dd309b95233abd88d34b8c925e8cf66145a6bc1d2a24633409ad19712eeb267",
+      "approvedBy": "黎路遥（副经理；2026-10-05 12:44「A：26张全改」）"
+    },
+    {
+      "id": "6a9a3c4f644e354d71a3fb27",
+      "note": "参加改参与（2026-10-05 黎路遥选 A：26 张全改）：仅把正文里每个「参加」替换为「参与」（66 处，含「不参加」→「不参与」），其余一字不动；ifBelievable/标题/绑店/ifOpen/orderStatus 一律不动。",
+      "currentSha256": "32406c6c501feec63fce9c87751a5c2084d02265d830cc66dd2b6b3afd0b8d26",
+      "expectedDiffs": [],
+      "status": "ready",
+      "businessPatch": "unchanged",
+      "expectBusinessSha256": "59d6da015fff6340b134605a38649f21d40f7a5f94952ccf3b768036c50f46b8",
+      "approvedBy": "黎路遥（副经理；2026-10-05 12:44「A：26张全改」）"
+    },
+    {
+      "id": "6a9a3c4f644e354d71a3fb23",
+      "note": "参加改参与（2026-10-05 黎路遥选 A：26 张全改）：仅把正文里每个「参加」替换为「参与」（66 处，含「不参加」→「不参与」），其余一字不动；ifBelievable/标题/绑店/ifOpen/orderStatus 一律不动。",
+      "currentSha256": "ce38a01683ec455f67f4e7901de972d2de84ed4febdc5a90e2e992be955a762f",
+      "expectedDiffs": [],
+      "status": "ready",
+      "businessPatch": "unchanged",
+      "expectBusinessSha256": "ffe10cebaab379a04a97e78d06e57f71086c89779a5e8a02dbc50d7a51cd9762",
+      "approvedBy": "黎路遥（副经理；2026-10-05 12:44「A：26张全改」）"
+    },
+    {
+      "id": "6a9a3c4f4a45121da4d7c94b",
+      "note": "参加改参与（2026-10-05 黎路遥选 A：26 张全改）：仅把正文里每个「参加」替换为「参与」（66 处，含「不参加」→「不参与」），其余一字不动；ifBelievable/标题/绑店/ifOpen/orderStatus 一律不动。",
+      "currentSha256": "d236862d5805a907b2a0e88ab52f530fb0a7ae5005bc379f6a4395fc018c3179",
+      "expectedDiffs": [],
+      "status": "ready",
+      "businessPatch": "unchanged",
+      "expectBusinessSha256": "83afeb2826f6f4cd10acd57c47cee95d46ddd8b5f1daa0a03cc3e774cc915e32",
+      "approvedBy": "黎路遥（副经理；2026-10-05 12:44「A：26张全改」）"
+    },
+    {
+      "id": "6a9a3c564a45121da4d7caa7",
+      "note": "参加改参与（2026-10-05 黎路遥选 A：26 张全改）：仅把正文里每个「参加」替换为「参与」（66 处，含「不参加」→「不参与」），其余一字不动；ifBelievable/标题/绑店/ifOpen/orderStatus 一律不动。",
+      "currentSha256": "b33e6da5750c030011031111250d5c3cb8a15b57dd47d6048149e63eeeeb2c7c",
+      "expectedDiffs": [],
+      "status": "ready",
+      "businessPatch": "unchanged",
+      "expectBusinessSha256": "930d4293070049ffd0333f33e7d03073377bbccae17beef3250b7e589c41f962",
+      "approvedBy": "黎路遥（副经理；2026-10-05 12:44「A：26张全改」）"
+    },
+    {
+      "id": "6a9a3c4f4a45121da4d7c949",
+      "note": "参加改参与（2026-10-05 黎路遥选 A：26 张全改）：仅把正文里每个「参加」替换为「参与」（66 处，含「不参加」→「不参与」），其余一字不动；ifBelievable/标题/绑店/ifOpen/orderStatus 一律不动。",
+      "currentSha256": "bb3a61ff4099cf2015d21cfb7c622c1a6ef93f8cbe284bfbe3a660f291a564a6",
+      "expectedDiffs": [],
+      "status": "ready",
+      "businessPatch": "unchanged",
+      "expectBusinessSha256": "9d69485a7f62bef63e3f8688007e7196fa949f36019665357cb512fbf9467c2d",
+      "approvedBy": "黎路遥（副经理；2026-10-05 12:44「A：26张全改」）"
+    },
+    {
+      "id": "6a9a3c4f4a45121da4d7c93b",
+      "note": "参加改参与（2026-10-05 黎路遥选 A：26 张全改）：仅把正文里每个「参加」替换为「参与」（66 处，含「不参加」→「不参与」），其余一字不动；ifBelievable/标题/绑店/ifOpen/orderStatus 一律不动。",
+      "currentSha256": "8fef6d705d86bdf209d2efb263b2786d449d75969e6113eb87f08094a8311d7d",
+      "expectedDiffs": [],
+      "status": "ready",
+      "businessPatch": "unchanged",
+      "expectBusinessSha256": "04c773902f1f55e00e7ba2e5fc12ccd07b0413ec06f73780f3b616fc7cd59f2e",
+      "approvedBy": "黎路遥（副经理；2026-10-05 12:44「A：26张全改」）"
+    },
+    {
+      "id": "6a9a61814a45121da4d7d422",
+      "note": "参加改参与（2026-10-05 黎路遥选 A：26 张全改）：仅把正文里每个「参加」替换为「参与」（66 处，含「不参加」→「不参与」），其余一字不动；ifBelievable/标题/绑店/ifOpen/orderStatus 一律不动。",
+      "currentSha256": "604665658bbd1295442a3dcc58779043de000f92ef2ea7bd4ffa4df3ef090147",
+      "expectedDiffs": [],
+      "status": "ready",
+      "businessPatch": "unchanged",
+      "expectBusinessSha256": "237a84462f44f437673f633118d78e4a6428ffcb84e35ed5a30674053d2d30e1",
+      "approvedBy": "黎路遥（副经理；2026-10-05 12:44「A：26张全改」）"
+    },
+    {
+      "id": "6a9a3c4f644e354d71a3fb3a",
+      "note": "参加改参与（2026-10-05 黎路遥选 A：26 张全改）：仅把正文里每个「参加」替换为「参与」（66 处，含「不参加」→「不参与」），其余一字不动；ifBelievable/标题/绑店/ifOpen/orderStatus 一律不动。",
+      "currentSha256": "4b2293b1aec93a38d544819d9cb138e45bc5c663f2c674c9fe098f2c8708e6b3",
+      "expectedDiffs": [],
+      "status": "ready",
+      "businessPatch": "unchanged",
+      "expectBusinessSha256": "653dcaeb5579b5d1ad8d41a8bde44d9554f3d1c1dad2b2df21397de76a3f99fe",
+      "approvedBy": "黎路遥（副经理；2026-10-05 12:44「A：26张全改」）"
+    },
+    {
+      "id": "6a9a3c4f644e354d71a3fb38",
+      "note": "参加改参与（2026-10-05 黎路遥选 A：26 张全改）：仅把正文里每个「参加」替换为「参与」（66 处，含「不参加」→「不参与」），其余一字不动；ifBelievable/标题/绑店/ifOpen/orderStatus 一律不动。",
+      "currentSha256": "61a077445f50158f8c21c9ecf2e48ae22a7a990c25520e21d09060295c393be4",
+      "expectedDiffs": [],
+      "status": "ready",
+      "businessPatch": "unchanged",
+      "expectBusinessSha256": "a2b5b3be5000d2df96197958f6e6fd7d94c6772b51a6afae77adf2423c2e7034",
+      "approvedBy": "黎路遥（副经理；2026-10-05 12:44「A：26张全改」）"
+    },
+    {
+      "id": "6a9a3c4f4a45121da4d7c94f",
+      "note": "参加改参与（2026-10-05 黎路遥选 A：26 张全改）：仅把正文里每个「参加」替换为「参与」（66 处，含「不参加」→「不参与」），其余一字不动；ifBelievable/标题/绑店/ifOpen/orderStatus 一律不动。",
+      "currentSha256": "43ef710443e626030b1edd35e80466a6eb47c065f64ffb55aa4ab8e4e7856df9",
+      "expectedDiffs": [],
+      "status": "ready",
+      "businessPatch": "unchanged",
+      "expectBusinessSha256": "190d423a675594822033f192c53c3473d08cf8a509160287643c878065cd15bb",
+      "approvedBy": "黎路遥（副经理；2026-10-05 12:44「A：26张全改」）"
+    },
+    {
+      "id": "6a9a3c4f4a45121da4d7c94d",
+      "note": "参加改参与（2026-10-05 黎路遥选 A：26 张全改）：仅把正文里每个「参加」替换为「参与」（66 处，含「不参加」→「不参与」），其余一字不动；ifBelievable/标题/绑店/ifOpen/orderStatus 一律不动。",
+      "currentSha256": "400b6a537a16ac6240cce1abe225dacb2c4f9cba46367872a5b062b32474fa39",
+      "expectedDiffs": [],
+      "status": "ready",
+      "businessPatch": "unchanged",
+      "expectBusinessSha256": "77565a96bacc266531c70c9707edbe30cb4fbbba27d0430ad13510a56703fe7e",
+      "approvedBy": "黎路遥（副经理；2026-10-05 12:44「A：26张全改」）"
+    },
+    {
+      "id": "6a9a3c4f644e354d71a3fb3d",
+      "note": "参加改参与（2026-10-05 黎路遥选 A：26 张全改）：仅把正文里每个「参加」替换为「参与」（66 处，含「不参加」→「不参与」），其余一字不动；ifBelievable/标题/绑店/ifOpen/orderStatus 一律不动。",
+      "currentSha256": "e963f9838b51b038b05628e47056c8e76eccfcd18517d9db6dfe649a6c108cdf",
+      "expectedDiffs": [],
+      "status": "ready",
+      "businessPatch": "unchanged",
+      "expectBusinessSha256": "4ec29897436b8563ee177d2fcea3d98a23e0a7518dd8fb4ba1f1af2e58ca0094",
+      "approvedBy": "黎路遥（副经理；2026-10-05 12:44「A：26张全改」）"
+    },
+    {
+      "id": "6a9a3c4f644e354d71a3fb3c",
+      "note": "参加改参与（2026-10-05 黎路遥选 A：26 张全改）：仅把正文里每个「参加」替换为「参与」（66 处，含「不参加」→「不参与」），其余一字不动；ifBelievable/标题/绑店/ifOpen/orderStatus 一律不动。",
+      "currentSha256": "167642b8eac8b9cb5645b2639e4495b22c8a0d86a0618992aec9d5afbe7131b3",
+      "expectedDiffs": [],
+      "status": "ready",
+      "businessPatch": "unchanged",
+      "expectBusinessSha256": "b24f877c3a189de27a8f94f14ef671f38f97e0b6f926c589488e00932751e750",
+      "approvedBy": "黎路遥（副经理；2026-10-05 12:44「A：26张全改」）"
+    },
+    {
+      "id": "6a9a3c4f4a45121da4d7c951",
+      "note": "参加改参与（2026-10-05 黎路遥选 A：26 张全改）：仅把正文里每个「参加」替换为「参与」（66 处，含「不参加」→「不参与」），其余一字不动；ifBelievable/标题/绑店/ifOpen/orderStatus 一律不动。",
+      "currentSha256": "36c71ae8eb9d725923e995886f134f4e760d39d28fda731ba3d65145796a88fd",
+      "expectedDiffs": [],
+      "status": "ready",
+      "businessPatch": "unchanged",
+      "expectBusinessSha256": "d0aa8e0e7f0d1197e1c01b3c1b858f2b1f1ba4287970c0bfd7e7a2c66844fa7b",
+      "approvedBy": "黎路遥（副经理；2026-10-05 12:44「A：26张全改」）"
+    }
+  ],
+  "finishedAt": "2026-10-05T04:50:48.759Z"
+}

@@ -1,0 +1,13 @@
+{
+  "workspace_id": "ce8030da7243118d007db49cd53647136de749bedf5a3a1bb3f6987771024b0e",
+  "scope": "team",
+  "phrase_id": "c2eb5d20-5b45-4d17-968e-056f8b88f62c",
+  "expected_revision": 4,
+  "idempotency_key": "phrase-update-c2eb5d20-7cang-20261006",
+  "content": [
+    {
+      "type": "text",
+      "text": "亲亲～为了让您尽快用上机器，我们支持全国7仓发货，大部分地区可次日达，可以放心下单（部分偏远地区3-4天）～\n具体由系统就近匹配发货仓发出，以下单页显示的预计送达时间为准哈～😊"
+    }
+  ]
+}

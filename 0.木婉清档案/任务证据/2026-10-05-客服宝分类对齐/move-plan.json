@@ -1,0 +1,477 @@
+[
+ {
+  "source_l1": "催付",
+  "source_l2": "京东6店自营店",
+  "source_category_id": "033e38b7-a132-4e68-ac97-18e4acf6e8db",
+  "source_category_revision": 1,
+  "target_l1": "付款",
+  "target_l2": "京东6店自营店",
+  "target_category_id": "09235307-54ca-4ddf-88f2-382451716fb7",
+  "target_category_revision": 1,
+  "count": 7,
+  "items": [
+   {
+    "phrase_id": "352e8f53-5659-4d22-b97d-a1359201ac5f",
+    "expected_revision": 2,
+    "scope": "team"
+   },
+   {
+    "phrase_id": "543bb81f-4a36-4ae3-b642-40428d975b1a",
+    "expected_revision": 2,
+    "scope": "team"
+   },
+   {
+    "phrase_id": "659621cd-cba5-47f5-a9f7-56905312a4d3",
+    "expected_revision": 2,
+    "scope": "team"
+   },
+   {
+    "phrase_id": "7cca70eb-0d24-4e79-a639-4c78071df625",
+    "expected_revision": 2,
+    "scope": "team"
+   },
+   {
+    "phrase_id": "a5c64321-21d2-453a-881f-046e10ad5702",
+    "expected_revision": 1,
+    "scope": "team"
+   },
+   {
+    "phrase_id": "ab88b534-7f4e-4e11-91a3-3d5caff3a474",
+    "expected_revision": 1,
+    "scope": "team"
+   },
+   {
+    "phrase_id": "bca4000e-9b0d-4f23-9cd9-2a697a1ef260",
+    "expected_revision": 1,
+    "scope": "team"
+   }
+  ]
+ },
+ {
+  "source_l1": "催付",
+  "source_l2": "DEDAKJ德迩杰跟进、逼单话术",
+  "source_category_id": "0a9068dd-5198-474d-a220-85506ac48d6d",
+  "source_category_revision": 1,
+  "target_l1": "付款",
+  "target_l2": "DEDAKJ德迩杰跟进、逼单话术",
+  "target_category_id": "9e7fa8ff-6b1f-4df0-88f9-ebb86ece331a",
+  "target_category_revision": 1,
+  "count": 2,
+  "items": [
+   {
+    "phrase_id": "18255920-bbab-4356-9143-7589fe013e97",
+    "expected_revision": 1,
+    "scope": "team"
+   },
+   {
+    "phrase_id": "6a11f6fc-6e22-4c51-bab0-1698a3caac9a",
+    "expected_revision": 1,
+    "scope": "team"
+   }
+  ]
+ },
+ {
+  "source_l1": "催付",
+  "source_l2": "额温枪清货计划",
+  "source_category_id": "80cebff3-85c1-4ae3-8b56-e451b067be6b",
+  "source_category_revision": 1,
+  "target_l1": "付款",
+  "target_l2": "额温枪清货计划",
+  "target_category_id": "43535d99-d85d-45d2-84cb-7b410d6b400a",
+  "target_category_revision": 1,
+  "count": 2,
+  "items": [
+   {
+    "phrase_id": "357512b1-7db6-4580-92be-bb50e4843899",
+    "expected_revision": 1,
+    "scope": "team"
+   },
+   {
+    "phrase_id": "7fc76511-2ec3-4319-9a50-b6700399436b",
+    "expected_revision": 1,
+    "scope": "team"
+   }
+  ]
+ },
+ {
+  "source_l1": "催付",
+  "source_l2": "天猫1店二次催付话术",
+  "source_category_id": "8cd633ff-82d3-441b-a047-39f79bb16837",
+  "source_category_revision": 1,
+  "target_l1": "付款",
+  "target_l2": "天猫1店二次催付话术",
+  "target_category_id": "f8275ab6-57ef-45f6-86e9-0797a5620d81",
+  "target_category_revision": 1,
+  "count": 5,
+  "items": [
+   {
+    "phrase_id": "5f1f8b0d-f9c1-4c1b-8ac1-eb32968836a3",
+    "expected_revision": 1,
+    "scope": "team"
+   },
+   {
+    "phrase_id": "7aaffad6-63b4-49b2-89a3-b4ed9a730d41",
+    "expected_revision": 1,
+    "scope": "team"
+   },
+   {
+    "phrase_id": "870cad03-ed66-4bee-bc07-5d6769e205b1",
+    "expected_revision": 1,
+    "scope": "team"
+   },
+   {
+    "phrase_id": "a73cfb05-5ace-4247-b4f8-37ccc0ad5d55",
+    "expected_revision": 1,
+    "scope": "team"
+   },
+   {
+    "phrase_id": "f0bffb23-5db0-4960-97f5-def2396a08f3",
+    "expected_revision": 1,
+    "scope": "team"
+   }
+  ]
+ },
+ {
+  "source_l1": "催付",
+  "source_l2": "通用跟进、逼单话术",
+  "source_category_id": "99306758-ae15-4f17-a9cd-335fb20f3df1",
+  "source_category_revision": 1,
+  "target_l1": "付款",
+  "target_l2": "通用跟进、逼单话术",
+  "target_category_id": "75eb7467-0a86-463c-bb10-258df687cd31",
+  "target_category_revision": 1,
+  "count": 6,
+  "items": [
+   {
+    "phrase_id": "5a2de902-c2c3-4318-821d-848eab122cf8",
+    "expected_revision": 1,
+    "scope": "team"
+   },
+   {
+    "phrase_id": "5ee0225c-964d-40c2-bc6e-074043186f39",
+    "expected_revision": 1,
+    "scope": "team"
+   },
+   {
+    "phrase_id": "c3d96e93-f329-41e1-886a-c2195ae6b275",
+    "expected_revision": 1,
+    "scope": "team"
+   },
+   {
+    "phrase_id": "ec35ec9e-cb7b-40d8-ab15-f6505ba50e50",
+    "expected_revision": 1,
+    "scope": "team"
+   },
+   {
+    "phrase_id": "f1157750-a87b-4a44-99ea-57fe122f4647",
+    "expected_revision": 1,
+    "scope": "team"
+   },
+   {
+    "phrase_id": "f69c1ab6-560c-4846-9af9-73e0ea5012dc",
+    "expected_revision": 1,
+    "scope": "team"
+   }
+  ]
+ },
+ {
+  "source_l1": "催付",
+  "source_l2": "京东3店",
+  "source_category_id": "9ba3b437-f374-4531-b533-77c8b1a128bc",
+  "source_category_revision": 1,
+  "target_l1": "付款",
+  "target_l2": "京东3店",
+  "target_category_id": "4da2ae19-2b52-4980-b8b6-3c7cac2a45ba",
+  "target_category_revision": 1,
+  "count": 3,
+  "items": [
+   {
+    "phrase_id": "32aaa969-00de-4497-9ab1-29b75c03952c",
+    "expected_revision": 1,
+    "scope": "team"
+   },
+   {
+    "phrase_id": "a20e5743-3b41-42c7-9497-a4c375014f27",
+    "expected_revision": 1,
+    "scope": "team"
+   },
+   {
+    "phrase_id": "f802991a-3acc-4a13-b2cc-ad431f63bcfb",
+    "expected_revision": 1,
+    "scope": "team"
+   }
+  ]
+ },
+ {
+  "source_l1": "催付",
+  "source_l2": "京东1店",
+  "source_category_id": "9d26ff80-2296-4c95-9aa8-2b807e80de13",
+  "source_category_revision": 1,
+  "target_l1": "付款",
+  "target_l2": "京东1店",
+  "target_category_id": "4ddf7edc-e282-4f3d-ad14-21b9285c8a17",
+  "target_category_revision": 1,
+  "count": 5,
+  "items": [
+   {
+    "phrase_id": "24243875-7e83-4738-b305-44c70f970dcf",
+    "expected_revision": 1,
+    "scope": "team"
+   },
+   {
+    "phrase_id": "63bc97b0-2a92-489a-91af-75e2dbe9d045",
+    "expected_revision": 1,
+    "scope": "team"
+   },
+   {
+    "phrase_id": "88d40a6f-ac1d-4ac4-b08c-0984a28a7f32",
+    "expected_revision": 1,
+    "scope": "team"
+   },
+   {
+    "phrase_id": "be61ae81-e3d4-4ccc-a48f-60a3f331bcbe",
+    "expected_revision": 1,
+    "scope": "team"
+   },
+   {
+    "phrase_id": "fdd4cd14-6959-4893-ad15-579ab4a22979",
+    "expected_revision": 1,
+    "scope": "team"
+   }
+  ]
+ },
+ {
+  "source_l1": "催付",
+  "source_l2": "德达跟进、逼单话术",
+  "source_category_id": "f9528adc-f6e6-4b71-b0fd-6fc554fad015",
+  "source_category_revision": 1,
+  "target_l1": "付款",
+  "target_l2": "德达跟进、逼单话术",
+  "target_category_id": "18168773-4e9e-459e-8b2f-fad7e0db1df8",
+  "target_category_revision": 1,
+  "count": 2,
+  "items": [
+   {
+    "phrase_id": "571e8eb9-6bed-43aa-87fc-272eb50af892",
+    "expected_revision": 1,
+    "scope": "team"
+   },
+   {
+    "phrase_id": "b372e442-3856-4122-a588-f28272556621",
+    "expected_revision": 1,
+    "scope": "team"
+   }
+  ]
+ },
+ {
+  "source_l1": "小蟹",
+  "source_l2": "维修",
+  "source_category_id": "0d90b4a5-b7b4-4bd6-a2bc-1b5d4409cba7",
+  "source_category_revision": 1,
+  "target_l1": "私域",
+  "target_l2": "维修",
+  "target_category_id": "e2250694-e5cc-4b32-9c4b-84a49947ee4e",
+  "target_category_revision": 1,
+  "count": 1,
+  "items": [
+   {
+    "phrase_id": "d324c5bf-d51d-4c8e-a5ca-17a9bfa89f6c",
+    "expected_revision": 1,
+    "scope": "team"
+   }
+  ]
+ },
+ {
+  "source_l1": "小蟹",
+  "source_l2": "延保",
+  "source_category_id": "2a242ad1-0a4a-4cf3-a6d9-73f2fe1c44de",
+  "source_category_revision": 1,
+  "target_l1": "私域",
+  "target_l2": "延保",
+  "target_category_id": "7bd64df0-3ac3-42d0-b78d-30bfa55529d2",
+  "target_category_revision": 1,
+  "count": 3,
+  "items": [
+   {
+    "phrase_id": "1f58a60e-b431-4f2c-9d36-c6f14787af66",
+    "expected_revision": 1,
+    "scope": "team"
+   },
+   {
+    "phrase_id": "d3d0962a-1596-43ea-9cad-f985892e7f68",
+    "expected_revision": 1,
+    "scope": "team"
+   },
+   {
+    "phrase_id": "fc3d5e34-6be4-4ceb-a348-ba72df23ac87",
+    "expected_revision": 1,
+    "scope": "team"
+   }
+  ]
+ },
+ {
+  "source_l1": "小蟹",
+  "source_l2": "引导",
+  "source_category_id": "613301b9-93a2-40d7-9bef-1cfc8185f9df",
+  "source_category_revision": 1,
+  "target_l1": "私域",
+  "target_l2": "引导",
+  "target_category_id": "a8838338-73da-4e15-81b5-396b83f06694",
+  "target_category_revision": 1,
+  "count": 4,
+  "items": [
+   {
+    "phrase_id": "5a6f8207-73d8-4385-949f-bedff37c7574",
+    "expected_revision": 1,
+    "scope": "team"
+   },
+   {
+    "phrase_id": "aafc0dd9-20e4-4457-b127-c71d2c0504f3",
+    "expected_revision": 1,
+    "scope": "team"
+   },
+   {
+    "phrase_id": "cb48ff1b-1666-4e51-82b7-9f0ce494f695",
+    "expected_revision": 1,
+    "scope": "team"
+   },
+   {
+    "phrase_id": "ecc23353-8bdb-4599-a601-85f1dc01d232",
+    "expected_revision": 1,
+    "scope": "team"
+   }
+  ]
+ },
+ {
+  "source_l1": "小蟹",
+  "source_l2": "私域优惠券",
+  "source_category_id": "75a0a2a6-eb39-4460-99de-f2c10dbfc7d4",
+  "source_category_revision": 1,
+  "target_l1": "私域",
+  "target_l2": "私域优惠券",
+  "target_category_id": "49431932-f5db-4c57-a206-4d6f5607b651",
+  "target_category_revision": 1,
+  "count": 6,
+  "items": [
+   {
+    "phrase_id": "4ef8d58e-fa8b-4df5-9fe9-1cb32b501bbc",
+    "expected_revision": 1,
+    "scope": "team"
+   },
+   {
+    "phrase_id": "5715036b-1a20-45ac-929e-3fd3a4d7afde",
+    "expected_revision": 1,
+    "scope": "team"
+   },
+   {
+    "phrase_id": "64bb6ff0-38fa-4496-8c73-9e35e9aea082",
+    "expected_revision": 1,
+    "scope": "team"
+   },
+   {
+    "phrase_id": "b29809a9-f582-4ea4-a564-6a81ecd6934a",
+    "expected_revision": 1,
+    "scope": "team"
+   },
+   {
+    "phrase_id": "ed78f983-f4cd-43f0-aa80-29ba50860fe8",
+    "expected_revision": 1,
+    "scope": "team"
+   },
+   {
+    "phrase_id": "fe7408b3-82bd-4310-9f24-27d2af7dea79",
+    "expected_revision": 1,
+    "scope": "team"
+   }
+  ]
+ },
+ {
+  "source_l1": "小蟹",
+  "source_l2": "小程序商城",
+  "source_category_id": "9d484e5a-db2f-4b4f-946f-0d333dbac141",
+  "source_category_revision": 1,
+  "target_l1": "私域",
+  "target_l2": "小程序商城",
+  "target_category_id": "73a7fa11-ebdd-43e1-8168-8ee3bd6611bd",
+  "target_category_revision": 1,
+  "count": 5,
+  "items": [
+   {
+    "phrase_id": "0a6b2a7a-f9fd-44a0-9e05-b65bd4913346",
+    "expected_revision": 1,
+    "scope": "team"
+   },
+   {
+    "phrase_id": "215ef340-b2ba-478e-9552-368f0247097c",
+    "expected_revision": 1,
+    "scope": "team"
+   },
+   {
+    "phrase_id": "4cce059b-adf2-494a-b208-7dc6ea9d8644",
+    "expected_revision": 1,
+    "scope": "team"
+   },
+   {
+    "phrase_id": "ba977646-52c0-4fd4-94d6-ebfda7809869",
+    "expected_revision": 1,
+    "scope": "team"
+   },
+   {
+    "phrase_id": "fad5b93b-9031-4102-8dec-45e8c23fa0a8",
+    "expected_revision": 1,
+    "scope": "team"
+   }
+  ]
+ },
+ {
+  "source_l1": "小蟹",
+  "source_l2": "打视频电话",
+  "source_category_id": "da084ba2-30cd-4e27-83a2-6c444421c962",
+  "source_category_revision": 1,
+  "target_l1": "私域",
+  "target_l2": "打视频电话",
+  "target_category_id": "8548ec17-cd28-4b28-929c-430e5d9a67ca",
+  "target_category_revision": 1,
+  "count": 3,
+  "items": [
+   {
+    "phrase_id": "285f2e23-e622-4e73-9ce4-740bdbb0f6b2",
+    "expected_revision": 1,
+    "scope": "team"
+   },
+   {
+    "phrase_id": "2ed02287-2daf-4c10-8598-7ac4e2a1473d",
+    "expected_revision": 1,
+    "scope": "team"
+   },
+   {
+    "phrase_id": "d6fd79f6-8210-4ffe-9895-453711475b43",
+    "expected_revision": 1,
+    "scope": "team"
+   }
+  ]
+ },
+ {
+  "source_l1": "小蟹",
+  "source_l2": "活动",
+  "source_category_id": "e4d211b7-9f62-454c-954a-b8b7f9655a4e",
+  "source_category_revision": 1,
+  "target_l1": "私域",
+  "target_l2": "活动",
+  "target_category_id": "1ac15013-03b1-48a8-9ed7-65d9f7a9ece8",
+  "target_category_revision": 1,
+  "count": 2,
+  "items": [
+   {
+    "phrase_id": "7405a2a1-7451-473c-969f-661d3d2ed69b",
+    "expected_revision": 1,
+    "scope": "team"
+   },
+   {
+    "phrase_id": "aca3d6a1-6cc6-42e2-a5a0-e6995a0448a4",
+    "expected_revision": 1,
+    "scope": "team"
+   }
+  ]
+ }
+]

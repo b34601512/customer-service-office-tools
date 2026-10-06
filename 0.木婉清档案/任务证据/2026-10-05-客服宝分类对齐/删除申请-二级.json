@@ -1,0 +1,86 @@
+[
+ {
+  "name": "京东1店",
+  "category_id": "9d26ff80-2296-4c95-9aa8-2b807e80de13",
+  "outcome": "PENDING_HUMAN_APPROVAL",
+  "approval_id": "fa2fa8f9-30e5-48a7-bbfb-88616bd55583"
+ },
+ {
+  "name": "京东3店",
+  "category_id": "9ba3b437-f374-4531-b533-77c8b1a128bc",
+  "outcome": "PENDING_HUMAN_APPROVAL",
+  "approval_id": "4e36b300-ad04-4a5b-871a-ee33e8e70c56"
+ },
+ {
+  "name": "京东6店自营店",
+  "category_id": "033e38b7-a132-4e68-ac97-18e4acf6e8db",
+  "outcome": "PENDING_HUMAN_APPROVAL",
+  "approval_id": "992c5f61-18be-4624-98b6-0b4a36b2afc9"
+ },
+ {
+  "name": "天猫1店二次催付话术",
+  "category_id": "8cd633ff-82d3-441b-a047-39f79bb16837",
+  "outcome": "PENDING_HUMAN_APPROVAL",
+  "approval_id": "776f662c-7314-43d3-897e-75b9c567152a"
+ },
+ {
+  "name": "小程序商城",
+  "category_id": "9d484e5a-db2f-4b4f-946f-0d333dbac141",
+  "outcome": "PENDING_HUMAN_APPROVAL",
+  "approval_id": "46d67324-3520-439d-9e8d-2f300dd5cfe2"
+ },
+ {
+  "name": "延保",
+  "category_id": "2a242ad1-0a4a-4cf3-a6d9-73f2fe1c44de",
+  "outcome": "PENDING_HUMAN_APPROVAL",
+  "approval_id": "25fa6ef1-d99d-4aae-bed6-9dfeb1dd9433"
+ },
+ {
+  "name": "引导",
+  "category_id": "613301b9-93a2-40d7-9bef-1cfc8185f9df",
+  "outcome": "PENDING_HUMAN_APPROVAL",
+  "approval_id": "e21f25dd-1dde-462c-9a0b-98e0be46b984"
+ },
+ {
+  "name": "德达跟进、逼单话术",
+  "category_id": "f9528adc-f6e6-4b71-b0fd-6fc554fad015",
+  "outcome": "PENDING_HUMAN_APPROVAL",
+  "approval_id": "7bb6549e-d715-4fdc-82a6-58270a319c08"
+ },
+ {
+  "name": "打视频电话",
+  "category_id": "da084ba2-30cd-4e27-83a2-6c444421c962",
+  "outcome": "PENDING_HUMAN_APPROVAL",
+  "approval_id": "fd636727-8ba7-43fb-b404-b5c537c37e4b"
+ },
+ {
+  "name": "活动",
+  "category_id": "e4d211b7-9f62-454c-954a-b8b7f9655a4e",
+  "outcome": "PENDING_HUMAN_APPROVAL",
+  "approval_id": "65666594-9735-4906-b852-fd3d16a6a953"
+ },
+ {
+  "name": "私域优惠券",
+  "category_id": "75a0a2a6-eb39-4460-99de-f2c10dbfc7d4",
+  "outcome": "PENDING_HUMAN_APPROVAL",
+  "approval_id": "84c461e9-149c-4f33-8fb2-05fc3f660bf5"
+ },
+ {
+  "name": "维修",
+  "category_id": "0d90b4a5-b7b4-4bd6-a2bc-1b5d4409cba7",
+  "outcome": "PENDING_HUMAN_APPROVAL",
+  "approval_id": "c940066b-c962-46eb-948a-a63d3c80305a"
+ },
+ {
+  "name": "通用跟进、逼单话术",
+  "category_id": "99306758-ae15-4f17-a9cd-335fb20f3df1",
+  "outcome": "PENDING_HUMAN_APPROVAL",
+  "approval_id": "0eadce05-3985-4878-91b7-8a2e983cfa58"
+ },
+ {
+  "name": "额温枪清货计划",
+  "category_id": "80cebff3-85c1-4ae3-8b56-e451b067be6b",
+  "outcome": "PENDING_HUMAN_APPROVAL",
+  "approval_id": "20b11d61-05ca-4b71-b182-4f2b1fa742c3"
+ }
+]

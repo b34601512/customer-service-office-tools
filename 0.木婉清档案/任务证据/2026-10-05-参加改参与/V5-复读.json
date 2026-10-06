@@ -1,0 +1,719 @@
+{
+ "时间": "2026-10-05T04:51:50.327Z",
+ "数量": 26,
+ "通过": 26,
+ "结果": [
+  {
+   "id": "6a9a32535680f7693636d3dc",
+   "通过": true,
+   "原处数": 1,
+   "现参与数": 1,
+   "检查": {
+    "正文同_after": true,
+    "参加出现0次": true,
+    "参与新增等于原处数": true,
+    "可信同": true,
+    "标题同": true,
+    "类型同": true,
+    "标签同": true,
+    "开关同": true,
+    "绑店同": true,
+    "阶段同": true
+   },
+   "排除域原样同": true,
+   "排除域归一化同": true,
+   "段元数据": [
+    {
+     "id": "6ac32cace4bec54754833fbf",
+     "index": 1,
+     "chunkLearnStatus": "FINISH"
+    },
+    {
+     "id": "6ac32cace4bec54754833fc0",
+     "index": 2,
+     "chunkLearnStatus": "FINISH"
+    }
+   ]
+  },
+  {
+   "id": "6a9a32535680f7693636d3d8",
+   "通过": true,
+   "原处数": 1,
+   "现参与数": 1,
+   "检查": {
+    "正文同_after": true,
+    "参加出现0次": true,
+    "参与新增等于原处数": true,
+    "可信同": true,
+    "标题同": true,
+    "类型同": true,
+    "标签同": true,
+    "开关同": true,
+    "绑店同": true,
+    "阶段同": true
+   },
+   "排除域原样同": true,
+   "排除域归一化同": true,
+   "段元数据": [
+    {
+     "id": "6ac32cace4bec54754833fc1",
+     "index": 1,
+     "chunkLearnStatus": "FINISH"
+    },
+    {
+     "id": "6ac32cace4bec54754833fc2",
+     "index": 2,
+     "chunkLearnStatus": "FINISH"
+    }
+   ]
+  },
+  {
+   "id": "6a9a5a0fb952375ec0322ed9",
+   "通过": true,
+   "原处数": 1,
+   "现参与数": 1,
+   "检查": {
+    "正文同_after": true,
+    "参加出现0次": true,
+    "参与新增等于原处数": true,
+    "可信同": true,
+    "标题同": true,
+    "类型同": true,
+    "标签同": true,
+    "开关同": true,
+    "绑店同": true,
+    "阶段同": true
+   },
+   "排除域原样同": true,
+   "排除域归一化同": true,
+   "段元数据": [
+    {
+     "id": "6ac32cace4bec54754833fc3",
+     "index": 1,
+     "chunkLearnStatus": "FINISH"
+    }
+   ]
+  },
+  {
+   "id": "6a9a5a0eb952375ec0322e64",
+   "通过": true,
+   "原处数": 2,
+   "现参与数": 2,
+   "检查": {
+    "正文同_after": true,
+    "参加出现0次": true,
+    "参与新增等于原处数": true,
+    "可信同": true,
+    "标题同": true,
+    "类型同": true,
+    "标签同": true,
+    "开关同": true,
+    "绑店同": true,
+    "阶段同": true
+   },
+   "排除域原样同": true,
+   "排除域归一化同": true,
+   "段元数据": [
+    {
+     "id": "6ac32cade4bec54754833fc4",
+     "index": 1,
+     "chunkLearnStatus": "FINISH"
+    }
+   ]
+  },
+  {
+   "id": "6a9a3c4f4a45121da4d7c93e",
+   "通过": true,
+   "原处数": 3,
+   "现参与数": 3,
+   "检查": {
+    "正文同_after": true,
+    "参加出现0次": true,
+    "参与新增等于原处数": true,
+    "可信同": true,
+    "标题同": true,
+    "类型同": true,
+    "标签同": true,
+    "开关同": true,
+    "绑店同": true,
+    "阶段同": true
+   },
+   "排除域原样同": true,
+   "排除域归一化同": true,
+   "段元数据": [
+    {
+     "id": "6ac32cade4bec54754833fc5",
+     "index": 1,
+     "chunkLearnStatus": "FINISH"
+    }
+   ]
+  },
+  {
+   "id": "6a9a3c3f4a45121da4d7c677",
+   "通过": true,
+   "原处数": 1,
+   "现参与数": 1,
+   "检查": {
+    "正文同_after": true,
+    "参加出现0次": true,
+    "参与新增等于原处数": true,
+    "可信同": true,
+    "标题同": true,
+    "类型同": true,
+    "标签同": true,
+    "开关同": true,
+    "绑店同": true,
+    "阶段同": true
+   },
+   "排除域原样同": true,
+   "排除域归一化同": true,
+   "段元数据": [
+    {
+     "id": "6ac32cade4bec54754833fc6",
+     "index": 1,
+     "chunkLearnStatus": "FINISH"
+    }
+   ]
+  },
+  {
+   "id": "6a9a3c4f644e354d71a3fb22",
+   "通过": true,
+   "原处数": 3,
+   "现参与数": 3,
+   "检查": {
+    "正文同_after": true,
+    "参加出现0次": true,
+    "参与新增等于原处数": true,
+    "可信同": true,
+    "标题同": true,
+    "类型同": true,
+    "标签同": true,
+    "开关同": true,
+    "绑店同": true,
+    "阶段同": true
+   },
+   "排除域原样同": true,
+   "排除域归一化同": true,
+   "段元数据": [
+    {
+     "id": "6ac32cade4bec54754833fc7",
+     "index": 1,
+     "chunkLearnStatus": "FINISH"
+    }
+   ]
+  },
+  {
+   "id": "6a9a3c4f644e354d71a3fb20",
+   "通过": true,
+   "原处数": 2,
+   "现参与数": 2,
+   "检查": {
+    "正文同_after": true,
+    "参加出现0次": true,
+    "参与新增等于原处数": true,
+    "可信同": true,
+    "标题同": true,
+    "类型同": true,
+    "标签同": true,
+    "开关同": true,
+    "绑店同": true,
+    "阶段同": true
+   },
+   "排除域原样同": true,
+   "排除域归一化同": true,
+   "段元数据": [
+    {
+     "id": "6ac32cade4bec54754833fc8",
+     "index": 1,
+     "chunkLearnStatus": "FINISH"
+    }
+   ]
+  },
+  {
+   "id": "6a9a3c4f4a45121da4d7c937",
+   "通过": true,
+   "原处数": 2,
+   "现参与数": 2,
+   "检查": {
+    "正文同_after": true,
+    "参加出现0次": true,
+    "参与新增等于原处数": true,
+    "可信同": true,
+    "标题同": true,
+    "类型同": true,
+    "标签同": true,
+    "开关同": true,
+    "绑店同": true,
+    "阶段同": true
+   },
+   "排除域原样同": true,
+   "排除域归一化同": true,
+   "段元数据": [
+    {
+     "id": "6ac32caee4bec54754833fc9",
+     "index": 1,
+     "chunkLearnStatus": "FINISH"
+    }
+   ]
+  },
+  {
+   "id": "6a9a3c4d644e354d71a3fadf",
+   "通过": true,
+   "原处数": 2,
+   "现参与数": 2,
+   "检查": {
+    "正文同_after": true,
+    "参加出现0次": true,
+    "参与新增等于原处数": true,
+    "可信同": true,
+    "标题同": true,
+    "类型同": true,
+    "标签同": true,
+    "开关同": true,
+    "绑店同": true,
+    "阶段同": true
+   },
+   "排除域原样同": true,
+   "排除域归一化同": true,
+   "段元数据": [
+    {
+     "id": "6ac32caee4bec54754833fca",
+     "index": 1,
+     "chunkLearnStatus": "FINISH"
+    }
+   ]
+  },
+  {
+   "id": "6a9a3c38644e354d71a3f71c",
+   "通过": true,
+   "原处数": 1,
+   "现参与数": 1,
+   "检查": {
+    "正文同_after": true,
+    "参加出现0次": true,
+    "参与新增等于原处数": true,
+    "可信同": true,
+    "标题同": true,
+    "类型同": true,
+    "标签同": true,
+    "开关同": true,
+    "绑店同": true,
+    "阶段同": true
+   },
+   "排除域原样同": true,
+   "排除域归一化同": true,
+   "段元数据": [
+    {
+     "id": "6ac32caee4bec54754833fcb",
+     "index": 1,
+     "chunkLearnStatus": "FINISH"
+    }
+   ]
+  },
+  {
+   "id": "6a9a3c4f644e354d71a3fb2a",
+   "通过": true,
+   "原处数": 3,
+   "现参与数": 3,
+   "检查": {
+    "正文同_after": true,
+    "参加出现0次": true,
+    "参与新增等于原处数": true,
+    "可信同": true,
+    "标题同": true,
+    "类型同": true,
+    "标签同": true,
+    "开关同": true,
+    "绑店同": true,
+    "阶段同": true
+   },
+   "排除域原样同": true,
+   "排除域归一化同": true,
+   "段元数据": [
+    {
+     "id": "6ac32caee4bec54754833fcc",
+     "index": 1,
+     "chunkLearnStatus": "FINISH"
+    }
+   ]
+  },
+  {
+   "id": "6a9a3c4f644e354d71a3fb27",
+   "通过": true,
+   "原处数": 4,
+   "现参与数": 4,
+   "检查": {
+    "正文同_after": true,
+    "参加出现0次": true,
+    "参与新增等于原处数": true,
+    "可信同": true,
+    "标题同": true,
+    "类型同": true,
+    "标签同": true,
+    "开关同": true,
+    "绑店同": true,
+    "阶段同": true
+   },
+   "排除域原样同": true,
+   "排除域归一化同": true,
+   "段元数据": [
+    {
+     "id": "6ac32cafe4bec54754833fcd",
+     "index": 1,
+     "chunkLearnStatus": "FINISH"
+    }
+   ]
+  },
+  {
+   "id": "6a9a3c4f644e354d71a3fb23",
+   "通过": true,
+   "原处数": 2,
+   "现参与数": 2,
+   "检查": {
+    "正文同_after": true,
+    "参加出现0次": true,
+    "参与新增等于原处数": true,
+    "可信同": true,
+    "标题同": true,
+    "类型同": true,
+    "标签同": true,
+    "开关同": true,
+    "绑店同": true,
+    "阶段同": true
+   },
+   "排除域原样同": true,
+   "排除域归一化同": true,
+   "段元数据": [
+    {
+     "id": "6ac32cafe4bec54754833fce",
+     "index": 1,
+     "chunkLearnStatus": "FINISH"
+    }
+   ]
+  },
+  {
+   "id": "6a9a3c4f4a45121da4d7c94b",
+   "通过": true,
+   "原处数": 3,
+   "现参与数": 3,
+   "检查": {
+    "正文同_after": true,
+    "参加出现0次": true,
+    "参与新增等于原处数": true,
+    "可信同": true,
+    "标题同": true,
+    "类型同": true,
+    "标签同": true,
+    "开关同": true,
+    "绑店同": true,
+    "阶段同": true
+   },
+   "排除域原样同": true,
+   "排除域归一化同": true,
+   "段元数据": [
+    {
+     "id": "6ac32cafe4bec54754833fcf",
+     "index": 1,
+     "chunkLearnStatus": "FINISH"
+    }
+   ]
+  },
+  {
+   "id": "6a9a3c564a45121da4d7caa7",
+   "通过": true,
+   "原处数": 3,
+   "现参与数": 3,
+   "检查": {
+    "正文同_after": true,
+    "参加出现0次": true,
+    "参与新增等于原处数": true,
+    "可信同": true,
+    "标题同": true,
+    "类型同": true,
+    "标签同": true,
+    "开关同": true,
+    "绑店同": true,
+    "阶段同": true
+   },
+   "排除域原样同": true,
+   "排除域归一化同": true,
+   "段元数据": [
+    {
+     "id": "6ac32cafe4bec54754833fd0",
+     "index": 1,
+     "chunkLearnStatus": "FINISH"
+    }
+   ]
+  },
+  {
+   "id": "6a9a3c4f4a45121da4d7c949",
+   "通过": true,
+   "原处数": 3,
+   "现参与数": 3,
+   "检查": {
+    "正文同_after": true,
+    "参加出现0次": true,
+    "参与新增等于原处数": true,
+    "可信同": true,
+    "标题同": true,
+    "类型同": true,
+    "标签同": true,
+    "开关同": true,
+    "绑店同": true,
+    "阶段同": true
+   },
+   "排除域原样同": true,
+   "排除域归一化同": true,
+   "段元数据": [
+    {
+     "id": "6ac32cb0e4bec54754833fd1",
+     "index": 1,
+     "chunkLearnStatus": "FINISH"
+    }
+   ]
+  },
+  {
+   "id": "6a9a3c4f4a45121da4d7c93b",
+   "通过": true,
+   "原处数": 3,
+   "现参与数": 3,
+   "检查": {
+    "正文同_after": true,
+    "参加出现0次": true,
+    "参与新增等于原处数": true,
+    "可信同": true,
+    "标题同": true,
+    "类型同": true,
+    "标签同": true,
+    "开关同": true,
+    "绑店同": true,
+    "阶段同": true
+   },
+   "排除域原样同": true,
+   "排除域归一化同": true,
+   "段元数据": [
+    {
+     "id": "6ac32cb0e4bec54754833fd2",
+     "index": 1,
+     "chunkLearnStatus": "FINISH"
+    }
+   ]
+  },
+  {
+   "id": "6a9a61814a45121da4d7d422",
+   "通过": true,
+   "原处数": 3,
+   "现参与数": 4,
+   "检查": {
+    "正文同_after": true,
+    "参加出现0次": true,
+    "参与新增等于原处数": true,
+    "可信同": true,
+    "标题同": true,
+    "类型同": true,
+    "标签同": true,
+    "开关同": true,
+    "绑店同": true,
+    "阶段同": true
+   },
+   "排除域原样同": true,
+   "排除域归一化同": true,
+   "段元数据": [
+    {
+     "id": "6ac32cb0e4bec54754833fd3",
+     "index": 1,
+     "chunkLearnStatus": "FINISH"
+    }
+   ]
+  },
+  {
+   "id": "6a9a3c4f644e354d71a3fb3a",
+   "通过": true,
+   "原处数": 3,
+   "现参与数": 3,
+   "检查": {
+    "正文同_after": true,
+    "参加出现0次": true,
+    "参与新增等于原处数": true,
+    "可信同": true,
+    "标题同": true,
+    "类型同": true,
+    "标签同": true,
+    "开关同": true,
+    "绑店同": true,
+    "阶段同": true
+   },
+   "排除域原样同": true,
+   "排除域归一化同": true,
+   "段元数据": [
+    {
+     "id": "6ac32cb0e4bec54754833fd4",
+     "index": 1,
+     "chunkLearnStatus": "FINISH"
+    }
+   ]
+  },
+  {
+   "id": "6a9a3c4f644e354d71a3fb38",
+   "通过": true,
+   "原处数": 3,
+   "现参与数": 3,
+   "检查": {
+    "正文同_after": true,
+    "参加出现0次": true,
+    "参与新增等于原处数": true,
+    "可信同": true,
+    "标题同": true,
+    "类型同": true,
+    "标签同": true,
+    "开关同": true,
+    "绑店同": true,
+    "阶段同": true
+   },
+   "排除域原样同": true,
+   "排除域归一化同": true,
+   "段元数据": [
+    {
+     "id": "6ac32cb1e4bec54754833fd5",
+     "index": 1,
+     "chunkLearnStatus": "FINISH"
+    }
+   ]
+  },
+  {
+   "id": "6a9a3c4f4a45121da4d7c94f",
+   "通过": true,
+   "原处数": 4,
+   "现参与数": 4,
+   "检查": {
+    "正文同_after": true,
+    "参加出现0次": true,
+    "参与新增等于原处数": true,
+    "可信同": true,
+    "标题同": true,
+    "类型同": true,
+    "标签同": true,
+    "开关同": true,
+    "绑店同": true,
+    "阶段同": true
+   },
+   "排除域原样同": true,
+   "排除域归一化同": true,
+   "段元数据": [
+    {
+     "id": "6ac32cb1e4bec54754833fd6",
+     "index": 1,
+     "chunkLearnStatus": "FINISH"
+    }
+   ]
+  },
+  {
+   "id": "6a9a3c4f4a45121da4d7c94d",
+   "通过": true,
+   "原处数": 3,
+   "现参与数": 4,
+   "检查": {
+    "正文同_after": true,
+    "参加出现0次": true,
+    "参与新增等于原处数": true,
+    "可信同": true,
+    "标题同": true,
+    "类型同": true,
+    "标签同": true,
+    "开关同": true,
+    "绑店同": true,
+    "阶段同": true
+   },
+   "排除域原样同": true,
+   "排除域归一化同": true,
+   "段元数据": [
+    {
+     "id": "6ac32cb1e4bec54754833fd7",
+     "index": 1,
+     "chunkLearnStatus": "FINISH"
+    }
+   ]
+  },
+  {
+   "id": "6a9a3c4f644e354d71a3fb3d",
+   "通过": true,
+   "原处数": 4,
+   "现参与数": 4,
+   "检查": {
+    "正文同_after": true,
+    "参加出现0次": true,
+    "参与新增等于原处数": true,
+    "可信同": true,
+    "标题同": true,
+    "类型同": true,
+    "标签同": true,
+    "开关同": true,
+    "绑店同": true,
+    "阶段同": true
+   },
+   "排除域原样同": true,
+   "排除域归一化同": true,
+   "段元数据": [
+    {
+     "id": "6ac32cb1e4bec54754833fd8",
+     "index": 1,
+     "chunkLearnStatus": "FINISH"
+    }
+   ]
+  },
+  {
+   "id": "6a9a3c4f644e354d71a3fb3c",
+   "通过": true,
+   "原处数": 3,
+   "现参与数": 3,
+   "检查": {
+    "正文同_after": true,
+    "参加出现0次": true,
+    "参与新增等于原处数": true,
+    "可信同": true,
+    "标题同": true,
+    "类型同": true,
+    "标签同": true,
+    "开关同": true,
+    "绑店同": true,
+    "阶段同": true
+   },
+   "排除域原样同": true,
+   "排除域归一化同": true,
+   "段元数据": [
+    {
+     "id": "6ac32cb2e4bec54754833fd9",
+     "index": 1,
+     "chunkLearnStatus": "FINISH"
+    }
+   ]
+  },
+  {
+   "id": "6a9a3c4f4a45121da4d7c951",
+   "通过": true,
+   "原处数": 3,
+   "现参与数": 3,
+   "检查": {
+    "正文同_after": true,
+    "参加出现0次": true,
+    "参与新增等于原处数": true,
+    "可信同": true,
+    "标题同": true,
+    "类型同": true,
+    "标签同": true,
+    "开关同": true,
+    "绑店同": true,
+    "阶段同": true
+   },
+   "排除域原样同": true,
+   "排除域归一化同": true,
+   "段元数据": [
+    {
+     "id": "6ac32cb2e4bec54754833fda",
+     "index": 1,
+     "chunkLearnStatus": "FINISH"
+    }
+   ]
+  }
+ ]
+}

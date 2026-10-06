@@ -1,0 +1,1 @@
+{"api_version": 1, "request_id": "5d673678-2c78-4806-8ba8-20ea685aa233", "operation_id": "683d657b-499e-4465-b6ad-7fe109a333b3", "ok": true, "data": {"operation_id": "683d657b-499e-4465-b6ad-7fe109a333b3", "outcome": "ACCEPTED", "execution_state": "accepted", "command": "import.apply", "actor_class": "automation", "automatic_retry": false}}

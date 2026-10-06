@@ -1,0 +1,54 @@
+{
+  "id": "6a9a3c4f4a45121da4d7c93e",
+  "title": "礼品/售后礼品问题/本店礼品没收到？",
+  "content": [
+    {
+      "id": "6ac03ba4e1041c390582d721",
+      "content": "Q:本店礼品没收到？\nA:本店赠品活动仅适用于德达医疗本店旗舰店订单，不适用于其他平台或其他店铺。详情页未限定型号时，本店各型号均可参加额外赠品活动，C1也可参加；标配配件与活动赠品分开核对。请提供型号、订单号及实际收到的物品，由我们逐项核对标配配件和活动赠品，不凭未收到就推断超过前100名，也不在未查记录前声称已经发齐。\n吸氧面罩保留前100名下单赠送规则；客户主动咨询赠送面罩时，各型号均可联系客服登记，按前100名赠送。C1也可参加本店统一赠品活动。可回复：“亲亲，可以给您特殊备注下，按前100名赠送吸氧面罩，麻烦提供订单号，由我们登记安排。”实际备注和发货状态需查询确认，未完成登记前不说已经备注或已经寄出。",
+      "knowledgeDigest": "0abda3bdde687dd2d8c7c678dd2ac0c6",
+      "chunkLength": null,
+      "chunkLearnStatus": "FINISH",
+      "index": 1
+    }
+  ],
+  "labels": [],
+  "labelInfos": null,
+  "ifBelievable": true,
+  "ifLearning": false,
+  "ifOpen": true,
+  "version": "V2",
+  "type": "SHOP",
+  "includeCondition": {
+    "spu": [],
+    "shop": [
+      {
+        "thirdShopId": "2095398963959042048",
+        "cids": []
+      }
+    ],
+    "rules": [],
+    "productGroupId": [],
+    "sellerGroup": [],
+    "platform": []
+  },
+  "excludeCondition": {
+    "spu": [],
+    "shop": [],
+    "rules": [],
+    "productGroupId": [],
+    "sellerGroup": [],
+    "platform": []
+  },
+  "timeliness": null,
+  "cycleTimeliness": null,
+  "orderStatus": [
+    "AFTER_SALE"
+  ],
+  "lastUpdatedAt": "2026-10-03 07:17:56",
+  "createdAt": "2026-09-04 11:34:39",
+  "source": null,
+  "productCondition": null,
+  "ifOpenSync": null,
+  "ifHasUrl": false,
+  "urlInfos": []
+}

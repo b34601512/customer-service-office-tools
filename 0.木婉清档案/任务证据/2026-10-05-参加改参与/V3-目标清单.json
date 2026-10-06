@@ -1,0 +1,359 @@
+{
+ "时间": "2026-10-05T04:50:16.909Z",
+ "数量": 26,
+ "纳入": 26,
+ "跳过": 0,
+ "应有处数": 66,
+ "纳入处数": 66,
+ "缺卡": [],
+ "漂移": [],
+ "状态观察": [],
+ "目标": [
+  {
+   "id": "6a9a32535680f7693636d3dc",
+   "type": "PRODUCT",
+   "ifBelievable": false,
+   "标题": null,
+   "ifOpen": true,
+   "labels": [
+    "SKU详情"
+   ],
+   "处数": 1,
+   "换后参与校验": {
+    "残留": 0,
+    "新增": 1
+   }
+  },
+  {
+   "id": "6a9a32535680f7693636d3d8",
+   "type": "PRODUCT",
+   "ifBelievable": false,
+   "标题": null,
+   "ifOpen": true,
+   "labels": [
+    "SKU详情"
+   ],
+   "处数": 1,
+   "换后参与校验": {
+    "残留": 0,
+    "新增": 1
+   }
+  },
+  {
+   "id": "6a9a5a0fb952375ec0322ed9",
+   "type": "PRODUCT",
+   "ifBelievable": false,
+   "标题": null,
+   "ifOpen": true,
+   "labels": [
+    "SKU详情"
+   ],
+   "处数": 1,
+   "换后参与校验": {
+    "残留": 0,
+    "新增": 1
+   }
+  },
+  {
+   "id": "6a9a5a0eb952375ec0322e64",
+   "type": "PRODUCT",
+   "ifBelievable": false,
+   "标题": null,
+   "ifOpen": true,
+   "labels": [
+    "商品详情"
+   ],
+   "处数": 2,
+   "换后参与校验": {
+    "残留": 0,
+    "新增": 2
+   }
+  },
+  {
+   "id": "6a9a3c4f4a45121da4d7c93e",
+   "type": "SHOP",
+   "ifBelievable": true,
+   "标题": "礼品/售后礼品问题/本店礼品没收到？",
+   "ifOpen": true,
+   "labels": [],
+   "处数": 3,
+   "换后参与校验": {
+    "残留": 0,
+    "新增": 3
+   }
+  },
+  {
+   "id": "6a9a3c3f4a45121da4d7c677",
+   "type": "SHOP",
+   "ifBelievable": true,
+   "标题": "售后/C1/太干【赠送湿化瓶】",
+   "ifOpen": true,
+   "labels": [],
+   "处数": 1,
+   "换后参与校验": {
+    "残留": 0,
+    "新增": 1
+   }
+  },
+  {
+   "id": "6a9a3c4f644e354d71a3fb22",
+   "type": "SHOP",
+   "ifBelievable": true,
+   "标题": "礼品/礼品分开发/能否同步发礼品？（C1系列除外）",
+   "ifOpen": true,
+   "labels": [],
+   "处数": 3,
+   "换后参与校验": {
+    "残留": 0,
+    "新增": 3
+   }
+  },
+  {
+   "id": "6a9a3c4f644e354d71a3fb20",
+   "type": "SHOP",
+   "ifBelievable": true,
+   "标题": "礼品/礼品分开发/礼品登记好了，分开发",
+   "ifOpen": true,
+   "labels": [],
+   "处数": 2,
+   "换后参与校验": {
+    "残留": 0,
+    "新增": 2
+   }
+  },
+  {
+   "id": "6a9a3c4f4a45121da4d7c937",
+   "type": "SHOP",
+   "ifBelievable": true,
+   "标题": "礼品/礼品分开发/怎么拆分了两个包裹？2个",
+   "ifOpen": true,
+   "labels": [],
+   "处数": 2,
+   "换后参与校验": {
+    "残留": 0,
+    "新增": 2
+   }
+  },
+  {
+   "id": "6a9a3c4d644e354d71a3fadf",
+   "type": "SHOP",
+   "ifBelievable": true,
+   "标题": "补发/登记后/赠品或配件补发是否已登记？",
+   "ifOpen": true,
+   "labels": [],
+   "处数": 2,
+   "换后参与校验": {
+    "残留": 0,
+    "新增": 2
+   }
+  },
+  {
+   "id": "6a9a3c38644e354d71a3f71c",
+   "type": "SHOP",
+   "ifBelievable": true,
+   "标题": "选款/产品卖点/1A卖点",
+   "ifOpen": true,
+   "labels": [],
+   "处数": 1,
+   "换后参与校验": {
+    "残留": 0,
+    "新增": 1
+   }
+  },
+  {
+   "id": "6a9a3c4f644e354d71a3fb2a",
+   "type": "SHOP",
+   "ifBelievable": true,
+   "标题": "礼品/售前礼品问题/2.礼品问题",
+   "ifOpen": true,
+   "labels": [],
+   "处数": 3,
+   "换后参与校验": {
+    "残留": 0,
+    "新增": 3
+   }
+  },
+  {
+   "id": "6a9a3c4f644e354d71a3fb27",
+   "type": "SHOP",
+   "ifBelievable": true,
+   "标题": "礼品/售前礼品问题/有什么礼品？",
+   "ifOpen": true,
+   "labels": [],
+   "处数": 4,
+   "换后参与校验": {
+    "残留": 0,
+    "新增": 4
+   }
+  },
+  {
+   "id": "6a9a3c4f644e354d71a3fb23",
+   "type": "SHOP",
+   "ifBelievable": true,
+   "标题": "礼品/礼品分开发/为什么礼品不能一起发？分开",
+   "ifOpen": true,
+   "labels": [],
+   "处数": 2,
+   "换后参与校验": {
+    "残留": 0,
+    "新增": 2
+   }
+  },
+  {
+   "id": "6a9a3c4f4a45121da4d7c94b",
+   "type": "SHOP",
+   "ifBelievable": true,
+   "标题": "晒图/发货后/1.没收到礼品？实际是晒单活动",
+   "ifOpen": true,
+   "labels": [],
+   "处数": 3,
+   "换后参与校验": {
+    "残留": 0,
+    "新增": 3
+   }
+  },
+  {
+   "id": "6a9a3c564a45121da4d7caa7",
+   "type": "SHOP",
+   "ifBelievable": true,
+   "标题": "自营店/活动/晒单赠品是否已登记？",
+   "ifOpen": true,
+   "labels": [],
+   "处数": 3,
+   "换后参与校验": {
+    "残留": 0,
+    "新增": 3
+   }
+  },
+  {
+   "id": "6a9a3c4f4a45121da4d7c949",
+   "type": "SHOP",
+   "ifBelievable": true,
+   "标题": "晒图/发货前/无法一起发过来",
+   "ifOpen": true,
+   "labels": [],
+   "处数": 3,
+   "换后参与校验": {
+    "残留": 0,
+    "新增": 3
+   }
+  },
+  {
+   "id": "6a9a3c4f4a45121da4d7c93b",
+   "type": "SHOP",
+   "ifBelievable": true,
+   "标题": "礼品/售前礼品问题/想要氧气袋（C1裸机商品除外）",
+   "ifOpen": true,
+   "labels": [],
+   "处数": 3,
+   "换后参与校验": {
+    "残留": 0,
+    "新增": 3
+   }
+  },
+  {
+   "id": "6a9a61814a45121da4d7d422",
+   "type": "SHOP",
+   "ifBelievable": true,
+   "标题": "有送氧气袋吗",
+   "ifOpen": true,
+   "labels": [],
+   "处数": 3,
+   "换后参与校验": {
+    "残留": 0,
+    "新增": 3
+   }
+  },
+  {
+   "id": "6a9a3c4f644e354d71a3fb3a",
+   "type": "SHOP",
+   "ifBelievable": true,
+   "标题": "晒图/发货前/1.一起发过来，为什么要分开？",
+   "ifOpen": true,
+   "labels": [],
+   "处数": 3,
+   "换后参与校验": {
+    "残留": 0,
+    "新增": 3
+   }
+  },
+  {
+   "id": "6a9a3c4f644e354d71a3fb38",
+   "type": "SHOP",
+   "ifBelievable": true,
+   "标题": "晒图/发货前/2.同意一起发过来",
+   "ifOpen": true,
+   "labels": [],
+   "处数": 3,
+   "换后参与校验": {
+    "残留": 0,
+    "新增": 3
+   }
+  },
+  {
+   "id": "6a9a3c4f4a45121da4d7c94f",
+   "type": "SHOP",
+   "ifBelievable": true,
+   "标题": "晒图/发货后/晒单活动具体怎么操作？【不要求好评，要真实】",
+   "ifOpen": true,
+   "labels": [],
+   "处数": 4,
+   "换后参与校验": {
+    "残留": 0,
+    "新增": 4
+   }
+  },
+  {
+   "id": "6a9a3c4f4a45121da4d7c94d",
+   "type": "SHOP",
+   "ifBelievable": true,
+   "标题": "晒图/发货后/差评也可以送礼品吗？",
+   "ifOpen": true,
+   "labels": [],
+   "处数": 3,
+   "换后参与校验": {
+    "残留": 0,
+    "新增": 3
+   }
+  },
+  {
+   "id": "6a9a3c4f644e354d71a3fb3d",
+   "type": "SHOP",
+   "ifBelievable": true,
+   "标题": "晒图/发货后/2.为什么要晒单？",
+   "ifOpen": true,
+   "labels": [],
+   "处数": 4,
+   "换后参与校验": {
+    "残留": 0,
+    "新增": 4
+   }
+  },
+  {
+   "id": "6a9a3c4f644e354d71a3fb3c",
+   "type": "SHOP",
+   "ifBelievable": true,
+   "标题": "晒图/发货后/3.不想晒单？",
+   "ifOpen": true,
+   "labels": [],
+   "处数": 3,
+   "换后参与校验": {
+    "残留": 0,
+    "新增": 3
+   }
+  },
+  {
+   "id": "6a9a3c4f4a45121da4d7c951",
+   "type": "SHOP",
+   "ifBelievable": true,
+   "标题": "晒图/发货后/客户反馈了差评→不要评价直接送",
+   "ifOpen": true,
+   "labels": [],
+   "处数": 3,
+   "换后参与校验": {
+    "残留": 0,
+    "新增": 3
+   }
+  }
+ ]
+}

@@ -1,0 +1,54 @@
+{
+  "id": "6a9a3c3f4a45121da4d7c677",
+  "title": "售后/C1/太干【赠送湿化瓶】",
+  "content": [
+    {
+      "id": "6ac32cade4bec54754833fc6",
+      "content": "Q:太干【赠送湿化瓶】\nA:以下赠品活动仅适用于本店德达医疗旗舰店购买的订单，不适用于其他平台或其他店铺。C1型号不参与额外赠品活动。若使用时感觉干燥，请说明型号及使用情况，由售后核对适配配件和处理方式，不自行加装湿化组件；质量问题按售后流程处理，不以放弃退货为前提。",
+      "knowledgeDigest": "30e83f72118dc341e5875f3b60cf170b",
+      "chunkLength": null,
+      "chunkLearnStatus": "WAIT",
+      "index": 1
+    }
+  ],
+  "labels": [],
+  "labelInfos": null,
+  "ifBelievable": true,
+  "ifLearning": true,
+  "ifOpen": true,
+  "version": "V2",
+  "type": "SHOP",
+  "includeCondition": {
+    "spu": [],
+    "shop": [
+      {
+        "thirdShopId": "2095398963959042048",
+        "cids": []
+      }
+    ],
+    "rules": [],
+    "productGroupId": [],
+    "sellerGroup": [],
+    "platform": []
+  },
+  "excludeCondition": {
+    "spu": [],
+    "shop": [],
+    "rules": [],
+    "productGroupId": [],
+    "sellerGroup": [],
+    "platform": []
+  },
+  "timeliness": null,
+  "cycleTimeliness": null,
+  "orderStatus": [
+    "AFTER_SALE"
+  ],
+  "lastUpdatedAt": "2026-10-05 12:50:53",
+  "createdAt": "2026-09-04 11:34:23",
+  "source": null,
+  "productCondition": null,
+  "ifOpenSync": null,
+  "ifHasUrl": false,
+  "urlInfos": []
+}

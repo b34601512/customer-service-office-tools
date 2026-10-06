@@ -1,0 +1,79 @@
+{
+  "id": "6a9a32535680f7693636d3dc",
+  "title": null,
+  "content": [
+    {
+      "id": "6abfcb1ee1041c390582d5e0",
+      "content": "## 雾化血氧款（C1L型号）\n本产品具备以下特点：\n- 大屏显示\n- 一键制氧\n- 非进口分子筛\n- 智能定时功能\n- 96%（仅1L/min工况）高氧浓度\n- 9L流量可调\n- 无线遥控（仅C1L款）\n- 10级过滤\n- 雾化制氧一体\n- 双核非进口分子筛\n- 36分贝静音\n- 静音纯铜压缩机\n\n促销与赠品：\n- 晒图赠送血氧仪\n- 雾化套装（仅C1L款）仅限雾化血氧款赠送\n- 送吸氧大礼包（包含遥控器（仅C1L款）、吸氧管、电源线、雾化面罩、雾化连接管、雾化杯、口含器）\n\n物流与售后：\n- 顺丰速运\n- 压缩机5年质保（整机1年质保）\n【德达医疗本店旗舰店赠品活动】\n仅适用于德达医疗本店旗舰店订单，不适用于其他平台或其他店铺。详情页未限定型号时，本店各型号均按以下规则执行，C1也可参加。\n\n下单赠品：\n- 标配吸氧管1根。\n- 过滤器＋过滤棉1份。\n- 雾化版本指C1L，赠雾化套装1套；C1不带雾化，不赠雾化套装。\n- 吸氧面罩：前100名下单赠1个；客户咨询时可联系客服登记，未核对订单前不说已经登记或寄出。该活动没有限定型号。\n\n收货晒单赠品：\n收货后真实晒单，文字10字以上，联系客服登记；以下四选一，不叠加：42L氧气袋1个、血氧仪1个、鼻吸管1份、过滤器＋过滤棉1份。\n\n付邮领取：\n每3个月可领取终身吸氧管4根，邮费13元由买家承担；需提供本店订单，由客服核对领取记录。\n\n标配配件、下单赠品、晒单赠品和付邮领取活动分别核对，不把不同活动合并承诺。\n\nC1系列（含C1L）仅1L/min时为96%高浓度工况，调大流量档位后氧浓度会下降；9L只代表气流大小，不代表9L/min时仍有96%氧浓度，其他档位不保证该高浓度。",
+      "knowledgeDigest": "c04ab94eac13a116fada69a396357ce9",
+      "chunkLength": null,
+      "chunkLearnStatus": "FINISH",
+      "index": 1
+    },
+    {
+      "id": "6abfcb1ee1041c390582d5e1",
+      "content": "⚠️浓度口径说明（必读）：文中「9升/9L」指每分钟出气量（气流）可调到 9L，**不等于 9L 时仍是高浓度**。1升机浓度随流量递减：1L≈96%、2L≈70%、3L≈60%、4L≈50%、5L≈45%、6L≈40%、7L≈35%、8L≈32%、9L≈30%；2升机从 2L≈96% 起递减；3升机在 1-3L、5升机在 1-5L、10升机在 1-10L 内可维持≈96%。「几升机」的定义＝氧浓度≥90% 时能达到的最大流量（如\"1升机\"＝90%以上浓度时最大 1L/min）。浓度受气压、湿度、温度影响，以机器实时显示为准。",
+      "knowledgeDigest": "2e729110ba5d1a399bbedbc82cfb5612",
+      "chunkLength": null,
+      "chunkLearnStatus": "FINISH",
+      "index": 2
+    }
+  ],
+  "labels": [
+    "SKU详情"
+  ],
+  "labelInfos": [
+    {
+      "label": "SKU详情",
+      "value": "SKU详情"
+    }
+  ],
+  "ifBelievable": false,
+  "ifLearning": false,
+  "ifOpen": true,
+  "version": "V2",
+  "type": "PRODUCT",
+  "includeCondition": {
+    "spu": [
+      {
+        "thirdShopId": "2095398963959042048",
+        "spuId": "446929841571",
+        "skuIds": [
+          "1969337774197"
+        ]
+      }
+    ],
+    "shop": [],
+    "rules": [],
+    "productGroupId": [],
+    "sellerGroup": [],
+    "platform": []
+  },
+  "excludeCondition": {
+    "spu": [],
+    "shop": [],
+    "rules": [],
+    "productGroupId": [],
+    "sellerGroup": [],
+    "platform": []
+  },
+  "timeliness": null,
+  "cycleTimeliness": null,
+  "orderStatus": [],
+  "lastUpdatedAt": "2026-10-05 08:50:48",
+  "createdAt": "2026-09-04 10:52:03",
+  "source": {
+    "type": "SKU_DETAIL",
+    "value": "https://img.pddpic.com/mms-goods-image/2026-07-17/11639cce-dec9-47b9-8559-34e8dde4e9dc.jpeg"
+  },
+  "productCondition": {
+    "thirdShopId": "2095398963959042048",
+    "spuId": "446929841571",
+    "skuIds": [
+      "1969337774197"
+    ]
+  },
+  "ifOpenSync": true,
+  "ifHasUrl": false,
+  "urlInfos": []
+}

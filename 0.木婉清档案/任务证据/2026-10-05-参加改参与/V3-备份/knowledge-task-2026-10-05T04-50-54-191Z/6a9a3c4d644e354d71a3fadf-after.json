@@ -1,0 +1,54 @@
+{
+  "id": "6a9a3c4d644e354d71a3fadf",
+  "title": "补发/登记后/赠品或配件补发是否已登记？",
+  "content": [
+    {
+      "id": "6ac32caee4bec54754833fca",
+      "content": "Q:赠品或配件补发是否已登记？\nA:本店赠品活动仅适用于德达医疗本店旗舰店订单，不适用于其他平台或其他店铺。详情页未限定型号时，本店各型号均可参与额外赠品活动，C1也可参与；标配配件与活动赠品分开核对。请提供订单号及相关活动记录，由我们查询赠品登记和发货进度；未查询前不确认已登记、已寄出或已经补发。",
+      "knowledgeDigest": "0b9c45255f999943cd9635fd3fc1dc5c",
+      "chunkLength": null,
+      "chunkLearnStatus": "WAIT",
+      "index": 1
+    }
+  ],
+  "labels": [],
+  "labelInfos": null,
+  "ifBelievable": true,
+  "ifLearning": true,
+  "ifOpen": true,
+  "version": "V2",
+  "type": "SHOP",
+  "includeCondition": {
+    "spu": [],
+    "shop": [
+      {
+        "thirdShopId": "2095398963959042048",
+        "cids": []
+      }
+    ],
+    "rules": [],
+    "productGroupId": [],
+    "sellerGroup": [],
+    "platform": []
+  },
+  "excludeCondition": {
+    "spu": [],
+    "shop": [],
+    "rules": [],
+    "productGroupId": [],
+    "sellerGroup": [],
+    "platform": []
+  },
+  "timeliness": null,
+  "cycleTimeliness": null,
+  "orderStatus": [
+    "AFTER_SALE"
+  ],
+  "lastUpdatedAt": "2026-10-05 12:50:54",
+  "createdAt": "2026-09-04 11:34:37",
+  "source": null,
+  "productCondition": null,
+  "ifOpenSync": null,
+  "ifHasUrl": false,
+  "urlInfos": []
+}

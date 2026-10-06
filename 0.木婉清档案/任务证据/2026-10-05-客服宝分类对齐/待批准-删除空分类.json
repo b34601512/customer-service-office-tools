@@ -1,0 +1,121 @@
+[
+ {
+  "level": 1,
+  "parent": null,
+  "name": "催付",
+  "category_id": "01ec5c0a-8a14-42cd-9bd9-a50369e5d5ca",
+  "revision": 4
+ },
+ {
+  "level": 1,
+  "parent": null,
+  "name": "小蟹",
+  "category_id": "279b70cb-37d0-4c10-888f-bf5c7a311f3a",
+  "revision": 4
+ },
+ {
+  "level": 2,
+  "parent": "催付",
+  "name": "DEDAKJ德迩杰跟进、逼单话术",
+  "category_id": "0a9068dd-5198-474d-a220-85506ac48d6d",
+  "revision": 1
+ },
+ {
+  "level": 2,
+  "parent": "催付",
+  "name": "京东1店",
+  "category_id": "9d26ff80-2296-4c95-9aa8-2b807e80de13",
+  "revision": 1
+ },
+ {
+  "level": 2,
+  "parent": "催付",
+  "name": "京东3店",
+  "category_id": "9ba3b437-f374-4531-b533-77c8b1a128bc",
+  "revision": 1
+ },
+ {
+  "level": 2,
+  "parent": "催付",
+  "name": "京东6店自营店",
+  "category_id": "033e38b7-a132-4e68-ac97-18e4acf6e8db",
+  "revision": 1
+ },
+ {
+  "level": 2,
+  "parent": "催付",
+  "name": "天猫1店二次催付话术",
+  "category_id": "8cd633ff-82d3-441b-a047-39f79bb16837",
+  "revision": 1
+ },
+ {
+  "level": 2,
+  "parent": "小蟹",
+  "name": "小程序商城",
+  "category_id": "9d484e5a-db2f-4b4f-946f-0d333dbac141",
+  "revision": 1
+ },
+ {
+  "level": 2,
+  "parent": "小蟹",
+  "name": "延保",
+  "category_id": "2a242ad1-0a4a-4cf3-a6d9-73f2fe1c44de",
+  "revision": 1
+ },
+ {
+  "level": 2,
+  "parent": "小蟹",
+  "name": "引导",
+  "category_id": "613301b9-93a2-40d7-9bef-1cfc8185f9df",
+  "revision": 1
+ },
+ {
+  "level": 2,
+  "parent": "催付",
+  "name": "德达跟进、逼单话术",
+  "category_id": "f9528adc-f6e6-4b71-b0fd-6fc554fad015",
+  "revision": 1
+ },
+ {
+  "level": 2,
+  "parent": "小蟹",
+  "name": "打视频电话",
+  "category_id": "da084ba2-30cd-4e27-83a2-6c444421c962",
+  "revision": 1
+ },
+ {
+  "level": 2,
+  "parent": "小蟹",
+  "name": "活动",
+  "category_id": "e4d211b7-9f62-454c-954a-b8b7f9655a4e",
+  "revision": 1
+ },
+ {
+  "level": 2,
+  "parent": "小蟹",
+  "name": "私域优惠券",
+  "category_id": "75a0a2a6-eb39-4460-99de-f2c10dbfc7d4",
+  "revision": 1
+ },
+ {
+  "level": 2,
+  "parent": "小蟹",
+  "name": "维修",
+  "category_id": "0d90b4a5-b7b4-4bd6-a2bc-1b5d4409cba7",
+  "revision": 1
+ },
+ {
+  "level": 2,
+  "parent": "催付",
+  "name": "通用跟进、逼单话术",
+  "category_id": "99306758-ae15-4f17-a9cd-335fb20f3df1",
+  "revision": 1
+ },
+ {
+  "level": 2,
+  "parent": "催付",
+  "name": "额温枪清货计划",
+  "category_id": "80cebff3-85c1-4ae3-8b56-e451b067be6b",
+  "revision": 1
+ }
+]
