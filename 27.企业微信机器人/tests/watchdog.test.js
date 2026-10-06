@@ -90,6 +90,14 @@ test("晚上防误报：群静默 200 分钟 + 单聊也 100 分钟没消息（�
   assert.equal(r.toAlert.length, 0, "单聊不活跃时群静默不单独报；单聊又没到 120 分钟，both 也不成立");
 });
 
+test("消息静默（群静默+单聊活跃）达阈值：报警但**不重启**守护（2026-10-06 误报收严）", () => {
+  const snap = snapshot({ groupLastAt: NOON - 200 * MIN, singleLastAt: NOON - 5 * MIN });
+  const state = { strikes: { group: 1 }, active: {}, restarts: [] };
+  const r = evaluate(snap, state, cfg, NOON);
+  assert.ok(r.toAlert.some((a) => a.key === "group"), "群静默应报警");
+  assert.equal(r.restart.needed, false, "消息静默类不许自动重启守护（只报警）");
+});
+
 test("守护进程不在：1 次即报警，且需要重启", () => {
   const snap = snapshot({ alive: false, reason: "pid 文件不存在（守护从未启动或已退出）" });
   const r = evaluate(snap, emptyState(), cfg, NOON);

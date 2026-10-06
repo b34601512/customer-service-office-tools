@@ -278,20 +278,16 @@ function evaluate(snapshot, state, cfg, nowMs) {
     }
   }
 
-  // 重启判定：确定性故障立即；消息类故障等连续命中达到阈值（约 10 分钟）
+  // 重启判定：**只对确定性故障**（守护进程不在 / 长连接断开后未恢复）自动重启。
+  // 消息静默类（group/single/both）**只报警、不重启**：2026-10-06 19:00 误报实例——夜里金牌组本来没人说话，
+  // 群静默 180min+ 就把正常守护（pid 未变）"重启"了一次（幸好未生效）；避免误报去动生产守护。
   const restartWanted =
     conditions.daemon.hit ||
-    conditions.connection.hit ||
-    (conditions.both.hit && strikes.both >= minStrikes.both) ||
-    (conditions.group.hit && strikes.group >= minStrikes.group) ||
-    (conditions.single.hit && strikes.single >= minStrikes.single);
+    conditions.connection.hit;
   const restart = { needed: restartWanted, allowed: false, reason: "", suppressed: "" };
   if (restartWanted) {
     restart.reason = conditions.daemon.hit ? "守护进程不在"
-      : conditions.connection.hit ? "长连接断开后未恢复"
-      : conditions.both.hit ? "群聊与单聊同时静默"
-      : conditions.group.hit ? "群聊疑似失联"
-      : "单聊疑似失联";
+      : "长连接断开后未恢复";
     const hourAgo = nowMs - HOUR;
     const recent = (state && state.restarts ? state.restarts : [])
       .map(normMs)
