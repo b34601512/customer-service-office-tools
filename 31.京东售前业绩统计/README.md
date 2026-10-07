@@ -32,7 +32,9 @@
 
 ### 下载工具（只读：导航/查询/点导出/下载；登录失效→留窗口跳过）
 - 管家：页面内调 `kf.jd.com/offlineDownload/addTask?type=2`（=点「导出excel」）→ 轮询 `getTaskStatus` 拿签名地址 → 下载。不用点日期控件（接口直接吃 startTime/endTime）。
-- 魔方：`joyi.yiyitech.com`（九易，京东服务市场 app FW_GOODS-908622）SPA 内直接调页面自己的 `exportExcelTask` → 轮询 `/task/export/selectByShopIdExportLst` → 下载。**首次/失效需人工在窗口里点一次京东 OAuth 授权**（勾选协议 + 登录）。
+- 魔方：`joyi.yiyitech.com`（九易，京东服务市场 app FW_GOODS-908622）。**登录态**存在 localStorage `joyi_token`；
+  失效时从魔方首页点「现在登录」→ 京东 SSO 授权页（勾《用户授权协议》→ 点登录）——**别直接开 OAuth 链接**（会落到 gwjoyi 的「服务器出错了」页）。
+  导出走「导出中心」：页面 `exportExcelTask()` 建任务 → 列表里等 **3~4 分钟**变「完成」→ 点该行「下载」（浏览器下载事件落盘）。
 - 店铺 profile 为 31号 专属：`runtime/state/browser-profiles/jd/<key>`（2026-10-07 从 9号/22号 已登录 profile 引导复制），端口 9470-9475，见 `project-config/stores.json`。
 - 可选参数：`--store jd1`（单店）、`--dry`、`--out <目录>`、`--保持窗口`。
 
@@ -50,8 +52,6 @@
   ]
 }
 ```
-- 管家文件可省 `store`（按昵称前缀自动识别：德达官方旗舰店→1店、dedakj旗舰店→2店、dedakj器械店→3店、dedakj个护→8店、dedakj保健器械→5S店、dedakj自营→6店）；魔方文件必须给 `store`（文件里没有店铺）。
-- 其他参数：`--batch 500`、`--刷新映射`（重读实名映射）、`--probe`（看云端末行/表头）。
 
 ## 安全设计（不许改坏）
 
