@@ -3,10 +3,10 @@
 // 覆盖：
 //  A. 粘贴安全规则（照 20号/22号 实测结论：不许成双等号、末行顶层 return main()、本地语法可解析、无箭头函数/模板字符串）；
 //  B. K列清洗：去空白、空与 / - — 跳过、公式格跳过、dryRun 不写、allowWrite 只写有变化的格、其它列不碰、回读 mismatched=0；
-//  C. 勾选已完结（v2026-10-07.4 单元格复选框版）：
+//  C. 勾选已完结（v2026-10-07.6 单元格复选框版）：
 //     F 格 = 数字 1/0（勾/未勾）；catch 绝不碰错误对象（毒错误回归测试——2026-10-07 实测崩溃根因）；
-//     试 模式各测；自检候选（渠道状态 ∩ F 未勾）；指定行候选（复核）；allowWrite 只写候选、只勾不取消、回读 0 不符；
-//     表头不对拒绝动手。
+//     试 模式各测；自检候选（F 未勾行逐行单格读渠道）；指定行候选（复核，候选行可传数组/类数组/逗号串）；
+//     allowWrite 只写候选、只勾不取消、回读 0 不符；表头不对拒绝动手。
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -208,7 +208,7 @@ test('勾选·probe：报数据末行，不写', () => {
   const { 结果, 簿 } = 跑(勾选全文, { probe: true }, 造交接());
   assert.equal(结果.mode, 'probe');
   assert.equal(结果.lastRow, 8);
-  assert.equal(结果.scriptVersion, '2026-10-07.5');
+  assert.equal(结果.scriptVersion, '2026-10-07.6');
   assert.equal(簿.写日志().length, 0);
 });
 
@@ -319,11 +319,23 @@ test('勾选·毒错误回归：读块抛「message 一碰就炸」的错误 →
   assert.equal(簿.写日志().length, 0);
 });
 
-test('勾选·渠道列读不到（自检）：N 列分列读失败 → 拒绝自检，提示用候选行', () => {
-  const { 结果, 簿 } = 跑(勾选全文, { dryRun: true }, 造交接(), [], ['N2:N8']);
-  assert.equal(结果.mode, 'error');
-  assert.match(结果.message, /渠道列 N/);
-  assert.match(结果.message, /候选行/);
+test('勾选·自检渠道单格读不到：该行不进候选、列入读不到行（不许当没状态）', () => {
+  const { 结果, 簿 } = 跑(勾选全文, { dryRun: true }, 造交接(), [], ['N3']);
+  assert.deepEqual(结果.candidates.map((c) => c.行), [4, 6, 8]);
+  assert.deepEqual(结果.读不到行, [3]);
+  assert.ok(结果.skipped.指定跳过.some((s) => s.行 === 3 && /读不到/.test(s.因)));
+  assert.equal(簿.写日志().length, 0);
+});
+
+test('勾选·候选行传逗号串：和数组一样用', () => {
+  const { 结果, 簿 } = 跑(勾选全文, { dryRun: true, 候选行: '2,3,5,8' }, 造交接());
+  assert.deepEqual(结果.candidates.map((c) => c.行), [3, 8]);
+  assert.equal(簿.写日志().length, 0);
+});
+
+test('勾选·候选行传类数组对象：和数组一样用（金山 argv 实况）', () => {
+  const { 结果, 簿 } = 跑(勾选全文, { dryRun: true, 候选行: { 0: 3, 1: 8, length: 2 } }, 造交接());
+  assert.deepEqual(结果.candidates.map((c) => c.行), [3, 8]);
   assert.equal(簿.写日志().length, 0);
 });
 

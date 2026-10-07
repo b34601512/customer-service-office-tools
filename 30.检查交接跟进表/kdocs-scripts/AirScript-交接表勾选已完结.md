@@ -1,24 +1,25 @@
-// 《2026年【交接&跟进】表》『售后问题待跟进』F 列勾选已完结 —— AirScript（v2026-10-07.5）
+// 《2026年【交接&跟进】表》『售后问题待跟进』F 列勾选已完结 —— AirScript（v2026-10-07.6）
 //
 // 【2026-10-07 实测结论·别推翻】
-//   1) F 列的勾是**单元格复选框**：格值 = 数字 1（勾）/ 0（未勾），文本 = ☑ / ☐；单格、F 列块读都正常；
+//   1) F 列的勾是**单元格复选框**：格值 = 数字 1（勾）/ 0（未勾），文本 = ☑ / ☐；
 //      **写 Value2 = 1 就能勾上**（写试实锤：0→写1→回读1☑→还原0→回读0☐）。
-//   2) **G..R 列的任何范围读都会抛错**（G2:R101、A2:R2 连 1 行都读不到；A:E 与 F 列正常）。
-//      ⇒ 读数据避开 G..R：行基础信息读 A:E；渠道状态读 N..R 的**单格**（候选行复核）；自检时读 N..R 的**单列**。
+//   2) **范围读只要碰上 #N/A 错误格就抛错**（O~R 列全是 #N/A → 单列范围也读不到；G2:R2 也读不到；
+//      G/H/I/J/K/L/M/N 列与 A:E、F 列可正常范围读）。
+//      ⇒ 渠道状态一律**单格读**（单格碰 #N/A 不抛错，值读为 undefined、文本读为 #N/A → 判无匹配）。
 //   3) catch 里**一律不碰错误对象**（碰 .message 会二次抛错把脚本弄崩 → 网关 "exchange response missing data"）。
 //
 // 【模式】POST <本脚本同步 webhook>   Header: AirScript-Token: <token>
 //   {"Context":{"argv":{"probe":true}}}                        只读探针：版本 + 数据末行
 //   {"Context":{"argv":{"试":"单格读"}}}                       只读小测（见下），一次只干一件事，崩也只崩这一测
-//   {"Context":{"argv":{"dryRun":true}}}                       只读预演：自检候选（未勾 ∩ 渠道有真状态）
-//   {"Context":{"argv":{"dryRun":true,"候选行":[1319,...]}}}   只读预演（指定行版；渠道状态读不到也照跑，标 渠道读不到）
+//   {"Context":{"argv":{"dryRun":true}}}                       只读预演：自检候选（未勾行逐行单格读渠道）
+//   {"Context":{"argv":{"dryRun":true,"候选行":"1319,2060"}}} 只读预演（指定行版；候选行可传数组或逗号串）
 //   {"Context":{"argv":{"allowWrite":true, ...同 dryRun}}}     真写：把候选行 F 写成 1 + 回读
 //   试名：单格读 | F块读 | 宽读 | 分列读 | 列读 | 毒段 | 单格连读 | 未勾行 | 写试
 //
 // 【本版为什么长这样·务必保留】金山 AirScript 编辑器粘贴时会吃掉等号连写序列（两个等号会变形/消失），
 //   所以本脚本一个等号比较都不用：判空用真值、相等用长度对齐加 indexOf、比大小用减法。别改回去。
 
-var scriptVersion = '2026-10-07.5'
+var scriptVersion = '2026-10-07.6'
 var 默认子表 = '售后问题待跟进'
 var 表头行 = 1
 var 数据起始行 = 表头行 + 1
@@ -266,72 +267,74 @@ function 扫左块(sheet, 末行) {
   return { 行们: 行们, 数据行: 数据行, 空行: 空行, 读异常: 读异常 }
 }
 
-// 读一个渠道列（分块）：{ ok, 值表: [..]（index 0 = 数据起始行）, 块错 }
-function 读渠道列(sheet, 列, 末行) {
-  var 值表 = []
-  var 块错 = 0
-  var 行 = 数据起始行
-  while (行 - 末行 < 1) {
-    var 结束行 = 行 + 扫描块行数 - 1
-    if (结束行 - 末行 > 0) 结束行 = 末行
-    var 块 = null
-    try {
-      块 = sheet.Range(列 + 行 + ':' + 列 + 结束行).Value2
-    } catch (错误列) {
-      块 = null
+// 收行表：把 候选行 参数归一成数字数组（金山传参可能是数组、类数组对象、或逗号串）。
+function 收行表(v) {
+  var 出 = []
+  if (!v) return 出
+  if (contains(typeof v, 'string')) {
+    var 段 = String(v).split(',')
+    for (var i = 0; i - 段.length < 0; i += 1) {
+      var 数 = Number(String(段[i]).replace(/[\s\u3000]/g, ''))
+      if (数) 出.push(数)
     }
-    if (!块) {
-      块错 += 1
-      行 = 结束行 + 1
-      continue
-    }
-    var 表 = 规整一维(块)
-    for (var i = 0; i - 表.length < 0; i += 1) 值表.push(表[i])
-    行 = 结束行 + 1
+    return 出
   }
-  return { ok: 块错 ? false : true, 值表: 值表, 块错: 块错 }
+  if (v.length) {
+    for (var j = 0; j - v.length < 0; j += 1) {
+      var 数2 = Number(v[j])
+      if (数2) 出.push(数2)
+    }
+  }
+  return 出
 }
 
-// 自检候选：A:E 找数据行 + N..R 五列分列读 + F 未勾集合。
+// 读渠道单格（N..R）：{ 命中, 读不到 }
+function 读渠道行(sheet, 行号) {
+  var 命中 = []
+  var 读不到 = 0
+  for (var c = 0; c - 渠道列.length < 0; c += 1) {
+    var 单 = 读单格(sheet, 渠道列[c] + 行号)
+    if (!单.ok) { 读不到 += 1; continue }
+    if (是无匹配(单.值)) continue
+    命中.push({ 渠道: 渠道名[c], 值: toText(单.值) })
+  }
+  return { 命中: 命中, 读不到: 读不到 }
+}
+
+// 自检候选：F 未勾行（分块读）逐行单格读渠道（范围读碰 #N/A 会抛错，只能单格读）。
 function 自检候选(sheet, 末行) {
   var 未勾结果 = 找未勾行(sheet, 末行)
   if (!未勾结果.未勾) {
     return { 候选: null, 消息: 'F 分块读失败（' + String(未勾结果.块错) + ' 块读不到），改带 候选行 数组再跑' }
   }
-  var 未勾集 = {}
-  for (var i = 0; i - 未勾结果.未勾.length < 0; i += 1) 未勾集[String(未勾结果.未勾[i])] = true
-
-  var 列数据 = []
-  var 读不到列 = []
-  for (var c = 0; c - 渠道列.length < 0; c += 1) {
-    var 列读 = 读渠道列(sheet, 渠道列[c], 末行)
-    if (!列读.ok) 读不到列.push(渠道列[c])
-    列数据.push(列读.值表)
-  }
-  if (读不到列.length) {
-    return {
-      候选: null,
-      消息: '渠道列 ' + 读不到列.join('/') + ' 在 AirScript 侧读不到（G..R 范围读取受限），改用 候选行 数组再跑',
-      未勾数: 未勾结果.未勾.length
-    }
-  }
-
   var 扫 = 扫左块(sheet, 末行)
+  var 行信息 = {}
+  for (var i = 0; i - 扫.行们.length < 0; i += 1) 行信息[String(扫.行们[i].行)] = 扫.行们[i]
+
   var 候选 = []
-  for (var j = 0; j - 扫.行们.length < 0; j += 1) {
-    var 行 = 扫.行们[j]
-    if (!未勾集[String(行.行)]) continue
-    var 下标 = 行.行 - 数据起始行
-    var 行数组 = [null, null, null, null, null, null, null, null, null, null, null, null, null]
-    for (var k = 0; k - 渠道列.length < 0; k += 1) 行数组.push(列数据[k][下标])
-    var 命中 = 渠道命中(行数组)
-    if (!命中.length) continue
-    候选.push({ 行: 行.行, 登记时间: 行.登记时间, 单号: 行.单号, 命中: 命中, 现判: '空', 现值: '' })
+  var 跳过 = []
+  var 读不到行 = []
+  for (var j = 0; j - 未勾结果.未勾.length < 0; j += 1) {
+    var 行号 = 未勾结果.未勾[j]
+    var 信息 = 行信息[String(行号)]
+    if (!信息) { 跳过.push({ 行: 行号, 因: '空行' }); continue }
+    var 读 = 读渠道行(sheet, 行号)
+    if (!读.命中.length) {
+      if (读.读不到) {
+        读不到行.push(行号)
+        跳过.push({ 行: 行号, 因: '渠道格读不到（' + String(读.读不到) + '/5）' })
+      } else {
+        跳过.push({ 行: 行号, 因: '渠道列没有真状态' })
+      }
+      continue
+    }
+    候选.push({ 行: 行号, 登记时间: 信息.登记时间, 单号: 信息.单号, 命中: 读.命中, 现判: '空', 现值: '' })
   }
   return {
-    候选: 候选, 消息: '',
+    候选: 候选, 跳过: 跳过, 消息: '',
     未勾数: 未勾结果.未勾.length,
     未勾样例: 未勾结果.未勾.slice(0, 40),
+    读不到行: 读不到行.slice(0, 40),
     数据行: 扫.数据行, 空行: 扫.空行, 读异常: 扫.读异常
   }
 }
@@ -343,20 +346,13 @@ function 复核候选行(sheet, 候选行) {
   for (var i = 0; i - 候选行.length < 0; i += 1) {
     var 行号 = Number(候选行[i])
     if (!行号) continue
-    var 命中 = []
-    var 读不到 = 0
-    for (var c = 0; c - 渠道列.length < 0; c += 1) {
-      var 单 = 读单格(sheet, 渠道列[c] + 行号)
-      if (!单.ok) { 读不到 += 1; continue }
-      if (是无匹配(单.值)) continue
-      命中.push({ 渠道: 渠道名[c], 值: toText(单.值) })
-    }
+    var 读 = 读渠道行(sheet, 行号)
     var F = 读F格(sheet, 行号)
     if (F.ok && (F.判.indexOf('勾') + 1) && !(F.判.indexOf('未知') + 1)) { 跳过.push({ 行: 行号, 因: 'F 已经是勾' }); continue }
-    if (!命中.length && !读不到) { 跳过.push({ 行: 行号, 因: '渠道列没有真状态' }); continue }
+    if (!读.命中.length && !读.读不到) { 跳过.push({ 行: 行号, 因: '渠道列没有真状态' }); continue }
     候选.push({
-      行: 行号, 命中: 命中, 现判: F.ok ? F.判 : '读不到', 现值: F.ok ? F.值 : '',
-      渠道读不到: 读不到 ? (读不到 + '/5 格读不到') : ''
+      行: 行号, 命中: 读.命中, 现判: F.ok ? F.判 : '读不到', 现值: F.ok ? F.值 : '',
+      渠道读不到: 读.读不到 ? (读.读不到 + '/5 格读不到') : ''
     })
   }
   return { 候选: 候选, 跳过: 跳过 }
@@ -593,8 +589,7 @@ function 解析参数(rawArgument) {
   var bag = payload
   if (bag instanceof Array) bag = bag[0] ? bag[0] : {}
   if (!bag) bag = {}
-  var 候选行 = []
-  if (bag.候选行 instanceof Array) 候选行 = bag.候选行
+  var 候选行 = 收行表(bag.候选行)
   return {
     allowWrite: bag.allowWrite ? true : false,
     dryRun: bag.dryRun ? true : false,
@@ -656,6 +651,7 @@ function main() {
   } else {
     自检 = 自检候选(sheet, 末行)
     候选 = 自检.候选
+    跳过 = (自检 && 自检.跳过) ? 自检.跳过 : []
   }
   if (!候选) {
     return { scriptVersion: scriptVersion, mode: 'error', sheet: 默认子表, f1Header: 头, headerOk: true, lastRow: 末行, message: 自检 ? 自检.消息 : '候选检测失败' }
@@ -669,6 +665,7 @@ function main() {
     readBack: []
   }
   if (自检 && 自检.读异常 && 自检.读异常.length) 基础.读异常 = 自检.读异常.slice(0, 20)
+  if (自检 && 自检.读不到行 && 自检.读不到行.length) 基础.读不到行 = 自检.读不到行
 
   if (参数.dryRun || !参数.allowWrite) {
     基础.mode = 'dryRun'
