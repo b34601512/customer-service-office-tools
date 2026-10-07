@@ -27,6 +27,10 @@ npm run cli
 
 配置文件位于 `project-config/platform-config.json`，运行产物位于 `runtime`。
 
+## 常用脚本
+
+- **只同步金山（不采集）**：`node scripts/同步金山明细.js` —— 本地「数据明细」全量覆盖在线同名表 + 刷新透视筛选日期（2026-10-07 加，供「换数据源后只同步」场景用，避免重跑采集）。
+
 ## 分发方式
 
 **自 2026-09-16 起不再制作便携版**：`打包便携版.bat`、`scripts/buildPortablePackage.ps1`、`scripts/verifyPortableStartup.js`、`scripts/verifyPortableSources.js` 均已删除，历史便携包已移到 `D:\备份文件夹\办公软件产物备份_20260916`。
