@@ -16,6 +16,18 @@
 2. `MonitorCreate`：命令 `cd "D:/桌面/办公软件/27.企业微信机器人" && node scripts/跟读收件箱.cjs`，
    timeout=0（不设超时），onDone=`监听停了：按本文件第 1.2 步重挂 Monitor，再跑 node scripts/读新消息.cjs 查漏`。
 
+3. 再补两个常驻循环（**会话重启会丢，开机必须重挂**）：
+   - `LoopCreate` cron `*/30 * * * *`，recurring=true，expiresIn=`30d`，maxFires=`1400`，prompt：
+
+     > 看门狗/频道巡检（每 30 分钟）：读 27.企业微信机器人/.state/看门狗状态.json；看机器人交流频道有没有新 [故障]
+     > （`GH_CONFIG_DIR=C:\Users\b3460\.config\gh-bots gh issue list --repo c34601512-cpu/bot-board --state open`）；
+     > 一切正常就安静；有异常/新故障才处理并私发黎路遥；顺手清频道历史垃圾（过时评论删、办完的关）。
+
+   - `LoopCreate` cron `0 9 * * *`，recurring=true，expiresIn=`90d`，maxFires=`95`，prompt：
+
+     > 探域每日例检时间到：按 17 号项目断点与《调优记录日常任务与接口.md》§8 跑今天的例检（清 8 店待审核＋增量扫＋非可信＋话术未生成）；
+     > 大活儿开任务窗（`0.木婉清档案/开任务窗.cjs`），回执到后汇总私发黎路遥。红线：待审核标记只许模型亲自读；删卡/启用/绑店/新建/花积分先问。
+
 ## 2. 查漏
 
 `cd "D:/桌面/办公软件/27.企业微信机器人" && node scripts/读新消息.cjs`；有未读就逐条处理。
@@ -43,6 +55,6 @@ chat_id 从本次 `wecom-cli message aibot sessions list` 现取，用 `scripts/
 
 ## 不要做
 
-- 不要重复开守护、不要重复挂监听（同一机器人只许一条长连接、Monitor 只挂一条）。
+- 不要重复开守护、不要重复挂监听/循环（同一机器人只许一条长连接、Monitor 只挂一条；**重挂前先 LoopList/MonitorList 看已有**）。
 - 平台后台（拼多多/抖音/天猫/京东）一律只读；改商品/价格/库存是运营部的活。
 - 未获同意的真实发送不做；天猫「待同意」不点。
