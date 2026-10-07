@@ -1,6 +1,12 @@
-var scriptVersion = '2026-10-07.1'
+var scriptVersion = '2026-10-07.2'
 
-// 《退款检测文件》『京东仓退货数据』**覆盖写入脚本**（独立脚本）版本 2026-10-07.1
+// 《退款检测文件》『京东仓退货数据』**覆盖写入脚本**（独立脚本）版本 2026-10-07.2
+//
+// 【v2026-10-07.2 修什么】首导发现：argv 里的行**不一定是 JS 数组**（实测整行被 String() 成
+//   "单号,运单,状态" 一串 → 旧代码 instanceof 判空 → 全挤进 A 列、B 空、C 只剩默认值）。
+//   修法：规整行() 兼容 真数组 / "a,b,c" 字符串 / 类数组对象 三种形态；
+//   另加 回读比对()：写完逐格比全表，返回 mismatchedRows/firstMismatch，内容对不对不靠肉眼。
+//   探针带 rows 时回报「行形态」诊断（随时可查 argv 到底长什么样）。
 //
 // 【干什么】把本地从京东物流【退货至京东库房管理】导出的明细（最近 3 个月）映射成 3 列：
 //   销售平台单号｜逆向运单号｜是否退回（值=已退回京东仓），经本脚本的同步 webhook **覆盖**写入本表数据区。
@@ -151,8 +157,24 @@ function 清数据区(sheet, 原末行) {
   }
 }
 
+// 行归一：argv 里的行实测有 3 种形态——真数组 / "a,b,c" 字符串 / 类数组对象（2026-10-07 踩过）。
+function 规整行(行) {
+  if (行 instanceof Array) return 行
+  if (contains(typeof 行, 'string')) {
+    var 拆 = 行.split(',')
+    if (拆.length - 1) return 拆
+    return [行]
+  }
+  if (行 && contains(typeof 行.length, 'number')) {
+    var 转 = []
+    for (var i = 0; i < 行.length; i += 1) 转.push(行[i])
+    return 转
+  }
+  return [行]
+}
+
 function 规范行(行) {
-  var 行数组 = (行 instanceof Array) ? 行 : [行]
+  var 行数组 = 规整行(行)
   var 单号 = toText(行数组[0])
   var 运单 = toText(行数组[1])
   var 状态 = toText(行数组[2])
@@ -210,6 +232,39 @@ function 读区块(sheet, 起行, 止行) {
   return 结果
 }
 
+// 写完整片回读逐格比对（分块）：数出多少行对不上 + 首条差异。写完必查，内容对不对不靠肉眼。
+function 回读比对(sheet, 数据) {
+  var 不一致行数 = 0
+  var 首条差异 = ''
+  var 行下标 = 0
+  while (行下标 - 数据.length < 0) {
+    var 结束下标 = 行下标 + CHUNK_ROWS - 1
+    if (结束下标 - (数据.length - 1) > 0) 结束下标 = 数据.length - 1
+    var 值 = null
+    try {
+      值 = sheet.Range('A' + String(数据起始行 + 行下标) + ':C' + String(数据起始行 + 结束下标)).Value2
+    } catch (errorCompare) {
+      值 = null
+    }
+    var 行数组 = 规整二维(值)
+    for (var i = 0; i - 行数组.length < 0; i += 1) {
+      var 实际行 = 规整行(行数组[i])
+      var 期望行 = 数据[行下标 + i]
+      for (var c = 0; c - COLUMN_COUNT < 0; c += 1) {
+        var 实文 = toText(实际行[c])
+        var 期文 = toText(期望行[c])
+        if (!contains(实文, 期文) || !contains(期文, 实文)) {
+          不一致行数 = 不一致行数 + 1
+          if (!首条差异) 首条差异 = '第' + String(数据起始行 + 行下标 + i) + '行 期望[' + 期文 + '] 实际[' + 实文 + ']'
+          break
+        }
+      }
+    }
+    行下标 = 结束下标 + 1
+  }
+  return { 不一致行数: 不一致行数, 首条差异: 首条差异 }
+}
+
 function 执行探针(参数) {
   var 末行 = 0
   var 行数 = 0
@@ -223,6 +278,13 @@ function 执行探针(参数) {
   } catch (errorProbe) {
     行数 = -1
   }
+  var 行形态 = '未提供'
+  var 行预览 = ''
+  if (参数.rows && 参数.rows[0]) {
+    var 首 = 参数.rows[0]
+    行形态 = typeof 首 + '；是JS数组:' + ((首 instanceof Array) ? '是' : '否') + '；长度:' + String((首 && 首.length) ? 首.length : 0)
+    行预览 = String(首).slice(0, 120)
+  }
   return {
     scriptVersion: scriptVersion,
     mode: 'probe',
@@ -230,6 +292,8 @@ function 执行探针(参数) {
     headerOk: 表头正常,
     dataRows: 行数,
     lastRow: 末行,
+    行形态: 行形态,
+    行预览: 行预览,
     argumentPreview: 参数.preview
   }
 }
@@ -288,6 +352,8 @@ function 执行覆盖(参数) {
     行下标 = 结束下标 + 1
   }
 
+  var 比对 = 回读比对(sheet, 数据)
+
   var 回读 = []
   var 回读末行 = 数据起始行 + 数据.length - 1
   var 前几行 = 5
@@ -310,6 +376,8 @@ function 执行覆盖(参数) {
     rows: 数据.length,
     lastRow: 回读末行,
     failedCells: 失败格数,
+    mismatchedRows: 比对.不一致行数,
+    firstMismatch: 比对.首条差异,
     readBack: 回读
   }
 }

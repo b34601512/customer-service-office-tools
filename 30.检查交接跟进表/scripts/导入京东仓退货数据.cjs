@@ -7,11 +7,14 @@
 //   → POST《退款检测文件》AirScript「京东仓退货数据-写入」的同步 webhook（该脚本覆盖写、保留表头；见《脚本大全》）。
 //
 // 用法：
-//   node scripts/导入京东仓退货数据.cjs [--csv <路径>] [--dry-run|--send|--verify] [--no-compare]
+//   node scripts/导入京东仓退货数据.cjs [--csv <路径>] [--dry-run|--send|--verify|--probe] [--no-compare]
 //   · 默认 --dry-run：只读 CSV，打印统计 + 前 5 行；再读一刀现有表行数做对比（--no-compare 可跳过）。
 //   · --send：POST webhook（需要本机 project-config/kdocs-airscript.local.json 的 scripts.write_jd_warehouse.webhookUrl；
 //             没有就退出码 2 并提示「等黎路遥粘贴后补 webhook」）。失败不自动重试。
-//   · --verify：用 24号 read-kdocs 回读『京东仓退货数据』，比对 应有（CSV 去重后）vs 实有。
+//             返回里 mismatchedRows>0（云端回读逐格比对不过）→ 视为失败，停下人工核对。
+//   · --verify：用 24号 read-kdocs 回读『京东仓退货数据』，**逐行逐列**比对 CSV 去重后应有值 vs 实有值，
+//             另查 A/B 列有没有空/逗号（防 2026-10-07「整行挤进 A 列」复发）。
+//   · --probe：探针（不写数据），确认云端脚本版本 + 回报 argv 的「行形态」（2026-10-07 故障诊断留的常驻能力）。
 //   · --csv 不给时取 24号/runtime/jd/ 下最新的 京东仓退货*.csv。
 const fs = require("node:fs");
 const path = require("node:path");
@@ -29,6 +32,7 @@ function 解析参数(argv) {
     else if (词 === "--dry-run") 参数.模式 = "dry-run";
     else if (词 === "--send") 参数.模式 = "send";
     else if (词 === "--verify") 参数.模式 = "verify";
+    else if (词 === "--probe") 参数.模式 = "probe";
     else if (词 === "--no-compare") 参数.noCompare = true;
     else if (词 === "--help" || 词 === "-h") 参数.帮助 = true;
   }
@@ -171,11 +175,17 @@ async function 发送(rows) {
     throw new Error("金山脚本没有返回结果：确认脚本已保存，且最后一行是 return main()。");
   }
   const 结果 = typeof 原始 === "object" ? 原始 : JSON.parse(String(原始));
-  console.log(`\n  远端返回：written=${结果.written} rows=${结果.rows} beforeRows=${结果.beforeRows} lastRow=${结果.lastRow} cleared=${结果.cleared} textFormat=${结果.textFormat}`);
+  console.log(`\n  远端返回：written=${结果.written} rows=${结果.rows} beforeRows=${结果.beforeRows} lastRow=${结果.lastRow} cleared=${结果.cleared} textFormat=${结果.textFormat} mismatchedRows=${结果.mismatchedRows ?? "?"}`);
   if (结果.message) console.log(`  说明：${结果.message}`);
   if (Array.isArray(结果.readBack) && 结果.readBack.length) console.log(`  回读：\n    ${结果.readBack.join("\n    ")}`);
   if (!结果.written) {
     console.error("\n  远端没有确认写入（written=false），请人工看上面的返回。\n");
+    process.exitCode = 1;
+    return;
+  }
+  if (结果.mismatchedRows) {
+    console.error(`\n  回读逐格比对：${结果.mismatchedRows} 行对不上！首条差异：${结果.firstMismatch}`);
+    console.error("  停下人工核对，不要重复发送（失败不自动重试）。\n");
     process.exitCode = 1;
     return;
   }
@@ -187,28 +197,85 @@ async function 核验(rows) {
   const { 矩阵, 落盘 } = 读工作表({ 表: "退款检测文件", 工作表: 数据表, 落盘: "runtime/核验-京东仓退货数据.json" });
   const 实有 = 计数数据行(矩阵);
   const 应有 = rows.length;
+  // 逐行逐列比对（顺序应与 CSV 去重后一致）
+  const 差异 = [];
+  for (let i = 0; i < Math.min(应有, 实有); i += 1) {
+    const 实 = (矩阵[i + 1] || []).slice(0, 3).map((v) => String(v ?? "").trim());
+    for (let c = 0; c < 3; c += 1) {
+      if (实[c] !== rows[i][c]) { 差异.push(`第 ${i + 2} 行 ${"ABC"[c]} 列：期望[${rows[i][c]}] 实际[${实[c]}]`); break; }
+    }
+  }
+  // 格式体检：A/B 列不许空、不许含逗号（防 2026-10-07「整行挤进 A 列」复发）
+  let 格式坏 = 0;
+  for (let i = 1; i <= 实有; i += 1) {
+    const a = String((矩阵[i] || [])[0] ?? "").trim();
+    const b = String((矩阵[i] || [])[1] ?? "").trim();
+    if (!a || !b || a.includes(",") || b.includes(",")) 格式坏 += 1;
+  }
   const 首行 = 矩阵[1] ? (矩阵[1] || []).slice(0, 3).map((v) => String(v ?? "")) : [];
   const 末行 = 矩阵[实有] ? (矩阵[实有] || []).slice(0, 3).map((v) => String(v ?? "")) : [];
   console.log(`\n  验收（应有值 vs 实有值）：`);
   console.log(`    应有 ${应有} 行（CSV 去重后） / 实有 ${实有} 行 → ${应有 === 实有 ? "一致 ✓" : "不一致 ✗"}`);
+  console.log(`    逐行逐列比对：${差异.length ? `${差异.length} 处对不上 ✗` : "全部一致 ✓"}`);
+  console.log(`    A/B 列格式体检：${格式坏 ? `${格式坏} 行异常 ✗（空或含逗号）` : "无异常 ✓"}`);
   console.log(`    表头：${(矩阵[0] || []).slice(0, 3).map((v) => String(v ?? "")).join(" | ")}`);
   console.log(`    首行：${首行.join(" | ")}`);
   console.log(`    末行：${末行.join(" | ")}`);
+  if (差异.length) console.log(`    首条差异：${差异[0]}`);
   console.log(`    回读落盘：${path.relative(仓库根, 落盘)}`);
-  if (应有 !== 实有) {
-    console.error("\n  行数不一致——停下来人工核对，不要重复发送（失败不自动重试）。\n");
+  if (应有 !== 实有 || 差异.length || 格式坏) {
+    console.error("\n  验收不过——停下来人工核对，不要重复发送（失败不自动重试）。\n");
     process.exitCode = 1;
   } else {
     console.log("");
   }
 }
 
+// --probe：只读探针——确认云端脚本版本 + argv 行形态（2026-10-07 故障诊断留的常驻能力）。
+async function 探测() {
+  const 配置 = 读金山配置();
+  const 条目 = (配置.scripts || {}).write_jd_warehouse || {};
+  const webhookUrl = String(条目.webhookUrl || "").trim();
+  if (!webhookUrl) {
+    console.error("\n  还没配 webhook：等黎路遥把脚本粘到《退款检测文件》并给出「同步 webhook」后，填进本机配置再探针。\n");
+    process.exitCode = 2;
+    return;
+  }
+  const 令牌 = 取令牌(配置);
+  if (!令牌) {
+    console.error("\n  缺少 AirScript-Token（本机配置或回退链里都没有）。\n");
+    process.exitCode = 2;
+    return;
+  }
+  const 样本 = [["5100000000000000001", "JDVA00000000001", "已退回京东仓"]];
+  console.log(`  探针（不写任何数据）→ ${webhookUrl.slice(0, 72)}…`);
+  const 响应 = await fetch(webhookUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "AirScript-Token": 令牌 },
+    body: JSON.stringify({ Context: { argv: { probe: true, rows: 样本 } } }),
+    signal: AbortSignal.timeout(120000)
+  });
+  const 文本 = await 响应.text();
+  if (!响应.ok) throw new Error(`金山接口返回 HTTP ${响应.status}：${文本.slice(0, 300)}`);
+  let 载荷 = null;
+  try { 载荷 = JSON.parse(文本); } catch { throw new Error(`金山接口没有返回可解析的 JSON：${文本.slice(0, 300)}`); }
+  if (载荷.error) throw new Error(`金山脚本报错：${String(载荷.error).slice(0, 300)}`);
+  const 原始 = 载荷.data ? 载荷.data.result : 载荷.result;
+  if (原始 === undefined || 原始 === null || 原始 === "[Undefined]") throw new Error("金山脚本没有返回结果：确认脚本已保存，且最后一行是 return main()。");
+  const 结果 = typeof 原始 === "object" ? 原始 : JSON.parse(String(原始));
+  console.log(`  云端：scriptVersion=${结果.scriptVersion} 表头=${结果.headerOk} 现有数据=${结果.dataRows} 行 末行=${结果.lastRow}`);
+  if (结果.行形态) console.log(`  行形态诊断：${结果.行形态}`);
+  if (结果.行预览) console.log(`  行预览：${结果.行预览}`);
+  console.log("");
+}
+
 async function main() {
   const 参数 = 解析参数(process.argv.slice(2));
   if (参数.帮助) {
-    console.log("用法：node scripts/导入京东仓退货数据.cjs [--csv <路径>] [--dry-run|--send|--verify] [--no-compare]");
+    console.log("用法：node scripts/导入京东仓退货数据.cjs [--csv <路径>] [--dry-run|--send|--verify|--probe] [--no-compare]");
     return;
   }
+  if (参数.模式 === "probe") return 探测();
   const csv = 参数.csv ? path.resolve(参数.csv) : 找最新CSV();
   if (!fs.existsSync(csv)) throw new Error(`CSV 不存在：${csv}`);
   const { rows, 统计 } = 映射数据(解析CSV(解码CSV(fs.readFileSync(csv))));

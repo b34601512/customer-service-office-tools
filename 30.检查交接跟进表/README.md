@@ -29,9 +29,10 @@
 
 ## 现役产物（2026-10-07 任务窗交付）
 - **下载**：`24.平台退款复查/src/tools/jd-warehouse-returns.js` → `runtime/jd/京东仓退货-<日期>.csv`（2026-10-07：480 行/去重 376 单）。
-- **AirScript**：`kdocs-scripts/AirScript-京东仓退货数据-写入.md`，登记在《脚本大全》**第 11 行**（动作 `write_jd_warehouse`，状态看台账）；写入配置在 `project-config/kdocs-airscript.local.json`（不入库）。
+- **AirScript**：`kdocs-scripts/AirScript-京东仓退货数据-写入.md`（**v2026-10-07.2**：行形态归一 + 回读逐格比对），登记在《脚本大全》**第 11 行**；写入配置在 `project-config/kdocs-airscript.local.json`（不入库）。
 - **导入脚本**：`scripts/导入京东仓退货数据.cjs`（`--dry-run` 默认 / `--send` / `--verify`；webhook 补了才能 send）。
 - **检查脚本**：`scripts/检查售后问题待跟进.cjs`（未完结=F 列≠☑ 且为真实数据行；2026-10-07 首跑：真实 2140 行 / 已完结 2105 / 未完结 35 / 五渠道全无匹配 22，清单落 `runtime/`）。
+- **测试**：`tests/airscript模拟.test.cjs`（8 项：三种行形态写入正确、坏写入探测、粘贴安全、安全闸门）→ `node --test tests/airscript模拟.test.cjs`。
 
 ## 红线
 - 金山文档**只按登记好的 AirScript 通道写**（webhook + token；写前 allowWrite 门、写后回读）；不做浏览器手写。
