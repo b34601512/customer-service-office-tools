@@ -16,7 +16,6 @@
 //   可选：--out <目录>、--保持窗口
 const fs = require("node:fs");
 const path = require("node:path");
-const https = require("node:https");
 const { 全部店铺, 读配置, 项目根 } = require("../config/stores");
 const engine = require("../engine/browser");
 const XLSX = require(path.resolve(项目根, "..", "9.客服数据自动更新", "node_modules", "xlsx"));
@@ -49,75 +48,121 @@ function 月末日期(年月) {
 
 function 睡觉(ms) { return new Promise((r) => setTimeout(r, ms)); }
 
-// 页面内：找当前页面的 Vue 组件，设置日期，调它自己的 exportExcelTask，再轮询导出记录
-async function 页内导出(page, { startDate, endDate }) {
-  return page.evaluate(async ({ startDate, endDate }) => {
+// 页面内：设日期范围 → 打开「导出中心」→ 有「条件匹配+完成」的行就点下载（浏览器下载事件落盘）；
+// 没有就先调页面自己的 exportExcelTask 建任务，再轮询导出中心（最多 ~180 秒）。
+async function 页内导出(page, { startDate, endDate, 目标 }) {
+  const 设日期 = () => page.evaluate(({ startDate, endDate }) => {
+    const 根 = document.querySelector("#app") && document.querySelector("#app").__vue__;
     const 找组件 = (vm) => {
-      if (vm && vm.$options && vm.$options.methods && vm.$options.methods.exportExcelTask) return vm;
-      for (const c of ((vm && vm.$children) || [])) { const hit = 找组件(c); if (hit) return hit; }
+      if (!vm) return null;
+      if (vm.$options && vm.$options.methods && vm.$options.methods.exportExcelTask) return vm;
+      for (const c of (vm.$children || [])) { const h = 找组件(c); if (h) return h; }
       return null;
     };
-    const token = localStorage.getItem("token") || new URLSearchParams(location.search).get("token") || "";
-    if (!token) return { ok: false, step: "login", message: "localStorage 里没有 token" };
-    const 根 = document.querySelector("#app") && document.querySelector("#app").__vue__;
-    if (!根) return { ok: false, step: "vue", message: "找不到 #app 的 Vue 实例" };
-    let vm = null;
-    for (let i = 0; i < 60; i += 1) {
-      vm = 找组件(根);
-      if (vm && vm.form && vm.form.shop && vm.form.shop.shopId) break;
-      await new Promise((r) => setTimeout(r, 1000));
-    }
-    if (!vm) return { ok: false, step: "vue", message: "找不到带 exportExcelTask 的页面组件" };
-    if (!(vm.form && vm.form.shop && vm.form.shop.shopId)) return { ok: false, step: "vue", message: "页面店铺信息还没就绪" };
+    const vm = 找组件(根);
+    if (!vm) return false;
+    if (vm.form) vm.form.daterange = [startDate, endDate];
+    return true;
+  }, { startDate, endDate }).catch(() => false);
 
-    vm.form.daterange = [startDate, endDate];
-    const 前id = vm.exportCenter && vm.exportCenter.exportId ? vm.exportCenter.exportId : "";
-    vm.exportExcelTask();
-    for (let i = 0; i < 60; i += 1) {
-      await new Promise((r) => setTimeout(r, 1000));
-      const 现id = vm.exportCenter && vm.exportCenter.exportId ? vm.exportCenter.exportId : "";
-      if (现id && 现id !== 前id) break;
-    }
-    const exportId = vm.exportCenter && vm.exportCenter.exportId ? vm.exportCenter.exportId : "";
-    if (!exportId) return { ok: false, step: "task", message: "建导出任务后没拿到 exportId" };
-
-    const shopId = vm.form.shop.shopId;
-    const post = (p, d) => fetch("https://gwjoyi.yiyitech.com/web-report" + p, {
-      method: "POST", credentials: "include",
-      headers: { "Content-Type": "application/x-www-form-urlencoded", Authorization: token },
-      body: new URLSearchParams(d).toString()
-    }).then((r) => r.json());
-    for (let i = 0; i < 60; i += 1) {
-      await new Promise((r) => setTimeout(r, 3000));
-      let res = null;
-      try { res = await post("/task/export/selectByShopIdExportLst", { shopId }); } catch (e) { res = null; }
-      if (!res) continue;
-      if (res.rpCode) return { ok: false, step: "api", message: `${res.rpCode} ${res.rpMsg || ""}` };
-      const 表 = res.exportRecordLst || [];
-      const 命中 = 表.find((r) => String(r.id) === String(exportId)) || 表.find((r) => r.name && r.name.indexOf("客服销售分析") + 1 && r.status !== 1);
-      if (命中 && 命中.url && 命中.status !== 1) return { ok: true, url: 命中.url, name: 命中.name, exportId, shopId };
-    }
-    return { ok: false, step: "poll", message: "等待导出文件超时（180 秒）" };
-  }, { startDate, endDate });
-}
-
-function 下载文件(url, 目标) {
-  return new Promise((resolve, reject) => {
-    const 全url = url.startsWith("http") ? url : `https://${url}`;
-    const 请求 = https.get(全url, { headers: { "User-Agent": "Mozilla/5.0" }, timeout: 120000 }, (res) => {
-      if ([301, 302, 303, 307, 308].includes(res.statusCode) && res.headers.location) {
-        res.resume();
-        return 下载文件(res.headers.location, 目标).then(resolve, reject);
-      }
-      if (res.statusCode !== 200) { res.resume(); return reject(new Error(`下载 HTTP ${res.statusCode}`)); }
-      const 流 = fs.createWriteStream(目标);
-      res.pipe(流);
-      流.on("finish", () => { 流.close(() => resolve(fs.statSync(目标).size)); });
-      流.on("error", reject);
+  // 对话框可见性（多份副本，任一大尺寸即可）
+  const 中心可见 = () => page.evaluate(() => {
+    return [...document.querySelectorAll(".export-dialog")].some((d) => {
+      const r = d.getBoundingClientRect();
+      return r.height > 10 && r.width > 10;
     });
-    请求.on("timeout", () => { 请求.destroy(new Error("下载超时")); });
-    请求.on("error", reject);
-  });
+  }).catch(() => false);
+  const 开中心 = async () => {
+    for (let i = 0; i < 3; i += 1) {
+      if (await 中心可见()) return true;
+      await page.evaluate(() => {
+        const el = [...document.querySelectorAll("button")].find((e) => (e.innerText || "").trim() === "导出");
+        if (el) el.click();
+      }).catch(() => {});
+      await 睡觉(2500);
+    }
+    return 中心可见();
+  };
+  const 关中心 = async () => {
+    await page.keyboard.press("Escape").catch(() => {});
+    await 睡觉(1200);
+  };
+
+  // 导出中心可能渲染多份（隐藏副本 + 可见副本），一律跨所有 .export-dialog 找行
+  const 找完成行 = () => page.evaluate(({ startDate, endDate }) => {
+    for (const d of document.querySelectorAll(".export-dialog")) {
+      for (const tr of d.querySelectorAll("tr")) {
+        const t = (tr.innerText || "").replace(/\s+/g, " ");
+        if (!t.trim()) continue;
+        if (t.indexOf(`_${startDate}_${endDate}_`) >= 0 && /完成/.test(t)) return t.slice(0, 90);
+      }
+    }
+    return "";
+  }, { startDate, endDate }).catch(() => "");
+
+  // 点该行的「下载」→ 等浏览器下载事件 → 落盘（JS click，不依赖可见性）
+  const 试下载 = async () => {
+    const 有 = await 找完成行();
+    if (!有) return "";
+    const 下载等 = page.waitForEvent("download", { timeout: 20000 }).catch(() => null);
+    await page.evaluate(({ startDate, endDate }) => {
+      for (const d of document.querySelectorAll(".export-dialog")) {
+        for (const tr of d.querySelectorAll("tr")) {
+          const t = (tr.innerText || "").replace(/\s+/g, " ");
+          if (t.indexOf(`_${startDate}_${endDate}_`) >= 0 && /完成/.test(t)) {
+            const 下载 = [...tr.querySelectorAll("button,a,span")].find((e) => (e.innerText || "").trim() === "下载");
+            if (下载) { 下载.click(); return; }
+          }
+        }
+      }
+    }, { startDate, endDate }).catch(() => {});
+    const dl = await 下载等;
+    if (!dl) return "";
+    await dl.saveAs(目标);
+    return 有;
+  };
+
+  // 找「导出条件带本区间」的行（不限状态；完成→可下载，进行中→等）
+  const 找任意匹配行 = () => page.evaluate(({ startDate, endDate }) => {
+    for (const d of document.querySelectorAll(".export-dialog")) {
+      for (const tr of d.querySelectorAll("tr")) {
+        const t = (tr.innerText || "").replace(/\s+/g, " ");
+        if (t.indexOf(`_${startDate}_${endDate}_`) >= 0) return t.slice(0, 90);
+      }
+    }
+    return "";
+  }, { startDate, endDate }).catch(() => "");
+
+  if (!(await 设日期())) return { ok: false, step: "vue", message: "找不到页面组件（#app.__vue__）" };
+  await 开中心();
+  let 命中 = await 试下载();
+  if (!命中) {
+    const 已有任务 = await 找任意匹配行();
+    if (!已有任务) {
+      await page.evaluate(async () => {
+        const 根 = document.querySelector("#app") && document.querySelector("#app").__vue__;
+        const 找组件 = (vm) => {
+          if (!vm) return null;
+          if (vm.$options && vm.$options.methods && vm.$options.methods.exportExcelTask) return vm;
+          for (const c of (vm.$children || [])) { const h = 找组件(c); if (h) return h; }
+          return null;
+        };
+        const vm = 找组件(根);
+        if (vm) { try { await vm.exportExcelTask(); } catch (e) { /* 建任务失败也继续轮询 */ } }
+      }).catch(() => {});
+      console.log("    [魔方] 没找到已有导出，已新建导出任务");
+    } else {
+      console.log("    [魔方] 已有本区间导出任务，等它完成");
+    }
+    for (let i = 0; i < 24; i += 1) {
+      await 睡觉(15000);
+      命中 = await 试下载();
+      console.log(`    [魔方] 第 ${i + 1} 次等导出：${命中 ? "拿到文件" : "还没完成"}`);
+      if (命中) break;
+    }
+  }
+  if (!命中) return { ok: false, step: "poll", message: "导出任务还没完成（等了约 6 分钟）" };
+  return { ok: true, name: 命中, size: fs.statSync(目标).size };
 }
 
 function 校验xlsx(文件) {
@@ -143,7 +188,7 @@ async function 跑一店(店铺, 参数, 输出目录) {
 
     const 当前url = page.url();
     const 文本 = await page.evaluate(() => document.body.innerText).catch(() => "");
-    const 有token = await page.evaluate(() => Boolean(localStorage.getItem("token"))).catch(() => false);
+    const 有token = await page.evaluate(() => Boolean(localStorage.getItem("joyi_token") || localStorage.getItem("token"))).catch(() => false);
     const 像登录页 = /passport\.jd\.com|\/login/i.test(当前url) || /登录|授权/.test(文本) && !/客服销售分析/.test(文本);
     if (!有token || 像登录页) {
       结果.status = "需要登录";
@@ -154,9 +199,10 @@ async function 跑一店(店铺, 参数, 输出目录) {
       return 结果;
     }
 
-    const 导出 = await 页内导出(page, { startDate, endDate });
+    const 目标 = path.join(输出目录, `${店铺.key}_客服销售分析_${参数.yearMonth}.xlsx`);
+    const 导出 = await 页内导出(page, { startDate, endDate, 目标 });
     if (!导出.ok) {
-      if (导出.step === "login" || 导出.step === "api") {
+      if (导出.step === "login") {
         结果.status = "需要登录";
         结果.detail = `魔方登录态失效：${导出.message}`;
         const 授权页 = `${OAuth入口}${Date.now()}`;
@@ -168,8 +214,6 @@ async function 跑一店(店铺, 参数, 输出目录) {
       结果.detail = `${导出.step}: ${导出.message}`;
       return 结果;
     }
-    const 目标 = path.join(输出目录, `${店铺.key}_客服销售分析_${参数.yearMonth}.xlsx`);
-    const 大小 = await 下载文件(导出.url, 目标);
     const 校验 = 校验xlsx(目标);
     if (!校验.ok) {
       结果.status = "文件校验失败";
@@ -177,7 +221,7 @@ async function 跑一店(店铺, 参数, 输出目录) {
       return 结果;
     }
     结果.status = "成功";
-    结果.detail = `${校验.行数} 行，${大小} 字节；服务器文件名=${导出.name}`;
+    结果.detail = `${校验.行数} 行，${导出.size} 字节；服务器文件名=${导出.name}`;
     结果.file = 目标;
     结果.rows = 校验.行数;
     return 结果;
