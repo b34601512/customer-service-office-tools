@@ -1,4 +1,4 @@
-var scriptVersion = '2026-10-07.1'
+var scriptVersion = '2026-10-07.2'
 
 // 《2026年【交接&跟进】表》『售后问题待跟进』F 列「是否已完结」自动勾选脚本 v2026-10-07.1
 //
@@ -19,6 +19,7 @@ var scriptVersion = '2026-10-07.1'
 //
 // 【调用】POST <本脚本同步 webhook>   Header: AirScript-Token: <token>
 //   探针（只读）：{"Context":{"argv":{"probe":true}}}
+//   诊断（只读）：{"Context":{"argv":{"debug":true}}}   逐个试读各范围，报「能不能读/什么形态」
 //   预演（只读）：{"Context":{"argv":{"dryRun":true}}}   或 不带 allowWrite 直接调
 //   勾选写入：{"Context":{"argv":{"allowWrite":true}}}
 // 返回：{ scriptVersion, mode, scanned, candidates, ticked, skipped, readBack, mismatched, firstMismatch }
@@ -325,7 +326,8 @@ function 解析参数(rawArgument) {
   return {
     allowWrite: bag.allowWrite ? true : false,
     dryRun: bag.dryRun ? true : false,
-    probe: bag.probe ? true : false
+    probe: bag.probe ? true : false,
+    debug: bag.debug ? true : false
   }
 }
 
@@ -342,6 +344,44 @@ function 基础信息(头, 末行, 探测) {
     skipped: {},
     readBack: []
   }
+}
+
+// 只读诊断（v2 新增）：逐个试读不同范围，把「能不能读、返回什么形态」如实报出来。
+// 背景：2026-10-07 探针发现 F2:F2001 与 A2:R2001 读不到 ☑、扫描为 0；此模式用于定位原因（不改任何数据）。
+function 调试诊断(sheet) {
+  var 范围表 = ['F1', 'F2', 'F3', 'F2060', 'F2119', 'F2:F3', 'F2:F6', 'F2:F2001', 'A2:R2', 'A2:R6', 'A2:R101', 'A2:R501', 'A2:R2001', 'A2:Q2001', 'A2:C6', 'N2:R6', 'D2:E6', 'G2:R6', 'F2200']
+  var 结果 = []
+  for (var i = 0; i - 范围表.length < 0; i += 1) {
+    var 范围 = 范围表[i]
+    var 项 = { 范围: 范围 }
+    var 块 = null
+    try {
+      块 = sheet.Range(范围).Value2
+    } catch (错误读) {
+      项.异常 = String(错误读 && 错误读.message ? 错误读.message : 错误读).slice(0, 160)
+    }
+    if (!项.异常) {
+      项.类型 = typeof 块
+      项.是数组 = (块 instanceof Array) ? true : false
+      if (块) {
+        try { 项.长度 = 块.length } catch (错误长) { 项.长度 = '读不到' }
+        try {
+          var 首 = 块[0]
+          项.首格类型 = typeof 首
+          项.首格是数组 = (首 instanceof Array) ? true : false
+          if (首 instanceof Array) {
+            项.首格 = JSON.stringify(首).slice(0, 140)
+          } else {
+            项.首格 = JSON.stringify(首) ? JSON.stringify(首).slice(0, 140) : String(首).slice(0, 80)
+          }
+        } catch (错误首) { 项.首格 = '读不到：' + String(错误首).slice(0, 80) }
+      } else {
+        项.空值 = String(块)
+      }
+    }
+    结果.push(项)
+  }
+  return 结果
 }
 
 function main() {
@@ -365,6 +405,9 @@ function main() {
   }
 
   var 末行 = 找数据末行(sheet)
+  if (参数.debug) {
+    return { scriptVersion: scriptVersion, mode: 'debug', sheet: 默认子表, f1Header: 头, lastRow: 末行, debug: 调试诊断(sheet) }
+  }
   var 探测 = 探测已完结值(sheet, 末行)
   var 基础 = 基础信息(头, 末行, 探测)
   基础.headerOk = true
