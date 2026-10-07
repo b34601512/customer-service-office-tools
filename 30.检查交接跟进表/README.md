@@ -27,6 +27,12 @@
 - 金山只读：仓库共用 `tools/金山表/`（薄壳 `24号/src/tools/read-kdocs.js`，匿名无头）。
 - AirScript：《金山〈AirScript 脚本大全〉》台账（`20.经验大全/kdocs脚本大全/`，读=`查脚本大全.cjs`、登记=`登记脚本.cjs --已确认`）；改脚本流程=本地改→登记→告诉用户行号→他粘贴到目标文档→验证。
 
+## 现役产物（2026-10-07 任务窗交付）
+- **下载**：`24.平台退款复查/src/tools/jd-warehouse-returns.js` → `runtime/jd/京东仓退货-<日期>.csv`（2026-10-07：480 行/去重 376 单）。
+- **AirScript**：`kdocs-scripts/AirScript-京东仓退货数据-写入.md`，登记在《脚本大全》**第 11 行**（动作 `write_jd_warehouse`，状态看台账）；写入配置在 `project-config/kdocs-airscript.local.json`（不入库）。
+- **导入脚本**：`scripts/导入京东仓退货数据.cjs`（`--dry-run` 默认 / `--send` / `--verify`；webhook 补了才能 send）。
+- **检查脚本**：`scripts/检查售后问题待跟进.cjs`（未完结=F 列≠☑ 且为真实数据行；2026-10-07 首跑：真实 2140 行 / 已完结 2105 / 未完结 35 / 五渠道全无匹配 22，清单落 `runtime/`）。
+
 ## 红线
 - 金山文档**只按登记好的 AirScript 通道写**（webhook + token；写前 allowWrite 门、写后回读）；不做浏览器手写。
 - 电商平台后台（京东/天猫/拼多多/抖音）一律**只读**；京东物流页只点「查询/导出明细」。
@@ -37,6 +43,10 @@
 ```bash
 # 下载京东仓退货明细（最近 3 个月）
 cd "D:/桌面/办公软件/24.平台退款复查" && node src/tools/jd-warehouse-returns.js --launch --out runtime/jd/京东仓退货-<日期>.csv --json runtime/jd/京东仓退货-<日期>.json
+# 导入（webhook 补好后）+ 回读验收
+cd "D:/桌面/办公软件/30.检查交接跟进表" && node scripts/导入京东仓退货数据.cjs --csv "../24.平台退款复查/runtime/jd/京东仓退货-<日期>.csv" --send && node scripts/导入京东仓退货数据.cjs --verify
+# 检查售后问题待跟进
+cd "D:/桌面/办公软件/30.检查交接跟进表" && node scripts/检查售后问题待跟进.cjs
 # 金山只读某子表
 cd "D:/桌面/办公软件/24.平台退款复查" && node src/tools/read-kdocs.js --url "https://www.kdocs.cn/l/cslE4qMbsUH1" --list
 ```
