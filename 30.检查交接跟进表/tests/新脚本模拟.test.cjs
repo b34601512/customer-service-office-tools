@@ -208,7 +208,7 @@ test('勾选·probe：报数据末行，不写', () => {
   const { 结果, 簿 } = 跑(勾选全文, { probe: true }, 造交接());
   assert.equal(结果.mode, 'probe');
   assert.equal(结果.lastRow, 8);
-  assert.equal(结果.scriptVersion, '2026-10-07.4');
+  assert.equal(结果.scriptVersion, '2026-10-07.5');
   assert.equal(簿.写日志().length, 0);
 });
 
@@ -314,8 +314,24 @@ test('勾选·allowWrite（指定行）：只写指定行', () => {
 test('勾选·毒错误回归：读块抛「message 一碰就炸」的错误 → 脚本不许死，要报读异常', () => {
   const { 结果, 簿 } = 跑(勾选全文, { dryRun: true }, 造交接(), [], ['A2:E8']);
   assert.equal(结果.mode, 'dryRun');
-  assert.deepEqual(结果.candidates, [], '渠道扫描块读不到 → 没有候选（不许当没状态）');
+  assert.deepEqual(结果.candidates, [], 'A:E 块读不到 → 没有候选（不许当没状态）');
   assert.deepEqual(结果.读异常, ['2-8']);
+  assert.equal(簿.写日志().length, 0);
+});
+
+test('勾选·渠道列读不到（自检）：N 列分列读失败 → 拒绝自检，提示用候选行', () => {
+  const { 结果, 簿 } = 跑(勾选全文, { dryRun: true }, 造交接(), [], ['N2:N8']);
+  assert.equal(结果.mode, 'error');
+  assert.match(结果.message, /渠道列 N/);
+  assert.match(结果.message, /候选行/);
+  assert.equal(簿.写日志().length, 0);
+});
+
+test('勾选·渠道单格读不到（指定行）：照收候选并标「渠道读不到」（候选行=调用方担保）', () => {
+  const { 结果, 簿 } = 跑(勾选全文, { dryRun: true, 候选行: [3] }, 造交接(), [], ['N3', 'O3', 'P3', 'Q3', 'R3']);
+  assert.deepEqual(结果.candidates.map((c) => c.行), [3]);
+  assert.equal(结果.candidates[0].渠道读不到, '5/5 格读不到');
+  assert.deepEqual(结果.candidates[0].命中, []);
   assert.equal(簿.写日志().length, 0);
 });
 
