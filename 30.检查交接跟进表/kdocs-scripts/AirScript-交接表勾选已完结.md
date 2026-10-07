@@ -1,4 +1,4 @@
-// 《2026年【交接&跟进】表》『售后问题待跟进』F 列勾选已完结 —— AirScript（v2026-10-07.6）
+// 《2026年【交接&跟进】表》『售后问题待跟进』F 列勾选已完结 —— AirScript（v2026-10-07.7）
 //
 // 【2026-10-07 实测结论·别推翻】
 //   1) F 列的勾是**单元格复选框**：格值 = 数字 1（勾）/ 0（未勾），文本 = ☑ / ☐；
@@ -7,19 +7,24 @@
 //      G/H/I/J/K/L/M/N 列与 A:E、F 列可正常范围读）。
 //      ⇒ 渠道状态一律**单格读**（单格碰 #N/A 不抛错，值读为 undefined、文本读为 #N/A → 判无匹配）。
 //   3) catch 里**一律不碰错误对象**（碰 .message 会二次抛错把脚本弄崩 → 网关 "exchange response missing data"）。
+//   4) N 列（湖南）显示「/」或「0」不一定是没匹配：VLOOKUP 只取单号的第一行，常先撞上**赠品行**
+//      （赠品行 W 为空或斜杠），主机行其实有真状态 → 这种行外部查实后用 候选行+已核实 直接勾（见下）。
 //
 // 【模式】POST <本脚本同步 webhook>   Header: AirScript-Token: <token>
 //   {"Context":{"argv":{"probe":true}}}                        只读探针：版本 + 数据末行
 //   {"Context":{"argv":{"试":"单格读"}}}                       只读小测（见下），一次只干一件事，崩也只崩这一测
 //   {"Context":{"argv":{"dryRun":true}}}                       只读预演：自检候选（未勾行逐行单格读渠道）
 //   {"Context":{"argv":{"dryRun":true,"候选行":"1319,2060"}}} 只读预演（指定行版；候选行可传数组或逗号串）
+//   {"Context":{"argv":{"dryRun":true,"候选行":"2124,2131","已核实":true}}} 指定行·已核实（跳过「渠道无真状态」跳过）
 //   {"Context":{"argv":{"allowWrite":true, ...同 dryRun}}}     真写：把候选行 F 写成 1 + 回读
+//   已核实:true 只对「候选行」生效：这些行由调用方外部查实（如按单号查退款表主机行）已收到；
+//   仍只勾不取消（F 已是勾的照旧跳过）；没传 已核实 就还是老规矩（渠道列必须有真状态）。
 //   试名：单格读 | F块读 | 宽读 | 分列读 | 列读 | 毒段 | 单格连读 | 未勾行 | 写试
 //
 // 【本版为什么长这样·务必保留】金山 AirScript 编辑器粘贴时会吃掉等号连写序列（两个等号会变形/消失），
 //   所以本脚本一个等号比较都不用：判空用真值、相等用长度对齐加 indexOf、比大小用减法。别改回去。
 
-var scriptVersion = '2026-10-07.6'
+var scriptVersion = '2026-10-07.7'
 var 默认子表 = '售后问题待跟进'
 var 表头行 = 1
 var 数据起始行 = 表头行 + 1
@@ -340,7 +345,8 @@ function 自检候选(sheet, 末行) {
 }
 
 // 指定行版候选：逐行读 N..R 单格复核有状态（读不到也照收，标 渠道读不到）+ 读 F 复核未勾。
-function 复核候选行(sheet, 候选行) {
+// 已核实:true ⇒ 调用方已外部查实（如按单号查退款表主机行），跳过「渠道无真状态」的跳过，直接收候选。
+function 复核候选行(sheet, 候选行, 已核实) {
   var 候选 = []
   var 跳过 = []
   for (var i = 0; i - 候选行.length < 0; i += 1) {
@@ -349,10 +355,11 @@ function 复核候选行(sheet, 候选行) {
     var 读 = 读渠道行(sheet, 行号)
     var F = 读F格(sheet, 行号)
     if (F.ok && (F.判.indexOf('勾') + 1) && !(F.判.indexOf('未知') + 1)) { 跳过.push({ 行: 行号, 因: 'F 已经是勾' }); continue }
-    if (!读.命中.length && !读.读不到) { 跳过.push({ 行: 行号, 因: '渠道列没有真状态' }); continue }
+    if (!读.命中.length && !读.读不到 && !已核实) { 跳过.push({ 行: 行号, 因: '渠道列没有真状态' }); continue }
     候选.push({
       行: 行号, 命中: 读.命中, 现判: F.ok ? F.判 : '读不到', 现值: F.ok ? F.值 : '',
-      渠道读不到: 读.读不到 ? (读.读不到 + '/5 格读不到') : ''
+      渠道读不到: 读.读不到 ? (读.读不到 + '/5 格读不到') : '',
+      已核实: 已核实 ? true : false
     })
   }
   return { 候选: 候选, 跳过: 跳过 }
@@ -596,6 +603,7 @@ function 解析参数(rawArgument) {
     probe: bag.probe ? true : false,
     试: bag.试 ? String(bag.试) : '',
     候选行: 候选行,
+    已核实: bag.已核实 ? true : false,
     写试行: bag.写试行 ? Number(bag.写试行) : 0
   }
 }
@@ -645,7 +653,7 @@ function main() {
   var 跳过 = []
   var 自检 = null
   if (参数.候选行.length) {
-    var 复核 = 复核候选行(sheet, 参数.候选行)
+    var 复核 = 复核候选行(sheet, 参数.候选行, 参数.已核实)
     候选 = 复核.候选
     跳过 = 复核.跳过
   } else {
@@ -660,6 +668,7 @@ function main() {
   var 基础 = {
     scriptVersion: scriptVersion, sheet: 默认子表, f1Header: 头, headerOk: true, lastRow: 末行,
     scanned: 自检 ? 自检.数据行 : 参数.候选行.length,
+    已核实: 参数.已核实,
     candidates: 候选,
     skipped: { 指定跳过: 跳过, 空行: 自检 ? 自检.空行 : 0, 未勾数: 取未勾数(自检) },
     readBack: []

@@ -7,7 +7,7 @@
 //     · 试      → { 试:<试名> }（只读小测，tick_completed 专用；试名见脚本头注释；写试除外，写试只动指定空行且净变化为零）
 //     · dry-run → { dryRun:true }（只读，回将改动清单；可加 --候选行 "1319,2060"）
 //     · 写      → { allowWrite:true }（真写；写入前先 probe/dry-run；可加 --候选行）
-//   另：--试名 <名>、--候选行 "行1,行2"、--写试行 <行号>
+//   另：--试名 <名>、--候选行 "行1,行2"、--写试行 <行号>、--已核实（配合 --候选行：跳过渠道状态检查，外部查实后用）
 //   默认 --模式 probe。
 //   · webhook 从 project-config/kdocs-airscript.local.json 的 scripts.<脚本>.webhookUrl 取；
 //     令牌链同 30号 惯例（本配置 → 7号 → 12号）。失败不自动重试。
@@ -43,7 +43,7 @@ function 取令牌(配置) {
 }
 
 async function main() {
-  const 参数 = { 脚本: "", 模式: "probe", 试名: "", 候选行: "", 写试行: "" };
+  const 参数 = { 脚本: "", 模式: "probe", 试名: "", 候选行: "", 写试行: "", 已核实: false };
   const 词表 = process.argv.slice(2);
   for (let i = 0; i < 词表.length; i += 1) {
     if (词表[i] === "--脚本") 参数.脚本 = 词表[i + 1];
@@ -51,9 +51,10 @@ async function main() {
     else if (词表[i] === "--试名") 参数.试名 = 词表[i + 1];
     else if (词表[i] === "--候选行") 参数.候选行 = 词表[i + 1];
     else if (词表[i] === "--写试行") 参数.写试行 = 词表[i + 1];
+    else if (词表[i] === "--已核实") 参数.已核实 = true;
   }
   if (!["clean_dh_k", "tick_completed"].includes(参数.脚本)) {
-    console.error("用法：node scripts/调AirScript.cjs --脚本 clean_dh_k|tick_completed [--模式 probe|试|dry-run|写] [--试名 <名>] [--候选行 \"1319,2060\"] [--写试行 3000]");
+    console.error("用法：node scripts/调AirScript.cjs --脚本 clean_dh_k|tick_completed [--模式 probe|试|dry-run|写] [--试名 <名>] [--候选行 \"1319,2060\"] [--写试行 3000] [--已核实]");
     process.exitCode = 2;
     return;
   }
@@ -79,9 +80,9 @@ async function main() {
   const 候选行表 = 参数.候选行 ? String(参数.候选行).split(",").map((x) => Number(String(x).trim())).filter((n) => n > 0) : [];
   const argv = 参数.模式 === "probe" ? { probe: true }
     : 参数.模式 === "试" ? { 试: 参数.试名, ...(参数.写试行 ? { 写试行: Number(参数.写试行) } : {}) }
-    : 参数.模式 === "dry-run" ? { dryRun: true, ...(候选行表.length ? { 候选行: 候选行表 } : {}) }
-    : { allowWrite: true, ...(候选行表.length ? { 候选行: 候选行表 } : {}) };
-  console.log(`  ${参数.脚本} | 模式 ${参数.模式}${参数.试名 ? "（" + 参数.试名 + "）" : ""}${候选行表.length ? " 候选行=" + 候选行表.join(",") : ""} → ${webhookUrl.slice(0, 78)}…`);
+    : 参数.模式 === "dry-run" ? { dryRun: true, ...(候选行表.length ? { 候选行: 候选行表 } : {}), ...(参数.已核实 ? { 已核实: true } : {}) }
+    : { allowWrite: true, ...(候选行表.length ? { 候选行: 候选行表 } : {}), ...(参数.已核实 ? { 已核实: true } : {}) };
+  console.log(`  ${参数.脚本} | 模式 ${参数.模式}${参数.试名 ? "（" + 参数.试名 + "）" : ""}${候选行表.length ? " 候选行=" + 候选行表.join(",") : ""}${参数.已核实 ? " 已核实" : ""} → ${webhookUrl.slice(0, 78)}…`);
   const 响应 = await fetch(webhookUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json", "AirScript-Token": 令牌 },

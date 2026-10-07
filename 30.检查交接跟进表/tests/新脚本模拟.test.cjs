@@ -208,7 +208,7 @@ test('勾选·probe：报数据末行，不写', () => {
   const { 结果, 簿 } = 跑(勾选全文, { probe: true }, 造交接());
   assert.equal(结果.mode, 'probe');
   assert.equal(结果.lastRow, 8);
-  assert.equal(结果.scriptVersion, '2026-10-07.6');
+  assert.equal(结果.scriptVersion, '2026-10-07.7');
   assert.equal(簿.写日志().length, 0);
 });
 
@@ -331,6 +331,34 @@ test('勾选·候选行传逗号串：和数组一样用', () => {
   const { 结果, 簿 } = 跑(勾选全文, { dryRun: true, 候选行: '2,3,5,8' }, 造交接());
   assert.deepEqual(结果.candidates.map((c) => c.行), [3, 8]);
   assert.equal(簿.写日志().length, 0);
+});
+
+test('勾选·已核实（指定行）：无真状态的行照收候选并标已核实，已勾的仍跳过', () => {
+  const { 结果, 簿 } = 跑(勾选全文, { dryRun: true, 候选行: [2, 5], 已核实: true }, 造交接());
+  assert.equal(结果.已核实, true);
+  assert.deepEqual(结果.candidates.map((c) => c.行), [5]);
+  assert.deepEqual(结果.candidates[0].命中, [], 'N..R 无真状态也照收（调用方担保）');
+  assert.equal(结果.candidates[0].已核实, true);
+  assert.deepEqual(结果.skipped.指定跳过, [{ 行: 2, 因: 'F 已经是勾' }], '已核实也不取消、不重写已勾行');
+  assert.equal(簿.写日志().length, 0, 'dryRun 不写');
+});
+
+test('勾选·已核实（allowWrite）：写 1 + 回读勾，只写指定行', () => {
+  const { 结果, 簿 } = 跑(勾选全文, { allowWrite: true, 候选行: '2124,2131', 已核实: true }, { ...造交接(), C2124: '单号A', F2124: 0, N2124: '/', C2131: '单号B', F2131: 0, N2131: '0' });
+  assert.equal(结果.mode, 'tick');
+  assert.deepEqual(结果.ticked, [2124, 2131]);
+  assert.equal(结果.mismatched, 0, 结果.firstMismatch);
+  const 格子 = 簿.格子();
+  assert.equal(格子.F2124, 1);
+  assert.equal(格子.F2131, 1);
+  assert.ok(结果.readBack.every((x) => x.说明.indexOf('已勾上') + 1));
+  assert.deepEqual(簿.写日志().map((x) => x.地址), ['F2124', 'F2131']);
+});
+
+test('勾选·没传已核实：无真状态的指定行仍跳过（老规矩不变）', () => {
+  const { 结果 } = 跑(勾选全文, { allowWrite: true, 候选行: [5] }, 造交接());
+  assert.deepEqual(结果.ticked, []);
+  assert.deepEqual(结果.skipped.指定跳过, [{ 行: 5, 因: '渠道列没有真状态' }]);
 });
 
 test('勾选·候选行传类数组对象：和数组一样用（金山 argv 实况）', () => {
