@@ -204,9 +204,11 @@ function normMs(v) {
  *  - snapshot: { daemon:{alive,pid,reason}, log:{lastAuthAt,lastDisconnectAt,disconnectReason,recentWarnings}, messages:{group:{lastAt,count},single:{lastAt,count}} }
  *  - state:    { strikes:{}, active:{}, restarts:[] }（上次落盘）
  *  - cfg / nowMs
+ *  - recon（可选，2026-10-07）：服务端对账结果 {checked, missed:[]}。对账一致 ⇒ 静默类不报（没人说话）；
+ *    发现 missed 则照报（告警正文由调用方补漏消息证据，alertTag 会升 [故障]）。
  * 输出：条件判定、命中次数、要发的告警/恢复、是否要重启守护，以及 nextState（不含重启时间，由调用方补）。
  */
-function evaluate(snapshot, state, cfg, nowMs) {
+function evaluate(snapshot, state, cfg, nowMs, recon) {
   const msgs = (snapshot && snapshot.messages) || {};
   const log = (snapshot && snapshot.log) || {};
   const daemon = (snapshot && snapshot.daemon) || { alive: false, reason: "快照缺失" };
@@ -220,6 +222,11 @@ function evaluate(snapshot, state, cfg, nowMs) {
   const singleSil = silenceMinutes(singleLast, nowMs, cfg);
   const groupRecent = groupLast != null && nowMs - groupLast <= cfg.recentMin * MINUTE;
   const singleRecent = singleLast != null && nowMs - singleLast <= cfg.recentMin * MINUTE;
+
+  // 服务端对账（可选，2026-10-07）：对账一致 ⇒ 静默属正常（没人说话），静默类不报；
+  // 发现漏消息（missed 非空）则照报，告警正文/前缀由调用方升级为 [故障]。
+  const reconOk = !!(recon && recon.checked && !(recon.missed && recon.missed.length));
+  const 静默可报 = !reconOk;
 
   // 断线未恢复：最后一次断开之后没有再认证成功（确定性失聪）
   const deaf = !!(log.lastDisconnectAt && (!log.lastAuthAt || log.lastAuthAt < log.lastDisconnectAt));
@@ -237,15 +244,15 @@ function evaluate(snapshot, state, cfg, nowMs) {
       detail: deaf ? (log.disconnectReason || "连接断开后未恢复认证") : (badWarn || "连接异常")
     },
     both: {
-      hit: !!daemon.alive && inWork && groupSil >= cfg.bothSilentMin && singleSil >= cfg.bothSilentMin,
+      hit: 静默可报 && !!daemon.alive && inWork && groupSil >= cfg.bothSilentMin && singleSil >= cfg.bothSilentMin,
       detail: `群聊静默 ${groupSil} 分钟、单聊静默 ${singleSil} 分钟（各自阈值 ${cfg.bothSilentMin}）`
     },
     group: {
-      hit: !!daemon.alive && inWork && groupSil >= cfg.groupSilentMin && singleRecent,
+      hit: 静默可报 && !!daemon.alive && inWork && groupSil >= cfg.groupSilentMin && singleRecent,
       detail: `群聊静默 ${groupSil} 分钟（阈值 ${cfg.groupSilentMin}；单聊 ${minutesAgo(singleLast)}有消息）`
     },
     single: {
-      hit: !!daemon.alive && inWork && singleSil >= cfg.singleSilentMin && groupRecent,
+      hit: 静默可报 && !!daemon.alive && inWork && singleSil >= cfg.singleSilentMin && groupRecent,
       detail: `单聊静默 ${singleSil} 分钟（阈值 ${cfg.singleSilentMin}；群聊 ${minutesAgo(groupLast)}有消息）`
     }
   };
@@ -357,14 +364,74 @@ function formatLocal(ms) {
 // 只有确定性故障（守护不在 / 长线断开未恢复）才用 [故障]。
 const SILENCE_ALERT_KEYS = new Set(["group", "single", "both"]);
 
-function alertTag(alertKeys) {
+function alertTag(alertKeys, missedCount) {
   const keys = Array.isArray(alertKeys) ? alertKeys : [];
+  if (Number(missedCount) > 0) return "[故障]";
   return keys.some((k) => !SILENCE_ALERT_KEYS.has(k)) ? "[故障]" : "[通知]";
+}
+
+// ---------------------------------------------------------------- 服务端对账（2026-10-07）
+//
+// 背景（2026-10-07 误报实例）：群聊只有被 @ 才有消息，「群+单聊同时静默」经常只是**没人说话**，
+// 按纯静默口径会反复误报。根治办法：wecom-cli 的会话列表能拿到**服务端**每条会话的最后消息时间，
+// 与本机 inbox 收到的最后时间对账：
+//   服务端更新（超出容差）→ 真漏消息（[故障]，说明长连接静默失效）；
+//   对账一致 → 静默属正常，不告警。
+// 对账结果由调用方传入 evaluate 的 recon 参数（服务端不可用时不传，按原静默口径处理）。
+
+/** 解析会话列表里的 "2026-10-07 14:04:00"（本机时区，wecom-cli 输出）→ 毫秒；解不开返回 null。 */
+function parseServerTime(s) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})/.exec(String(s || "").trim());
+  if (!m) return null;
+  const t = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]), Number(m[4]), Number(m[5]), Number(m[6])).getTime();
+  return Number.isFinite(t) ? t : null;
+}
+
+/**
+ * 从 inbox 行文本算「每个会话最后收到时间」：单聊按 fromUserId（= 服务端会话的 chat_id），
+ * 群按 chatid。返回 { 会话键: epochMs }。
+ */
+function lastByChat(text) {
+  const out = {};
+  for (const line of String(text || "").split(/\r?\n/)) {
+    const s = line.trim();
+    if (!s) continue;
+    let rec;
+    try { rec = JSON.parse(s); } catch { continue; }
+    const t = Date.parse(rec.at || rec.receivedAt || "");
+    if (Number.isNaN(t)) continue;
+    const key = rec.chattype === "group" ? String(rec.chatid || "") : String(rec.fromUserId || "");
+    if (!key) continue;
+    if (out[key] == null || t > out[key]) out[key] = t;
+  }
+  return out;
+}
+
+/**
+ * 服务端对账：会话列表 vs 本机最后收到时间。
+ * 服务端时间比本机新超过 reconMarginMin → 真漏消息；超过 reconMaxAgeMin 的旧消息不算（早丢了、报也没用）。
+ */
+function reconcileSessions(serverSessions, localLast, cfg, nowMs) {
+  const margin = ((cfg && cfg.reconMarginMin) || 5) * MINUTE;
+  const maxAge = ((cfg && cfg.reconMaxAgeMin) || 720) * MINUTE;
+  const missed = [];
+  for (const s of serverSessions || []) {
+    const t = parseServerTime(s && s.last_msg_time);
+    if (t == null) continue;
+    if (nowMs - t > maxAge) continue;
+    const key = String((s && s.chat_id) || "");
+    const local = (key && localLast && localLast[key]) || 0;
+    if (t > local + margin) missed.push({ chat: String((s && s.chat_name) || ""), chatId: key, serverAt: t, localAt: local || null });
+  }
+  return { checked: true, missed };
 }
 
 module.exports = {
   alertTag,
   SILENCE_ALERT_KEYS,
+  parseServerTime,
+  lastByChat,
+  reconcileSessions,
   DEFAULT_CONFIG,
   CONDITION_KEYS,
   mergeConfig,

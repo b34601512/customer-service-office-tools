@@ -32,10 +32,12 @@ const {
   evaluate,
   formatJst,
   formatLocal,
+  lastByChat,
   mergeConfig,
   parseConnectionEvents,
   parseDaemonLog,
-  parseInbox
+  parseInbox,
+  reconcileSessions
 } = require("../src/watchdog");
 
 const ROOT = path.join(__dirname, "..");
@@ -53,7 +55,12 @@ const EXTRA_DEFAULTS = {
   pendingFile: "看门狗待发留言.jsonl",
   statusFile: "看门狗状态.json",
   logFile: "看门狗.log",
-  lockFile: "看门狗.lock"
+  lockFile: "看门狗.lock",
+  // 服务端对账（2026-10-07）：静默类告警前先用 wecom-cli 会话列表对账，服务端没更新就不报（误报根治）。
+  reconEnabled: true,
+  wecomCliJs: path.join(process.env.APPDATA || "", "npm", "node_modules", "@wecom", "cli", "bin", "wecom.js"),
+  reconMarginMin: 5,
+  reconMaxAgeMin: 720
 };
 
 // ---------------------------------------------------------------- 基础工具
@@ -149,6 +156,24 @@ function readState(stateDir, cfg) {
   return { strikes: st.strikes || {}, active: st.active || {}, restarts: st.restarts || [], lastAlertAt: st.lastAlertAt || null };
 }
 
+// ---------------------------------------------------------------- 服务端对账（wecom-cli 会话列表，2026-10-07）
+
+/** 读服务端会话列表（只读）。返回 { ok, sessions } 或 { ok:false, err }。 */
+function readServerSessions(cfg) {
+  const cli = String(cfg.wecomCliJs || "").trim();
+  if (!cli || !fs.existsSync(cli)) return { ok: false, err: "找不到 wecom-cli（" + cli + "）" };
+  const r = spawnSync(process.execPath, [cli, "message", "aibot", "sessions", "list"], {
+    cwd: ROOT, encoding: "utf8", timeout: 60000, windowsHide: true
+  });
+  const out = String(r.stdout || "") + String(r.stderr || "");
+  const i = out.indexOf("{");
+  if (r.status !== 0 || i < 0) return { ok: false, err: "wecom-cli 退出码 " + r.status + "：" + out.slice(0, 200) };
+  let data;
+  try { data = JSON.parse(out.slice(i)); } catch { return { ok: false, err: "会话列表不是 JSON：" + out.slice(0, 200) }; }
+  if (!Array.isArray(data.sessions)) return { ok: false, err: "会话列表缺 sessions 字段" };
+  return { ok: true, sessions: data.sessions };
+}
+
 function pendingCount(stateDir, cfg) {
   const p = path.join(stateDir, cfg.pendingFile);
   try { return fs.readFileSync(p, "utf8").split("\n").filter(Boolean).length; } catch { return 0; }
@@ -234,7 +259,7 @@ const RESOLVE_DESC = {
 const { alertTag: alertTagForKeys } = require("../src/watchdog");
 
 function alertTag(result) {
-  return alertTagForKeys((result?.toAlert || []).map((a) => a.key));
+  return alertTagForKeys((result?.toAlert || []).map((a) => a.key), result && result.recon ? result.recon.missed.length : 0);
 }
 
 function alertBody(result, cfg, restartNote) {
@@ -246,6 +271,13 @@ function alertBody(result, cfg, restartNote) {
   for (const a of result.toAlert) {
     const desc = ALERT_DESC[a.key] ? ALERT_DESC[a.key](a.detail) : `${a.key}：${a.detail}`;
     lines.push(`- ${desc}`);
+  }
+  if (result.recon && result.recon.missed.length) {
+    lines.push("");
+    lines.push("服务端对账发现本机漏收消息（长连接可能已静默失效）：");
+    for (const m of result.recon.missed.slice(0, 5)) {
+      lines.push(`- ${m.chat || m.chatId}：服务端最后消息 ${formatLocal(m.serverAt)}，本机最后收到 ${formatLocal(m.localAt)}`);
+    }
   }
   if (restartNote) lines.push(`- ${restartNote}`);
   else if (result.restart.suppressed) lines.push(`- 未自动重启：${result.restart.suppressed}`);
@@ -261,6 +293,9 @@ function resolveBody(result, cfg) {
   lines.push("");
   lines.push("前述企微守护告警已恢复：");
   for (const x of result.toResolve) lines.push(`- ${RESOLVE_DESC[x.key] || x.key}`);
+  if (result.recon && result.recon.checked && !result.recon.missed.length) {
+    lines.push("- 注：本次静默经服务端对账确认属正常（没人说话），非故障");
+  }
   lines.push(`- 群聊最后消息：${formatLocal(result.messages.groupLastAt)}；单聊最后消息：${formatLocal(result.messages.singleLastAt)}`);
   return lines.join("\n");
 }
@@ -322,6 +357,9 @@ function buildStatus(snapshot, result, stateDir, cfg) {
       singleLastAt: iso(result.messages.singleLastAt),
       singleSilenceMin: result.silences.single
     },
+    recon: result.recon
+      ? { checked: !!result.recon.checked, missed: result.recon.missed.length, detail: result.recon.missed.slice(0, 5).map((m) => ({ chat: m.chat, serverAt: iso(m.serverAt), localAt: iso(m.localAt) })) }
+      : { checked: false, missed: 0, detail: [] },
     conditions: Object.fromEntries(CONDITION_KEYS.map((k) => [k, !!result.conditions[k].hit])),
     strikes: result.nextState.strikes,
     activeAlerts: Object.keys(result.active),
@@ -351,9 +389,30 @@ async function main() {
     const nowMs = Date.now();
     const prev = readState(stateDir, cfg);
     const { daemon, log: connLog } = readDaemon(stateDir);
-    const messages = parseInbox(readTail(path.join(stateDir, "inbox.jsonl"), 512 * 1024));
+    const inboxText = readTail(path.join(stateDir, "inbox.jsonl"), 512 * 1024);
+    const messages = parseInbox(inboxText);
     const snapshot = { daemon, log: connLog, messages };
-    const result = evaluate(snapshot, prev, cfg, nowMs);
+    let result = evaluate(snapshot, prev, cfg, nowMs);
+
+    // 服务端对账（2026-10-07，只在静默类条件命中时查，省调用）：
+    // 对账一致 ⇒ 静默属正常（没人说话）→ 静默类不报；发现漏消息 ⇒ 照报并升 [故障]。
+    let recon = { checked: false, missed: [] };
+    const 静默命中 = ["both", "group", "single"].some((k) => result.conditions[k].hit);
+    if (cfg.reconEnabled && 静默命中) {
+      const srv = readServerSessions(cfg);
+      if (srv.ok) {
+        recon = reconcileSessions(srv.sessions, lastByChat(inboxText), cfg, nowMs);
+        result = evaluate(snapshot, prev, cfg, nowMs, recon);
+        if (recon.missed.length) {
+          log(`服务端对账：发现 ${recon.missed.length} 个会话本机漏收 → ` + recon.missed.map((m) => `${m.chat}（服务端 ${formatLocal(m.serverAt)}，本机 ${formatLocal(m.localAt)}）`).join("；"));
+        } else {
+          log(`服务端对账一致（${srv.sessions.length} 个会话），静默属正常（没人说话），不告警`);
+        }
+      } else {
+        log(`服务端对账不可用（${srv.err}），按原静默口径处理`);
+      }
+    }
+    result.recon = recon;
     let restartNote = "";
 
     if (result.restart.needed && !args.dryRun) {

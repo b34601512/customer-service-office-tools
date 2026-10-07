@@ -202,3 +202,85 @@ test("mergeConfig：覆盖字段、忽略非法值", () => {
   assert.equal(c.recentMin, 30);
   assert.equal(c.singleSilentMin, DEFAULT_CONFIG.singleSilentMin);
 });
+
+// ================= 服务端对账（2026-10-07） =================
+// 背景：群只有被 @ 才有消息，「群+单聊同时静默」常只是没人说话；
+// 用 wecom-cli 会话列表（服务端最后消息时间）与本机 inbox 对账：服务端更新 → 真漏消息。
+
+const { parseServerTime, lastByChat, reconcileSessions } = require("../src/watchdog");
+
+test("parseServerTime：解 wecom-cli 的本地时间串，脏串返回 null", () => {
+  assert.equal(parseServerTime("2026-10-07 14:04:00"), new Date(2026, 9, 7, 14, 4, 0).getTime());
+  assert.equal(parseServerTime(" 2026-10-07T14:04:00 "), new Date(2026, 9, 7, 14, 4, 0).getTime());
+  assert.equal(parseServerTime(""), null);
+  assert.equal(parseServerTime("昨天"), null);
+});
+
+test("lastByChat：单聊按 fromUserId、群按 chatid，取每会话最后时间", () => {
+  const text = [
+    JSON.stringify({ chattype: "single", fromUserId: "u1", at: "2026-10-07T05:00:00.000Z" }),
+    JSON.stringify({ chattype: "single", fromUserId: "u1", at: "2026-10-07T06:00:00.000Z" }),
+    JSON.stringify({ chattype: "group", chatid: "g1", fromUserId: "u2", at: "2026-10-06T07:00:00.000Z" }),
+    JSON.stringify({ chattype: "single", fromUserId: "", at: "2026-10-07T07:00:00.000Z" }),
+    "半行垃圾"
+  ].join("\n");
+  const r = lastByChat(text);
+  assert.equal(r.u1, Date.parse("2026-10-07T06:00:00.000Z"));
+  assert.equal(r.g1, Date.parse("2026-10-06T07:00:00.000Z"));
+  assert.equal(Object.keys(r).length, 2, "没键的行不进对账表");
+});
+
+test("reconcileSessions：服务端与本机一致 → 无漏；服务端更新 → 报漏", () => {
+  const now = new Date(2026, 9, 7, 15, 0, 0).getTime();
+  const 会话 = [
+    { chat_id: "u1", chat_name: "黎路遥", last_msg_time: "2026-10-07 14:04:00" },
+    { chat_id: "g1", chat_name: "«金牌组»", last_msg_time: "2026-10-06 15:51:09" }
+  ];
+  const 本机 = { u1: new Date(2026, 9, 7, 14, 4, 8).getTime(), g1: new Date(2026, 9, 6, 15, 51, 17).getTime() };
+  assert.deepEqual(reconcileSessions(会话, 本机, DEFAULT_CONFIG, now).missed, [], "几十秒差不算漏");
+  const 漏 = reconcileSessions(会话, { u1: 本机.u1 - 10 * MIN, g1: 本机.g1 }, DEFAULT_CONFIG, now).missed;
+  assert.equal(漏.length, 1);
+  assert.equal(漏[0].chatId, "u1");
+  assert.equal(漏[0].chat, "黎路遥");
+  assert.equal(漏[0].serverAt, new Date(2026, 9, 7, 14, 4, 0).getTime());
+});
+
+test("reconcileSessions：容差内不报（5分钟），超容差才报", () => {
+  const now = new Date(2026, 9, 7, 15, 0, 0).getTime();
+  const 会话 = [{ chat_id: "u1", chat_name: "黎路遥", last_msg_time: "2026-10-07 14:00:00" }];
+  const 基准 = new Date(2026, 9, 7, 14, 0, 0).getTime();
+  assert.equal(reconcileSessions(会话, { u1: 基准 - 4 * MIN }, DEFAULT_CONFIG, now).missed.length, 0, "差 4 分钟在容差内");
+  assert.equal(reconcileSessions(会话, { u1: 基准 - 6 * MIN }, DEFAULT_CONFIG, now).missed.length, 1, "差 6 分钟超容差");
+});
+
+test("reconcileSessions：太旧的（>12h）不算、解不开的时间跳过", () => {
+  const now = new Date(2026, 9, 7, 15, 0, 0).getTime();
+  const 旧 = [{ chat_id: "u9", chat_name: "旧会话", last_msg_time: "2026-10-05 10:00:00" }];
+  assert.equal(reconcileSessions(旧, {}, DEFAULT_CONFIG, now).missed.length, 0, "两天前的旧消息不报");
+  const 脏 = [{ chat_id: "u1", chat_name: "x", last_msg_time: "not-a-time" }];
+  assert.equal(reconcileSessions(脏, {}, DEFAULT_CONFIG, now).missed.length, 0);
+});
+
+test("evaluate + 对账一致：静默类不报（没人说话），已报的走恢复", () => {
+  const snap = snapshot({ groupLastAt: NOON - 300 * MIN, singleLastAt: NOON - 200 * MIN });
+  const recon = { checked: true, missed: [] };
+  const r = evaluate(snap, emptyState(), cfg, NOON, recon);
+  assert.equal(r.conditions.both.hit, false, "对账一致 → both 不算命中");
+  assert.equal(r.toAlert.length, 0, "不再误报");
+  const state = { strikes: { both: 2 }, active: { both: { since: NOON - 30 * MIN, lastAt: NOON - 30 * MIN } }, restarts: [] };
+  const r2 = evaluate(snap, state, cfg, NOON, recon);
+  assert.ok(r2.toResolve.some((x) => x.key === "both"), "已报过的要出 [已解决]");
+});
+
+test("evaluate + 对账发现漏消息：静默照报（调用方升 [故障]）", () => {
+  const snap = snapshot({ groupLastAt: NOON - 300 * MIN, singleLastAt: NOON - 200 * MIN });
+  const recon = { checked: true, missed: [{ chat: "黎路遥", chatId: "u1", serverAt: NOON - 5 * MIN, localAt: NOON - 200 * MIN }] };
+  const r = evaluate(snap, emptyState(), cfg, NOON, recon);
+  assert.equal(r.conditions.both.hit, true, "有漏消息时静默照样命中");
+});
+
+test("evaluate 不传 recon：维持原静默口径（向后兼容）", () => {
+  const snap = snapshot({ groupLastAt: NOON - 300 * MIN, singleLastAt: NOON - 200 * MIN });
+  const r = evaluate(snap, emptyState(), cfg, NOON);
+  assert.equal(r.conditions.both.hit, true);
+});
