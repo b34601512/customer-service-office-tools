@@ -32,7 +32,8 @@
 - **AirScript**：`kdocs-scripts/AirScript-京东仓退货数据-写入.md`（**v2026-10-07.2**：行形态归一 + 回读逐格比对），登记在《脚本大全》**第 11 行**；写入配置在 `project-config/kdocs-airscript.local.json`（不入库）。
 - **导入脚本**：`scripts/导入京东仓退货数据.cjs`（`--dry-run` 默认 / `--send` / `--verify`；webhook 补了才能 send）。
 - **检查脚本**：`scripts/检查售后问题待跟进.cjs`（未完结=F 列≠☑ 且为真实数据行；2026-10-07 首跑：真实 2140 行 / 已完结 2105 / 未完结 35 / 五渠道全无匹配 22，清单落 `runtime/`）。
-- **测试**：`tests/airscript模拟.test.cjs`（8 项：三种行形态写入正确、坏写入探测、粘贴安全、安全闸门）→ `node --test tests/airscript模拟.test.cjs`。
+- **勾选脚本**：`kdocs-scripts/AirScript-交接表勾选已完结.md`（**v2026-10-07.6**：F 格 1=勾/0=未勾；**范围读碰 #N/A 会崩→渠道一律单格读**；catch 不碰错误对象；只勾不取消+回读），登记在《脚本大全》**第 13 行**；调用器 `scripts/调AirScript.cjs`（`--模式 probe|试|dry-run|写 [--候选行 "1319,2060"]`）。2026-10-07 实测：自检 16 条与网页逐行一致，已勾 16 条 + 网页复核通过（勾 2105→2121、未勾 35→19）。
+- **测试**：`tests/airscript模拟.test.cjs`（8 项）+ `tests/新脚本模拟.test.cjs`（21 项：粘贴安全、F 读写、毒错误回归、#N/A 单格场景、候选行三种形态、安全闸门）→ `node --test tests/新脚本模拟.test.cjs`。
 
 ## 红线
 - 金山文档**只按登记好的 AirScript 通道写**（webhook + token；写前 allowWrite 门、写后回读）；不做浏览器手写。
