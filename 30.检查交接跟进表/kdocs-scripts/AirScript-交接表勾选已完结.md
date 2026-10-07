@@ -1,44 +1,40 @@
-var scriptVersion = '2026-10-07.2'
-
-// 《2026年【交接&跟进】表》『售后问题待跟进』F 列「是否已完结」自动勾选脚本 v2026-10-07.1
+// 《2026年【交接&跟进】表》『售后问题待跟进』F 列勾选已完结 —— AirScript（v2026-10-07.2）
 //
-// 【干什么】黎路遥 2026-10-07：「交接表里你好像没有勾选已经收到的吧」——
-//   扫描『售后问题待跟进』真实数据行（表头 1 行；A 列登记时间 / C 列 ID·订单编号 非空才算数据行），
-//   找 F 列尚未打勾、且 N/O/P/Q/R 五个渠道列（湖南｜京东仓｜撕单｜理赔｜异常件表）任一有**真状态**的行，
-//   把 F 写「☑」。真状态 = 非空、不是 #N/A 之类错误值、不是 0、不是 `/`。
-//   **只勾不取消**：只有候选行会被写，其余行一个字节不碰。
+// 【2026-10-07 为什么重写】F 列的勾是**复选框控件**（用户确认），不是单元格文本：
+//   · Range.Value2 读不到它们（探针扫 F2:F2001 一个 ☑ 都没有；A2:R2001 还整块读空）。
+//   · 官方文档（airsheet.wps.cn）：复选框用 Shape 控件 API ——
+//     sheet.Shapes → Item(i).FormControlType == xlCheckBox(1) → Item(i).ControlFormat.Value 读写（true=勾）；
+//     行位置用 Item(i).TopLeftCell.Row（本表复选框按行有序时 = 序号 + 行偏移，脚本会先取样验证）。
 //
-// 【安全设计】
-//   1) 写值类型「照抄」表里已有的 ☑ 格：先探测一个已完结行的 F 原始值（文本"☑"还是布尔 TRUE），
-//      照它的类型写；一个已完结格都找不到时回退写文本 "☑"（探针会报出用的是哪种）。
-//   2) 没有 allowWrite:true → 一个字节都不写，只回候选清单（dryRun / probe）；
-//   3) 写完回读 F 列全部数据行：候选行必须变成已完结、非候选行的 F 文本必须跟写前一致
-//      （这就是「只勾不取消」的机器证据：mismatched / firstMismatch）。
-//   4) F1 表头不是「是否已完结」→ 拒绝动手（防表结构变了误伤）。
-//   5) 每 2000 行一块读写；数据末行按 A 列或 C 列非空判定（底部 7000+ 行只带 ☐ 的模板行不算）。
+// 【功能】
+//   1) debug（只读）：报数据末行 + 取样探控件（名字/类型/控件类型/值/行）+ F 列 Value2 试读。
+//   2) dryRun（只读）：扫『售后问题待跟进』渠道列 N/O/P/Q/R（A:E + G:R 分开读，避开 F 控件区），
+//      找出「有真状态（非空、不是 #N/A 类错误、不是 0、不是 /）且复选框没勾」的行 → 候选清单（不写）。
+//   3) allowWrite（写）：把候选行的复选框 ControlFormat.Value 写 true，写完逐个回读；只勾不取消。
+//   4) 找不到复选框控件 / F1 表头不对 → 拒绝动手，报 message。
 //
 // 【调用】POST <本脚本同步 webhook>   Header: AirScript-Token: <token>
 //   探针（只读）：{"Context":{"argv":{"probe":true}}}
-//   诊断（只读）：{"Context":{"argv":{"debug":true}}}   逐个试读各范围，报「能不能读/什么形态」
-//   预演（只读）：{"Context":{"argv":{"dryRun":true}}}   或 不带 allowWrite 直接调
+//   诊断（只读）：{"Context":{"argv":{"debug":true}}}
+//   预演（只读）：{"Context":{"argv":{"dryRun":true}}}
 //   勾选写入：{"Context":{"argv":{"allowWrite":true}}}
-// 返回：{ scriptVersion, mode, scanned, candidates, ticked, skipped, readBack, mismatched, firstMismatch }
+// 返回：{ scriptVersion, mode, sheet, f1Header, lastRow, 控件:{数,有序,行偏移,取样}, scanned, candidates, ticked, skipped, readBack, mismatched, firstMismatch, message }
 //
-// 【粘贴方式】《2026年【交接&跟进】表》→ 效率 → 高级开发 → AirScript → 新建脚本「交接表勾选已完结」
-//   → 先清空编辑器里的全部默认内容 → 粘全文 → 保存 → 生成「同步 webhook」
-//   → 把地址填进本机 30号 project-config/kdocs-airscript.local.json 的 tick_completed。
 // 【本版为什么长这样·务必保留】金山 AirScript 编辑器粘贴时会吃掉等号连写序列（两个等号会变形/消失），
 //   所以本脚本一个等号比较都不用：判空用真值、相等用长度对齐加 indexOf、比大小用减法。别改回去。
 
+var scriptVersion = '2026-10-07.2'
 var 默认子表 = '售后问题待跟进'
 var 表头行 = 1
 var 数据起始行 = 表头行 + 1
 var 完结列 = 'F'
 var 渠道列 = ['N', 'O', 'P', 'Q', 'R']
 var 渠道名 = ['湖南', '京东仓', '撕单', '理赔', '异常件表']
-var CHUNK_ROWS = 2000
+var CHUNK_ROWS = 2000      // 找数据末行用（A:C 分块，已验证可用）
+var 扫描块行数 = 500       // 扫候选用（A:E + G:R 分开读，避开 F 控件区）
 var 最大行数 = 20000
-var 回退勾选值 = '☑'
+var 最大图形数 = 20000
+var 控件取样步长 = 250
 var 抽查上限 = 30
 
 function contains(haystack, needle) {
@@ -63,33 +59,19 @@ function 同文(a, b) {
   return Boolean(乙.indexOf(甲) + 1)
 }
 
-// 是否已完结：☑ / 布尔 true / TRUE / √ / ✓ / 是 / Y（后五个只认单字符，防误把长文本当已完结）。
-function 是已完结(值) {
-  var 文本 = toText(值)
-  if (!文本) return false
-  if (文本.indexOf('☑') + 1) return true
-  var 大 = 文本.toUpperCase()
-  if (大.length - 4 < 1 && 大.indexOf('TRUE') + 1) return true
-  if (文本.length - 1) return false
-  if (文本.indexOf('√') + 1) return true
-  if (文本.indexOf('✓') + 1) return true
-  if (文本.indexOf('是') + 1) return true
-  return Boolean('Y'.indexOf(大) + 1)
-}
-
 // 纯 0（0 / 0.0 / 0.00 这类算「没有匹配」）。
 function 是纯零(文本) {
   if (!(文本.indexOf('0') + 1)) return false
   return (文本.replace(/[0.]/g, '').length) ? false : true
 }
 
-// 单字符：`/`、`-`、`—`（非状态内容，跳过）。
+// 单字符：/、-、—（非状态内容，跳过）。
 function 是斜杠或横(文本) {
   if (文本.length - 1) return false
   return Boolean('/-—'.indexOf(文本) + 1)
 }
 
-// 无匹配：空 / #N/A 等错误值 / 0 / `/` / `-`。
+// 无匹配：空 / #N/A 等错误值 / 0 / / / -。
 function 是无匹配(值) {
   var 文本 = toText(值)
   if (!文本) return true
@@ -149,42 +131,95 @@ function 找数据末行(sheet) {
   return 末行
 }
 
-// 探测写值形态：找一个已有已完结（☑）格的原始值，照它的类型写。
-function 探测已完结值(sheet, 末行) {
-  var 找到 = false
-  var 原值 = null
-  var 行 = 数据起始行
-  while (行 - 末行 < 1 && !找到) {
-    var 结束行 = 行 + CHUNK_ROWS - 1
-    if (结束行 - 末行 > 0) 结束行 = 末行
-    var 块 = null
-    try {
-      块 = sheet.Range(完结列 + 行 + ':' + 完结列 + 结束行).Value2
-    } catch (errorRead) {
-      块 = null
-    }
-    if (块) {
-      var 值表 = 规整一维(块)
-      for (var i = 0; i - 值表.length < 0; i += 1) {
-        if (是已完结(值表[i])) {
-          找到 = true
-          原值 = 值表[i]
-          break
-        }
-      }
-    }
-    行 = 结束行 + 1
-  }
-  var 写值 = 回退勾选值
-  var 形态 = '文本（未找到已有 ☑，回退）'
-  if (找到) {
-    写值 = 原值
-    形态 = typeof 原值
-  }
-  return { 找到: 找到, 原值: 找到 ? toText(原值) : '', 类型: 形态, 写值: 写值 }
+// ============ 复选框控件（官方 Shape/ControlFormat API） ============
+
+// 控件值判定：true / 1 / TRUE 算「勾」；false / 0 / -4146 / 空 算「空」；其它报「未知」。
+function 控件值判定(值) {
+  var 类 = typeof 值
+  if (类.indexOf('boolean') + 1) return 值 ? '勾' : '空'
+  var 文本 = toText(值)
+  if (!文本) return '空'
+  var 大 = 文本.toUpperCase()
+  if (大.indexOf('TRUE') + 1) return '勾'
+  if (大.indexOf('FALSE') + 1) return '空'
+  if (文本.indexOf('-4146') + 1) return '空'
+  if (文本.indexOf('1') + 1 && 文本.length - 1 < 1) return '勾'
+  if (文本.indexOf('0') + 1 && 文本.length - 1 < 1) return '空'
+  return '未知[' + 文本.slice(0, 24) + ']'
 }
 
-// 渠道命中：N/O/P/Q/R 里任一「真状态」都要报出来（行数组是 A..R 共 18 列）。
+// 取样探控件：确认是复选框控件 + 按行有序（第 i 个控件 → 第 i + 行偏移 行）。
+function 探控件(sheet) {
+  var 结果 = { 数: 0, 有序: false, 行偏移: 0, 取样: [], 异常: '' }
+  var shapes = null
+  try { shapes = sheet.Shapes } catch (e1) { 结果.异常 = '取 Shapes 失败：' + String(e1).slice(0, 80); return 结果 }
+  if (!shapes) { 结果.异常 = '工作表没有 Shapes 集合'; return 结果 }
+  try { 结果.数 = shapes.Count } catch (e2) { 结果.异常 = '读 Shapes.Count 失败：' + String(e2).slice(0, 80); return 结果 }
+  if (!结果.数) { 结果.异常 = 'Shapes 数量为 0'; return 结果 }
+  var 序 = []
+  var i = 1
+  while (i - 结果.数 < 1) {
+    序.push(i)
+    i += 控件取样步长
+  }
+  if (结果.数 - 序[序.length - 1] > 0) 序.push(结果.数)
+  for (var k = 0; k - 序.length < 0; k += 1) {
+    var 项 = { i: 序[k] }
+    try {
+      var sh = shapes.Item(序[k])
+      try { 项.名 = String(sh.Name).slice(0, 30) } catch (e3) { 项.名 = '' }
+      try { 项.类型 = String(sh.Type) } catch (e4) { 项.类型 = '' }
+      try { 项.控件类型 = String(sh.FormControlType) } catch (e5) { 项.控件类型 = '' }
+      try { 项.值 = String(sh.ControlFormat.Value) } catch (e6) { 项.值 = '' }
+      try { 项.行 = String(sh.TopLeftCell.Row) } catch (e7) { 项.行 = '' }
+    } catch (e8) { 项.异常 = String(e8).slice(0, 80) }
+    结果.取样.push(项)
+  }
+  var 偏移 = 0
+  var 首偏移已记 = false
+  var 有序 = true
+  var 复选数 = 0
+  for (var m = 0; m - 结果.取样.length < 0; m += 1) {
+    var s = 结果.取样[m]
+    if (s.控件类型.indexOf('1') + 1 && s.控件类型.length - 1 < 1) 复选数 += 1
+    if (!s.行) { 有序 = false; continue }
+    var d = Number(s.行) - s.i
+    if (!首偏移已记) { 偏移 = d; 首偏移已记 = true }
+    else if (偏移 - d) 有序 = false
+  }
+  结果.有序 = 有序
+  结果.行偏移 = 首偏移已记 ? 偏移 : 0
+  结果.取样复选框数 = 复选数
+  return 结果
+}
+
+// 读某行复选框状态（有序映射：控件序号 = 行号 - 行偏移）。
+function 控件状态(sheet, 行号, 行偏移) {
+  try {
+    var sh = sheet.Shapes.Item(行号 - 行偏移)
+    var 判 = 控件值判定(sh.ControlFormat.Value)
+    return { ok: true, 判: 判, 值: String(sh.ControlFormat.Value) }
+  } catch (e) {
+    return { ok: false, 判: '读不到', 值: String(e).slice(0, 80) }
+  }
+}
+
+// 勾选某行复选框（有序映射）。
+function 勾选控件(sheet, 行号, 行偏移) {
+  try {
+    sheet.Shapes.Item(行号 - 行偏移).ControlFormat.Value = true
+    return { ok: true }
+  } catch (e1) {
+    try {
+      sheet.Shapes.Item(行号 - 行偏移).ControlFormat.Value = 1
+      return { ok: true, 回退: '数字1' }
+    } catch (e2) {
+      return { ok: false, 错: String(e2).slice(0, 80) }
+    }
+  }
+}
+
+// 渠道命中：N/O/P/Q/R 里任一「真状态」（行数组 A..R 共 18 列，F 占位 null 在 index 5）。
 function 渠道命中(行数组) {
   var 命中 = []
   for (var i = 0; i - 渠道列.length < 0; i += 1) {
@@ -195,118 +230,72 @@ function 渠道命中(行数组) {
   return 命中
 }
 
-// 扫描候选：只读；顺便把每行 F 原文本拍快照（写后比对「只勾不取消」）。
-function 扫描候选(sheet, 末行) {
+// 扫候选：A:E + G:R 分开读（避开 F 控件区），渠道有真状态且复选框未勾 → 候选。
+function 扫候选(sheet, 末行, 行偏移) {
   var 候选 = []
   var 数据行 = 0
-  var 已完结 = 0
+  var 已勾数 = 0
   var 无渠道 = 0
   var 空行 = 0
-  var F快照 = {}
+  var 读不到数 = 0
+  var 读异常 = []
   var 行 = 数据起始行
   while (行 - 末行 < 1) {
-    var 结束行 = 行 + CHUNK_ROWS - 1
+    var 结束行 = 行 + 扫描块行数 - 1
     if (结束行 - 末行 > 0) 结束行 = 末行
-    var 块 = null
-    try {
-      块 = sheet.Range('A' + 行 + ':R' + 结束行).Value2
-    } catch (errorRead) {
-      块 = null
+    var 前块 = null
+    var 后块 = null
+    try { 前块 = sheet.Range('A' + 行 + ':E' + 结束行).Value2 } catch (e1) { 前块 = null }
+    try { 后块 = sheet.Range('G' + 行 + ':R' + 结束行).Value2 } catch (e2) { 后块 = null }
+    if (!前块 || !后块) {
+      读异常.push(String(行) + '-' + String(结束行) + (前块 ? '' : '(A:E读不到)') + (后块 ? '' : '(G:R读不到)'))
+      行 = 结束行 + 1
+      continue
     }
-    if (块) {
-      var 值表 = 规整二维(块)
-      for (var i = 0; i - 值表.length < 0; i += 1) {
-        var 行数组 = (值表[i] instanceof Array) ? 值表[i] : [值表[i]]
-        var 行号 = 行 + i
-        var A文 = toText(行数组[0])
-        var C文 = toText(行数组[2])
-        if (!(A文 || C文)) {
-          空行 = 空行 + 1
-          continue
-        }
-        数据行 = 数据行 + 1
-        var F原 = 行数组[5]
-        F快照[String(行号)] = { 文: toText(F原) }
-        if (是已完结(F原)) {
-          已完结 = 已完结 + 1
-          continue
-        }
-        var 命中 = 渠道命中(行数组)
-        if (!命中.length) {
-          无渠道 = 无渠道 + 1
-          continue
-        }
-        候选.push({ 行: 行号, 登记时间: A文, 单号: C文, 命中: 命中 })
-      }
+    var 前表 = 规整二维(前块)
+    var 后表 = 规整二维(后块)
+    var 行数 = 前表.length
+    if (后表.length - 行数 < 0) 行数 = 后表.length
+    for (var i = 0; i - 行数 < 0; i += 1) {
+      var 前行 = (前表[i] instanceof Array) ? 前表[i] : [前表[i]]
+      var 后行 = (后表[i] instanceof Array) ? 后表[i] : [后表[i]]
+      var 行数组 = []
+      var c = 0
+      while (c - 5 < 0) { 行数组.push(前行[c]); c += 1 }
+      行数组.push(null)
+      c = 0
+      while (c - 后行.length < 0) { 行数组.push(后行[c]); c += 1 }
+      var 行号 = 行 + i
+      var A文 = toText(行数组[0])
+      var C文 = toText(行数组[2])
+      if (!(A文 || C文)) { 空行 += 1; continue }
+      数据行 += 1
+      var 命中 = 渠道命中(行数组)
+      if (!命中.length) { 无渠道 += 1; continue }
+      var 状 = 控件状态(sheet, 行号, 行偏移)
+      if (!状.ok) { 读不到数 += 1; 读异常.push('第' + String(行号) + '行控件：' + 状.值); continue }
+      if (状.判.indexOf('勾') + 1 && !(状.判.indexOf('未知') + 1)) { 已勾数 += 1; continue }
+      候选.push({ 行: 行号, 登记时间: A文, 单号: C文, 命中: 命中, 现判: 状.判, 现值: 状.值 })
     }
     行 = 结束行 + 1
   }
-  return { 候选: 候选, 数据行: 数据行, 已完结: 已完结, 无渠道: 无渠道, 空行: 空行, F快照: F快照 }
+  return { 候选: 候选, 数据行: 数据行, 已勾数: 已勾数, 无渠道: 无渠道, 空行: 空行, 读不到数: 读不到数, 读异常: 读异常 }
 }
 
-// 勾选：只写候选行的 F；其余一个字节不碰。
-function 执行勾选(sheet, 候选, 写值) {
-  var 已写行 = []
-  var 失败行 = []
-  for (var i = 0; i - 候选.length < 0; i += 1) {
-    var 行号 = 候选[i].行
-    var 写成 = false
-    try {
-      sheet.Range(完结列 + 行号).Value2 = 写值
-      写成 = true
-    } catch (errorWrite1) {
-      try {
-        sheet.Range(完结列 + 行号).Value = 写值
-        写成 = true
-      } catch (errorWrite2) {
-        写成 = false
-      }
-    }
-    if (写成) 已写行.push(行号)
-    else 失败行.push(行号)
-  }
-  return { 已写行: 已写行, 失败行: 失败行 }
-}
-
-// 回读核验：候选行必须已完结；非候选行 F 文本必须和写前一致（只勾不取消）。
-function 回读核验(sheet, 末行, 候选行集, F快照) {
+// 回读核验：候选行复选框必须已勾；非候选不碰（不读不回写）。
+function 回读核验(sheet, 候选, 行偏移) {
   var 不符 = 0
   var 首条差 = ''
   var 抽查 = []
-  var 行 = 数据起始行
-  while (行 - 末行 < 1) {
-    var 结束行 = 行 + CHUNK_ROWS - 1
-    if (结束行 - 末行 > 0) 结束行 = 末行
-    var 块 = null
-    try {
-      块 = sheet.Range(完结列 + 行 + ':' + 完结列 + 结束行).Value2
-    } catch (errorRead) {
-      块 = null
+  for (var i = 0; i - 候选.length < 0; i += 1) {
+    var 行号 = 候选[i].行
+    var 状 = 控件状态(sheet, 行号, 行偏移)
+    if (状.ok && (状.判.indexOf('勾') + 1) && !(状.判.indexOf('未知') + 1)) {
+      if (抽查.length - 抽查上限 < 0) 抽查.push({ 行: 行号, 值: 状.值, 说明: '已勾上' })
+    } else {
+      不符 += 1
+      if (!首条差) 首条差 = '第' + String(行号) + '行 候选没勾上（实际[' + 状.值 + '] ' + 状.判 + '）'
     }
-    if (块) {
-      var 值表 = 规整一维(块)
-      for (var j = 0; j - 值表.length < 0; j += 1) {
-        var 行号 = 行 + j
-        var 快照项 = F快照[String(行号)]
-        if (!快照项) continue
-        var 实际 = 值表[j]
-        var 实际文 = toText(实际)
-        if (候选行集[String(行号)]) {
-          if (是已完结(实际)) {
-            if (抽查.length - 抽查上限 < 0) 抽查.push({ 行: 行号, 值: 实际文, 说明: '候选已勾上' })
-          } else {
-            不符 = 不符 + 1
-            if (!首条差) 首条差 = '第' + String(行号) + '行 候选没勾上（实际[' + 实际文 + ']）'
-          }
-        } else {
-          if (!同文(实际文, 快照项.文)) {
-            不符 = 不符 + 1
-            if (!首条差) 首条差 = '第' + String(行号) + '行 非候选格被动了（写前[' + 快照项.文 + '] 写后[' + 实际文 + ']）'
-          }
-        }
-      }
-    }
-    行 = 结束行 + 1
   }
   return { 不符: 不符, 首条差: 首条差, 抽查: 抽查 }
 }
@@ -331,25 +320,9 @@ function 解析参数(rawArgument) {
   }
 }
 
-function 基础信息(头, 末行, 探测) {
-  return {
-    scriptVersion: scriptVersion,
-    sheet: 默认子表,
-    f1Header: 头,
-    lastRow: 末行,
-    勾选写法: 探测.类型,
-    已有已完结值: 探测.原值,
-    candidates: [],
-    ticked: [],
-    skipped: {},
-    readBack: []
-  }
-}
-
-// 只读诊断（v2 新增）：逐个试读不同范围，把「能不能读、返回什么形态」如实报出来。
-// 背景：2026-10-07 探针发现 F2:F2001 与 A2:R2001 读不到 ☑、扫描为 0；此模式用于定位原因（不改任何数据）。
+// 只读诊断：逐个试读不同范围，把「能不能读、返回什么形态」如实报出来。
 function 调试诊断(sheet) {
-  var 范围表 = ['F1', 'F2', 'F3', 'F2060', 'F2119', 'F2:F3', 'F2:F6', 'F2:F2001', 'A2:R2', 'A2:R6', 'A2:R101', 'A2:R501', 'A2:R2001', 'A2:Q2001', 'A2:C6', 'N2:R6', 'D2:E6', 'G2:R6', 'F2200']
+  var 范围表 = ['F1', 'F2', 'F3', 'F2060', 'F2119', 'F2:F3', 'F2:F6', 'F2:F2001', 'A2:R2', 'A2:R6', 'A2:R101', 'A2:R501', 'A2:R2001', 'A2:C6', 'A2:E6', 'G2:R6', 'N2:R6', 'D2:E6']
   var 结果 = []
   for (var i = 0; i - 范围表.length < 0; i += 1) {
     var 范围 = 范围表[i]
@@ -372,7 +345,7 @@ function 调试诊断(sheet) {
           if (首 instanceof Array) {
             项.首格 = JSON.stringify(首).slice(0, 140)
           } else {
-            项.首格 = JSON.stringify(首) ? JSON.stringify(首).slice(0, 140) : String(首).slice(0, 80)
+            项.首格 = String(首).slice(0, 80)
           }
         } catch (错误首) { 项.首格 = '读不到：' + String(错误首).slice(0, 80) }
       } else {
@@ -403,55 +376,68 @@ function main() {
   if (!contains(头, '完结')) {
     return { scriptVersion: scriptVersion, mode: 'error', sheet: 默认子表, f1Header: 头, headerOk: false, message: 'F1 表头不是「是否已完结」（读到：' + 头 + '），拒绝动手（防表结构变了误伤）' }
   }
-
   var 末行 = 找数据末行(sheet)
-  if (参数.debug) {
-    return { scriptVersion: scriptVersion, mode: 'debug', sheet: 默认子表, f1Header: 头, lastRow: 末行, debug: 调试诊断(sheet) }
-  }
-  var 探测 = 探测已完结值(sheet, 末行)
-  var 基础 = 基础信息(头, 末行, 探测)
-  基础.headerOk = true
+  var 控件 = 探控件(sheet)
 
   if (参数.probe) {
-    基础.mode = 'probe'
-    基础.scanned = 0
-    基础.message = '只读探针：数据末行 ' + String(末行) + '，写值形态 ' + 探测.类型
-    return 基础
+    return {
+      scriptVersion: scriptVersion, mode: 'probe', sheet: 默认子表, f1Header: 头, headerOk: true,
+      lastRow: 末行, 控件: 控件, scanned: 0, candidates: [], ticked: [], skipped: {}, readBack: [],
+      message: '只读探针：数据末行 ' + String(末行) + '，Shapes ' + String(控件.数) + ' 个，有序=' + String(控件.有序) + '，行偏移=' + String(控件.行偏移)
+    }
+  }
+  if (参数.debug) {
+    return {
+      scriptVersion: scriptVersion, mode: 'debug', sheet: 默认子表, f1Header: 头, headerOk: true,
+      lastRow: 末行, 控件: 控件, F读探针: 调试诊断(sheet)
+    }
   }
   if (!末行) {
-    基础.mode = 'dryRun'
-    基础.scanned = 0
-    基础.message = 'A/C 列没读到数据行，拒绝执行'
-    return 基础
+    return { scriptVersion: scriptVersion, mode: 'dryRun', sheet: 默认子表, f1Header: 头, headerOk: true, lastRow: 0, 控件: 控件, scanned: 0, candidates: [], message: 'A/C 列没读到数据行，拒绝执行' }
+  }
+  if (!控件.数) {
+    return { scriptVersion: scriptVersion, mode: 'error', sheet: 默认子表, f1Header: 头, headerOk: true, lastRow: 末行, 控件: 控件, message: '没找到复选框控件（Shapes 为空或读不到）：' + 控件.异常 }
+  }
+  if (!控件.有序) {
+    return { scriptVersion: scriptVersion, mode: 'error', sheet: 默认子表, f1Header: 头, headerOk: true, lastRow: 末行, 控件: 控件, message: '复选框控件不是按行有序（取样验证失败），先别写：请把 debug 结果发给木婉清看' }
   }
 
-  var 扫描结果 = 扫描候选(sheet, 末行)
-  基础.scanned = 扫描结果.数据行
-  基础.candidates = 扫描结果.候选
-  基础.skipped = { 已完成: 扫描结果.已完结, 无渠道状态: 扫描结果.无渠道, 空行: 扫描结果.空行 }
+  var 扫描结果 = 扫候选(sheet, 末行, 控件.行偏移)
+  var 基础 = {
+    scriptVersion: scriptVersion, sheet: 默认子表, f1Header: 头, headerOk: true, lastRow: 末行,
+    控件: { 数: 控件.数, 有序: 控件.有序, 行偏移: 控件.行偏移, 取样: 控件.取样 },
+    scanned: 扫描结果.数据行,
+    candidates: 扫描结果.候选,
+    skipped: { 已勾过: 扫描结果.已勾数, 无渠道状态: 扫描结果.无渠道, 空行: 扫描结果.空行, 控件读不到: 扫描结果.读不到数 },
+    readBack: []
+  }
+  if (扫描结果.读异常.length) 基础.读异常 = 扫描结果.读异常.slice(0, 20)
 
   if (参数.dryRun || !参数.allowWrite) {
     基础.mode = 'dryRun'
     基础.message = 参数.allowWrite ? 'dryRun:true，未写入' : '缺少 allowWrite:true，只回候选清单，未写入'
     基础.ticked = []
-    基础.readBack = []
     基础.mismatched = 0
     基础.firstMismatch = ''
     return 基础
   }
 
-  var 写入 = 执行勾选(sheet, 扫描结果.候选, 探测.写值)
-  var 候选行集 = {}
-  for (var i = 0; i - 扫描结果.候选.length < 0; i += 1) 候选行集[String(扫描结果.候选[i].行)] = true
-  var 核验 = 回读核验(sheet, 末行, 候选行集, 扫描结果.F快照)
-
+  // ===== 写入 =====
+  var 已写 = []
+  var 失败 = []
+  for (var i = 0; i - 扫描结果.候选.length < 0; i += 1) {
+    var 行号 = 扫描结果.候选[i].行
+    var 写 = 勾选控件(sheet, 行号, 控件.行偏移)
+    if (写.ok) 已写.push(行号)
+    else 失败.push(行号 + '：' + 写.错)
+  }
+  var 核验 = 回读核验(sheet, 扫描结果.候选, 控件.行偏移)
   基础.mode = 'tick'
   基础.wrote = true
-  基础.ticked = 写入.已写行
-  基础.written = 写入.已写行.length
-  基础.failed = 写入.失败行.length
-  基础.failedRows = 写入.失败行
-  基础.candidates = 扫描结果.候选
+  基础.ticked = 已写
+  基础.written = 已写.length
+  基础.failed = 失败.length
+  基础.failedRows = 失败.slice(0, 20)
   基础.readBack = 核验.抽查
   基础.mismatched = 核验.不符
   基础.firstMismatch = 核验.首条差
