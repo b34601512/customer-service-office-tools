@@ -55,6 +55,27 @@ const PASSWORD_FILE = path.join(CONF_DIR, "备份密码.txt");
 const PASSWORD_FILE_POSIX = PASSWORD_FILE.replace(/\\/g, "/");
 const NODE_EXE = process.execPath;
 
+// 计划任务环境没有 Git 的 PATH（openssl/tar 在 Git\usr\bin，不在系统 PATH）——用绝对路径兜底，避免 ENOENT
+function resolveBin(name, candidates) {
+  for (const p of candidates) {
+    try {
+      if (fs.existsSync(p)) return p;
+    } catch {
+      /* 忽略 */
+    }
+  }
+  return name; // 回退到 PATH 查找
+}
+const GIT_ROOT = "C:\\Program Files\\Git";
+const TAR_BIN = resolveBin("tar", [
+  path.join(GIT_ROOT, "usr", "bin", "tar.exe"),
+  path.join(GIT_ROOT, "mingw64", "bin", "tar.exe")
+]);
+const OPENSSL_BIN = resolveBin("openssl", [
+  path.join(GIT_ROOT, "usr", "bin", "openssl.exe"),
+  path.join(GIT_ROOT, "mingw64", "bin", "openssl.exe")
+]);
+
 const PACKAGES_DIR = "packages";
 const KEEP_PACKAGES = 3;
 const PACKAGE_RE = /^packages\/archive-(\d{8})-(\d{6})-([0-9a-f]{16})\.tar\.enc$/;
@@ -217,7 +238,7 @@ function buildPackage(relFiles, shortHash) {
       fs.copyFileSync(path.join(ROOT, rel), dst);
     }
 
-    let r = spawnSync("tar", ["-cf", "archive.tar", "-C", "payload", "."], {
+    let r = spawnSync(TAR_BIN, ["-cf", "archive.tar", "-C", "payload", "."], {
       cwd: tmp,
       encoding: "utf8",
       windowsHide: true,
@@ -228,7 +249,7 @@ function buildPackage(relFiles, shortHash) {
     }
 
     r = spawnSync(
-      "openssl",
+      OPENSSL_BIN,
       ["enc", "-aes-256-cbc", "-pbkdf2", "-salt", "-in", "archive.tar", "-out", "archive.tar.enc", "-pass", `file:${PASSWORD_FILE_POSIX}`],
       { cwd: tmp, encoding: "utf8", windowsHide: true, timeout: 10 * 60 * 1000 }
     );
