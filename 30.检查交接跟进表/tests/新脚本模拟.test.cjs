@@ -2,11 +2,11 @@
 //
 // 覆盖：
 //  A. 粘贴安全规则（照 20号/22号 实测结论：不许成双等号、末行顶层 return main()、本地语法可解析、无箭头函数/模板字符串）；
-//  B. K列清洗：去空白（前后空格/全角空格/TAB/零宽/BOM/中间空格）、空与 / - — 跳过、公式格跳过、
-//     dryRun 不写、allowWrite 只写有变化的格、其它列不碰、写完回读 mismatched=0；
-//  C. 勾选已完结（v2026-10-07.2 复选框控件版）：Shapes 取样验证按行有序、ControlFormat.Value 判勾/写勾、
-//     A:E + G:R 分开读（避开 F 控件区）、dryRun 只回候选、只勾不取消、#N/A/0// 不算真状态、模板空行不算数据行、
-//     表头不对/无控件/无序 都拒绝动手、写完回读 mismatched=0。
+//  B. K列清洗：去空白、空与 / - — 跳过、公式格跳过、dryRun 不写、allowWrite 只写有变化的格、其它列不碰、回读 mismatched=0；
+//  C. 勾选已完结（v2026-10-07.4 单元格复选框版）：
+//     F 格 = 数字 1/0（勾/未勾）；catch 绝不碰错误对象（毒错误回归测试——2026-10-07 实测崩溃根因）；
+//     试 模式各测；自检候选（渠道状态 ∩ F 未勾）；指定行候选（复核）；allowWrite 只写候选、只勾不取消、回读 0 不符；
+//     表头不对拒绝动手。
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -19,14 +19,14 @@ const K全文 = fs.readFileSync(K路径, 'utf8');
 const 勾选全文 = fs.readFileSync(勾选路径, 'utf8');
 const 去注释 = (text) => text.split(/\r?\n/).map((line) => line.replace(/\/\/.*$/, '')).join('\n');
 
-// ---------- mock 金山表格运行时（Range + Shapes；记录每次单格写入，方便断言「别碰不该碰的」） ----------
-// 复选框表：{ 数, 行偏移, 状态: { 行号: true/false/1/0/'TRUE'/'未知文字'… }, 逆序?: true }
-function 造簿(初始格子, 公式格, 复选框表) {
+// ---------- mock 金山表格运行时（Range；记录写日志；支持毒错误范围模拟引擎读崩） ----------
+// 毒范围：读这些范围时抛一个「message 取值就二次抛错」的错误对象 —— 脚本的 catch 若不碰错误对象就能活下来。
+function 造簿(初始格子, 公式格, 毒范围) {
   const 格子 = { ...初始格子 };
   const 公式 = new Set(公式格 || []);
+  const 毒 = new Set(毒范围 || []);
   const 写日志 = [];
   const 格式日志 = [];
-  const 勾写日志 = [];
   const 列号 = (s) => { let n = 0; for (const ch of s) n = n * 26 + (ch.charCodeAt(0) - 64); return n; };
   const 列名 = (n) => { let s = ''; while (n > 0) { const r = (n - 1) % 26; s = String.fromCharCode(65 + r) + s; n = Math.floor((n - 1) / 26); } return s; };
   function 解析(addr) {
@@ -34,6 +34,13 @@ function 造簿(初始格子, 公式格, 复选框表) {
     if (!m) throw new Error('mock 无法解析范围: ' + addr);
     return { 列1: m[1], 行1: Number(m[2]), 列2: m[3] || m[1], 行2: m[4] ? Number(m[4]) : Number(m[2]) };
   }
+  const 毒错误 = () => {
+    const o = {};
+    Object.defineProperty(o, 'message', { get() { throw new Error('毒错误：不许碰 .message'); } });
+    Object.defineProperty(o, 'toString', { get() { throw new Error('毒错误：不许碰 toString'); } });
+    return o;
+  };
+  const 显示文本 = (v) => (v === 1 ? '☑' : v === 0 ? '☐' : v === undefined || v === null ? '' : String(v));
   function 范围(addr) {
     const r = 解析(addr);
     const 单格 = (r.行1 === r.行2 && r.列1 === r.列2);
@@ -43,6 +50,7 @@ function 造簿(初始格子, 公式格, 复选框表) {
     };
     return {
       get Value2() {
+        if (毒.has(addr)) throw 毒错误();
         if (单格) return 格子[addr] ?? '';
         const 行数组 = [];
         for (let 行 = r.行1; 行 <= r.行2; 行 += 1) {
@@ -63,42 +71,27 @@ function 造簿(初始格子, 公式格, 复选框表) {
         }
         遍历((a) => { 格子[a] = 值; 写日志.push({ 地址: a, 值 }); });
       },
+      get Text() {
+        if (毒.has(addr)) throw 毒错误();
+        return 显示文本(格子[addr]);
+      },
       get HasFormula() { return 单格 ? 公式.has(addr) : false; },
       set NumberFormatLocal(值) { if (单格) 格式日志.push({ 地址: addr, 格式: 值 }); },
       set NumberFormat(值) { if (单格) 格式日志.push({ 地址: addr, 格式: 值 }); },
       ClearContents() { 遍历((a) => { delete 格子[a]; }); }
     };
   }
-  const 勾表 = 复选框表 || { 数: 0, 行偏移: 1, 状态: {} };
-  const Shapes = {
-    get Count() { return 勾表.数; },
-    Item(i) {
-      if (i - 1 < 0 || i - 勾表.数 > 0) throw new Error('mock: 控件序号越界 ' + i);
-      const 行 = 勾表.逆序 ? (勾表.数 - i + 1) : (i + 勾表.行偏移);
-      return {
-        Name: '复选框 ' + i,
-        Type: 8,
-        FormControlType: 1,
-        ControlFormat: {
-          get Value() { return Object.prototype.hasOwnProperty.call(勾表.状态, 行) ? 勾表.状态[行] : false; },
-          set Value(v) { 勾表.状态[行] = v; 勾写日志.push({ 行, 值: v }); }
-        },
-        TopLeftCell: { Row: 行 }
-      };
-    }
-  };
-  const 表 = { Range: 范围, Shapes };
+  const 表 = { Range: 范围 };
   return {
     格子: () => 格子,
     写日志: () => 写日志,
     格式日志: () => 格式日志,
-    勾写日志: () => 勾写日志,
     Application: { Worksheets: { Item: (_名) => 表 } }
   };
 }
 
-function 跑(全文, argv, 初始格子, 公式格, 复选框表) {
-  const 簿 = 造簿(初始格子, 公式格, 复选框表);
+function 跑(全文, argv, 初始格子, 公式格, 毒范围) {
+  const 簿 = 造簿(初始格子, 公式格, 毒范围);
   const 函数体 = new Function('Context', 'Application', 全文); // 顶层 return main() 在 Function 体内合法
   return { 结果: 函数体({ argv }, 簿.Application), 簿 };
 }
@@ -191,120 +184,144 @@ test('K清洗·安全闸门：K1 表头不对 → 拒绝写入', () => {
   assert.equal(簿.写日志().length, 0);
 });
 
-// ================= C. 勾选已完结（复选框控件版） =================
+// ================= C. 勾选已完结（单元格复选框版） =================
+// F 格：1=勾 ☑，0=未勾 ☐（网页实测的存储形态）。
 const 表头行 = {
   A1: '登记时间', B1: '店铺名称', C1: 'ID/订单编号', F1: '是否已完结',
   N1: '湖南', O1: '京东仓', P1: '撕单', Q1: '理赔', R1: '异常件表'
 };
-// 6 个真实数据行（2~8，第 7 行是模板空行）+ 复选框状态：行2 已勾；行3/4/6/8 未勾有状态；行5 未勾但无真状态
+// 6 个真实数据行（2~8，第 7 行是模板空行）；行2 已勾；行3/4/6/8 未勾有状态；行5 未勾但无真状态
 function 造交接() {
-  const 格子 = {
+  return {
     ...表头行,
-    A2: '2026/1/1', C2: '订单1', N2: '已退款',
-    A3: '2026/1/2', C3: '订单2', N3: '平台已退款',
-    A4: '2026/1/3', C4: '订单3', O4: '已退回京东仓',
-    A5: '2026/1/4', C5: '订单4', N5: '#N/A', O5: '0', P5: '/', R5: '#REF!',
-    A6: '2026/1/5', C6: '订单5', P6: '理赔中',
-    A8: '2026/1/6', C8: '订单6', Q8: '12.49'
+    A2: '2026/1/1', C2: '订单1', F2: 1, N2: '已退款',
+    A3: '2026/1/2', C3: '订单2', F3: 0, N3: '平台已退款',
+    A4: '2026/1/3', C4: '订单3', F4: 0, O4: '已退回京东仓',
+    A5: '2026/1/4', C5: '订单4', F5: 0, N5: '#N/A', O5: '0', P5: '/', R5: '#REF!',
+    A6: '2026/1/5', C6: '订单5', F6: 0, P6: '理赔中',
+    F7: 0,
+    A8: '2026/1/6', C8: '订单6', F8: 0, Q8: '12.49'
   };
-  const 复选框表 = { 数: 9999, 行偏移: 1, 状态: { 2: true, 3: false, 4: false, 5: false, 6: false, 7: false, 8: false } };
-  return { 格子, 复选框表 };
 }
 
-test('勾选·probe：报数据末行 + Shapes 数 + 有序/行偏移，不写', () => {
-  const { 格子, 复选框表 } = 造交接();
-  const { 结果, 簿 } = 跑(勾选全文, { probe: true }, 格子, [], 复选框表);
+test('勾选·probe：报数据末行，不写', () => {
+  const { 结果, 簿 } = 跑(勾选全文, { probe: true }, 造交接());
   assert.equal(结果.mode, 'probe');
   assert.equal(结果.lastRow, 8);
-  assert.equal(结果.控件.数, 9999);
-  assert.equal(结果.控件.有序, true);
-  assert.equal(结果.控件.行偏移, 1);
+  assert.equal(结果.scriptVersion, '2026-10-07.4');
   assert.equal(簿.写日志().length, 0);
-  assert.equal(簿.勾写日志().length, 0);
 });
 
-test('勾选·debug：回控件取样 + F 读探针（只读）', () => {
-  const { 格子, 复选框表 } = 造交接();
-  const { 结果, 簿 } = 跑(勾选全文, { debug: true }, 格子, [], 复选框表);
-  assert.equal(结果.mode, 'debug');
-  assert.ok(Array.isArray(结果.F读探针));
-  assert.ok(结果.F读探针.length > 10);
+test('勾选·试「单格读」：F2 判勾（值1）、F7 判空（值0），一字节不写', () => {
+  const { 结果, 簿 } = 跑(勾选全文, { 试: '单格读' }, 造交接());
+  assert.equal(结果.mode, '试');
+  assert.equal(结果.试, '单格读');
+  const F2 = 结果.明细.find((x) => x.行 === 2);
+  const F3 = 结果.明细.find((x) => x.行 === 3);
+  assert.equal(F2.ok, true);
+  assert.equal(F2.值, '1');
+  assert.equal(F2.判, '勾');
+  assert.equal(F2.文本, '☑');
+  assert.equal(F3.值, '0');
+  assert.equal(F3.判, '空');
+  assert.equal(F3.文本, '☐');
   assert.equal(簿.写日志().length, 0);
-  assert.equal(簿.勾写日志().length, 0);
 });
 
-test('勾选·dryRun：只回「有状态且没勾」的候选，一字节不写', () => {
-  const { 格子, 复选框表 } = 造交接();
-  const { 结果, 簿 } = 跑(勾选全文, { dryRun: true }, 格子, [], 复选框表);
+test('勾选·试「F块读」：分块可读、长度对', () => {
+  const { 结果, 簿 } = 跑(勾选全文, { 试: 'F块读' }, 造交接());
+  const 首 = 结果.明细.find((x) => x.范围 === 'F2:F51');
+  assert.equal(首.ok, true);
+  assert.equal(首.长度, 50, 'F2:F51 共 50 行（超数据区也照样返回，末行由调用方按 lastRow 截）');
+  assert.equal(簿.写日志().length, 0);
+});
+
+test('勾选·试「未勾行」：找出所有 F=0 的行', () => {
+  const { 结果 } = 跑(勾选全文, { 试: '未勾行' }, 造交接());
+  assert.equal(结果.末行, 8);
+  assert.equal(结果.块错, 0);
+  assert.deepEqual(结果.未勾样例, [3, 4, 5, 6, 7, 8]);
+  assert.equal(结果.未勾数, 6);
+});
+
+test('勾选·试「写试」：写 1 → 回读勾 → 还原回 0（净变化为零）', () => {
+  const { 结果, 簿 } = 跑(勾选全文, { 试: '写试', 写试行: 3000 }, 造交接());
+  assert.equal(结果.试行, 3000);
+  const 写前 = 结果.步骤.find((x) => x.步 === '写前');
+  const 写后 = 结果.步骤.find((x) => x.步 === '写后');
+  const 还原后 = 结果.步骤.find((x) => x.步 === '还原后');
+  assert.equal(写前.判, '空');
+  assert.equal(写后.判, '勾');
+  assert.equal(写后.值, '1');
+  assert.equal(还原后.判, '空');
+  assert.equal(还原后.值, '0');
+  assert.deepEqual(簿.写日志().map((x) => [x.地址, x.值]), [['F3000', 1], ['F3000', 0]], '净变化为零');
+});
+
+test('勾选·dryRun（自检）：候选 = 渠道有真状态 且 F 未勾', () => {
+  const { 结果, 簿 } = 跑(勾选全文, { dryRun: true }, 造交接());
   assert.equal(结果.mode, 'dryRun');
   assert.equal(结果.headerOk, true);
   assert.equal(簿.写日志().length, 0);
-  assert.equal(簿.勾写日志().length, 0);
   assert.equal(结果.scanned, 6, '真实数据行 6 行');
   assert.deepEqual(结果.candidates.map((c) => c.行), [3, 4, 6, 8]);
   assert.deepEqual(结果.candidates.map((c) => c.单号), ['订单2', '订单3', '订单5', '订单6']);
   assert.deepEqual(结果.candidates[0].命中, [{ 渠道: '湖南', 值: '平台已退款' }]);
   assert.deepEqual(结果.candidates[1].命中, [{ 渠道: '京东仓', 值: '已退回京东仓' }]);
   assert.deepEqual(结果.candidates[3].命中, [{ 渠道: '理赔', 值: '12.49' }]);
-  assert.deepEqual(结果.skipped, { 已勾过: 1, 无渠道状态: 1, 空行: 1, 控件读不到: 0 });
+  assert.equal(结果.skipped.未勾数, 6);
+  assert.equal(结果.skipped.空行, 1);
   assert.deepEqual(结果.ticked, []);
 });
 
+test('勾选·dryRun（指定行）：复核后只留该勾的，已勾/无状态的跳过', () => {
+  const { 结果, 簿 } = 跑(勾选全文, { dryRun: true, 候选行: [2, 3, 5, 8] }, 造交接());
+  assert.deepEqual(结果.candidates.map((c) => c.行), [3, 8]);
+  assert.deepEqual(结果.skipped.指定跳过, [
+    { 行: 2, 因: 'F 已经是勾' },
+    { 行: 5, 因: '渠道列没有真状态' }
+  ]);
+  assert.equal(簿.写日志().length, 0);
+});
+
 test('勾选·allowWrite：只勾候选行、只勾不取消、回读 0 不符', () => {
-  const { 格子, 复选框表 } = 造交接();
-  const { 结果, 簿 } = 跑(勾选全文, { allowWrite: true }, 格子, [], 复选框表);
+  const { 结果, 簿 } = 跑(勾选全文, { allowWrite: true }, 造交接());
   assert.equal(结果.mode, 'tick');
   assert.equal(结果.wrote, true);
   assert.deepEqual(结果.ticked, [3, 4, 6, 8]);
   assert.equal(结果.written, 4);
   assert.equal(结果.mismatched, 0, 结果.firstMismatch);
-  assert.deepEqual(簿.勾写日志().map((x) => x.行), [3, 4, 6, 8], '只有候选行控件被写');
-  assert.equal(复选框表.状态[2], true, '已勾过的不许重写/不许取消');
-  assert.equal(复选框表.状态[3], true);
-  assert.equal(复选框表.状态[4], true);
-  assert.equal(复选框表.状态[6], true);
-  assert.equal(复选框表.状态[8], true);
-  assert.equal(复选框表.状态[5], false, '无真状态的不许勾');
-  assert.equal(复选框表.状态[7], false, '模板空行不许勾');
+  assert.equal(结果.failed, 0);
+  const 格子 = 簿.格子();
+  assert.equal(格子.F2, 1, '已勾的不许重写/不许取消');
+  assert.equal(格子.F3, 1);
+  assert.equal(格子.F4, 1);
+  assert.equal(格子.F6, 1);
+  assert.equal(格子.F8, 1);
+  assert.equal(格子.F5, 0, '无真状态的不许勾');
+  assert.equal(格子.F7, 0, '模板空行不许勾');
+  assert.deepEqual(簿.写日志().map((x) => x.地址), ['F3', 'F4', 'F6', 'F8'], '只有候选行被写');
   assert.ok(结果.readBack.every((x) => x.说明.indexOf('已勾上') + 1));
 });
 
-test('勾选·控件值形态：1 算已勾；0 / -4146 / 未知文字 算没勾 → 候选', () => {
-  const { 格子, 复选框表 } = 造交接();
-  复选框表.状态[2] = 1;          // 已勾（数字 1）
-  复选框表.状态[3] = 0;          // 没勾
-  复选框表.状态[4] = '-4146';    // 没勾（xlOff）
-  复选框表.状态[6] = '奇怪内容';  // 未知 → 当作没勾，候选
-  const { 结果, 簿 } = 跑(勾选全文, { dryRun: true }, 格子, [], 复选框表);
-  assert.deepEqual(结果.candidates.map((c) => c.行), [3, 4, 6, 8]);
-  assert.equal(结果.skipped.已勾过, 1);
-  assert.equal(结果.candidates[2].现判, '未知[奇怪内容]');
-  assert.equal(簿.勾写日志().length, 0);
+test('勾选·allowWrite（指定行）：只写指定行', () => {
+  const { 结果, 簿 } = 跑(勾选全文, { allowWrite: true, 候选行: [3] }, 造交接());
+  assert.deepEqual(结果.ticked, [3]);
+  assert.equal(簿.写日志().length, 1);
+  assert.deepEqual(簿.写日志().map((x) => x.地址), ['F3']);
 });
 
-test('勾选·安全闸门：控件无序 → 拒绝动手', () => {
-  const { 格子, 复选框表 } = 造交接();
-  复选框表.逆序 = true;
-  const { 结果, 簿 } = 跑(勾选全文, { allowWrite: true }, 格子, [], 复选框表);
-  assert.equal(结果.mode, 'error');
-  assert.match(结果.message, /有序/);
-  assert.equal(簿.勾写日志().length, 0);
-  assert.equal(簿.写日志().length, 0);
-});
-
-test('勾选·安全闸门：没有 Shapes → 拒绝动手', () => {
-  const { 格子 } = 造交接();
-  const { 结果, 簿 } = 跑(勾选全文, { allowWrite: true }, 格子, [], { 数: 0, 行偏移: 1, 状态: {} });
-  assert.equal(结果.mode, 'error');
-  assert.match(结果.message, /复选框控件/);
+test('勾选·毒错误回归：读块抛「message 一碰就炸」的错误 → 脚本不许死，要报读异常', () => {
+  const { 结果, 簿 } = 跑(勾选全文, { dryRun: true }, 造交接(), [], ['A2:E8']);
+  assert.equal(结果.mode, 'dryRun');
+  assert.deepEqual(结果.candidates, [], '渠道扫描块读不到 → 没有候选（不许当没状态）');
+  assert.deepEqual(结果.读异常, ['2-8']);
   assert.equal(簿.写日志().length, 0);
 });
 
 test('勾选·安全闸门：F1 表头不对 → 拒绝动手', () => {
-  const { 格子, 复选框表 } = 造交接();
-  const { 结果, 簿 } = 跑(勾选全文, { allowWrite: true }, { ...格子, F1: '别的表头' }, [], 复选框表);
+  const { 结果, 簿 } = 跑(勾选全文, { allowWrite: true }, { ...造交接(), F1: '别的表头' });
   assert.equal(结果.mode, 'error');
   assert.equal(结果.headerOk, false);
-  assert.equal(簿.勾写日志().length, 0);
   assert.equal(簿.写日志().length, 0);
 });
