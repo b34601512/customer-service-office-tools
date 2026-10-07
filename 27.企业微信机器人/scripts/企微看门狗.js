@@ -27,6 +27,7 @@ const os = require("os");
 const { spawnSync } = require("child_process");
 
 const {
+  bootRecoveryOnly,
   CONDITION_KEYS,
   DEFAULT_CONFIG,
   evaluate,
@@ -391,7 +392,7 @@ async function main() {
     const { daemon, log: connLog } = readDaemon(stateDir);
     const inboxText = readTail(path.join(stateDir, "inbox.jsonl"), 512 * 1024);
     const messages = parseInbox(inboxText);
-    const snapshot = { daemon, log: connLog, messages };
+    const snapshot = { daemon, log: connLog, messages, sys: { uptimeSec: os.uptime() } };
     let result = evaluate(snapshot, prev, cfg, nowMs);
 
     // 服务端对账（2026-10-07，只在静默类条件命中时查，省调用）：
@@ -414,6 +415,7 @@ async function main() {
     }
     result.recon = recon;
     let restartNote = "";
+    let restartVerified = false;
 
     if (result.restart.needed && !args.dryRun) {
       if (args.noRestart) {
@@ -426,6 +428,7 @@ async function main() {
         log(`重启守护（原因：${result.restart.reason}）`);
         const started = startDaemon();
         const v = started ? await verifyRestart(stateDir, cfg) : { ok: false, pid: null };
+        if (v.ok) restartVerified = true;
         restartNote = v.ok
           ? `已自动重启守护并确认恢复（pid ${v.pid}）`
           : `已尝试自动重启，${cfg.restartVerifySec} 秒内仍未见到认证成功`;
@@ -437,6 +440,13 @@ async function main() {
     }
 
     log(`巡检 ok=${result.ok} 守护=${daemon.alive ? "在" : "不在"} 群静默=${result.silences.group}min 单聊静默=${result.silences.single}min 告警=${result.toAlert.map((a) => a.key).join(",") || "无"} 恢复=${result.toResolve.map((x) => x.key).join(",") || "无"}`);
+
+    // 开机恢复降噪（2026-10-08）：开机窗口内守护缺席=随关机停止，非故障；已自动拉起就不占板面。
+    if (!args.dryRun && bootRecoveryOnly(result.toAlert, restartVerified)) {
+      log(`开机恢复：守护缺席发生在开机 ${Math.round(os.uptime() / 60)} 分钟内，已自动拉起（按开机降噪，不占板面）`);
+      delete result.nextState.active.daemon; // 防下一轮补发 [已解决]
+      result.toAlert = [];
+    }
 
     if (!args.dryRun && !args.noBoard) {
       flushQueue(stateDir, cfg, log);

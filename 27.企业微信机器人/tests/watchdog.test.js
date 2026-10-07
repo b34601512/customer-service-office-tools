@@ -10,6 +10,7 @@ const {
   parseConnectionEvents,
   parseInbox,
   evaluate,
+  bootRecoveryOnly,
   formatJst
 } = require("../src/watchdog");
 
@@ -24,7 +25,7 @@ function emptyState() {
 }
 
 function snapshot(opts = {}) {
-  return {
+  const snap = {
     daemon: { alive: opts.alive !== false, pid: opts.alive === false ? null : 1234, reason: opts.reason || "守护进程不在" },
     log: {
       lastAuthAt: "lastAuthAt" in opts ? opts.lastAuthAt : NOON - 2 * MIN,
@@ -37,6 +38,9 @@ function snapshot(opts = {}) {
       single: { count: opts.singleLastAt ? 1 : 0, lastAt: opts.singleLastAt || null }
     }
   };
+  // 开机恢复降噪：不传 uptimeSec 则不带 sys，保持既有用例（不涉及开机窗口）不变。
+  if (opts.uptimeSec !== undefined) snap.sys = { uptimeSec: opts.uptimeSec };
+  return snap;
 }
 
 test("群静默但单聊正常：连续 2 次后报警（单聊不掩蔽群）", () => {
@@ -283,4 +287,41 @@ test("evaluate 不传 recon：维持原静默口径（向后兼容）", () => {
   const snap = snapshot({ groupLastAt: NOON - 300 * MIN, singleLastAt: NOON - 200 * MIN });
   const r = evaluate(snap, emptyState(), cfg, NOON);
   assert.equal(r.conditions.both.hit, true);
+});
+
+// ================= 开机恢复降噪（2026-10-08） =================
+// 背景：过夜关机 → 开机后看门狗发现守护随关机停止（pid 文件残留），自动重启并确认恢复；
+// 这属「开机恢复」而非故障，不应占用留言板（真故障/重启失败仍照旧报）。
+
+test("开机窗口内守护缺席：daemon 告警带 boot 标记", () => {
+  const snap = snapshot({ alive: false, uptimeSec: 60 });
+  const r = evaluate(snap, emptyState(), cfg, NOON);
+  const a = r.toAlert.find((x) => x.key === "daemon");
+  assert.ok(a, "守护缺席应出 daemon 告警");
+  assert.equal(a.boot, true);
+});
+
+test("开机 40 分钟后守护缺席：daemon 项不带 boot 真值（照旧报故障）", () => {
+  const snap = snapshot({ alive: false, uptimeSec: 40 * 60 });
+  const r = evaluate(snap, emptyState(), cfg, NOON);
+  const a = r.toAlert.find((x) => x.key === "daemon");
+  assert.ok(a);
+  assert.ok(!a.boot, "超出默认开机窗口（30 分钟）不再标 boot");
+});
+
+test("bootRecoveryOnly：唯一 daemon+boot 且重启已验证恢复才为 true", () => {
+  const daemonBoot = { key: "daemon", detail: "x", strikes: 1, boot: true };
+  assert.equal(bootRecoveryOnly([daemonBoot], true), true);
+  assert.equal(bootRecoveryOnly([daemonBoot], false), false, "未确认恢复不降噪");
+  assert.equal(bootRecoveryOnly([daemonBoot, { key: "connection", detail: "x", strikes: 1, boot: false }], true), false, "混入连接告警不降噪");
+  assert.equal(bootRecoveryOnly([{ key: "daemon", detail: "x", strikes: 1, boot: false }], true), false, "非开机窗口不降噪");
+  assert.equal(bootRecoveryOnly([], true), false, "没有告警谈不上降噪");
+});
+
+test("bootGraceMin 可配置：1 分钟窗口外不再带 boot 标记", () => {
+  const tight = mergeConfig(DEFAULT_CONFIG, { bootGraceMin: 1 });
+  const inWin = evaluate(snapshot({ alive: false, uptimeSec: 30 }), emptyState(), tight, NOON);
+  assert.equal(inWin.toAlert.find((x) => x.key === "daemon").boot, true);
+  const outWin = evaluate(snapshot({ alive: false, uptimeSec: 2 * 60 }), emptyState(), tight, NOON);
+  assert.ok(!outWin.toAlert.find((x) => x.key === "daemon").boot);
 });

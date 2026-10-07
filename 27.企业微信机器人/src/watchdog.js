@@ -17,6 +17,8 @@
  *   反过来"单聊静默"要求"群聊最近有消息"；两边都静默超阈值则由 both 条件兜底。
  * - 消息类条件连续 N 次（默认 2 次；看门狗 5 分钟一跑 ≈ 10 分钟）命中才报；
  *   "守护进程不在 / 断线未恢复"是确定性故障，1 次即报。
+ * - 开机 30 分钟内（bootGraceMin）守护缺席 = 随关机停止的正常现象，不等于故障：daemon 告警带 boot 标记，
+ *   由调用方配合"重启已验证恢复"走降噪（只写本地日志、不占留言板）；真故障（重启失败/被节流/混有其它告警）照旧报。
  */
 
 const MINUTE = 60 * 1000;
@@ -42,7 +44,9 @@ const DEFAULT_CONFIG = Object.freeze({
   // 告警/重启节流
   alertCooldownMin: 60,
   restartCooldownMin: 10,
-  restartMaxPerHour: 3
+  restartMaxPerHour: 3,
+  // 开机恢复降噪（2026-10-08）：开机 30 分钟内守护缺席=随关机停止，已自动拉起就不占留言板
+  bootGraceMin: 30
 });
 
 function mergeConfig(...parts) {
@@ -212,6 +216,10 @@ function evaluate(snapshot, state, cfg, nowMs, recon) {
   const msgs = (snapshot && snapshot.messages) || {};
   const log = (snapshot && snapshot.log) || {};
   const daemon = (snapshot && snapshot.daemon) || { alive: false, reason: "快照缺失" };
+  // 开机恢复降噪（2026-10-08）：系统运行时长（秒）；读不到（未传 sys / 非法值）按"不在开机窗口"处理。
+  const sys = (snapshot && snapshot.sys) || {};
+  const uptimeSec = Number.isFinite(sys.uptimeSec) && sys.uptimeSec >= 0 ? sys.uptimeSec : null;
+  const bootRecent = uptimeSec != null && uptimeSec < cfg.bootGraceMin * 60;
   const prevStrikes = (state && state.strikes) || {};
   const prevActive = (state && state.active) || {};
 
@@ -276,7 +284,7 @@ function evaluate(snapshot, state, cfg, nowMs, recon) {
     if (hit && strikes[key] >= minStrikes[key]) {
       const due = !act || !(act.lastAt) || nowMs - act.lastAt >= cfg.alertCooldownMin * MINUTE;
       if (due) {
-        toAlert.push({ key, detail: conditions[key].detail, strikes: strikes[key] });
+        toAlert.push({ key, detail: conditions[key].detail, strikes: strikes[key], boot: key === "daemon" && bootRecent });
         active[key] = { since: act && act.since ? act.since : nowMs, lastAt: nowMs };
       }
     } else if (!hit && act) {
@@ -342,6 +350,15 @@ function evaluate(snapshot, state, cfg, nowMs, recon) {
       lastRunAt: nowMs
     }
   };
+}
+
+/**
+ * 开机恢复降噪（2026-10-08）：本轮唯一告警是"守护缺席"、且带开机窗口内的 boot 标记，
+ * 并已由重启验证恢复 ⇒ 属随关机停止的正常现象；调用方只写本地日志、不占留言板。
+ */
+function bootRecoveryOnly(toAlert, restartVerifiedOk) {
+  return !!restartVerifiedOk && Array.isArray(toAlert) && toAlert.length > 0 &&
+    toAlert.every((a) => a && a.key === "daemon" && a.boot === true);
 }
 
 /** 日本时间（UTC+9）字符串：留言板规矩用。 */
@@ -445,6 +462,7 @@ module.exports = {
   parseConnectionEvents,
   parseInbox,
   evaluate,
+  bootRecoveryOnly,
   formatJst,
   formatLocal
 };
