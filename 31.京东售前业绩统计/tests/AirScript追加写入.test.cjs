@@ -21,6 +21,16 @@ function 解析地址(地址) {
   return { 起列: 列号(m[1]), 起行: Number(m[2]), 止列: 列号(m[3] || m[1]), 止行: Number(m[4] || m[2]) };
 }
 
+// 模拟金山“日期自动解析”：非文本格式的格写入 2026-09 / 2026-09-01 10:00:00 这类串会被存成日期序列号。
+// 2026-10-07 线上实锤：管家 B/C/D 没设 '@' → "2026-09" 存成 46266，回读不一致。
+function 像日期串(v) {
+  return typeof v === "string" && /^\d{4}-\d{2}(-\d{2})?( \d{2}:\d{2}(:\d{2})?)?$/.test(v);
+}
+function 日期序列(v) {
+  const 时间 = v.includes(" ") ? Date.parse(v.replace(" ", "T")) : Date.parse(v.length === 7 ? `${v}-01T00:00:00` : `${v}T00:00:00`);
+  return Math.round(时间 / 86400000) + 25569;
+}
+
 class FakeSheet {
   constructor(行数 = 4000, 列数 = 20) {
     this.格 = Array.from({ length: 行数 }, () => new Array(列数).fill(""));
@@ -34,7 +44,12 @@ class FakeSheet {
   Range(地址) {
     const { 起列, 起行, 止列, 止行 } = 解析地址(地址);
     const 本 = this;
-    const 落 = (r, c, v) => { if (本.格[r - 1]?.[ c - 1 ] !== undefined) 本.格[r - 1][c - 1] = v; };
+    const 落 = (r, c, v) => {
+      if (本.格[r - 1]?.[ c - 1 ] === undefined) return;
+      let 存 = v;
+      if (本.格式[`${r}:${c}`] !== "@" && 像日期串(v)) 存 = 日期序列(v);
+      本.格[r - 1][c - 1] = 存;
+    };
     const 写 = (值) => {
       if (值 instanceof Array) 值.forEach((行, i) => (行 instanceof Array ? 行 : [行]).forEach((v, j) => 落(起行 + i, 起列 + j, v)));
       else if (起行 === 止行 && 起列 === 止列) 落(起行, 起列, 值);
@@ -103,6 +118,35 @@ console.log("== 管家数据-追加写入 ==");
   const 大追加 = 跑({ argv: { rows: 大数据, allowWrite: true, expectedLastRow: 3 } }, 应用, console, Date);
   断言(大追加.written === true && 大追加.rows === 250 && 大追加.firstRow === 4 && 大追加.lastRow === 253, "跨块追加 250 行（4~253）", JSON.stringify(大追加).slice(0, 300));
   断言(大追加.mismatchedRows === 0, "跨块回读比对 0 差异", 大追加.firstMismatch);
+
+  // v2：B/C/D 强制文本（防金山日期解析）——年月/时间是原文串，回读 0 差异
+  const 文本行 = ["京东1店", "2026-09", "2026-09-01 10:00:00", "2026-09-01 10:05:00", "1002", "商品", "nick", "cust", "3576448017067421", 1, 1, "已完成", "实名", ""];
+  const 文本追加 = 跑({ argv: { rows: [文本行], allowWrite: true, expectedLastRow: 253 } }, 应用, console, Date);
+  断言(文本追加.written === true && 文本追加.mismatchedRows === 0, "v2：B/C/D 设文本格式，回读 0 差异", 文本追加.firstMismatch);
+  断言(表.格[253][1] === "2026-09" && 表.格[253][2] === "2026-09-01 10:00:00" && 表.格[253][3] === "2026-09-01 10:05:00", "v2：年月/咨询/下单时间是文本原文", `${表.格[253][1]} / ${表.格[253][2]}`);
+
+  // v2 repair：把已被日期解析的 3 行（B/C/D 是序列号）重写回文本 + 守卫
+  const 修表 = 造表(表头A, []);
+  修表.格[1] = ["京东1店", 46266, 46266, 46266, "1001", "商品", "nick", "cust", "3576448017067400", 1, 1, "已完成", "实名", ""];
+  修表.格[2] = ["京东1店", 46266, 46266, 46266, "1001", "商品", "nick", "cust", "3576448017067401", 1, 1, "已完成", "实名", ""];
+  修表.格[3] = ["京东1店", 46266, 46266, 46266, "1001", "商品", "nick", "cust", "3576448017067402", 1, 1, "已完成", "实名", ""];
+  const 修复行 = [
+    ["京东1店", "2026-09", "2026-09-01 10:00:00", "2026-09-01 10:05:00", "1001", "商品", "nick", "cust", "3576448017067400", 1, 1, "已完成", "实名", ""],
+    ["京东1店", "2026-09", "2026-09-02 10:00:00", "2026-09-02 10:05:00", "1001", "商品", "nick", "cust", "3576448017067401", 1, 1, "已完成", "实名", ""],
+    ["京东1店", "2026-09", "2026-09-03 10:00:00", "2026-09-03 10:05:00", "1001", "商品", "nick", "cust", "3576448017067402", 1, 1, "已完成", "实名", ""]
+  ];
+  const 跑修 = 载入脚本("kdocs-scripts/AirScript-管家数据-追加写入.md");
+  const 修应用 = 建应用({ 明细: 修表 });
+  const 拒修 = 跑修({ argv: { repair: { startRow: 2, rows: 修复行 } } }, 修应用, console, Date);
+  断言(拒修.written === false && String(拒修.message).includes("allowWrite"), "repair 没 allowWrite 拒绝");
+  const 超界 = 跑修({ argv: { repair: { startRow: 2, rows: [...修复行, ...修复行] }, allowWrite: true } }, 修应用, console, Date);
+  断言(超界.written === false && String(超界.message).includes("超出"), "repair 超出末行拒绝");
+  const 错位 = 跑修({ argv: { repair: { startRow: 2, rows: 修复行, expectFirstA: "京东9店" }, allowWrite: true } }, 修应用, console, Date);
+  断言(错位.written === false && String(错位.message).includes("expectFirstA"), "repair 首行不符拒绝（防错位）");
+  const 修复 = 跑修({ argv: { repair: { startRow: 2, rows: 修复行, expectFirstA: "京东1店" }, allowWrite: true } }, 修应用, console, Date);
+  断言(修复.written === true && 修复.rows === 3 && 修复.mismatchedRows === 0, "repair 3 行重写 + 回读 0 差异", JSON.stringify(修复).slice(0, 300));
+  断言(修表.格[1][1] === "2026-09" && 修表.格[1][2] === "2026-09-01 10:00:00", "repair 后 B/C 是文本原文", `${修表.格[1][1]} / ${修表.格[1][2]}`);
+  断言(修复.firstA === "京东1店", "repair 回执带 firstA", String(修复.firstA));
 }
 
 console.log("== 魔方数据-追加写入 ==");
@@ -117,6 +161,20 @@ console.log("== 魔方数据-追加写入 ==");
   断言(追加.written === true && 追加.rows === 1 && 追加.mismatchedRows === 0, "追加 1 行 + 回读 0 差异", JSON.stringify(追加).slice(0, 300));
   断言(表.格[2][2] === "3607474001008523", "16 位订单号未丢精度（文本存储）", String(表.格[2][2]));
   断言(表.格[2][8] === 993.65, "金额保持数值", String(表.格[2][8]));
+
+  // v2：B/F/G/H/K/L 强制文本（防日期解析）
+  const 魔方行 = ["京东3店", "2026-09", "3607474001008524", "s***7", "完成", "2026-09-02 20:54:23", "2026-09-02 20:54:39", "2026-09-02 22:29:06", 993.65, "麦某某", "2026-09-02 20:49:14", "2026-09-02 20:51:17", "abc124"];
+  const 魔方追加 = 跑({ argv: { rows: [魔方行], allowWrite: true, expectedLastRow: 3 } }, 应用, console, Date);
+  断言(魔方追加.written === true && 魔方追加.mismatchedRows === 0, "v2：B/F/G/H/K/L 设文本格式，回读 0 差异", 魔方追加.firstMismatch);
+  断言(表.格[3][1] === "2026-09" && 表.格[3][5] === "2026-09-02 20:54:23", "v2：年月/下单时间是文本原文", `${表.格[3][1]} / ${表.格[3][5]}`);
+
+  // v2 repair
+  const 魔方修表 = 造表(表头B, []);
+  魔方修表.格[1] = ["京东3店", 46266, "3607474001008525", "s***8", "完成", 46266, 46266, 46266, 993.65, "麦某某", 46266, 46266, "abc125"];
+  const 魔方修复行 = [["京东3店", "2026-09", "3607474001008525", "s***8", "完成", "2026-09-03 20:54:23", "2026-09-03 20:54:39", "2026-09-03 22:29:06", 993.65, "麦某某", "2026-09-03 20:49:14", "2026-09-03 20:51:17", "abc125"]];
+  const 魔方修 = 跑({ argv: { repair: { startRow: 2, rows: 魔方修复行, expectFirstA: "京东3店" }, allowWrite: true } }, 建应用({ Sheet1: 魔方修表 }), console, Date);
+  断言(魔方修.written === true && 魔方修.mismatchedRows === 0, "repair 1 行重写 + 回读 0 差异", JSON.stringify(魔方修).slice(0, 200));
+  断言(魔方修表.格[1][1] === "2026-09" && 魔方修表.格[1][5] === "2026-09-03 20:54:23", "repair 后 B/F 是文本原文", `${魔方修表.格[1][1]} / ${魔方修表.格[1][5]}`);
 }
 
 console.log(`\n结果：通过 ${通过}，失败 ${失败}`);

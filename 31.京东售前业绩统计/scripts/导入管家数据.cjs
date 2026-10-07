@@ -16,7 +16,9 @@
 //   · --verify：读在线『明细』，按 店铺+年月 逐行核对（期望=源文件映射后行；查缺/多/重复）。
 //   · --probe：调云端探针（看 lastRow/dataRows/表头是否就位），不写。
 //   · --store 不给时按文件里客服昵称前缀自动识别（6 店前缀见下）；识别不出来会报错要你 --store。
-//   · --batch 500 可调批次大小；--映射缓存 <路径> 换缓存文件；--刷新映射 强制重读《客服昵称对应姓名》。
+//   · --batch 500 可调批次大小；--跳过前 N 用于续写（前面 N 行已写入，只补剩下）；
+//     --只发 jd5s 只发指定店铺（补单店用；核对仍全量）；
+//     --映射缓存 <路径> 换缓存文件；--刷新映射 强制重读《客服昵称对应姓名》。
 //   清单格式：{"yearMonth":"2026-09","files":[{"file":"…xlsx","store":"京东1店"},{"file":"…xlsx"}]}
 const fs = require("node:fs");
 const path = require("node:path");
@@ -38,7 +40,7 @@ const 店铺前缀 = [
 const 源列名 = ["咨询时间", "下单时间", "商品编号", "商品名称", "客服", "客户", "所属订单编号", "商品单价(?)", "购买数量", "订单状态"];
 
 function 解析参数(argv) {
-  const 参数 = { mode: "dry-run", file: "", manifest: "", store: "", yearMonth: "", batch: 500, 映射缓存: "", 刷新映射: false, 帮助: false };
+  const 参数 = { mode: "dry-run", file: "", manifest: "", store: "", yearMonth: "", batch: 500, 跳过前: 0, 只发: "", 映射缓存: "", 刷新映射: false, 帮助: false };
   for (let i = 0; i < argv.length; i += 1) {
     const 词 = argv[i];
     if (词 === "--file") { 参数.file = argv[i + 1] || ""; i += 1; }
@@ -46,6 +48,8 @@ function 解析参数(argv) {
     else if (词 === "--store") { 参数.store = argv[i + 1] || ""; i += 1; }
     else if (词 === "--year-month") { 参数.yearMonth = argv[i + 1] || ""; i += 1; }
     else if (词 === "--batch") { 参数.batch = Number(argv[i + 1]) || 500; i += 1; }
+    else if (词 === "--跳过前") { 参数.跳过前 = Number(argv[i + 1]) || 0; i += 1; }
+    else if (词 === "--只发") { 参数.只发 = argv[i + 1] || ""; i += 1; }
     else if (词 === "--映射缓存") { 参数.映射缓存 = argv[i + 1] || ""; i += 1; }
     else if (词 === "--刷新映射") 参数.刷新映射 = true;
     else if (词 === "--dry-run") 参数.mode = "dry-run";
@@ -60,13 +64,13 @@ function 解析参数(argv) {
 function 用法() {
   console.log(`用法：
   node scripts/导入管家数据.cjs --file <促成订单xlsx> [--store 京东1店] --year-month 2026-09 [--dry-run|--send|--verify|--probe]
-  node scripts/导入管家数据.cjs --manifest <清单.json> [--dry-run|--send|--verify]`);
+  node scripts/导入管家数据.cjs --manifest <清单.json> [--dry-run|--send|--verify] [--跳过前 N] [--只发 key]`);
 }
 
 function 读清单(参数) {
   if (参数.manifest) {
     const 清单 = JSON.parse(fs.readFileSync(参数.manifest, "utf8"));
-    const files = (清单.files || []).map((f) => ({ file: f.file, store: f.store || "" }));
+    const files = (清单.files || []).map((f) => ({ file: f.file, store: f.store || "", key: f.key || "" }));
     if (!files.length) throw new Error("清单里 files 是空的");
     return { yearMonth: 参数.yearMonth || 清单.yearMonth || "", files };
   }
@@ -320,7 +324,7 @@ async function main() {
   }
   const 清单 = 读清单(参数);
   console.log(`  模式=${参数.mode} 年月=${清单.yearMonth || "(未给)"} 文件数=${清单.files.length}`);
-  const { 全部行 } = 加载全部(参数, 清单);
+  const { 结果: 文件结果, 全部行 } = 加载全部(参数, 清单);
   if (参数.mode === "dry-run") {
     console.log(`\n  映射后前 3 行：`);
     for (const 行 of 全部行.slice(0, 3)) console.log("    " + JSON.stringify(行));
@@ -335,7 +339,16 @@ async function main() {
     return;
   }
   if (参数.mode === "send") {
-    await 发送(全部行, 参数.batch);
+    // --只发 key[,key]：只发指定店铺的行（核对仍用全量，适合补单店）；--跳过前 N：续写（前面 N 行已写入）
+    let 发送行 = 全部行.slice(参数.跳过前);
+    if (参数.只发) {
+      const 要发 = new Set(参数.只发.split(",").map((s) => s.trim()).filter(Boolean));
+      发送行 = 文件结果.flatMap((r, i) => 要发.has((清单.files[i] || {}).key) ? r.rows : []);
+      console.log(`  （只发模式：只发 ${参数.只发}，共 ${发送行.length} 行；核对仍用全部 ${全部行.length} 行）`);
+    } else if (参数.跳过前) {
+      console.log(`  （续写模式：跳过前 ${参数.跳过前} 行，只发后 ${发送行.length} 行；核对仍用全部 ${全部行.length} 行）`);
+    }
+    await 发送(发送行, 参数.batch);
     const 结果 = 核对(全部行, 清单.yearMonth);
     if (结果.缺 || 结果.多 || 结果.重复) throw new Error("写入后核对不一致，停下人工核对。");
     console.log("  写入后核对通过：应有=实有。");
@@ -350,7 +363,11 @@ async function main() {
   throw new Error(`未知模式：${参数.mode}`);
 }
 
-main().catch((error) => {
-  console.error(`\n  失败：${error.message}\n`);
-  process.exitCode = 1;
-});
+if (require.main === module) {
+  main().catch((error) => {
+    console.error(`\n  失败：${error.message}\n`);
+    process.exitCode = 1;
+  });
+}
+
+module.exports = { 解析参数, 读清单, 加载全部, 处理文件, 读映射缓存, 建匹配器, 发送, 核对, 探针, 记录键, 目标表, 目标子表, 表头, 店铺前缀, 源列名, 去空白 };

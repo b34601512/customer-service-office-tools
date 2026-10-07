@@ -1,0 +1,51 @@
+{
+  "_说明": "31号 京东店铺 → 浏览器 profile + 调试端口。profile 目录相对本项目根；端口 9470 起，避开 22/24/25/26 号（9421-9460）。profiles 为本项目专属（由 9号/22号 已登录 profile 引导复制而来，2026-10-07），不与其它项目共用。 mofangKeys = 魔方（客服销售分析）需要下载的店铺。",
+  "stores": [
+    {
+      "key": "jd1",
+      "displayName": "京东1店",
+      "nickPrefix": "德达官方旗舰店",
+      "profileDir": "runtime/state/browser-profiles/jd/jd1",
+      "port": 9470
+    },
+    {
+      "key": "jd2",
+      "displayName": "京东2店",
+      "nickPrefix": "dedakj旗舰店",
+      "profileDir": "runtime/state/browser-profiles/jd/jd2",
+      "port": 9471
+    },
+    {
+      "key": "jd3",
+      "displayName": "京东3店",
+      "nickPrefix": "dedakj器械店",
+      "profileDir": "runtime/state/browser-profiles/jd/jd3",
+      "port": 9472
+    },
+    {
+      "key": "jd8",
+      "displayName": "京东8店",
+      "nickPrefix": "dedakj个护",
+      "profileDir": "runtime/state/browser-profiles/jd/jd8",
+      "port": 9473
+    },
+    {
+      "key": "jd5s",
+      "displayName": "京东5S店",
+      "nickPrefix": "dedakj保健器械",
+      "profileDir": "runtime/state/browser-profiles/jd/jd5s",
+      "port": 9474
+    },
+    {
+      "key": "jd6",
+      "displayName": "京东6店",
+      "nickPrefix": "dedakj自营",
+      "profileDir": "runtime/state/browser-profiles/jd/jd6",
+      "port": 9475
+    }
+  ],
+  "mofangKeys": [
+    "jd1",
+    "jd3"
+  ]
+}

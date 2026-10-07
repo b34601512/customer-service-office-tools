@@ -1,25 +1,32 @@
-var scriptVersion = '2026-10-07.1'
+var scriptVersion = '2026-10-07.2'
 
-// 《京东客服询单业绩汇总（魔方数据）》『Sheet1』**追加写入**脚本（独立脚本）版本 2026-10-07.1
+// 《京东客服询单业绩汇总（魔方数据）》『Sheet1』**追加写入**脚本（独立脚本）版本 2026-10-07.2
+//
+// 【v2 变更（2026-10-07）】① 强制文本列从 [C] 扩到 [B,C,F,G,H,K,L]：B 年月、F 下单时间、G 付款时间、
+//   H 出库时间、K 开始时间、L 结束时间在常规格式下会被金山当日期解析（管家表已实测踩坑），
+//   历史行是文本，必须一起设 '@'；② 新增 repair 模式（同管家脚本）：区间重写 + 回读逐格比对。
 //
 // 【干什么】把本地从京东魔方【数据分析→成交分析→客服销售分析】导出的明细
 //   （某月整月，本机已先去掉「已取消」和 0 金额行）**追加**到 Sheet1 表尾：
 //   一行 13 列（A~M）= 店铺｜年月｜订单编号｜顾客昵称｜订单状态｜下单时间｜付款时间｜出库时间｜
 //   订单金额（元）｜客服昵称｜开始时间｜结束时间｜种菜（=顾客mofangID）
 //   **只从「现有末行+1」往下追加；绝不覆盖、绝不清空任何已有行；第 1 行表头永远不碰。**
+//   （repair 是唯一会写已有行的模式，必须显式传 repair 参数 + allowWrite，且区间不得超出当前末行。）
 //
 // 【安全设计（顺序不能改）】
 //   1) 没有 allowWrite:true → 一个字节都不写（只回原有统计）；
 //   2) rows 为空 → 拒绝执行；rows 超过上限 → 拒绝执行；
 //   3) 传了 expectedLastRow 时：与当前末行不一致 → 拒绝执行（防并发写入/重复导入）；
-//   4) C 列(订单编号) 写前设文本格式（'@'），防 16 位单号被当数字丢精度；
+//   4) B/C/F/G/H/K/L 列写前设文本格式（'@'），防日期解析与 16 位单号丢精度；
 //   5) 写完立刻回读本批写入区逐格比对（mismatchedRows/firstMismatch），写没写对不靠肉眼。
 //
 // 【调用】POST <本脚本同步 webhook>   Header: AirScript-Token: <token>
 //   探针（不写，自检脚本已生效）：{"Context":{"argv":{"probe":true}}}
 //   写入：{"Context":{"argv":{"rows":[[...13列...]],"allowWrite":true,"expectedLastRow":1648}}}
+//   修复：{"Context":{"argv":{"repair":{"startRow":1649,"rows":[[...13列...]],"expectFirstA":"京东1店"},"allowWrite":true}}}
 //   建议每批 <= 500 行，由本机导入脚本分批调用；expectedLastRow 给上一批的 lastRow（首批给探针的 lastRow）。
-// 返回：{ scriptVersion, mode, sheet, headerOk, beforeRows, written, rows, lastRow, mismatchedRows, firstMismatch, readBack }
+// 返回：append { scriptVersion, mode, sheet, headerOk, beforeRows, written, rows, lastRow, mismatchedRows, firstMismatch, readBack }
+//       repair { scriptVersion, mode:'repair', written, rows, firstRow, lastRow, firstA, mismatchedRows, firstMismatch }
 //
 // 【粘贴方式】《京东客服询单业绩汇总（魔方数据）》→ 效率 → 高级开发 → AirScript → 新建脚本
 //   「魔方数据-追加写入」→ 粘全文 → 保存 → 给这个脚本生成「同步 webhook」→ 把地址填进本机
@@ -33,8 +40,8 @@ var 数据起始行 = 表头行 + 1
 var COLUMN_COUNT = 13
 var CHUNK_ROWS = 200
 var 最大行数 = 20000
-// 强制文本列（1-based）：C=订单编号
-var 强制文本列 = [3]
+// 强制文本列（1-based）：B=年月、C=订单编号、F=下单时间、G=付款时间、H=出库时间、K=开始时间、L=结束时间
+var 强制文本列 = [2, 3, 6, 7, 8, 11, 12]
 var 列名单 = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M']
 
 function contains(haystack, needle) {
@@ -87,6 +94,7 @@ function 解析参数(rawArgument) {
     rows: bag.rows ? bag.rows : null,
     allowWrite: bag.allowWrite ? true : false,
     probe: bag.probe ? true : false,
+    repair: bag.repair ? bag.repair : null,
     expectedLastRow: contains(typeof bag.expectedLastRow, 'number') ? bag.expectedLastRow : null,
     hasExpectedLastRow: contains(typeof bag.expectedLastRow, 'number') ? true : false,
     preview: preview
@@ -308,6 +316,95 @@ function 执行探针(参数) {
   }
 }
 
+// 修复模式：对 [startRow, startRow+rows.length-1] 区间按传入行重写 A~M。
+// 守卫：必须 allowWrite；区间不得早于数据区、不得超出当前末行；可选 expectFirstA 校验首行 A 列防错位。
+function 执行修复(参数) {
+  var sheet = 取表()
+  if (!表头就位(sheet)) {
+    return { scriptVersion: scriptVersion, mode: 'repair', written: false, rows: 0, message: '第 1 行表头不对，拒绝修复' }
+  }
+  if (!参数.allowWrite) {
+    return { scriptVersion: scriptVersion, mode: 'repair', written: false, rows: 0, message: '缺少 allowWrite:true，未授权写入' }
+  }
+  var 修复 = 参数.repair
+  if (!修复) {
+    return { scriptVersion: scriptVersion, mode: 'repair', written: false, rows: 0, message: '缺少 repair 参数' }
+  }
+  var 输入 = 修复.rows ? 修复.rows : []
+  var 起始行 = 修复.startRow ? 修复.startRow : 0
+  if (!输入.length) {
+    return { scriptVersion: scriptVersion, mode: 'repair', written: false, rows: 0, message: 'repair.rows 为空，拒绝执行' }
+  }
+  if (起始行 - 数据起始行 < 0) {
+    return { scriptVersion: scriptVersion, mode: 'repair', written: false, rows: 0, message: '起始行早于数据区（第 ' + String(数据起始行) + ' 行），拒绝执行' }
+  }
+  if (最大行数 - 输入.length < 0) {
+    return { scriptVersion: scriptVersion, mode: 'repair', written: false, rows: 输入.length, message: 'rows 超过上限，拒绝执行（请分批）' }
+  }
+  var 末行 = 找数据末行(sheet)
+  if (起始行 + 输入.length - 1 - 末行 > 0) {
+    return { scriptVersion: scriptVersion, mode: 'repair', written: false, rows: 输入.length, message: '修复区间超出当前数据末行 ' + String(末行) + '，拒绝执行' }
+  }
+  if (修复.expectFirstA) {
+    var 首格 = toText(sheet.Range('A' + String(起始行)).Value2)
+    if (!contains(首格, String(修复.expectFirstA))) {
+      return { scriptVersion: scriptVersion, mode: 'repair', written: false, rows: 输入.length, message: '首行 A 列是「' + 首格 + '」，与 expectFirstA「' + String(修复.expectFirstA) + '」不符，拒绝执行（防错位）' }
+    }
+  }
+
+  var 数据 = []
+  for (var i = 0; i - 输入.length < 0; i += 1) 数据.push(规范行(输入[i]))
+  var 结束行 = 起始行 + 数据.length - 1
+
+  var 文本列失败 = 0
+  for (var 列 = 0; 列 - 强制文本列.length < 0; 列 += 1) {
+    if (!设列文本格式(sheet, 列名单[强制文本列[列] - 1], 起始行, 结束行)) 文本列失败 = 文本列失败 + 1
+  }
+
+  var 失败格数 = 0
+  var 行下标 = 0
+  while (行下标 - 数据.length < 0) {
+    var 结束下标 = 行下标 + CHUNK_ROWS - 1
+    if (结束下标 - (数据.length - 1) > 0) 结束下标 = 数据.length - 1
+    var 块 = []
+    for (var j = 行下标; j - 结束下标 < 1; j += 1) 块.push(数据[j])
+    var 块起行 = 起始行 + 行下标
+    var 块止行 = 起始行 + 结束下标
+    var 写成 = false
+    try {
+      sheet.Range('A' + 块起行 + ':M' + 块止行).Value2 = 块
+      写成 = true
+    } catch (errorRepair) {
+      写成 = false
+    }
+    if (!写成) {
+      for (var r = 行下标; r - 结束下标 < 1; r += 1) {
+        var 行数值 = 数据[r]
+        for (var c = 0; c - COLUMN_COUNT < 0; c += 1) {
+          if (!写单元格(sheet, 列名单[c], 起始行 + r, 行数值[c])) 失败格数 = 失败格数 + 1
+        }
+      }
+    }
+    行下标 = 结束下标 + 1
+  }
+
+  var 比对 = 回读比对(sheet, 数据, 起始行)
+  return {
+    scriptVersion: scriptVersion,
+    mode: 'repair',
+    sheet: 默认子表,
+    textColumnsFailed: 文本列失败,
+    written: (失败格数 ? false : true),
+    rows: 数据.length,
+    firstRow: 起始行,
+    lastRow: 结束行,
+    firstA: toText(sheet.Range('A' + String(起始行)).Value2),
+    failedCells: 失败格数,
+    mismatchedRows: 比对.不一致行数,
+    firstMismatch: 比对.首条差异
+  }
+}
+
 function 执行追加(参数) {
   var sheet = 取表()
   if (!表头就位(sheet)) {
@@ -404,6 +501,7 @@ function 执行追加(参数) {
 function main() {
   var 参数 = 解析参数((Context && Context.argv) ? Context.argv : null)
   if (参数.probe) return 执行探针(参数)
+  if (参数.repair) return 执行修复(参数)
   if (!参数.rows) return { scriptVersion: scriptVersion, mode: 'idle', written: false, message: '缺少 rows：没有要写入的数据，拒绝执行' }
   return 执行追加(参数)
 }
