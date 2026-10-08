@@ -6,6 +6,9 @@
 // webhook / 令牌都不入库：project-config/kdocs-airscript.local.json（令牌链：本配置 → 7号 → 12号）。
 // 失败不自动重试（用户铁律）；每一步回读差异都必须为 0，否则停手报人。
 //
+// ⚠ 行数组一律用 JSON 字符串传（2026-10-08.3）：webhook 入站数组是宿主对象（instanceof Array
+//   为 false，v2 守卫误判成“没有行”）；字符串实测原样到达，服务器 JSON.parse 后得到原生数组。
+//
 // 用法：
 //   node scripts/写入在线表.cjs --模式 探针                        # 只读：看表结构/透视/末行
 //   node scripts/写入在线表.cjs --模式 预演 --数据 runtime/待写数据/2026-09.json
@@ -120,7 +123,7 @@ async function 全流程(参数, 证据目录) {
   console.log(`  · 预演：末行检查 ${通过 ? "通过" : "不通过"}，表头检查 ${表头全好 ? "通过" : "不通过"}`);
   if (!通过 || !表头全好) throw new Error(`预演不通过，停手：${JSON.stringify(预).slice(0, 800)}`);
 
-  const 汇 = await 调脚本({ action: "写汇总", 汇总行: 数据.汇总行, 预期末行: 预期.汇总, allowWrite: true });
+  const 汇 = await 调脚本({ action: "写汇总", 汇总行: JSON.stringify(数据.汇总行), 预期末行: 预期.汇总, allowWrite: true });
   落盘证据(证据目录, "3-写汇总", 汇);
   if (!汇.written) throw new Error(`写汇总失败：${JSON.stringify(汇).slice(0, 500)}`);
   if (汇.回读差异数) throw new Error(`写汇总回读有 ${汇.回读差异数} 格不一致：${JSON.stringify(汇.差异样例).slice(0, 400)}`);
@@ -128,8 +131,8 @@ async function 全流程(参数, 证据目录) {
 
   const 主 = await 调脚本({
     action: "写主体",
-    集团行: 数据.主体["深圳市德达医疗科技集团有限公司"].行,
-    器械行: 数据.主体["深圳市德达医疗器械有限公司"].行,
+    集团行: JSON.stringify(数据.主体["深圳市德达医疗科技集团有限公司"].行),
+    器械行: JSON.stringify(数据.主体["深圳市德达医疗器械有限公司"].行),
     预期: { 集团: 预期.集团, 器械: 预期.器械 },
     allowWrite: true
   });
@@ -171,14 +174,14 @@ async function main() {
     const { 数据 } = 读数据文件(参数.数据);
     const 预期 = 数据.预期末行 || {};
     if (参数.模式 === "写汇总") {
-      const 结果 = await 调脚本({ action: "写汇总", 汇总行: 数据.汇总行, 预期末行: 预期.汇总, allowWrite: true });
+      const 结果 = await 调脚本({ action: "写汇总", 汇总行: JSON.stringify(数据.汇总行), 预期末行: 预期.汇总, allowWrite: true });
       落盘证据(证据目录, "3-写汇总", 结果);
       console.log(JSON.stringify(结果, null, 2).slice(0, 8000));
     } else {
       const 结果 = await 调脚本({
         action: "写主体",
-        集团行: 数据.主体["深圳市德达医疗科技集团有限公司"].行,
-        器械行: 数据.主体["深圳市德达医疗器械有限公司"].行,
+        集团行: JSON.stringify(数据.主体["深圳市德达医疗科技集团有限公司"].行),
+        器械行: JSON.stringify(数据.主体["深圳市德达医疗器械有限公司"].行),
         预期: { 集团: 预期.集团, 器械: 预期.器械 },
         allowWrite: true
       });

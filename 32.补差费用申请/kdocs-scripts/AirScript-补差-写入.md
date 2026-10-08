@@ -1,4 +1,4 @@
-var scriptVersion = '2026-10-08.2'
+var scriptVersion = '2026-10-08.3'
 
 // 《好评返现，返差价、运费汇总表【打印版】》写入脚本（**必须建 AirScript 2.0 Beta 脚本**：
 //   刷新透视表只有 2.0 有 API；1.0 没有透视表对象）。
@@ -14,8 +14,9 @@ var scriptVersion = '2026-10-08.2'
 // 【动作】POST <本脚本同步 webhook>  Header: AirScript-Token: <token>   Body: {"Context":{"argv":{...}}}
 //   探针（只读）   {"action":"探针"}
 //   预演（只读）   {"action":"预演","汇总预期末行":1672,"集团预期末行":19,"器械预期末行":12}
-//   写汇总         {"action":"写汇总","汇总行":[[18列]…],"预期末行":1672,"allowWrite":true}
-//   写主体         {"action":"写主体","集团行":[[12列]…],"器械行":[[12列]…],"预期":{"集团":19,"器械":12},"allowWrite":true}
+//   写汇总         {"action":"写汇总","汇总行":"[[18列]…的JSON字符串]","预期末行":1672,"allowWrite":true}
+//   写主体         {"action":"写主体","集团行":"[[12列]…]","器械行":"[[12列]…]","预期":{"集团":19,"器械":12},"allowWrite":true}
+//   （行数组也接受原生/宿主数组：服务器 转净数组() 三种形态都兼容）
 //   刷新与税金     {"action":"刷新与税金","allowWrite":true}
 // 没有 allowWrite:true → 写动作一个字节都不写，只回当前状态。
 //
@@ -30,6 +31,11 @@ var scriptVersion = '2026-10-08.2'
 //   ① 主体末行() 把数据区下面的透视表（锚点/店铺/总计也写在 A 列）算成了数据末行：
 //      预演守卫过不了，且清除范围会误伤透视表 → 改为扫到透视锚点前就停；
 //   ② 汇总表头「客户反馈/品质工程师」两列实际单元格是换行不是空格 → 期望串对齐（换行）。
+// 【2026-10-08.3 修复（v2 实测发现：写汇总/写主体都回“没有行”，一个字节没写）】
+//   平台把 webhook argv 里的数组传成**宿主数组**：能下标、有 length、能序列化，
+//   但 `instanceof Array` 为 false（跨 realm），v2 的行数组守卫全部误判成“没有行”。
+//   修法：入站行数组一律先过 转净数组() 重建成本脚本 realm 的原生数组；客户端把行数组
+//   改成 JSON 字符串传（字符串实测原样到达，服务器 JSON.parse 结果必为原生数组）→ 双保险。
 // 【粘贴方式】打开《好评返现，返差价、运费汇总表【打印版】》→ 效率 → 高级开发 → AirScript 脚本编辑器
 //   → 左侧「+」旁边的下拉选 **AirScript 2.0 Beta（推荐）** → 新建脚本「补差-写入」→ 清空默认内容 → 粘全文
 //   → 保存 → 脚本「更多」里复制「同步 webhook」→ 填进本机 32号 project-config/kdocs-airscript.local.json。
@@ -69,6 +75,55 @@ function 是公式(值) {
 
 // 是不是 0（预演/守卫比较用；不用双等号）
 function 是零(x) { return Math.abs(Number(x)) < 0.0000001 }
+
+// 是不是数组：不用 instanceof（webhook 入站数组是宿主对象，instanceof 会误判），
+// 用「有数字 length」鸭子判定；字符串有 length，先排除。
+function 是数组(值) {
+  if (!值) return false
+  if (含(typeof 值, 'string')) return false
+  var 数 = Number(值.length)
+  if (!isFinite(数) || 数 < 0) return false
+  return true
+}
+
+// 入站行数组 → 本脚本 realm 的原生二维数组。接受三种形态：
+//   ① JSON 字符串（客户端现在这样传，最稳）；② 宿主数组（能下标、有 length，但 instanceof 为 false）；③ 原生数组。
+// 返回 [] 表示拿不到有效行（调用方按“缺行”处理）。
+function 转净数组(值) {
+  var 出 = []
+  if (!值) return 出
+  if (含(typeof 值, 'string')) {
+    try { 值 = JSON.parse(String(值)) } catch (错误解析) { return 出 }
+  }
+  if (!是数组(值)) return 出
+  var 数 = Number(值.length)
+  for (var i = 0; i < 数; i += 1) {
+    var 行 = 值[i]
+    var 列数 = NaN
+    try { 列数 = Number(行.length) } catch (错误行) { 列数 = NaN }
+    if (含(typeof 行, 'string') || !isFinite(列数) || 列数 < 0) { 出.push([行]); continue }
+    var 净行 = []
+    for (var j = 0; j < 列数; j += 1) 净行.push(行[j])
+    出.push(净行)
+  }
+  return 出
+}
+
+// 入站对象 → 对象（字符串就先 JSON.parse）
+function 转对象(值) {
+  if (!值) return {}
+  if (含(typeof 值, 'string')) {
+    try { return JSON.parse(String(值)) } catch (错误解析2) { return {} }
+  }
+  return 值
+}
+
+// 入参形态（失败留现场用，写进返回报告）
+function 入参形态(值) {
+  var 形 = { 类型: String(typeof 值), 长度: '无' }
+  try { 形.长度 = String(值.length) } catch (错误形) {}
+  return 形
+}
 
 function 规整(值) {
   if (值 instanceof Array) {
@@ -374,8 +429,8 @@ function 执行预演(参数) {
 }
 
 function 执行写汇总(参数) {
-  var 行 = 参数.汇总行
-  if (!(行 instanceof Array) || !行.length) return { scriptVersion: scriptVersion, 模式: '写汇总', written: false, message: '没有汇总行' }
+  var 行 = 转净数组(参数.汇总行)
+  if (!行.length) return { scriptVersion: scriptVersion, 模式: '写汇总', written: false, message: '没有汇总行', 入参形态: 入参形态(参数.汇总行) }
   var 汇 = 取表(汇总表名)
   if (!汇) return { written: false, message: '没有『汇总』表' }
   var 表头差异 = 表头检查(汇, 1, 汇总列数, ['购买日期', '姓名', '支付宝/微信账号', '店铺', '订单编号', '产品', '费用类型', '金额', '处理时间', '转账单号', '原因', '费用责任部门', '主体', '申请日期', '客户反馈\n故障现象', '品质工程师\n确认结果', '维修内容及更换配件', '责任归属'])
@@ -397,9 +452,10 @@ function 执行写汇总(参数) {
 }
 
 function 执行写主体(参数) {
-  var 集行 = 参数.集团行, 械行 = 参数.器械行
-  if (!(集行 instanceof Array) || !(械行 instanceof Array)) return { written: false, message: '缺 集团行/器械行' }
+  var 集行 = 转净数组(参数.集团行), 械行 = 转净数组(参数.器械行)
+  if (!集行.length || !械行.length) return { written: false, message: '缺 集团行/器械行', 入参形态: { 集团: 入参形态(参数.集团行), 器械: 入参形态(参数.器械行) } }
   var 报告 = { scriptVersion: scriptVersion, 模式: '写主体' }
+  var 预期 = 转对象(参数.预期)
   function 写一个(表名, 行, 预期末行, 键) {
     var 表 = 取表(表名)
     if (!表) return { written: false, message: '没有「' + 表名 + '」表' }
@@ -418,8 +474,8 @@ function 执行写主体(参数) {
     var 差异 = 对比块(行, 实, 主体列数)
     return { written: true, 写前末行: 末, 清除到: 末, 写入行数: 数, 回读差异数: 差异.length, 差异样例: 差异.slice(0, 5) }
   }
-  报告.集团 = 写一个(集团表名, 集行, 参数.预期.集团, '集团')
-  报告.器械 = 写一个(器械表名, 械行, 参数.预期.器械, '器械')
+  报告.集团 = 写一个(集团表名, 集行, 预期.集团, '集团')
+  报告.器械 = 写一个(器械表名, 械行, 预期.器械, '器械')
   return 报告
 }
 
@@ -435,6 +491,15 @@ function 解析参数() {
   var 裸 = null
   try { if (Context) 裸 = Context.argv } catch (错误) { 裸 = null }
   if (!裸) 裸 = {}
+  // 平台把 argv 传成 JSON 字符串 / 数组 / 对象都遇到过（22号 实测）；统一规范成对象
+  if (含(typeof 裸, 'string')) {
+    try { 裸 = JSON.parse(String(裸)) } catch (错误2) { 裸 = {} }
+  }
+  if (!裸.action && 裸[0]) 裸 = 裸[0]
+  if (含(typeof 裸, 'string')) {
+    try { 裸 = JSON.parse(String(裸)) } catch (错误3) { 裸 = {} }
+  }
+  if (!裸 || 含(typeof 裸, 'string')) 裸 = {}
   return 裸
 }
 
