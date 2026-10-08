@@ -177,6 +177,18 @@ test('写入 happy path：第 2 行起追加，回读 0 差异，日期列设 @'
   assert.ok(文本列格.includes('F2:F2'), 'F 列要设文本格式');
 });
 
+test('终验公式回归：空表→写表头→写行，终验末行=写.末行（第 2 行），不能用 当前末行+rows', () => {
+  // 2026-10-08 实测：调用器用 当前末行+rows（0+1=1）终验假报差异；正确=写入回读的 写.末行=2。
+  const 头 = 跑({ 写表头: true, allowWrite: true }, {});
+  assert.equal(头.结果.written, true);
+  const 写 = 跑({ rows: [行1], expectedLastRow: 0, allowWrite: true }, 头.簿.格子());
+  assert.equal(写.结果.written, true);
+  const 终 = 跑({ probe: true }, 写.簿.格子());
+  assert.equal(写.结果.末行, 2, '建表头后数据从第 2 行起');
+  assert.equal(终.结果.lastRow, 写.结果.末行, '终验必须拿 写.末行 比对');
+  assert.equal(终.结果.headerOk, true);
+});
+
 test('写入第二批复用第一批末行 → 落第 3 行', () => {
   const 初始 = { ...头格(), A2: '2026/10/8', B2: '前人', C2: 'x', D2: 'x', E2: 'x', F2: '2026/10/8', G2: 'x', H2: '', I2: '' };
   const 行2 = ['2026/10/9', '张三', '湿化瓶', '第二条问题', '产品部', '2026/10/9', '已反馈', '', ''];

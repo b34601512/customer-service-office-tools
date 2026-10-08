@@ -140,7 +140,9 @@ async function 写入模式(参数, 证据目录, { 允许建表头 }) {
 
   const 终 = await 调脚本({ probe: true });
   落盘证据(证据目录, "5-终验探针", 终);
-  const 应有末行 = 当前末行 + 写.rows;
+  // 终验拿「写入回读的实际末行」比对：空表建表头路径下数据从第 2 行起，
+  // 用 当前末行+写.rows（=0+1）会假报差异（2026-10-08 实测，已修+测试锁死）。
+  const 应有末行 = 写.末行;
   if (终.lastRow !== 应有末行) throw new Error(`终验不符：现有末行 ${终.lastRow}，应有 ${应有末行}`);
   console.log(`  · 终验：数据末行 ${终.lastRow}（应有 ${应有末行}），表头 ${终.headerOk ? "就位" : "异常"}`);
   console.log(`\n  完成。证据：${path.relative(项目根, 证据目录)}`);
