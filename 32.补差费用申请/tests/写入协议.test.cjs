@@ -7,6 +7,8 @@
 //     ② JSON 字符串（客户端 v3 起这样传）→ 转净数组 必须解析出原生数组。
 //   并验证：守卫放行、写块对「=DISPIMG(…)」公式格走 Formula 写入（收款码图片）、argv 形态兼容。
 //   （2026-10-08.4 起）还验证 同值()/日期序()：日期串 ↔ 序列号 归一（轮2 实测：写汇总成功但回读假报 12 条日期差异）。
+//   （2026-10-08.5 起）还验证 解析图列表()/执行插图()/执行自检图片API()：只改 DISPIMG 格的守卫、逐格回读、报错原文回传；
+//   并反向断言脚本源码里不出现连续两个等号（金山编辑器粘贴会吃掉 `==` 序列）。
 // 跑：node tests/写入协议.test.cjs
 const fs = require("node:fs");
 const path = require("node:path");
@@ -30,7 +32,7 @@ function 实例化(宿主对象 = {}) {
   源码 = 源码.slice(0, 尾);
   const 工厂 = new Function(
     "Context", "Application",
-    源码 + "\nreturn { scriptVersion, 是数组, 转净数组, 转对象, 入参形态, 执行写汇总, 执行写主体, 写块, 对比块, 解析参数, 同值, 日期序 };"
+    源码 + "\nreturn { scriptVersion, 是数组, 转净数组, 转对象, 入参形态, 解析图列表, 执行写汇总, 执行写主体, 执行插图, 执行自检图片API, 写块, 对比块, 解析参数, 主函数: main, 同值, 日期序 };"
   );
   return 工厂(宿主对象.Context, 宿主对象.Application);
 }
@@ -63,6 +65,43 @@ function 造记录表() {
   return { 表, 记录 };
 }
 
+// 假文档（v5 插图/自检用）：公式表键 "行,列"；Range('C行').InsertImage 可配抛错/回读内容
+function 造插图文档(opts = {}) {
+  const { 公式 = {}, 插入抛错行 = 0, 插后公式 = {} } = opts;
+  const 记录 = { 插入: [], 清空: [], 页选择: [] };
+  const 表 = {
+    Activate() { 记录.激活 = true; },
+    Cells(r, c) {
+      const 键 = r + "," + c;
+      return {
+        get Formula() { return String(公式[键] !== undefined ? 公式[键] : ""); },
+        get Value2() { return ""; }
+      };
+    },
+    Range(addr) {
+      const 行 = Number((/^[A-Z]+(\d+)$/.exec(addr) || [])[1] || 0);
+      const 列 = (addr.match(/^[A-Z]+/) || [""])[0];
+      return {
+        InsertImage(dataURL) {
+          if (插入抛错行 && 插入抛错行 === 行) throw new Error("InsertImage 不存在");
+          记录.插入.push({ 地址: addr, dataURL });
+          if (列 === "T") 公式[行 + ",20"] = '=DISPIMG("ID_自检",1)';
+          else 公式[行 + ",3"] = 插后公式[行] !== undefined ? 插后公式[行] : '=DISPIMG("ID_新",1)';
+        },
+        ClearContents() { 记录.清空.push(addr); 公式[行 + ",20"] = ""; },
+        Select() { 记录.表内选择 = addr; }
+      };
+    },
+    Shapes: { GetActiveShapeImg() { return "https://example.test/C1670.png"; } }
+  };
+  const app = {
+    Worksheets: { Item(名) { if (名 === "汇总") return 表; throw new Error("stub：没有表 " + 名); }, Count: 1 },
+    Range(addr) { return { Select() { 记录.页选择.push(addr); } }; },
+    ActiveSheet: 表
+  };
+  return { app, 记录, 公式 };
+}
+
 function 宿主数组(字面量) {
   return vm.runInNewContext(`(${字面量})`);
 }
@@ -70,7 +109,11 @@ function 宿主数组(字面量) {
 function 主() {
   const 脚本 = 实例化({ Application: 造空Application() });
   console.log(`\n  脚本版本：${脚本.scriptVersion}`);
-  断言(脚本.scriptVersion === "2026-10-08.4", "脚本是 v4（2026-10-08.4）", 脚本.scriptVersion);
+  断言(脚本.scriptVersion === "2026-10-08.5", "脚本是 v5（2026-10-08.5）", 脚本.scriptVersion);
+  {
+    const 源码 = fs.readFileSync(脚本路径, "utf8");
+    断言(!源码.includes("=="), "源码里没有连续两个等号（粘贴安全，v5 反向断言）");
+  }
 
   // ── 1) 平台形态：宿主数组 instanceof 为 false（转净数组 存在的理由）───────────────
   const 宿主 = 宿主数组('[["甲","=DISPIMG(\\"ID_1\\",1)"],["乙","x"]]');
@@ -160,6 +203,85 @@ function 主() {
     断言(!脚本.同值("交易成功", "122"), "同值(文本, 数字) = false");
     const 日期差异 = 脚本.对比块([["2023/2/28", "122"]], [["44985", "122"]], 2);
     断言(日期差异.length === 0, "对比块(日期串期望 vs 序列号实际) 0 差异", JSON.stringify(日期差异));
+  }
+
+  // ── 8) v5：解析图列表（JSON字符串/宿主数组/坏项过滤）────────────────────
+  {
+    const s = 实例化({ Application: 造空Application() });
+    const 好 = [{ 行: 1674, dataURL: "data:image/jpeg;base64,AAAA" }, { 行: 1675, dataURL: "data:image/png;base64,BBBB" }];
+    断言(s.解析图列表(JSON.stringify(好)).length === 2, "解析图列表(JSON字符串) → 2 项");
+    断言(s.解析图列表(宿主数组('[{"行":1674,"dataURL":"data:image/png;base64,AAAA"}]')).length === 1, "解析图列表(宿主数组) → 1 项");
+    const 混合 = [
+      { 行: 1, dataURL: "data:image/png;base64,AAAA" },
+      { 行: 1674, dataURL: "照片" },
+      { 行: 1675, dataURL: "data:image/png;base64,BBBB" }
+    ];
+    const 净 = s.解析图列表(混合);
+    断言(净.length === 1 && 净[0].行 === 1675, "解析图列表：行<2 / 非 data:image 的项都丢掉", JSON.stringify(净));
+    断言(s.解析图列表("不是JSON").length === 0, "解析图列表(坏字符串) → []");
+  }
+
+  // ── 9) v5 插图：happy path（只改 DISPIMG 格 + 写后回读）────────────────────
+  {
+    const { app, 记录 } = 造插图文档({ 公式: { "1674,3": '=DISPIMG("ID_A",1)', "1675,3": '=DISPIMG("ID_B",1)' } });
+    const s = 实例化({ Application: app });
+    const 结果 = s.执行插图({
+      图: JSON.stringify([
+        { 行: 1674, dataURL: "data:image/jpeg;base64,甲" },
+        { 行: 1675, dataURL: "data:image/png;base64,乙" }
+      ]),
+      预期起: 1673, 预期止: 1685
+    });
+    断言(结果.written && 结果.成功数 === 2 && 结果.插入失败数 === 0 && 结果.回读不符数 === 0, "插图：2 格写入回读全对", JSON.stringify(结果).slice(0, 200));
+    断言(记录.插入.length === 2 && 记录.插入[0].地址 === "C1674" && 记录.插入[0].dataURL === "data:image/jpeg;base64,甲", "插图：InsertImage 收到 C1674 + dataURL", JSON.stringify(记录.插入).slice(0, 160));
+    断言(结果.逐行[0].旧公式.indexOf("DISPIMG") > -1 && 结果.逐行[0].新公式.indexOf("DISPIMG") > -1, "插图：旧/新公式都回读留痕");
+  }
+
+  // ── 10) v5 插图：守卫（行越界 / 非 DISPIMG 格 / 非图项 一律不写）────────────
+  {
+    const { app, 记录 } = 造插图文档({ 公式: { "1674,3": '=DISPIMG("ID_A",1)', "1676,3": "普通账号" } });
+    const s = 实例化({ Application: app });
+    const 结果 = s.执行插图({
+      图: JSON.stringify([
+        { 行: 1674, dataURL: "data:image/jpeg;base64,甲" },
+        { 行: 1676, dataURL: "data:image/jpeg;base64,丙" },
+        { 行: 1690, dataURL: "data:image/jpeg;base64,丁" }
+      ]),
+      预期起: 1673, 预期止: 1685
+    });
+    断言(结果.成功数 === 1 && 结果.跳过.length === 2 && 记录.插入.length === 1, "插图：越界行/非 DISPIMG 格被跳过，只写 1 格", JSON.stringify(结果.跳过).slice(0, 220));
+  }
+
+  // ── 11) v5 插图：InsertImage 报错 / 回读不符 如实回报（不重试）──────────────
+  {
+    const { app, 记录 } = 造插图文档({
+      公式: { "1674,3": '=DISPIMG("ID_A",1)', "1675,3": '=DISPIMG("ID_B",1)' },
+      插入抛错行: 1674,
+      插后公式: { 1675: "" }
+    });
+    const s = 实例化({ Application: app });
+    const 结果 = s.执行插图({
+      图: JSON.stringify([
+        { 行: 1674, dataURL: "data:image/jpeg;base64,甲" },
+        { 行: 1675, dataURL: "data:image/jpeg;base64,乙" }
+      ]),
+      预期起: 1673, 预期止: 1685
+    });
+    断言(结果.插入失败数 === 1 && /InsertImage 不存在/.test(结果.逐行[0].插入报错), "插图：插入报错原文回传", JSON.stringify(结果.逐行[0]).slice(0, 180));
+    断言(结果.回读不符数 === 1 && 结果.written, "插图：回读不符单独计数（不掩盖插入本身成功）", JSON.stringify({ w: 结果.written, 不符: 结果.回读不符数 }).slice(0, 160));
+    断言(记录.插入.length === 1, "插图：抛错那格不再重试（只调了一次 InsertImage）");
+  }
+
+  // ── 12) v5 自检图片API：只读路径（不需要 allowWrite），试插+清空+取 C1670 ─────
+  {
+    const { app, 记录 } = 造插图文档({ 公式: { "2000,20": "" } });
+    const s = 实例化({ Context: { argv: { action: "自检图片API" } }, Application: app });
+    const 结果 = s.主函数();
+    断言(结果.模式 === "自检图片API" && 结果.InsertImage类型 === "function", "自检：InsertImage 探测到 function", JSON.stringify(结果).slice(0, 200));
+    断言(结果.试插 === "成功" && 结果.清空 === "已执行 ClearContents", "自检：试插成功且已清空", JSON.stringify(结果).slice(0, 200));
+    断言(结果.清空后公式 === "", "自检：临时格清空后无公式");
+    断言(/example\.test/.test(String(结果.C1670图片)), "自检：GetActiveShapeImg 返回图片 URL", String(结果.C1670图片));
+    断言(记录.插入.length === 1 && /^data:image\/png;base64,/.test(记录.插入[0].dataURL), "自检：试插是 1x1 PNG dataURL");
   }
 
   console.log(`\n  结果：${通过} 通过 / ${失败} 失败\n`);

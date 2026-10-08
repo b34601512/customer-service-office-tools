@@ -1,4 +1,4 @@
-var scriptVersion = '2026-10-08.4'
+var scriptVersion = '2026-10-08.5'
 
 // 《好评返现，返差价、运费汇总表【打印版】》写入脚本（**必须建 AirScript 2.0 Beta 脚本**：
 //   刷新透视表只有 2.0 有 API；1.0 没有透视表对象）。
@@ -18,6 +18,8 @@ var scriptVersion = '2026-10-08.4'
 //   写主体         {"action":"写主体","集团行":"[[12列]…]","器械行":"[[12列]…]","预期":{"集团":19,"器械":12},"allowWrite":true}
 //   （行数组也接受原生/宿主数组：服务器 转净数组() 三种形态都兼容）
 //   刷新与税金     {"action":"刷新与税金","allowWrite":true}
+//   自检图片API（只读）{"action":"自检图片API"} —— 探测本运行时 Range.InsertImage / Shapes.GetActiveShapeImg 存不存在
+//   插图           {"action":"插图","图":"[{\"行\":1674,\"dataURL\":\"data:image/…\"}]","预期起":1673,"预期止":1685,"allowWrite":true}
 // 没有 allowWrite:true → 写动作一个字节都不写，只回当前状态。
 //
 // 【安全设计（顺序不能改）】
@@ -41,6 +43,12 @@ var scriptVersion = '2026-10-08.4'
 //   回读回来是序列号 "44985"；旧 同值() 长度不同 → Number("2023/2/28")=NaN → 判不等（假差异）。
 //   修法：新增 日期序()（日期串 ↔ 序列号 都归一到「距 1899-12-30 的天数」），同值() 先走日期比对。
 //   只影响比对、不改写入；老行/新行本来就都是序列号，数据无差异。
+// 【2026-10-08.5 新增（9月批 7 格收款码图只有公式、图没搬进目标表 → 补图准备，黎路遥拍板要保留截图）】
+//   ① 自检图片API（只读）：查 Range.InsertImage / Shapes.GetActiveShapeImg 存不存在；并在临时格
+//      T2000 试插一张 1x1 PNG（写完 ClearContents + 记录清空后状态）；C1670（8月批图正常那格）试 GetActiveShapeImg。
+//   ② 插图（写动作）：只改「当前是 DISPIMG 公式」的 C 列格（防写错行/列）；逐格 InsertImage(dataURL) → 写后回读公式；
+//      插入失败的格记录报错原文，**不重试**。base64 尾部 padding 用 String.fromCharCode(61) 拼出来，
+//      源码里不出现连续两个等号（粘贴安全）。
 // 【粘贴方式】打开《好评返现，返差价、运费汇总表【打印版】》→ 效率 → 高级开发 → AirScript 脚本编辑器
 //   → 左侧「+」旁边的下拉选 **AirScript 2.0 Beta（推荐）** → 新建脚本「补差-写入」→ 清空默认内容 → 粘全文
 //   → 保存 → 脚本「更多」里复制「同步 webhook」→ 填进本机 32号 project-config/kdocs-airscript.local.json。
@@ -128,6 +136,29 @@ function 入参形态(值) {
   var 形 = { 类型: String(typeof 值), 长度: '无' }
   try { 形.长度 = String(值.length) } catch (错误形) {}
   return 形
+}
+
+// 入站图列表 → [{行, dataURL}]。接受 JSON 字符串/原生数组/宿主数组（和行数组一样跨 realm）；
+// 坏项直接丢掉（行号不是 ≥2 的数、dataURL 不以 data:image/ 开头），不猜、不兜底。
+function 解析图列表(值) {
+  var 出 = []
+  if (!值) return 出
+  if (含(typeof 值, 'string')) {
+    try { 值 = JSON.parse(String(值)) } catch (错误图) { return 出 }
+  }
+  if (!是数组(值)) return 出
+  var 数 = Number(值.length)
+  for (var i = 0; i < 数; i += 1) {
+    var 项 = 值[i]
+    if (!项) continue
+    var 行 = Number(项.行)
+    var 图 = String(项.dataURL ? 项.dataURL : '')
+    if (!isFinite(行) || 行 < 2) continue
+    if (!含(图, 'data:image/')) continue
+    出.push({ 行: Math.round(行), dataURL: 图 })
+    if (出.length > 60) break
+  }
+  return 出
 }
 
 function 规整(值) {
@@ -513,6 +544,94 @@ function 执行刷新与税金() {
   return 报告
 }
 
+// 只读自检：本运行时有没有 Range.InsertImage / Shapes.GetActiveShapeImg。
+// 会在临时格 T2000 试插一张 1x1 PNG（不是空白就浪费一格，写后 ClearContents + 记录清空后状态）。
+function 执行自检图片API() {
+  var 报告 = { scriptVersion: scriptVersion, 模式: '自检图片API' }
+  var 汇 = 取表(汇总表名)
+  if (!汇) { 报告.问题 = '没有『' + 汇总表名 + '』表'; return 报告 }
+  var 测试行 = 2000, 测试列 = 20
+  var 测试格 = 'T' + 测试行
+  报告.测试格 = 测试格
+  var 区 = null
+  try { 区 = 汇.Range(测试格) } catch (错误0) { 区 = null }
+  报告.InsertImage类型 = 区 ? typeof 区.InsertImage : '取不到测试格'
+  try { 报告.Shapes类型 = typeof 汇.Shapes } catch (错误1) { 报告.Shapes类型 = '报错：' + String(错误1.message ? 错误1.message : 错误1).slice(0, 200) }
+  try { 报告.GetActiveShapeImg类型 = 汇.Shapes ? typeof 汇.Shapes.GetActiveShapeImg : '没有 Shapes' } catch (错误2) { 报告.GetActiveShapeImg类型 = '报错：' + String(错误2.message ? 错误2.message : 错误2).slice(0, 200) }
+  if (区 && 含(报告.InsertImage类型, 'function')) {
+    try { 报告.插前公式 = String(汇.Cells(测试行, 测试列).Formula).slice(0, 80) } catch (错误3) {}
+    var 等号 = String.fromCharCode(61)
+    var 小图 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg' + 等号 + 等号
+    try { 区.InsertImage(小图); 报告.试插 = '成功' } catch (错误4) { 报告.试插报错 = String(错误4.message ? 错误4.message : 错误4).slice(0, 400) }
+    try { 报告.插后公式 = String(汇.Cells(测试行, 测试列).Formula).slice(0, 80) } catch (错误5) {}
+    try { 汇.Range(测试格).ClearContents(); 报告.清空 = '已执行 ClearContents' } catch (错误6) { 报告.清空报错 = String(错误6.message ? 错误6.message : 错误6).slice(0, 300) }
+    try { 报告.清空后公式 = String(汇.Cells(测试行, 测试列).Formula).slice(0, 80) } catch (错误7) {}
+  }
+  try {
+    汇.Activate()
+    Application.Range('C1670').Select()
+    var 图 = null
+    try { 图 = Application.ActiveSheet.Shapes.GetActiveShapeImg() } catch (错误8) { 报告.C1670报错 = String(错误8.message ? 错误8.message : 错误8).slice(0, 300) }
+    报告.C1670图片 = 图 ? String(图).slice(0, 200) : '取不到（undefined/空）'
+  } catch (错误9) { 报告.C1670报错 = String(错误9.message ? 错误9.message : 错误9).slice(0, 300) }
+  return 报告
+}
+
+// 写动作：给一批 C 列格补图上身（如 9 月批 7 张收款码）。
+// 只改「当前是 DISPIMG 公式」的格（防写错行/列）；逐格写、逐格回读；失败不重试，报错原文回传。
+function 执行插图(参数) {
+  var 图列表 = 解析图列表(参数.图 ? 参数.图 : 参数.图列表)
+  var 报告 = { scriptVersion: scriptVersion, 模式: '插图' }
+  if (!图列表.length) {
+    报告.written = false
+    报告.message = '没有图（图/图列表解析后为空；dataURL 必须以 data:image/ 开头）'
+    报告.入参形态 = 入参形态(参数.图)
+    return 报告
+  }
+  var 汇 = 取表(汇总表名)
+  if (!汇) { 报告.written = false; 报告.message = '没有『' + 汇总表名 + '』表'; return 报告 }
+  var 起 = Number(参数.预期起); if (!isFinite(起)) 起 = 0
+  var 止 = Number(参数.预期止); if (!isFinite(止)) 止 = 0
+  if (起 > 0 && 止 > 0 && 起 > 止) { 报告.written = false; 报告.message = '预期起 > 预期止，停手'; return 报告 }
+  var 逐行 = []
+  var 跳过 = []
+  var 成功 = 0, 插入失败 = 0, 回读不符 = 0
+  for (var i = 0; i < 图列表.length; i += 1) {
+    var 项 = 图列表[i], 行 = 项.行
+    var 条 = { 行: 行 }
+    if (起 > 0 && 行 < 起) { 条.跳过原因 = '行号小于预期起 ' + 起; 跳过.push(条); continue }
+    if (止 > 0 && 行 > 止) { 条.跳过原因 = '行号大于预期止 ' + 止; 跳过.push(条); continue }
+    var 旧公式 = ''
+    try { 旧公式 = String(汇.Cells(行, 3).Formula) } catch (错误旧) { 旧公式 = '' }
+    if (!含(旧公式, 'DISPIMG')) {
+      条.跳过原因 = '该格当前不是 DISPIMG 公式（防误写）：' + 旧公式.slice(0, 50)
+      跳过.push(条); continue
+    }
+    条.旧公式 = 旧公式.slice(0, 90)
+    try {
+      汇.Range('C' + 行).InsertImage(项.dataURL)
+      条.插入 = '成功'
+      成功 += 1
+    } catch (错误插) {
+      条.插入报错 = String(错误插.message ? 错误插.message : 错误插).slice(0, 300)
+      插入失败 += 1
+    }
+    if (条.插入) {
+      try { 条.新公式 = String(汇.Cells(行, 3).Formula).slice(0, 90) } catch (错误读) { 条.新公式 = '' }
+      if (!含(条.新公式, 'DISPIMG')) 回读不符 += 1
+    }
+    逐行.push(条)
+  }
+  报告.written = 成功 > 0
+  报告.请求数 = 图列表.length
+  报告.成功数 = 成功
+  报告.插入失败数 = 插入失败
+  报告.回读不符数 = 回读不符
+  报告.逐行 = 逐行
+  报告.跳过 = 跳过
+  return 报告
+}
+
 function 解析参数() {
   var 裸 = null
   try { if (Context) 裸 = Context.argv } catch (错误) { 裸 = null }
@@ -534,10 +653,12 @@ function main() {
   var 动作 = 文本(参数.action)
   if (等(动作, '探针') || !动作) return 执行探针()
   if (等(动作, '预演')) return 执行预演(参数)
+  if (等(动作, '自检图片API')) return 执行自检图片API()
   if (!参数.allowWrite) return { scriptVersion: scriptVersion, mode: 动作, written: false, message: '没有 allowWrite:true，拒绝执行（写动作一个字节都不写）' }
   if (等(动作, '写汇总')) return 执行写汇总(参数)
   if (等(动作, '写主体')) return 执行写主体(参数)
   if (等(动作, '刷新与税金')) return 执行刷新与税金(参数)
+  if (等(动作, '插图')) return 执行插图(参数)
   return { scriptVersion: scriptVersion, message: '不认识的 action：' + 动作 }
 }
 

@@ -18,6 +18,9 @@
 //   node scripts/写入在线表.cjs --模式 全流程 --数据 runtime/待写数据/2026-09.json
 //     全流程 = 探针 → 预演（守卫：末行/表头）→ 写汇总 → 写主体 → 刷新与税金；
 //     每一步的证据 JSON 落到 runtime/证据/<时间戳>/。
+//   node scripts/写入在线表.cjs --模式 自检图片API                  # 只读：查本运行时有没有 InsertImage/GetActiveShapeImg（会在临时格 T2000 试插一张再清空）
+//   node scripts/写入在线表.cjs --模式 插图 --数据 runtime/收款码图/2026-10-08/dataURL.json
+//     插图：给 C 列格补图上身（只改当前为 DISPIMG 公式的格；逐格回读；失败不重试）。
 const fs = require("node:fs");
 const path = require("node:path");
 
@@ -192,10 +195,42 @@ async function main() {
     const 结果 = await 调脚本({ action: "刷新与税金", allowWrite: true });
     落盘证据(证据目录, "5-刷新与税金", 结果);
     console.log(JSON.stringify(结果, null, 2).slice(0, 8000));
+  } else if (参数.模式 === "自检图片API") {
+    const 结果 = await 调脚本({ action: "自检图片API" });
+    落盘证据(证据目录, "6-自检图片API", 结果);
+    console.log(JSON.stringify(结果, null, 2).slice(0, 8000));
+  } else if (参数.模式 === "插图") {
+    const { 数据 } = 读数据文件(参数.数据);
+    const 图 = (Array.isArray(数据) ? 数据 : [])
+      .filter((x) => x && x.dataURL)
+      .map((x) => ({ 行: Number(x.行), dataURL: String(x.dataURL) }));
+    if (!图.length) throw new Error("数据文件里没有 {行, dataURL}（先用 scripts/导出收款码图.cjs 导图）");
+    console.log(`\n  插图：${图.length} 张，逐张调用（单张最大 ${Math.round(Math.max(...图.map((x) => x.dataURL.length)) / 1024)} KB，避免单次 body 过大）`);
+    let 成功 = 0;
+    for (const 一 of 图) {
+      console.log(`  · 行 ${一.行}（dataURL ${Math.round(一.dataURL.length / 1024)} KB）…`);
+      const 结果 = await 调脚本({
+        action: "插图",
+        图: JSON.stringify([一]),
+        预期起: 一.行,
+        预期止: 一.行,
+        allowWrite: true
+      });
+      落盘证据(证据目录, `7-插图-${一.行}`, 结果);
+      const 行条 = (结果.逐行 || [])[0] || {};
+      if (结果.成功数 === 1 && 结果.回读不符数 === 0) {
+        成功 += 1;
+        console.log(`    成功；新公式：${String(行条.新公式 || "").slice(0, 90)}`);
+      } else {
+        console.log(`    未成功：${JSON.stringify({ 成功数: 结果.成功数, 插入失败数: 结果.插入失败数, 回读不符数: 结果.回读不符数, 跳过: 结果.跳过, 行条 }).slice(0, 500)}`);
+      }
+    }
+    console.log(`\n  插图完成：成功 ${成功} / ${图.length}（逐张证据 7-插图-<行>.json；有失败则退出码 1）`);
+    if (成功 !== 图.length) process.exitCode = 1;
   } else if (参数.模式 === "全流程") {
     await 全流程(参数, 证据目录);
   } else {
-    throw new Error(`不认识的 --模式 ${参数.模式}（探针 | 预演 | 写汇总 | 写主体 | 刷新与税金 | 全流程）`);
+    throw new Error(`不认识的 --模式 ${参数.模式}（探针 | 预演 | 写汇总 | 写主体 | 刷新与税金 | 自检图片API | 插图 | 全流程）`);
   }
 }
 
