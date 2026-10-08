@@ -3,7 +3,7 @@
 用户 2026-09-30 建立：**金山文档《AirScript 脚本大全》** 当所有项目 AirScript 脚本的总台账
 （一行 = 一个脚本：项目｜脚本动作｜用途｜脚本内容全文｜webhook｜目标文档｜状态｜更新时间）。
 
-- 文档：`https://www.kdocs.cn/l/cp2Y5jrJPQos`（表内子表 `工作表1`）
+- 文档：`https://www.kdocs.cn/l/<脚本大全文档分享ID>`（表内子表 `工作表1`）
 - 它自己的两个脚本（读/写）也登记在里面；webhook 存在
   `2.发票自动化/7.自动登记发票/project-config/kdocs-airscript.json`（不入库），键名 `脚本大全_读取` / `脚本大全_写入`
 
