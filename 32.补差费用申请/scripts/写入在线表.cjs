@@ -19,10 +19,15 @@
 //     全流程 = 探针 → 预演（守卫：末行/表头）→ 写汇总 → 写主体 → 刷新与税金；
 //     每一步的证据 JSON 落到 runtime/证据/<时间戳>/。
 //   node scripts/写入在线表.cjs --模式 自检图片API                  # 只读：查本运行时有没有 InsertImage/GetActiveShapeImg（会在临时格 T2000 试插一张再清空）
-//   node scripts/写入在线表.cjs --模式 插图 --数据 runtime/收款码图/2026-10-08/dataURL.json
-//     插图：给 C 列格补图上身（只改当前为 DISPIMG 公式的格；逐格回读；失败不重试）。
+//   node scripts/写入在线表.cjs --模式 插图 --数据 <dataURL.json> [--批次 runtime/待写数据/2026-09.json]
+//     插图（2026-10-08.6 防错行）：数据文件的 `行` 须是**目标表行**（导出收款码图.cjs --批次 产出）；
+//     旧文件只有源行时，用 --批次 现场映射（scripts/批次映射.cjs），映射不到/重复/超域一律不写；
+//     调用时传批次行域（预期起=目标首行 / 预期止=目标末行 / 预期末行），不再传自等值的单行域。
+//   node scripts/写入在线表.cjs --模式 写公式 --数据 runtime/还原-3格.json
+//     写公式：把 [{行, 新公式, 当前公式}] 逐格写回（当前公式精确一致才写；行域=既有数据行）；失败不重试。
 const fs = require("node:fs");
 const path = require("node:path");
+const { 读批次文件 } = require("./批次映射.cjs");
 
 const 项目根 = path.resolve(__dirname, "..");
 const 脚本键 = "write_bucha";
@@ -81,10 +86,11 @@ async function 调脚本(argv) {
 }
 
 function 解析参数(argv) {
-  const 参数 = { 模式: "探针", 数据: "" };
+  const 参数 = { 模式: "探针", 数据: "", 批次: "" };
   for (let i = 0; i < argv.length; i += 1) {
     if (argv[i] === "--模式") 参数.模式 = argv[i + 1];
     else if (argv[i] === "--数据") 参数.数据 = argv[i + 1];
+    else if (argv[i] === "--批次") 参数.批次 = argv[i + 1];
   }
   return 参数;
 }
@@ -100,6 +106,54 @@ function 读数据文件(路径) {
   const 全路径 = path.resolve(项目根, 路径 || "");
   if (!fs.existsSync(全路径)) throw new Error(`待写数据文件不存在：${全路径}（先跑 scripts/准备月度数据.cjs）`);
   return { 全路径, 数据: JSON.parse(fs.readFileSync(全路径, "utf8")) };
+}
+
+// 插图数据文件 → { 图:[{行(目标行), 源行, dataURL}], 预期起, 预期止, 预期末行, 批次说明 }
+// 规则（2026-10-08.6，防「源行当目标行」事故重演）：
+//   ① 条目带 目标行（或 行语义='目标行' 的 行）→ 直接当目标行；
+//   ② 否则 行/源行 是源表行号 → 必须给 --批次，按批次记录映射（scripts/批次映射.cjs，不硬编码偏移）；
+//   ③ 映射不到 / 与批次矛盾 / 目标行重复 / 超出批次域 → 抛错（一个字节都不写）。
+function 规整插图文(数据, 批次) {
+  const 数 = (v) => (v === undefined || v === null || v === "" ? NaN : Number(v));
+  const 图 = [];
+  const 看过 = new Set();
+  for (const x of Array.isArray(数据) ? 数据 : []) {
+    if (!x || !x.dataURL) continue;
+    let 显式目标 = 数(x.目标行);
+    if (!Number.isFinite(显式目标) && x.行语义 === "目标行") 显式目标 = 数(x.行);
+    let 源行 = 数(x.源行);
+    if (!Number.isFinite(源行) && !Number.isFinite(显式目标)) 源行 = 数(x.行);
+    let 目标行 = 显式目标;
+    if (!Number.isFinite(目标行)) {
+      if (!批次) {
+        throw new Error(`数据文件里第 ${图.length + 1} 条只有源表行号 ${x.行}，没给 --批次，拒绝猜目标行（10-08 写错行事故的根因）`);
+      }
+      目标行 = 批次.源行到目标.get(源行);
+      if (!Number.isFinite(目标行)) throw new Error(`源表行号 ${源行} 不在批次明细（${批次.目标首行}~${批次.目标末行}）里，拒绝`);
+    } else if (批次 && Number.isFinite(源行)) {
+      const 应写 = 批次.源行到目标.get(源行);
+      if (Number.isFinite(应写) && 应写 !== 目标行) {
+        throw new Error(`源表行号 ${源行} 按批次应写目标行 ${应写}，数据文件却写 ${目标行}，对不上，拒绝`);
+      }
+    }
+    if (看过.has(目标行)) throw new Error(`目标行 ${目标行} 在数据文件里重复出现，拒绝`);
+    看过.add(目标行);
+    图.push({ 行: 目标行, 源行: Number.isFinite(源行) ? 源行 : null, dataURL: String(x.dataURL) });
+  }
+  if (!图.length) throw new Error("数据文件里没有 {行, dataURL}（先用 scripts/导出收款码图.cjs 导图）");
+  const 行们 = 图.map((x) => x.行);
+  if (批次) {
+    for (const 行 of 行们) {
+      if (行 < 批次.目标首行 || 行 > 批次.目标末行) throw new Error(`目标行 ${行} 超出批次域 ${批次.目标首行}~${批次.目标末行}，拒绝`);
+    }
+  }
+  return {
+    图,
+    预期起: 批次 ? 批次.目标首行 : Math.min(...行们),
+    预期止: 批次 ? 批次.目标末行 : Math.max(...行们),
+    预期末行: 批次 ? 批次.目标末行 : 0,
+    批次说明: 批次 ? `批次目标行 ${批次.目标首行}~${批次.目标末行}（写前置末 ${批次.写前置末} + ${批次.行数} 行）` : ""
+  };
 }
 
 async function 全流程(参数, 证据目录) {
@@ -201,22 +255,23 @@ async function main() {
     console.log(JSON.stringify(结果, null, 2).slice(0, 8000));
   } else if (参数.模式 === "插图") {
     const { 数据 } = 读数据文件(参数.数据);
-    const 图 = (Array.isArray(数据) ? 数据 : [])
-      .filter((x) => x && x.dataURL)
-      .map((x) => ({ 行: Number(x.行), dataURL: String(x.dataURL) }));
-    if (!图.length) throw new Error("数据文件里没有 {行, dataURL}（先用 scripts/导出收款码图.cjs 导图）");
+    const 批次 = 参数.批次 ? 读批次文件(path.resolve(项目根, 参数.批次)) : null;
+    const 规 = 规整插图文(数据, 批次);
+    const 图 = 规.图;
     console.log(`\n  插图：${图.length} 张，逐张调用（单张最大 ${Math.round(Math.max(...图.map((x) => x.dataURL.length)) / 1024)} KB，避免单次 body 过大）`);
+    console.log(`  行域：预期起 ${规.预期起} / 预期止 ${规.预期止}${规.批次说明 ? "（" + 规.批次说明 + "）" : ""}；目标行 ${图.map((x) => x.行).join("/")}`);
     let 成功 = 0;
     for (const 一 of 图) {
-      console.log(`  · 行 ${一.行}（dataURL ${Math.round(一.dataURL.length / 1024)} KB）…`);
+      console.log(`  · 目标行 ${一.行}${一.源行 ? `（源行 ${一.源行}）` : ""}（dataURL ${Math.round(一.dataURL.length / 1024)} KB）…`);
       const 结果 = await 调脚本({
         action: "插图",
-        图: JSON.stringify([一]),
-        预期起: 一.行,
-        预期止: 一.行,
+        图: JSON.stringify([{ 行: 一.行, dataURL: 一.dataURL }]),
+        预期起: 规.预期起,
+        预期止: 规.预期止,
+        预期末行: 规.预期末行 || undefined,
         allowWrite: true
       });
-      落盘证据(证据目录, `7-插图-${一.行}`, 结果);
+      落盘证据(证据目录, `7-插图-${一.行}`, { 源行: 一.源行, ...结果 });
       const 行条 = (结果.逐行 || [])[0] || {};
       if (结果.成功数 === 1 && 结果.回读不符数 === 0) {
         成功 += 1;
@@ -225,12 +280,25 @@ async function main() {
         console.log(`    未成功：${JSON.stringify({ 成功数: 结果.成功数, 插入失败数: 结果.插入失败数, 回读不符数: 结果.回读不符数, 跳过: 结果.跳过, 行条 }).slice(0, 500)}`);
       }
     }
-    console.log(`\n  插图完成：成功 ${成功} / ${图.length}（逐张证据 7-插图-<行>.json；有失败则退出码 1）`);
+    console.log(`\n  插图完成：成功 ${成功} / ${图.length}（逐张证据 7-插图-<目标行>.json；有失败则退出码 1）`);
     if (成功 !== 图.length) process.exitCode = 1;
+  } else if (参数.模式 === "写公式") {
+    const { 全路径, 数据 } = 读数据文件(参数.数据);
+    const 列表 = (Array.isArray(数据) ? 数据 : []).map((x) => ({
+      行: Number(x && x.行),
+      新公式: String((x && x.新公式) || ""),
+      当前公式: String((x && x.当前公式) || "")
+    })).filter((x) => Number.isFinite(x.行) && x.新公式);
+    if (!列表.length) throw new Error("数据文件里没有 {行, 新公式, 当前公式}（如 runtime/还原-3格.json）");
+    console.log(`\n  写公式：${列表.length} 格（行 ${列表.map((x) => x.行).join("/")}）；当前公式精确一致才写，逐格回读，失败不重试`);
+    const 结果 = await 调脚本({ action: "写公式", 公式行: JSON.stringify(列表), allowWrite: true });
+    落盘证据(证据目录, "8-写公式", { 数据文件: path.relative(项目根, 全路径), ...结果 });
+    console.log(JSON.stringify(结果, null, 2).slice(0, 8000));
+    if (!结果.written || 结果.回读不符数 || 结果.写入失败数 || (结果.跳过 || []).length) process.exitCode = 1;
   } else if (参数.模式 === "全流程") {
     await 全流程(参数, 证据目录);
   } else {
-    throw new Error(`不认识的 --模式 ${参数.模式}（探针 | 预演 | 写汇总 | 写主体 | 刷新与税金 | 自检图片API | 插图 | 全流程）`);
+    throw new Error(`不认识的 --模式 ${参数.模式}（探针 | 预演 | 写汇总 | 写主体 | 刷新与税金 | 自检图片API | 插图 | 写公式 | 全流程）`);
   }
 }
 
@@ -241,4 +309,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { 调脚本, 脚本键 };
+module.exports = { 调脚本, 脚本键, 规整插图文, 解析参数 };

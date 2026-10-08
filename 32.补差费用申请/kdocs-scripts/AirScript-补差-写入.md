@@ -1,4 +1,4 @@
-var scriptVersion = '2026-10-08.5'
+var scriptVersion = '2026-10-08.6'
 
 // 《好评返现，返差价、运费汇总表【打印版】》写入脚本（**必须建 AirScript 2.0 Beta 脚本**：
 //   刷新透视表只有 2.0 有 API；1.0 没有透视表对象）。
@@ -19,7 +19,12 @@ var scriptVersion = '2026-10-08.5'
 //   （行数组也接受原生/宿主数组：服务器 转净数组() 三种形态都兼容）
 //   刷新与税金     {"action":"刷新与税金","allowWrite":true}
 //   自检图片API（只读）{"action":"自检图片API"} —— 探测本运行时 Range.InsertImage / Shapes.GetActiveShapeImg 存不存在
-//   插图           {"action":"插图","图":"[{\"行\":1674,\"dataURL\":\"data:image/…\"}]","预期起":1673,"预期止":1685,"allowWrite":true}
+//   插图           {"action":"插图","图":"[{\"行\":1674,\"dataURL\":\"data:image/…\"}]","预期起":1673,"预期止":1685,"预期末行":1685,"allowWrite":true}
+//     行号 = **目标表**行号（C 列）；硬行域守卫：无论调用方传什么，行必须落在 live 末行的窗口 [末行-50, 末行] 内；
+//     传了 预期末行 必须等于 live 末行，否则整批拒绝一个字节不写。
+//   写公式         {"action":"写公式","公式行":"[{\"行\":454,\"新公式\":\"=DISPIMG(…)\",\"当前公式\":\"=DISPIMG(…)\"}]" ,"allowWrite":true}
+//     逐格先精确比对当前公式，一致才写、写完回读；行域守卫 = 既有数据行 [2, live末行]（不套插图的 ±50 窗口，
+//     专门用来修老行/还原被写错的格）；不符/越界跳过并回原文，失败不重试。
 // 没有 allowWrite:true → 写动作一个字节都不写，只回当前状态。
 //
 // 【安全设计（顺序不能改）】
@@ -49,6 +54,18 @@ var scriptVersion = '2026-10-08.5'
 //   ② 插图（写动作）：只改「当前是 DISPIMG 公式」的 C 列格（防写错行/列）；逐格 InsertImage(dataURL) → 写后回读公式；
 //      插入失败的格记录报错原文，**不重试**。base64 尾部 padding 用 String.fromCharCode(61) 拼出来，
 //      源码里不出现连续两个等号（粘贴安全）。
+// 【2026-10-08.6 新增（10-08 14:44 插图写错行事故的根治；重贴后先还原再补图）】
+//   事故：客户端把数据文件里的**源表行号**（451…462）当目标行号传进来，v5 又没有硬行域守卫
+//   （预期起/止 都等于该行本身，自等值恒真）→ 目标表 C454/C456/C460 三格 2022 年老记录被盖。
+//   ① 插图：新增 live 末行硬窗 [末行-50, 末行]，行不在窗口内一律 skip+报原因（与调用方参数无关）；
+//      调用方若传 预期末行，必须等于 live 末行，否则整批拒绝（一个字节都不写）；
+//      客户端（写入在线表.cjs）同步改成：数据文件必须带目标行（或给 --批次 现场映射），
+//      并以批次行域（预期起/止）调用——不再传自等值的单行域。
+//   ② 新动作「写公式」：还原被写错的格（写回旧公式）等场景；入参 [{行, 新公式, 当前公式}]，
+//      逐格先精确比对当前公式（DISPIMG ID 唯一，比错格必然不符）→ 一致才写 → 写后回读；
+//      行域 = 既有数据行 [2, live末行]；不符/越界跳过并回原文；失败不重试。
+//      为什么「写公式」不套插图的 ±50 硬窗口：还原 C454/C456/C460 这类老行正是它的用途，
+//      套硬窗口会把自己要修的行拦掉；它的安全性由「当前公式精确一致」保证。
 // 【粘贴方式】打开《好评返现，返差价、运费汇总表【打印版】》→ 效率 → 高级开发 → AirScript 脚本编辑器
 //   → 左侧「+」旁边的下拉选 **AirScript 2.0 Beta（推荐）** → 新建脚本「补差-写入」→ 清空默认内容 → 粘全文
 //   → 保存 → 脚本「更多」里复制「同步 webhook」→ 填进本机 32号 project-config/kdocs-airscript.local.json。
@@ -156,6 +173,29 @@ function 解析图列表(值) {
     if (!isFinite(行) || 行 < 2) continue
     if (!含(图, 'data:image/')) continue
     出.push({ 行: Math.round(行), dataURL: 图 })
+    if (出.length > 60) break
+  }
+  return 出
+}
+
+// 入站公式列表 → [{行, 新公式, 当前公式}]。接受 JSON 字符串/原生数组/宿主数组（同 解析图列表）。
+// 坏项丢掉：行号不是 ≥2 的数、新公式不是公式（不以等号开头）。当前公式可以是空串（只当护栏用）。
+function 解析公式列表(值) {
+  var 出 = []
+  if (!值) return 出
+  if (含(typeof 值, 'string')) {
+    try { 值 = JSON.parse(String(值)) } catch (错误公式) { return 出 }
+  }
+  if (!是数组(值)) return 出
+  var 数 = Number(值.length)
+  for (var i = 0; i < 数; i += 1) {
+    var 项 = 值[i]
+    if (!项) continue
+    var 行 = Number(项.行)
+    if (!isFinite(行) || 行 < 2) continue
+    var 新 = String(项.新公式 ? 项.新公式 : '')
+    if (!是公式(新)) continue
+    出.push({ 行: Math.round(行), 新公式: 新, 当前公式: String(项.当前公式 ? 项.当前公式 : '') })
     if (出.length > 60) break
   }
   return 出
@@ -590,6 +630,18 @@ function 执行插图(参数) {
   }
   var 汇 = 取表(汇总表名)
   if (!汇) { 报告.written = false; 报告.message = '没有『' + 汇总表名 + '』表'; return 报告 }
+  // 硬行域守卫（2026-10-08.6）：不管调用方传什么，行必须落在 live 末行的近域窗口内。
+  var live末 = 汇总末行(汇)
+  var 硬窗起 = live末 - 50
+  if (硬窗起 < 2) 硬窗起 = 2
+  报告.live末行 = live末
+  报告.硬窗口 = '[' + 硬窗起 + ',' + live末 + ']'
+  var 预期末 = Number(参数.预期末行)
+  if (isFinite(预期末) && !是零(预期末 - live末)) {
+    报告.written = false
+    报告.message = '预期末行 ' + 预期末 + ' 不等于 live 末行 ' + live末 + '，停手（一个字节都不写）'
+    return 报告
+  }
   var 起 = Number(参数.预期起); if (!isFinite(起)) 起 = 0
   var 止 = Number(参数.预期止); if (!isFinite(止)) 止 = 0
   if (起 > 0 && 止 > 0 && 起 > 止) { 报告.written = false; 报告.message = '预期起 > 预期止，停手'; return 报告 }
@@ -599,6 +651,10 @@ function 执行插图(参数) {
   for (var i = 0; i < 图列表.length; i += 1) {
     var 项 = 图列表[i], 行 = 项.行
     var 条 = { 行: 行 }
+    if (行 < 硬窗起 || live末 < 行) {
+      条.跳过原因 = '行号 ' + 行 + ' 不在 live 末行硬窗口 [' + 硬窗起 + ',' + live末 + '] 内（防写错行）'
+      跳过.push(条); continue
+    }
     if (起 > 0 && 行 < 起) { 条.跳过原因 = '行号小于预期起 ' + 起; 跳过.push(条); continue }
     if (止 > 0 && 行 > 止) { 条.跳过原因 = '行号大于预期止 ' + 止; 跳过.push(条); continue }
     var 旧公式 = ''
@@ -632,6 +688,74 @@ function 执行插图(参数) {
   return 报告
 }
 
+// 写动作：把指定格的公式改掉（还原/修补用）。逐格先精确比对「当前公式」，一致才写；写后回读；
+// 行域守卫 = 既有数据行 [2, live末行]（不套插图的 ±50 硬窗；理由见 v6 注释）。不符/越界跳过并回原文，失败不重试。
+function 执行写公式(参数) {
+  var 列表 = 解析公式列表(参数.公式行 ? 参数.公式行 : 参数.公式列表)
+  var 报告 = { scriptVersion: scriptVersion, 模式: '写公式' }
+  if (!列表.length) {
+    报告.written = false
+    报告.message = '没有公式行（公式行/公式列表解析后为空；新公式必须以等号开头）'
+    报告.入参形态 = 入参形态(参数.公式行)
+    return 报告
+  }
+  var 汇 = 取表(汇总表名)
+  if (!汇) { 报告.written = false; 报告.message = '没有『' + 汇总表名 + '』表'; return 报告 }
+  var live末 = 汇总末行(汇)
+  报告.live末行 = live末
+  报告.行域 = '[2,' + live末 + ']（既有数据行）'
+  var 预期末 = Number(参数.预期末行)
+  if (isFinite(预期末) && !是零(预期末 - live末)) {
+    报告.written = false
+    报告.message = '预期末行 ' + 预期末 + ' 不等于 live 末行 ' + live末 + '，停手（一个字节都不写）'
+    return 报告
+  }
+  var 起 = Number(参数.预期起); if (!isFinite(起) || 起 < 1) 起 = 0
+  var 止 = Number(参数.预期止); if (!isFinite(止) || 止 < 1) 止 = 0
+  if (起 > 0 && 止 > 0 && 起 > 止) { 报告.written = false; 报告.message = '预期起 > 预期止，停手'; return 报告 }
+  var 逐行 = []
+  var 跳过 = []
+  var 成功 = 0, 写入失败 = 0, 回读不符 = 0
+  for (var i = 0; i < 列表.length; i += 1) {
+    var 项 = 列表[i], 行 = 项.行
+    var 条 = { 行: 行 }
+    if (行 < 2 || live末 < 行) {
+      条.跳过原因 = '行号 ' + 行 + ' 不在既有数据行域 [2,' + live末 + '] 内（防写到表外）'
+      跳过.push(条); continue
+    }
+    if (起 > 0 && 行 < 起) { 条.跳过原因 = '行号小于预期起 ' + 起; 跳过.push(条); continue }
+    if (止 > 0 && 行 > 止) { 条.跳过原因 = '行号大于预期止 ' + 止; 跳过.push(条); continue }
+    var 现公式 = ''
+    try { 现公式 = String(汇.Cells(行, 3).Formula) } catch (错误取) { 现公式 = '' }
+    条.当前实际公式 = 现公式.slice(0, 120)
+    if (!等(文本(现公式), 文本(项.当前公式))) {
+      条.跳过原因 = '当前公式与预期不符（防误写）；实际：' + 现公式.slice(0, 90)
+      跳过.push(条); continue
+    }
+    try {
+      汇.Range('C' + 行).Formula = 项.新公式
+      条.写入 = '成功'
+      成功 += 1
+    } catch (错误写) {
+      条.写入报错 = String(错误写.message ? 错误写.message : 错误写).slice(0, 300)
+      写入失败 += 1
+    }
+    if (条.写入) {
+      try { 条.写后公式 = String(汇.Cells(行, 3).Formula).slice(0, 120) } catch (错误读2) { 条.写后公式 = '' }
+      if (!等(文本(条.写后公式), 文本(项.新公式))) 回读不符 += 1
+    }
+    逐行.push(条)
+  }
+  报告.written = 成功 > 0
+  报告.请求数 = 列表.length
+  报告.成功数 = 成功
+  报告.写入失败数 = 写入失败
+  报告.回读不符数 = 回读不符
+  报告.逐行 = 逐行
+  报告.跳过 = 跳过
+  return 报告
+}
+
 function 解析参数() {
   var 裸 = null
   try { if (Context) 裸 = Context.argv } catch (错误) { 裸 = null }
@@ -659,6 +783,7 @@ function main() {
   if (等(动作, '写主体')) return 执行写主体(参数)
   if (等(动作, '刷新与税金')) return 执行刷新与税金(参数)
   if (等(动作, '插图')) return 执行插图(参数)
+  if (等(动作, '写公式')) return 执行写公式(参数)
   return { scriptVersion: scriptVersion, message: '不认识的 action：' + 动作 }
 }
 

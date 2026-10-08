@@ -11,13 +11,18 @@
 //   全程只读：不输入、不点保存、不触发同步。
 //
 // 用法：
-//   node scripts/导出收款码图.cjs --清单 runtime/tmp/收款码清单.json --出 runtime/收款码图/2026-10-08
-//   清单 JSON：[{"行":451,"姓名":"程小霞","id":"ID_352FA1A825414A33B3C550B97EAE6B0C"}, …]
-//   输出：<出>/<行>-<姓名>.<ext>（原格式 jpg/png/webp）+ <出>/dataURL.json
-//   （含 行/姓名/id/附件ID/文件/字节/mime/宽高/dataURL）；失败退出码 1，**不自动重试**（用户铁律）。
+//   node scripts/导出收款码图.cjs --清单 <源行清单>.json --批次 runtime/待写数据/2026-09.json --出 runtime/收款码图/2026-10-08
+//   node scripts/导出收款码图.cjs --表 目标 --清单 <json> --出 <目录>     # --表 源(默认)|目标，或 --url 直接给链接
+//   清单 JSON：[{"行":451,"姓名":"程小霞","id":"ID_352FA1A825414A33B3C550B97EAE6B0C"}, …]（行 = 源表行号）
+//   输出：<出>/<源行>-<姓名>.<ext>（原格式 jpg/png/webp）+ <出>/dataURL.json
+//   **给 --批次（待写数据.json）时**：按批次记录推目标行（目标首行=预期末行.汇总+1，见 批次映射.cjs），
+//   dataURL.json 每条带 `行`=目标表行号 + `目标行` + `源行`（2026-10-08.6 起；防源行当目标行的写错行事故）；
+//   不给 --批次 时 `行` 仍是源表行号（只用于留档，**不许直接喂给「插图」**——插图会拒绝源行语义的数据）。
+//   失败退出码 1，**不自动重试**（用户铁律）。
 const fs = require("node:fs");
 const path = require("node:path");
 const { resolveBrowserPath } = require("../../tools/金山表/读表核心.js");
+const { 读批次文件 } = require("./批次映射.cjs");
 
 const 项目根 = path.resolve(__dirname, "..");
 
@@ -80,18 +85,29 @@ async function main() {
   const 清单路径 = String(参.清单 || "");
   const 出目录 = path.resolve(String(参.出 || path.join(项目根, "runtime", "收款码图", "未命名")));
   if (!清单路径 || !fs.existsSync(清单路径)) {
-    console.error("用法：node scripts/导出收款码图.cjs --清单 <json> --出 <目录>");
+    console.error("用法：node scripts/导出收款码图.cjs --清单 <json> [--批次 <待写数据.json>] --出 <目录>");
     process.exitCode = 2;
     return;
   }
   const 清单 = JSON.parse(fs.readFileSync(path.resolve(清单路径), "utf8"));
+  const 批次 = 参.批次 ? 读批次文件(String(参.批次)) : null;
   const 项 = (Array.isArray(清单) ? 清单 : 清单.项 || []).map((x) => ({
-    行: Number(x.行), 姓名: String(x.姓名 || ""), id: String(x.id || "")
+    源行: Number(x.源行 !== undefined ? x.源行 : x.行), 姓名: String(x.姓名 || ""), id: String(x.id || "")
   })).filter((x) => x.id);
   if (!项.length) { console.error("清单里没有带 id 的项"); process.exitCode = 2; return; }
+  // 先把「源行 → 目标行」全部核过（映射不了就整体拒绝，不启动浏览器、不产出半个文件）
+  if (批次) {
+    for (const 一 of 项) {
+      if (!Number.isFinite(一.源行)) { console.error(`清单里有条目没写 行/源行`); process.exitCode = 2; return; }
+      const 目标 = 批次.源行到目标.get(一.源行);
+      if (!Number.isFinite(目标)) { console.error(`源行 ${一.源行} 不在批次明细（${批次.目标首行}~${批次.目标末行}）里，拒绝`); process.exitCode = 2; return; }
+      一.目标行 = 目标;
+    }
+    console.log(`批次映射：源行 ${Math.min(...项.map((x) => x.源行))}~${Math.max(...项.map((x) => x.源行))} → 目标行 ${批次.目标首行}~${批次.目标末行}（写前置末 ${批次.写前置末}，${批次.行数} 行）`);
+  }
   fs.mkdirSync(出目录, { recursive: true });
 
-  const url = 读链接("补差登记总表");
+  const url = 参.url ? String(参.url) : 读链接(参.表 === "目标" ? "好评返现汇总表" : "补差登记总表");
   const { chromium } = 加载playwright();
   const browser = await chromium.launch({
     executablePath: resolveBrowserPath(),
@@ -153,7 +169,7 @@ async function main() {
     const 结果 = [];
     for (const 一 of 项) {
       const 形 = 映射.映射[一.id];
-      if (!形) { console.error(`✗ 行${一.行} ${一.姓名} 隐藏表里没有这个图片 ID`); 结果.push({ ...一, 错误: "映射里没有该 ID" }); continue; }
+      if (!形) { console.error(`✗ 源行${一.源行} ${一.姓名} 隐藏表里没有这个图片 ID`); 结果.push({ ...一, 错误: "映射里没有该 ID" }); continue; }
       const r = await page.evaluate(async ({ id, 附件ID }) => {
         try {
           const im = window.APP._imageManager;
@@ -183,18 +199,20 @@ async function main() {
           return { 错误: String(e.message || e).slice(0, 300) };
         }
       }, { id: 一.id, 附件ID: 形.附件ID });
-      if (r.错误) { console.error(`✗ 行${一.行} ${一.姓名} ${r.错误}`); 结果.push({ ...一, 附件ID: 形.附件ID, 错误: r.错误 }); continue; }
+      if (r.错误) { console.error(`✗ 源行${一.源行} ${一.姓名} ${r.错误}`); 结果.push({ ...一, 附件ID: 形.附件ID, 错误: r.错误 }); continue; }
       const 后缀 = r.mime.includes("jpeg") ? "jpg" : r.mime.includes("webp") ? "webp" : r.mime.includes("gif") ? "gif" : "png";
       const buf = Buffer.from(String(r.dataURL).split(",")[1], "base64");
-      const 文件名 = `${一.行}-${一.姓名 || "无姓名"}.${后缀}`;
+      const 文件名 = `${一.源行}-${一.姓名 || "无姓名"}.${后缀}`;
       fs.writeFileSync(path.join(出目录, 文件名), buf);
       const 尺寸 = 读图片尺寸(buf, r.mime);
-      console.log(`✓ 行${一.行} ${一.姓名} → ${文件名}（${r.字节} 字节，${r.mime}${尺寸.宽 ? `，${尺寸.宽}x${尺寸.高}` : ""}，途径 ${r.途径}）`);
-      结果.push({ 行: 一.行, 姓名: 一.姓名, id: 一.id, 附件ID: 形.附件ID, 文件: 文件名, 字节: r.字节, mime: r.mime, ...尺寸, 途径: r.途径, dataURL: r.dataURL });
+      console.log(`✓ 源行${一.源行}${一.目标行 ? ` → 目标行${一.目标行}` : ""} ${一.姓名} → ${文件名}（${r.字节} 字节，${r.mime}${尺寸.宽 ? `，${尺寸.宽}x${尺寸.高}` : ""}，途径 ${r.途径}）`);
+      // 2026-10-08.6：带 --批次 时 `行`=目标行（写 C 列用），另留 `源行`/`目标行` 两个字段留痕
+      结果.push({ 行: 一.目标行 || 一.源行, 源行: 一.源行, 目标行: 一.目标行 || 0, 行语义: 一.目标行 ? "目标行" : "源行", 姓名: 一.姓名, id: 一.id, 附件ID: 形.附件ID, 文件: 文件名, 字节: r.字节, mime: r.mime, ...尺寸, 途径: r.途径, dataURL: r.dataURL });
     }
     fs.writeFileSync(path.join(出目录, "dataURL.json"), JSON.stringify(结果, null, 1));
     const 失败 = 结果.filter((x) => x.错误).length;
     console.log(`\n完成：成功 ${结果.length - 失败} / 共 ${结果.length}；输出目录 ${出目录}`);
+    if (批次) console.log(`  dataURL.json 的 \`行\`=目标表行号（${批次.目标首行}~${批次.目标末行}）；直接喂给「插图」即可`);
     if (失败) process.exitCode = 1;
   } finally {
     await browser.close().catch(() => {});
