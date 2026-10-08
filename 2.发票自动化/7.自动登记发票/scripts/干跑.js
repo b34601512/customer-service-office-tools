@@ -1,5 +1,6 @@
 // 7号 动作②：**干跑** —— 算出这单要写的列（含目标表列映射），一个字节都不写。
 // 用法：node scripts/干跑.js --订单号 5127724117341157631 --表 "科技--唐雪梅"
+//   --行序号 <n>：1 起 = 行列表里的第几行（一单多主件/主件+赠品；证据文件带 -行<n>）。
 //   --明细序号 <n>：0=主商品（默认）；1/2…=赠品行（与 scripts/写登记表.js 同口径，证据文件带 -明细序号）。
 const path = require("path");
 const fs = require("fs");
@@ -15,17 +16,26 @@ async function main() {
   let 表名 = 默认表名;
   let 订单号 = "";
   let 明细序号 = 0;
+  let 行序号 = 0;
   for (let i = 0; i < argv.length; i += 1) {
     if (argv[i] === "--表") { 表名 = argv[i + 1]; i += 1; continue; }
     if (argv[i] === "--订单号") { 订单号 = argv[i + 1]; i += 1; continue; }
     if (argv[i] === "--明细序号") { 明细序号 = Number(argv[i + 1]) || 0; i += 1; continue; }
+    if (argv[i] === "--行序号") { 行序号 = Number(argv[i + 1]) || 0; i += 1; continue; }
   }
-  if (!订单号) { console.error("用法：node scripts/干跑.js --订单号 <单号> [--表 <子表名>] [--明细序号 <n>]"); process.exit(2); }
+  if (!订单号) { console.error("用法：node scripts/干跑.js --订单号 <单号> [--表 <子表名>] [--行序号 <n>|--明细序号 <n>]"); process.exit(2); }
 
   const 条目 = 读清单条目(清单路径, 订单号);
-  const 数据 = 生成写表数据(条目, { 表名, 明细序号 });
+  const 数据 = 生成写表数据(条目, { 表名, 明细序号, 行序号 });
   const 待人工 = 数据.待人工 || [];
-  console.log(`\n  ② 干跑（不写）：订单号 ${订单号}　表 ${表名}${明细序号 ? `　明细序号：${明细序号}（赠品行）` : ""}`);
+  console.log(`\n  ② 干跑（不写）：订单号 ${订单号}　表 ${表名}${行序号 ? `　行序号：${行序号}${行序号 > 1 ? "（续行）" : ""}` : ""}${明细序号 ? `　明细序号：${明细序号}（赠品行）` : ""}`);
+  if ((数据.总行数 || 1) > 1) {
+    console.log(`  本单共 ${数据.总行数} 行（主件按 ERP 顺序在前、赠品在后）——逐行写用 --行序号 1..${数据.总行数}：`);
+    for (const 行 of 数据.行列表 || []) {
+      console.log(`    行${行.行序号}${行.是否主行 ? "（主件）" : "（赠品）"}：U=${行.列.U ? 行.列.U.值 : "-"} V=${行.列.V ? 行.列.V.值 : "-"} Y=${行.列.Y ? 行.列.Y.值 : "-"}`);
+    }
+    console.log(`  金额对账：基准 ${数据.对账基准 ?? "-"}，差额 ${数据.金额差额 === null ? "（无法对账）" : 数据.金额差额}${(数据.对账提示 || []).length ? "；" + 数据.对账提示.join("；") : ""}`);
+  }
   console.log(`  待人工项：${待人工.length ? 待人工.join("；") : "无 ✓"}`);
   console.log("  将要写入的列（只写这些，公式列不碰）：");
   for (const [字母, 项] of Object.entries(数据.列 || {})) {
@@ -33,8 +43,8 @@ async function main() {
   }
   try {
     fs.mkdirSync(证据目录, { recursive: true });
-    const 文件 = path.join(证据目录, `干跑-${订单号}${明细序号 ? `-明细${明细序号}` : ""}.json`);
-    fs.writeFileSync(文件, JSON.stringify({ 时间: new Date().toISOString(), 订单号, 表名, 明细序号, 列: 数据.列, 待人工 }, null, 2), "utf8");
+    const 文件 = path.join(证据目录, `干跑-${订单号}${行序号 ? `-行${行序号}` : ""}${明细序号 ? `-明细${明细序号}` : ""}.json`);
+    fs.writeFileSync(文件, JSON.stringify({ 时间: new Date().toISOString(), 订单号, 表名, 行序号, 明细序号, 总行数: 数据.总行数, 列: 数据.列, 行列表: 数据.行列表, 对账基准: 数据.对账基准, 金额差额: 数据.金额差额, 对账提示: 数据.对账提示, 待人工 }, null, 2), "utf8");
     console.log(`  证据：${path.relative(项目根, 文件)}`);
   } catch (_错误) { /* 证据可选 */ }
   console.log("");

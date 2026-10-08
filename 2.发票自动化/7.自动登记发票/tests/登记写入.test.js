@@ -200,3 +200,41 @@ test("赠品行不放查重、但其它闸门照走（明细序号>0 时跳过 c
   assert.ok(!调用.some((a) => a.checkOnly), "赠品行不该跑云端查重（同订单号是预期的）");
   assert.ok(调用.some((a) => a.allowWrite === true && a.writeCells && Number(a.writeCells.Y) === 0), "赠品金额写 0");
 });
+
+// 一单多主件（2026-10-08）：第 2 条主件 = 续行——同订单号是预期，不跑查重；回读走探针（末行=刚写那行）。
+// 反向断言：第 1 行（行序号=1）必须照旧跑全表查重——谁把续行逻辑放宽到第 1 行，这里就红。
+test("多主件第 2 行（行序号=2）：跳过查重、回读走探针；第 1 行仍必须全表查重", async () => {
+  let 查重次数 = 0;
+  const 调用 = [];
+  const 跑脚本 = async (参数) => {
+    调用.push(参数);
+    if (参数.checkOnly) {
+      查重次数 += 1;
+      return 查重次数 === 1 ? { duplicate: false, row: 0 } : { duplicate: true, row: 2788 };
+    }
+    if (参数.probe) return { scriptVersion: "test", lastDataRow: 调用.some((a) => a.allowWrite) ? 2788 : 2787, nextWriteRow: 2789 };
+    return { written: true, row: 2788, writtenColumns: ["U", "V", "Y"], dateColumns: ["A", "AK"], readBack: ["J=260926-***********0863"] };
+  };
+  const 依赖 = { 跑脚本, 生成写表数据 };
+  const 条目 = {
+    订单号: "260926-***********0863", 店铺: "拼多多02店", 发票类型: "普票",
+    开票金额: 697.96, 平台应开金额: 697.96, 抬头: "青岛元胜堂医疗管理有限公司", 税号: "91370203MAE2TXW57X",
+    登记时间: "2026-10-08 10:00:00", 发货日期: "2026-09-26",
+    商品明细: [
+      { 规格名称: "纯正弦波逆变器", 型号: "纯正弦波逆变器", 订购数: "1", 买家支付金额: 104.7, 赠品: false },
+      { 规格名称: "DH22-C1L(9L)", 型号: "DH22-C1L", 订购数: "1", 买家支付金额: 593.3, 赠品: false },
+    ],
+  };
+  const 第1行 = await 写登记行(条目, 依赖, { 表名: "德达医疗器械发票登记 --毛叶红", 已确认: true, 行序号: 1 });
+  assert.strictEqual(第1行.状态, "已写入");
+  assert.ok(调用.some((a) => a.checkOnly), "第 1 行必须跑全表查重");
+  assert.ok(调用.some((a) => a.writeCells && Number(a.writeCells.Y) === 104.7), "第 1 行写该行买家支付 104.70");
+
+  调用.length = 0;
+  const 第2行 = await 写登记行(条目, 依赖, { 表名: "德达医疗器械发票登记 --毛叶红", 已确认: true, 行序号: 2 });
+  assert.strictEqual(第2行.状态, "已写入");
+  assert.strictEqual(第2行.行序号, 2);
+  assert.ok(!调用.some((a) => a.checkOnly), "续行不该跑云端查重（同订单号是预期的）");
+  assert.ok(调用.some((a) => a.probe === true), "续行回读走探针（末行=刚写那行）");
+  assert.ok(调用.some((a) => a.writeCells && Number(a.writeCells.Y) === 593.3), "第 2 行写该行买家支付 593.30");
+});

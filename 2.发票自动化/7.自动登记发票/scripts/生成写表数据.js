@@ -42,12 +42,20 @@ function main() {
     process.exit(1);
   }
 
-  const { 列, 待人工 } = 生成写表数据(条目);
+  const 数据 = 生成写表数据(条目);
+  const { 列, 待人工 } = 数据;
   const 列序 = Object.keys(列).sort();
   console.log(`\n  订单 ${条目.订单号}（${条目.店铺}）→ 写表数据 ${列序.length} 列：`);
   for (const 名 of 列序) {
     const 项 = 列[名];
     console.log(`    ${名} = ${项.值}${项.说明 ? `  （${项.类型}：${项.说明}）` : `  （${项.类型}）`}`);
+  }
+  if ((数据.总行数 || 1) > 1) {
+    console.log(`\n  本单共 ${数据.总行数} 行（主件按 ERP 顺序在前、赠品在后）——逐行写用 --行序号 1..${数据.总行数}：`);
+    for (const 行 of 数据.行列表) {
+      console.log(`    行${行.行序号}${行.是否主行 ? "（主件）" : "（赠品）"}：U=${行.列.U ? 行.列.U.值 : "-"} V=${行.列.V ? 行.列.V.值 : "-"} Y=${行.列.Y ? 行.列.Y.值 : "-"}${行.待人工.length ? "　待人工：" + 行.待人工.join("；") : ""}`);
+    }
+    console.log(`  金额对账：基准 ${数据.对账基准 ?? "-"}，差额 ${数据.金额差额 === null ? "（无法对账）" : 数据.金额差额}${(数据.对账提示 || []).length ? "；" + 数据.对账提示.join("；") : ""}`);
   }
   console.log(`\n  待人工：${待人工.length ? 待人工.join("；") : "（无）"}`);
   console.log(`  公式列检查：${["C", "D", "E", "T", "W", "X", "AO"].some((c) => 列[c]) ? "❌ 混进了公式列" : "✅ 没有公式列"}`);
@@ -56,7 +64,7 @@ function main() {
   if (参数.out) {
     const 输出路径 = path.isAbsolute(参数.out) ? 参数.out : path.join(项目根, 参数.out);
     fs.mkdirSync(path.dirname(输出路径), { recursive: true });
-    fs.writeFileSync(输出路径, JSON.stringify({ 订单号: 条目.订单号, 店铺: 条目.店铺, 列, 待人工 }, null, 2), "utf8");
+    fs.writeFileSync(输出路径, JSON.stringify({ 订单号: 条目.订单号, 店铺: 条目.店铺, 列, 待人工, 总行数: 数据.总行数, 行列表: 数据.行列表, 对账基准: 数据.对账基准, 金额差额: 数据.金额差额, 对账提示: 数据.对账提示 }, null, 2), "utf8");
     console.log(`  已保存：${path.relative(项目根, 输出路径)}\n`);
   }
 }
