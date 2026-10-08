@@ -28,6 +28,9 @@
   → node scripts/导入管家数据.cjs --manifest runtime/downloads/2026-09/manifest.json --dry-run   # 先看统计/映射
   → node scripts/导入管家数据.cjs --manifest runtime/downloads/2026-09/manifest.json --send      # 分批追加 + 写完自动回读核对
   → node scripts/导入管家数据.cjs --manifest runtime/downloads/2026-09/manifest.json --verify    # 随时再核对（应有=实有）
+校对（**涉及工资，必做**，2026-10-08 黎路遥定：导入之后必须多一道金额校对）
+  → node scripts/校对金额.cjs --年月 2026-09   # 按客服/每店：本地汇总 ⇄ 系统统计（差异率清单；脚本落地后启用）
+     · 差异率不达标 → 不许交付，写回执报人；结论与证据落 runtime/校对-<日期>/
 ```
 
 ### 下载工具（只读：导航/查询/点导出/下载；登录失效→留窗口跳过）
