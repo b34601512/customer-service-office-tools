@@ -13,8 +13,13 @@
 // 用法：
 //   node scripts/导出收款码图.cjs --清单 <源行清单>.json --批次 runtime/待写数据/2026-09.json --出 runtime/收款码图/2026-10-08
 //   node scripts/导出收款码图.cjs --表 目标 --清单 <json> --出 <目录>     # --表 源(默认)|目标，或 --url 直接给链接
+//   node scripts/导出收款码图.cjs --清单 <json> --批次 <待写数据.json> --出 <目录> --缩略图 [--宽 320] [--质量 0.75] [--单张上限KB 60]
 //   清单 JSON：[{"行":451,"姓名":"程小霞","id":"ID_352FA1A825414A33B3C550B97EAE6B0C"}, …]（行 = 源表行号）
-//   输出：<出>/<源行>-<姓名>.<ext>（原格式 jpg/png/webp）+ <出>/dataURL.json
+//   输出：<出>/<源行>-<姓名>.<ext>（原格式 jpg/png/webp）+ <出>/dataURL.json；--缩略图 时是 <源行>-<姓名>-缩略.jpg。
+//   --缩略图（2026-10-08.7，黎路遥 15:57 口径）：打印只要看得出是收款码；每张都从**该行自己的原图**
+//     在浏览器 canvas 里缩（不是占位图/同一张套用），默认宽 320px、JPEG 质量 0.75，单张目标 ≤60KB、整批 ≤1MB；
+//     超过单张上限时在本地按「质量 0.6 → 0.45 → 宽度×0.8」确定性降档（不请求平台、不是重试），最终仍超限则退出码 1。
+//   --原图：显式保留原尺寸原格式（默认行为，与 --缩略图 二选一）。
 //   **给 --批次（待写数据.json）时**：按批次记录推目标行（目标首行=预期末行.汇总+1，见 批次映射.cjs），
 //   dataURL.json 每条带 `行`=目标表行号 + `目标行` + `源行`（2026-10-08.6 起；防源行当目标行的写错行事故）；
 //   不给 --批次 时 `行` 仍是源表行号（只用于留档，**不许直接喂给「插图」**——插图会拒绝源行语义的数据）。
@@ -23,6 +28,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { resolveBrowserPath } = require("../../tools/金山表/读表核心.js");
 const { 读批次文件 } = require("./批次映射.cjs");
+const { 默认缩略参数, 缩略体积守门 } = require("./缩略图规格.cjs");
 
 const 项目根 = path.resolve(__dirname, "..");
 
@@ -85,10 +91,24 @@ async function main() {
   const 清单路径 = String(参.清单 || "");
   const 出目录 = path.resolve(String(参.出 || path.join(项目根, "runtime", "收款码图", "未命名")));
   if (!清单路径 || !fs.existsSync(清单路径)) {
-    console.error("用法：node scripts/导出收款码图.cjs --清单 <json> [--批次 <待写数据.json>] --出 <目录>");
+    console.error("用法：node scripts/导出收款码图.cjs --清单 <json> [--批次 <待写数据.json>] --出 <目录> [--缩略图|--原图]");
     process.exitCode = 2;
     return;
   }
+  const 模式原图 = Boolean(参.原图);
+  const 模式缩略 = Boolean(参.缩略图);
+  if (模式原图 && 模式缩略) { console.error("--原图 与 --缩略图 只能二选一"); process.exitCode = 2; return; }
+  const 取正数 = (值, 默认, 名) => {
+    const n = 值 === undefined ? Number(默认) : Number(typeof 值 === "boolean" ? NaN : 值);
+    if (!Number.isFinite(n) || n <= 0) throw new Error(`${名} 必须是正数：${String(值)}`);
+    return n;
+  };
+  const 缩略选项 = 模式缩略 ? {
+    宽: 取正数(参.宽, 默认缩略参数.宽, "--宽"),
+    质量: 取正数(参.质量, 默认缩略参数.质量, "--质量"),
+    单张上限字节: Math.round(取正数(参.单张上限KB, 默认缩略参数.单张上限字节 / 1024, "--单张上限KB") * 1024)
+  } : null;
+  if (模式缩略) console.log(`缩略图模式：宽 ${缩略选项.宽}px、JPEG 质量 ${缩略选项.质量}、单张上限 ${Math.round(缩略选项.单张上限字节 / 1024)}KB（逐张从该行自己的原图缩放）`);
   const 清单 = JSON.parse(fs.readFileSync(path.resolve(清单路径), "utf8"));
   const 批次 = 参.批次 ? 读批次文件(String(参.批次)) : null;
   const 项 = (Array.isArray(清单) ? 清单 : 清单.项 || []).map((x) => ({
@@ -170,7 +190,7 @@ async function main() {
     for (const 一 of 项) {
       const 形 = 映射.映射[一.id];
       if (!形) { console.error(`✗ 源行${一.源行} ${一.姓名} 隐藏表里没有这个图片 ID`); 结果.push({ ...一, 错误: "映射里没有该 ID" }); continue; }
-      const r = await page.evaluate(async ({ id, 附件ID }) => {
+      const r = await page.evaluate(async ({ id, 附件ID, 缩略 }) => {
         try {
           const im = window.APP._imageManager;
           let url = "";
@@ -190,28 +210,76 @@ async function main() {
           if (!resp.ok) return { 错误: `fetch 状态 ${resp.status}（途径 ${途径}）` };
           const mime = String(resp.headers.get("content-type") || "image/png").split(";")[0];
           const buf = new Uint8Array(await resp.arrayBuffer());
-          let 二进制 = "";
-          for (let i = 0; i < buf.length; i += 8192) {
-            二进制 += String.fromCharCode.apply(null, buf.subarray(i, i + 8192));
+          if (!缩略) {
+            let 二进制 = "";
+            for (let i = 0; i < buf.length; i += 8192) {
+              二进制 += String.fromCharCode.apply(null, buf.subarray(i, i + 8192));
+            }
+            return { 途径, mime, 字节: buf.length, dataURL: `data:${mime};base64,${btoa(二进制)}` };
           }
-          return { 途径, mime, 字节: buf.length, dataURL: `data:${mime};base64,${btoa(二进制)}` };
+          // 缩略图：这一张原图 → 位图 → canvas 缩放 → JPEG（逐张独立，花纹/颜色差异保留）
+          const 位图 = await createImageBitmap(new Blob([buf], { type: mime }));
+          const 估字节 = (s) => {
+            const i = String(s).indexOf(",");
+            const b64 = String(s).slice(i + 1);
+            let 补 = 0;
+            if (b64.slice(-2) === "==") 补 = 2;
+            else if (b64.slice(-1) === "=") 补 = 1;
+            return Math.max(0, Math.floor((b64.length * 3) / 4) - 补);
+          };
+          const 画 = (w, q) => {
+            const c = document.createElement("canvas");
+            c.width = w;
+            c.height = Math.max(1, Math.round((位图.height * w) / 位图.width));
+            const ctx = c.getContext("2d");
+            ctx.fillStyle = "#ffffff"; // JPEG 不支持透明；PNG 透明底填白，防二维码变黑块
+            ctx.fillRect(0, 0, c.width, c.height);
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = "high";
+            ctx.drawImage(位图, 0, 0, c.width, c.height);
+            return { dataURL: c.toDataURL("image/jpeg", q), 宽: c.width, 高: c.height, 质量: q };
+          };
+          const 目标宽 = Math.min(位图.width, 缩略.宽);
+          // 本地确定性降档（不请求平台、非重试）：质量 0.6 → 0.45 → 宽度×0.8；第一档达标就停。
+          const 阶梯 = [
+            [目标宽, 缩略.质量],
+            [目标宽, Math.min(缩略.质量, 0.6)],
+            [目标宽, Math.min(缩略.质量, 0.45)],
+            [Math.max(64, Math.round(目标宽 * 0.8)), Math.min(缩略.质量, 0.45)]
+          ];
+          let 果 = 画(阶梯[0][0], 阶梯[0][1]);
+          for (let i = 1; i < 阶梯.length; i += 1) {
+            if (估字节(果.dataURL) <= 缩略.单张上限字节) break;
+            果 = 画(阶梯[i][0], 阶梯[i][1]);
+          }
+          return {
+            途径, mime: "image/jpeg", 字节: 估字节(果.dataURL), dataURL: 果.dataURL,
+            宽: 果.宽, 高: 果.高, 缩略质量: 果.质量, 原字节: buf.length, 原宽: 位图.width, 原高: 位图.height
+          };
         } catch (e) {
           return { 错误: String(e.message || e).slice(0, 300) };
         }
-      }, { id: 一.id, 附件ID: 形.附件ID });
+      }, { id: 一.id, 附件ID: 形.附件ID, 缩略: 缩略选项 });
       if (r.错误) { console.error(`✗ 源行${一.源行} ${一.姓名} ${r.错误}`); 结果.push({ ...一, 附件ID: 形.附件ID, 错误: r.错误 }); continue; }
-      const 后缀 = r.mime.includes("jpeg") ? "jpg" : r.mime.includes("webp") ? "webp" : r.mime.includes("gif") ? "gif" : "png";
+      const 是缩略 = Boolean(r.缩略质量);
+      const 后缀 = 是缩略 ? "jpg" : r.mime.includes("jpeg") ? "jpg" : r.mime.includes("webp") ? "webp" : r.mime.includes("gif") ? "gif" : "png";
       const buf = Buffer.from(String(r.dataURL).split(",")[1], "base64");
-      const 文件名 = `${一.源行}-${一.姓名 || "无姓名"}.${后缀}`;
+      const 文件名 = `${一.源行}-${一.姓名 || "无姓名"}${是缩略 ? "-缩略" : ""}.${后缀}`;
       fs.writeFileSync(path.join(出目录, 文件名), buf);
-      const 尺寸 = 读图片尺寸(buf, r.mime);
-      console.log(`✓ 源行${一.源行}${一.目标行 ? ` → 目标行${一.目标行}` : ""} ${一.姓名} → ${文件名}（${r.字节} 字节，${r.mime}${尺寸.宽 ? `，${尺寸.宽}x${尺寸.高}` : ""}，途径 ${r.途径}）`);
+      const 尺寸 = 是缩略 ? { 宽: r.宽, 高: r.高 } : 读图片尺寸(buf, r.mime);
+      console.log(`✓ 源行${一.源行}${一.目标行 ? ` → 目标行${一.目标行}` : ""} ${一.姓名} → ${文件名}（${buf.length} 字节，${r.mime}${尺寸.宽 ? `，${尺寸.宽}x${尺寸.高}` : ""}，途径 ${r.途径}${是缩略 ? `【该行原图 ${r.原字节} 字节 ${r.原宽}x${r.原高}，缩到 ${r.宽}x${r.高} q${r.缩略质量}】` : ""}）`);
       // 2026-10-08.6：带 --批次 时 `行`=目标行（写 C 列用），另留 `源行`/`目标行` 两个字段留痕
-      结果.push({ 行: 一.目标行 || 一.源行, 源行: 一.源行, 目标行: 一.目标行 || 0, 行语义: 一.目标行 ? "目标行" : "源行", 姓名: 一.姓名, id: 一.id, 附件ID: 形.附件ID, 文件: 文件名, 字节: r.字节, mime: r.mime, ...尺寸, 途径: r.途径, dataURL: r.dataURL });
+      结果.push({ 行: 一.目标行 || 一.源行, 源行: 一.源行, 目标行: 一.目标行 || 0, 行语义: 一.目标行 ? "目标行" : "源行", 姓名: 一.姓名, id: 一.id, 附件ID: 形.附件ID, 文件: 文件名, 字节: buf.length, mime: r.mime, 缩略: 是缩略, ...尺寸, ...(是缩略 ? { 原字节: r.原字节, 原宽: r.原宽, 原高: r.原高, 缩略质量: r.缩略质量 } : {}), 途径: r.途径, dataURL: r.dataURL });
     }
     fs.writeFileSync(path.join(出目录, "dataURL.json"), JSON.stringify(结果, null, 1));
     const 失败 = 结果.filter((x) => x.错误).length;
     console.log(`\n完成：成功 ${结果.length - 失败} / 共 ${结果.length}；输出目录 ${出目录}`);
+    if (模式缩略) {
+      const 闸 = 缩略体积守门(结果.filter((x) => !x.错误), { 单张上限字节: 缩略选项.单张上限字节 });
+      console.log(`  缩略图体积：合计 ${闸.总字节} 字节（${(闸.总字节 / 1024).toFixed(1)} KB）${闸.通过 ? "，全部在限内" : ""}`);
+      for (const f of 闸.失败) console.error(`  ✗ 体积超限：${f.原因}`);
+      if (!闸.通过) process.exitCode = 1;
+    }
     if (批次) console.log(`  dataURL.json 的 \`行\`=目标表行号（${批次.目标首行}~${批次.目标末行}）；直接喂给「插图」即可`);
     if (失败) process.exitCode = 1;
   } finally {

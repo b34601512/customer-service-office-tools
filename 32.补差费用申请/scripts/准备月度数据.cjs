@@ -13,6 +13,7 @@
 //   ⑤ 出现没见过的店铺 / 康健体系（无主体子表）的行 → 不猜，抛错停下让人处理
 const fs = require("node:fs");
 const path = require("node:path");
+const { 解析DISPIMG, 从批次生成清单, 清单路径, 写清单 } = require("./收款码图清单.cjs");
 
 const 项目根 = path.resolve(__dirname, "..");
 
@@ -184,6 +185,22 @@ function main() {
     console.log(`    · ${主体}：${组.行数} 行 / ¥${组.合计金额}`);
   }
   console.log(`  已落盘：${path.relative(项目根, 落盘路径)}\n`);
+
+  // 带图清单（2026-10-08 起自动生成，不再手工攒）：本批源表 G 列是 DISPIMG 图的行 → 源行/姓名/ID/目标行。
+  // 目标行要拿 预期末行.汇总 推；没给就先只提示，跑 同步收款码图.cjs 时仍会按批次文件再算。
+  if (结果.预期末行 && 结果.预期末行.汇总) {
+    const 清单 = 从批次生成清单(结果, { 文件: 落盘路径 });
+    const 图文件 = 清单路径(项目根, 结果.月份);
+    写清单(图文件, 清单);
+    console.log(`  带图清单：${清单.有图行数}/${结果.行数} 行有收款码图 → ${path.relative(项目根, 图文件)}`);
+    for (const 一 of 清单.项) console.log(`    · 源R${一.源行} ${一.姓名} → 目标行 ${一.目标行}`);
+    if (清单.有图行数) console.log(`    下一步（缩略图→一把插→回读一键）：node scripts/同步收款码图.cjs --批次 ${path.relative(项目根, 落盘路径)}`);
+    console.log("");
+  } else {
+    const 有图行数 = (结果.明细 || []).filter((x) => 解析DISPIMG((x.汇总行 || [])[2])).length;
+    if (有图行数) console.log(`  提示：本批有 ${有图行数} 行带收款码图；没给 --预期汇总末行，目标行等跑 同步收款码图.cjs 时再算。\n`);
+  }
+
   for (const 行 of 结果.明细) {
     console.log(`    源R${行.源行号} ${行.付款时间} ${行.店铺} ${行.汇总行[1]} ¥${行.汇总行[7]} ${行.汇总行[6]} → ${行.主体.slice(6, 12)}`);
   }
