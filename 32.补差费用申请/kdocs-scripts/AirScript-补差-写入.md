@@ -1,4 +1,4 @@
-var scriptVersion = '2026-10-08.3'
+var scriptVersion = '2026-10-08.4'
 
 // 《好评返现，返差价、运费汇总表【打印版】》写入脚本（**必须建 AirScript 2.0 Beta 脚本**：
 //   刷新透视表只有 2.0 有 API；1.0 没有透视表对象）。
@@ -36,6 +36,11 @@ var scriptVersion = '2026-10-08.3'
 //   但 `instanceof Array` 为 false（跨 realm），v2 的行数组守卫全部误判成“没有行”。
 //   修法：入站行数组一律先过 转净数组() 重建成本脚本 realm 的原生数组；客户端把行数组
 //   改成 JSON 字符串传（字符串实测原样到达，服务器 JSON.parse 结果必为原生数组）→ 双保险。
+// 【2026-10-08.4 修复（轮2 实测发现：写汇总成功、但回读比对假报 12 条差异被拦停）】
+//   日期格式列（如汇总表 A 列，历史行都是序列号）写入 "2023/2/28" 这类日期串后，服务端 Value2
+//   回读回来是序列号 "44985"；旧 同值() 长度不同 → Number("2023/2/28")=NaN → 判不等（假差异）。
+//   修法：新增 日期序()（日期串 ↔ 序列号 都归一到「距 1899-12-30 的天数」），同值() 先走日期比对。
+//   只影响比对、不改写入；老行/新行本来就都是序列号，数据无差异。
 // 【粘贴方式】打开《好评返现，返差价、运费汇总表【打印版】》→ 效率 → 高级开发 → AirScript 脚本编辑器
 //   → 左侧「+」旁边的下拉选 **AirScript 2.0 Beta（推荐）** → 新建脚本「补差-写入」→ 清空默认内容 → 粘全文
 //   → 保存 → 脚本「更多」里复制「同步 webhook」→ 填进本机 32号 project-config/kdocs-airscript.local.json。
@@ -195,8 +200,29 @@ function 读块(表, 起行, 列数, 行数) {
   return 出
 }
 
-// 值对比：空白/大小写不管、'-' 和 '/' 归一、数字按数值比
+// 日期归一：'2023/2/28' 与序列号 '44985' 都 →「距 1899-12-30 的天数」；不是日期返回 NaN。
+// （2026-10-08.4：日期格式列写日期串、Value2 回读是序列号，两者必须视作同值）
+function 日期序(值) {
+  var 字 = 文本(值).split('-').join('/')
+  var 段 = 字.split('/')
+  if (段.length - 3) {
+    if (字.length > 0 && 字.length < 7 && isFinite(Number(字))) {
+      var 数 = Number(字)
+      if (数 > 20000 && 数 < 80000) return Math.round(数)
+    }
+    return NaN
+  }
+  var 年 = Number(段[0]), 月 = Number(段[1]), 日 = Number(段[2])
+  if (isFinite(年) && isFinite(月) && isFinite(日) && 年 > 1899 && 月 > 0 && 月 < 13 && 日 > 0 && 日 < 32) {
+    return Math.round((Date.UTC(年, 月 - 1, 日) - Date.UTC(1899, 11, 30)) / 86400000)
+  }
+  return NaN
+}
+
+// 值对比：空白/大小写不管、'-' 和 '/' 归一、数字按数值比、日期串与序列号视作同值
 function 同值(a, b) {
+  var 甲 = 日期序(a), 乙 = 日期序(b)
+  if (isFinite(甲) && isFinite(乙)) return 是零(甲 - 乙)
   var x = 文本(a).split('-').join('/'), y = 文本(b).split('-').join('/')
   if (x.length - y.length) {
     var nx = Number(x), ny = Number(y)
