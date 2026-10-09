@@ -100,7 +100,7 @@ test.beforeEach(() => {
       }
     ],
     member_directory: [
-      { name: "张三", mobile: "19900000000", user_id: "", inline_mention_enabled: true }
+      { name: "黎路遥", mobile: "19900000000", user_id: "", inline_mention_enabled: true }
     ]
   }));
   global.fetch = async () => ({

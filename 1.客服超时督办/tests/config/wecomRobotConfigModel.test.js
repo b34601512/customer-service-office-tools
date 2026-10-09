@@ -11,7 +11,7 @@ test("旧版双 webhook 配置在地址相同时应该自动迁移成一个统�
     pre_sales_webhook_url: "https://example.com/shared",
     after_sales_webhook_url: "https://example.com/shared",
     member_mobile_map: {
-      张三: "13800000000"
+      黎路遥: "13800000000"
     },
     member_userid_map: {
       苏哲: "userid002"
@@ -31,7 +31,7 @@ test("旧版双 webhook 配置在地址相同时应该自动迁移成一个统�
   assert.deepEqual(config.staffDirectory, [
     {
       id: "staff_1",
-      name: "张三",
+      name: "黎路遥",
       mobile: "13800000000",
       userId: "",
       inlineMentionEnabled: true
@@ -48,7 +48,7 @@ test("旧版双 webhook 配置在地址相同时应该自动迁移成一个统�
     苏哲: "userid002"
   });
   assert.deepEqual(config.memberInlineMentionEnabledMap, {
-    张三: true,
+    黎路遥: true,
     苏哲: true
   });
 });
@@ -66,7 +66,7 @@ test("保存新的通知群列表时应该同时回写兼容旧版的双 webhook
     staffDirectory: [
       {
         id: "staff_a",
-        name: "张三",
+        name: "黎路遥",
         mobile: "13800000000",
         userId: "userid001",
         inlineMentionEnabled: true
@@ -93,7 +93,7 @@ test("保存新的通知群列表时应该同时回写兼容旧版的双 webhook
   ]);
   assert.deepEqual(config.member_directory, [
     {
-      name: "张三",
+      name: "黎路遥",
       mobile: "13800000000",
       user_id: "userid001",
       inline_mention_enabled: true
@@ -106,15 +106,15 @@ test("保存新的通知群列表时应该同时回写兼容旧版的双 webhook
     }
   ]);
   assert.deepEqual(config.member_mobile_map, {
-    张三: "13800000000",
+    黎路遥: "13800000000",
     苏哲: "13800000000"
   });
   assert.deepEqual(config.member_userid_map, {
-    张三: "userid001",
+    黎路遥: "userid001",
     苏哲: "userid002"
   });
   assert.deepEqual(config.member_inline_mention_enabled_map, {
-    张三: true,
+    黎路遥: true,
     苏哲: false
   });
 });

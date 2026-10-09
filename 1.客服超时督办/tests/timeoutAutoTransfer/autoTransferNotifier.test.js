@@ -87,7 +87,7 @@ test("失败通知必须@主管，成功通知只留痕不打扰", async () => {
       }
     ],
     member_directory: [
-      { name: "张三", mobile: "19900000000", user_id: "", inline_mention_enabled: true }
+      { name: "黎路遥", mobile: "19900000000", user_id: "", inline_mention_enabled: true }
     ]
   }));
 

@@ -17,9 +17,9 @@ test("未上线提醒应该按售前/售后分别写清要开启的开关", () =
       周九: "<@userid007>",
       吴十: "<@userid006>",
       王五: "<@userid003>",
-      张三: "<@userid001>"
+      黎路遥: "<@userid001>"
     },
-    managerStaffName: "张三"
+    managerStaffName: "黎路遥"
   });
 
   assert.equal(
@@ -37,8 +37,8 @@ test("只有售前未上线时不应把售后写进文案", () => {
   const message = buildOnlinePresenceReminderMessage({
     expectedStaffNames: ["周九"],
     staffGroupByExpectedName: { 周九: "pre_sales" },
-    mentionTextByStaffName: { 周九: "周九", 张三: "张三" },
-    managerStaffName: "张三"
+    mentionTextByStaffName: { 周九: "周九", 黎路遥: "黎路遥" },
+    managerStaffName: "黎路遥"
   });
 
   assert.equal(
@@ -46,17 +46,17 @@ test("只有售前未上线时不应把售后写进文案", () => {
     [
       "应值班客服尚未上线，请尽快处理：",
       "· 售前（周九）：开启「是否可被转接」",
-      "张三（主管）请督办"
+      "黎路遥（主管）请督办"
     ].join("\n")
   );
 });
 
 test("主管也在应值班名单里时不重复督办", () => {
   const message = buildOnlinePresenceReminderMessage({
-    expectedStaffNames: ["张三"],
-    staffGroupByExpectedName: { 张三: "pre_sales" },
-    mentionTextByStaffName: { 张三: "<@userid001>" },
-    managerStaffName: "张三"
+    expectedStaffNames: ["黎路遥"],
+    staffGroupByExpectedName: { 黎路遥: "pre_sales" },
+    mentionTextByStaffName: { 黎路遥: "<@userid001>" },
+    managerStaffName: "黎路遥"
   });
 
   assert.equal(

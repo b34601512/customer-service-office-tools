@@ -58,17 +58,17 @@ test("接待ID有值但成员表缺失时应该暴露具体ID", () => {
 test("当前接待客服就是主管时不应该重复行内@", () => {
   const plan = resolveMissedReplyMentionPlan(
     {
-      staffName: "张三"
+      staffName: "黎路遥"
     },
     {
       memberMobileMap: {
-        张三: "13800000000"
+        黎路遥: "13800000000"
       },
       memberUserIdMap: {
-        张三: "manager"
+        黎路遥: "manager"
       },
       memberInlineMentionEnabledMap: {
-        张三: true
+        黎路遥: true
       }
     }
   );
@@ -86,17 +86,17 @@ test("提醒名单只包含平台当前接待和主管", () => {
       memberMobileMap: {
         卢安: "13800000001",
         马倩: "13800000002",
-        张三: "13800000000"
+        黎路遥: "13800000000"
       },
       memberUserIdMap: {
         卢安: "deng",
         马倩: "ke",
-        张三: "manager"
+        黎路遥: "manager"
       },
       memberInlineMentionEnabledMap: {
         卢安: true,
         马倩: true,
-        张三: true
+        黎路遥: true
       }
     }
   );

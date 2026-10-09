@@ -287,7 +287,7 @@ test("未实质回复提醒复盘快照应该能落盘和读回", () => {
       lastCustomerMessageAtMs: 1800000000000,
       lastCustomerMessageText: "帮我查一下",
       recentAgentReplyText: "",
-      dispatchTarget: "客服A + 张三",
+      dispatchTarget: "客服A + 黎路遥",
       webhookName: "测试群"
     });
     writeMissedReplyMonitorState(state);
@@ -297,7 +297,7 @@ test("未实质回复提醒复盘快照应该能落盘和读回", () => {
     assert.equal(persistedState.reminderSnapshotsByChatId.chat_1.reminderKind, "timeout");
     assert.equal(persistedState.reminderSnapshotsByChatId.chat_1.assignmentStatus, "assigned");
     assert.equal(persistedState.reminderSnapshotsByChatId.chat_1.assignmentStatusLabel, "当前会话已分配客服");
-    assert.equal(persistedState.reminderSnapshotsByChatId.chat_1.dispatchTarget, "客服A + 张三");
+    assert.equal(persistedState.reminderSnapshotsByChatId.chat_1.dispatchTarget, "客服A + 黎路遥");
   } finally {
     appConfig.missedReplyMonitorStatePath = originalStatePath;
     fs.rmSync(tempDir, { recursive: true, force: true });

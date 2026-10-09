@@ -157,7 +157,7 @@ test("客户镜像列表应该展示最近提醒复盘但不改变当前正常�
           assigneeRoleLabel: "售后客服",
           lastCustomerMessageText: "制氧机出现E9",
           recentAgentReplyText: "",
-          dispatchTarget: "客服A + 张三",
+          dispatchTarget: "客服A + 黎路遥",
           webhookName: "测试群"
         }
       }
@@ -172,7 +172,7 @@ test("客户镜像列表应该展示最近提醒复盘但不改变当前正常�
   assert.equal(items[0].timeoutReminderRemainingSeconds, 0);
   assert.equal(items[0].missedReplyReminderRemainingSeconds, 0);
   assert.equal(items[0].recentReminderSnapshot.reasonLabel, "客户消息后无人实质回复");
-  assert.equal(items[0].recentReminderSnapshot.dispatchTarget, "客服A + 张三");
+  assert.equal(items[0].recentReminderSnapshot.dispatchTarget, "客服A + 黎路遥");
 });
 
 test("首页运行巡检摘要应该只取统一判定时间", () => {

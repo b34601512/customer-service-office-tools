@@ -98,10 +98,10 @@ const CONFIG = {
   duty: {
     group: "售后",
     leadNames: ["李四"],
-    managerNames: ["张三"],
+    managerNames: ["黎路遥"],
     colorNames: { "#BDD7EE": "浅蓝", "#FFFFFF": "白色" }
   },
-  wecom: { memberMobileMap: { "李四": "13800000102", "孙八": "13800000104", "张三": "13800000101" } }
+  wecom: { memberMobileMap: { "李四": "13800000102", "孙八": "13800000104", "黎路遥": "13800000101" } }
 };
 
 test("@计划：组长+标记人+主管，@行写清原因", () => {
@@ -116,7 +116,7 @@ test("@计划：组长+标记人+主管，@行写清原因", () => {
       { name: "孙八", reason: "浅蓝底标记" }
     ]
   });
-  assert.deepStrictEqual(plan.atNames, ["李四", "孙八", "张三"]);
+  assert.deepStrictEqual(plan.atNames, ["李四", "孙八", "黎路遥"]);
   assert.deepStrictEqual(plan.mobiles, ["13800000102", "13800000104", "13800000101"]);
   assert.match(plan.onDutyLine, /本次@：李四（组长值班）、孙八（浅蓝底标记）/);
   assert.ok(!("todayLine" in plan), "群文案不再有全员值班长行");
@@ -124,7 +124,7 @@ test("@计划：组长+标记人+主管，@行写清原因", () => {
 
 test("排班读取失败→只@主管并说明原因", () => {
   const plan = buildMentionPlan(CONFIG, { ok: false, todayStaff: [], atStaff: [], error: "网络超时" });
-  assert.deepStrictEqual(plan.atNames, ["张三"]);
+  assert.deepStrictEqual(plan.atNames, ["黎路遥"]);
   assert.deepStrictEqual(plan.mobiles, ["13800000101"]);
   assert.match(plan.onDutyLine, /排班读取失败.*网络超时.*只@主管/);
 });
