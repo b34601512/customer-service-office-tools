@@ -3,19 +3,25 @@
 //   同一单改错/拆行时订单号已经存在，需要一个「按行号 + 指定列」的改正入口。
 //   云端写入脚本（独立脚本 v2026-09-30.8 起）已支持 {row, writeCells}，本工具只是把四道闸做在本地。
 //
-// 用法：node scripts/改登记行.js --订单号 <单> --表 "<子表名>" --行 <行号> --改 U=DH22-C1L,Y=593.30 [--脚本 write] [--查脚本 query] --已确认
+// 用法：node scripts/改登记行.js --订单号 <单> --表 "<子表名>" --行 <行号> [--改 U=DH22-C1L,Y=593.30] [--清 AB] [--脚本 write] [--查脚本 query] --已确认
+//   --改 / --清 至少给一个；可以只清不改（如个人票的税号栏要留空）。
 //   示例：node scripts/改登记行.js --订单号 260926-***********0863 --表 "德达医疗器械发票登记 --毛叶红" --行 2781 --改 U=DH22-C1L,Y=593.30 --已确认
+//   示例：node scripts/改登记行.js --订单号 240103-***********1794 --表 "德达医疗器械发票登记 --毛叶红" --行 2791 --清 AB --已确认
+//
+// 清空（2026-10-09.1 新增）：列要**留空**（不是打错）时用 `--清 AB` 显式声明 → 请求里带 clearCells（云端 ClearContents），
+//   清掉的列会进云端 writtenColumns；--改 里的空值仍旧拒（打错就拒的防呆）。清空只放白名单列，只清声明的那几列。
 //
 // 四道闸（顺序不能改；任何一道不过 → 一个字节都不写）：
 //   ① 身份核对（云端只读）：按行读该行，J 列必须 = --订单号；**J 为空的表尾新行**要追加两条：
 //       --改 里必须同时写 J=本单号（身份由本次写入建立），且云端探针的 nextWriteRow 必须就是 --行
 //       （防止打错行号把单写进中间的空行）。读请求与 `node scripts/查登记表.js --行 <行号> --脚本 <查脚本>` 一致。
-//   ② 列白名单：只允许 A/F/G/I/J/K/L/O/U/V/Y/AA/AB/AK；公式列（C/D/E/M/T/W/X/AO）与其余列（含 S，走写同单备注.js）一律拒写。
-//   ③ 类型：A/V/Y/AK 一律转数字再传（金额 593.30 不能当字符串写进去；A/AK 是日期序列号）。
-//   ④ 云端写入 + 判据：written===true 且 failedColumns 空 且 **每个目标列**都在 writtenColumns（防云端静默跳过）。
-//      写完再用只读查询回读该行，证据落 runtime/改行-<单>-行<行>-<时间戳>.json（runtime 不入库）。
+//   ② 列白名单：只允许 A/F/G/I/J/K/L/O/U/V/Y/AA/AB/AK；公式列（C/D/E/M/T/W/X/AO）与其余列（含 S，走写同单备注.js）一律拒写（清空列同拒）。
+//   ③ 类型：A/V/Y/AK 一律转数字再传（金额 593.30 不能当字符串写进去；A/AK 是日期序列号）；清空列不转类型。
+//   ④ 云端写入 + 判据 + 写后回读逐格核对：written===true 且 failedColumns 空 且 **每个目标列**都在 writtenColumns（防云端静默跳过）；
+//      写完再用只读查询回读该行逐格核对——清空的列必须为空、写入的列按值对上、其它列（公式列除外）一格不许变，不符判失败。
+//      证据落 runtime/改行-<单>-行<行>-<时间戳>.json（runtime 不入库）。
 //
-// 缺 --已确认 / --改 解析失败 / 身份不符 → 拒写。本工具只改这几格，不碰别人的行、不碰公式列。
+// 缺 --已确认 / --改、--清 都空 / 解析失败 / 身份不符 / 回读核对不符 → 拒写。本工具只改这几格，不碰别人的行、不碰公式列。
 const path = require("path");
 const fs = require("fs");
 const { 跑脚本 } = require("../src/金山脚本客户端");
@@ -31,13 +37,14 @@ const 公式列 = ["C", "D", "E", "M", "T", "W", "X", "AO"];
 const 数字列 = ["A", "V", "Y", "AK"];
 
 function 解析参数(argv) {
-  const 结果 = { 订单号: "", 表名: "", 行: 0, 改: "", 脚本: "write", 查脚本: "", 已确认: false };
+  const 结果 = { 订单号: "", 表名: "", 行: 0, 改: "", 清: "", 脚本: "write", 查脚本: "", 已确认: false };
   for (let i = 0; i < argv.length; i += 1) {
     const 词 = argv[i];
     if (词 === "--订单号") { 结果.订单号 = argv[i + 1] || ""; i += 1; continue; }
     if (词 === "--表") { 结果.表名 = argv[i + 1] || ""; i += 1; continue; }
     if (词 === "--行") { 结果.行 = Number(argv[i + 1]) || 0; i += 1; continue; }
     if (词 === "--改") { 结果.改 = argv[i + 1] || ""; i += 1; continue; }
+    if (词 === "--清") { 结果.清 = argv[i + 1] || ""; i += 1; continue; }
     if (词 === "--脚本") { 结果.脚本 = argv[i + 1] || ""; i += 1; continue; }
     if (词 === "--查脚本") { 结果.查脚本 = argv[i + 1] || ""; i += 1; continue; }
     if (词 === "--已确认") { 结果.已确认 = true; continue; }
@@ -49,7 +56,7 @@ function 检查参数(参数) {
   if (!参数.订单号) return { 错误: "缺少 --订单号" };
   if (!参数.表名) return { 错误: "缺少 --表" };
   if (!(Number(参数.行) > 0)) return { 错误: "缺少 --行（行号要是正整数）" };
-  if (!参数.改) return { 错误: "缺少 --改（格式如 --改 U=DH22-C1L,Y=593.30）" };
+  if (!参数.改 && !参数.清) return { 错误: "缺少 --改 / --清（至少给一个；--改 格式如 U=DH22-C1L,Y=593.30，--清 格式如 AB）" };
   if (参数.已确认 !== true) return { 错误: "未授权：改表必须逐次授权，请加 --已确认" };
   return { 通过: true };
 }
@@ -69,6 +76,29 @@ function 解析改列(文本) {
     列[字母] = 值;
   }
   return { 列 };
+}
+
+// 解析 --清 "AB" / "AB,AA"：只认列字母（1~2 位）；重复列拒。空值清空必须走这里显式声明。
+function 解析清空列(文本) {
+  const 片段 = String(文本 || "").split(/[,，]/).map((s) => s.trim()).filter(Boolean);
+  if (!片段.length) return { 错误: "--清 是空的" };
+  const 列 = [];
+  for (const 段 of 片段) {
+    if (!/^[A-Za-z]{1,2}$/.test(段)) return { 错误: `--清 的「${段}」不是列字母；格式应为 AB 或 AB,AA` };
+    const 字母 = 段.toUpperCase();
+    if (列.indexOf(字母) >= 0) return { 错误: `--清 里 ${字母} 列写了两次` };
+    列.push(字母);
+  }
+  return { 列 };
+}
+
+// 闸门② 对清空列同样适用：公式列、白名单外的列一律拒清。
+function 检查清空列(列名单) {
+  for (const 列 of 列名单 || []) {
+    if (公式列.indexOf(列) >= 0) return { 通过: false, 原因: `${列} 列是公式列（表里会自己算），一律拒清` };
+    if (列白名单.indexOf(列) < 0) return { 通过: false, 原因: `${列} 列不在白名单（只允许 ${列白名单.join("/")}）` };
+  }
+  return { 通过: true };
 }
 
 function 检查列(列对象) {
@@ -159,8 +189,39 @@ function 判定写入(结果, 目标列) {
   return { 成功: true, 状态: "已写入", 原因: "" };
 }
 
-function 生成请求(订单号, 表名, 行号, 写值) {
-  return { orderNo: 订单号, row: Number(行号), writeCells: 写值, allowWrite: true, sheets: [表名] };
+// 闸门④的后半段：写完用**只读查询**回读整行，逐格核对（只认回读，不认云端自报）。
+//   清空的列必须为空；写入的列按值对上（数字按数字比）；其它列一格不许变——公式列 C/D/E/M/T/W/X/AO 会自己重算，跳过。
+//   任何一条不符 → 通过:false，主流程按「回读核对不符」判失败（不清不写第二遍）。
+function 核对写后(写前, 写后, 写列, 清列) {
+  if (!写后 || 写后.读取失败) return { 通过: false, 问题: [`写后回读没读到该行${写后 && 写后.读取失败 ? `（${写后.读取失败}）` : ""}`] };
+  const 问题 = [];
+  const 写 = 写列 || {};
+  const 清 = Array.isArray(清列) ? 清列 : [];
+  const 取 = (源, 列) => (源 && 源[列] !== undefined ? String(源[列]).trim() : "");
+  for (const 列 of 清) {
+    if (取(写后, 列)) 问题.push(`${列} 列要求清空，回读却是「${取(写后, 列)}」`);
+  }
+  for (const [列, 值] of Object.entries(写)) {
+    const 回读 = 取(写后, 列);
+    const 一致 = typeof 值 === "number" ? Number(回读) === 值 : 回读 === String(值).trim();
+    if (!一致) 问题.push(`${列} 写的是「${String(值).trim()}」，回读却是「${回读 || "(空)"}」`);
+  }
+  const 目标 = new Set(Object.keys(写).concat(清));
+  const 键 = new Set(Object.keys(写前 || {}).concat(Object.keys(写后 || {})));
+  for (const 列 of 键) {
+    if (目标.has(列)) continue;
+    if (公式列.indexOf(列) >= 0) continue;
+    const 前 = 取(写前, 列);
+    const 后 = 取(写后, 列);
+    if (前 !== 后) 问题.push(`${列} 列不该动：写前「${前}」→ 写后「${后}」`);
+  }
+  return { 通过: 问题.length === 0, 问题 };
+}
+
+function 生成请求(订单号, 表名, 行号, 写值, 清列) {
+  const 请求 = { orderNo: 订单号, row: Number(行号), writeCells: 写值 || {}, allowWrite: true, sheets: [表名] };
+  if (Array.isArray(清列) && 清列.length) 请求.clearCells = 清列.slice();
+  return 请求;
 }
 
 function 时间戳(现在 = new Date()) {
@@ -184,14 +245,21 @@ async function main() {
   const 参数 = 解析参数(process.argv.slice(2));
   const 参数检查 = 检查参数(参数);
   if (!参数检查.通过) {
-    console.error('用法：node scripts/改登记行.js --订单号 <单> --表 "<子表名>" --行 <行号> --改 U=DH22-C1L,Y=593.30 [--脚本 write] [--查脚本 query] --已确认');
+    console.error('用法：node scripts/改登记行.js --订单号 <单> --表 "<子表名>" --行 <行号> [--改 U=DH22-C1L,Y=593.30] [--清 AB] [--脚本 write] [--查脚本 query] --已确认');
     console.error(`拒写：${参数检查.错误}`);
     process.exit(2);
   }
-  const 解析 = 解析改列(参数.改);
+  const 解析 = 参数.改 ? 解析改列(参数.改) : { 列: {} };
   if (解析.错误) { console.error(`拒写：${解析.错误}`); process.exit(2); }
-  const 列检查 = 检查列(解析.列);
+  const 列检查 = 参数.改 ? 检查列(解析.列) : { 通过: true };
   if (!列检查.通过) { console.error(`拒写：${列检查.原因}`); process.exit(2); }
+  const 清解析 = 参数.清 ? 解析清空列(参数.清) : { 列: [] };
+  if (清解析.错误) { console.error(`拒写：${清解析.错误}`); process.exit(2); }
+  const 清列 = 清解析.列;
+  const 清检查 = 检查清空列(清列);
+  if (!清检查.通过) { console.error(`拒写：${清检查.原因}`); process.exit(2); }
+  const 撞列 = 清列.filter((列) => 解析.列[列] !== undefined);
+  if (撞列.length) { console.error(`拒写：${撞列.join("、")} 列在 --改 和 --清 里各写了一次（同一列只能有一个动作）`); process.exit(2); }
   const 类型 = 转类型(解析.列);
   if (类型.错误) { console.error(`拒写：${类型.错误}`); process.exit(2); }
   const 写脚本 = 参数.脚本 || "write";
@@ -206,8 +274,9 @@ async function main() {
     行: Number(参数.行),
     写脚本,
     查脚本,
-    命令: `node scripts/改登记行.js --订单号 ${参数.订单号} --表 "${参数.表名}" --行 ${参数.行} --改 "${参数.改}"${写脚本 !== "write" ? ` --脚本 ${写脚本}` : ""}${参数.查脚本 ? ` --查脚本 ${参数.查脚本}` : ""} --已确认`,
+    命令: `node scripts/改登记行.js --订单号 ${参数.订单号} --表 "${参数.表名}" --行 ${参数.行}${参数.改 ? ` --改 "${参数.改}"` : ""}${参数.清 ? ` --清 "${参数.清}"` : ""}${写脚本 !== "write" ? ` --脚本 ${写脚本}` : ""}${参数.查脚本 ? ` --查脚本 ${参数.查脚本}` : ""} --已确认`,
     writeCells: 类型.列,
+    clearCells: 清列,
   };
 
   // 闸门① 身份核对：按行读云端（与 `node scripts/查登记表.js --行 <行号> --脚本 <查脚本>` 同一请求）。
@@ -239,32 +308,40 @@ async function main() {
   }
 
   // 闸门④ 云端写入（指定行；云端自己还会再验一次该行 J 为空或本单号）。
-  const 请求 = 生成请求(参数.订单号, 参数.表名, 参数.行, 类型.列);
+  const 目标列 = Object.keys(类型.列).concat(清列);
+  const 请求 = 生成请求(参数.订单号, 参数.表名, 参数.行, 类型.列, 清列);
   证据.请求 = 请求;
   const 云端返回 = await 跑脚本(请求, { 脚本: 写脚本 });
   证据.云端返回 = 云端返回;
-  const 判定 = 判定写入(云端返回, Object.keys(类型.列));
+  const 判定 = 判定写入(云端返回, 目标列);
   证据.判定 = 判定;
 
-  // 写后回读：云端 readBack 是截断展示，这里再用只读查询读一次整行落证据。
+  // 写后回读：云端 readBack 是截断展示，这里再用只读查询读一次整行 + 逐格核对。
   try {
     const 写后 = await 跑脚本(查请求, { 脚本: 查脚本 });
     证据.写后行 = 取行值(写后, 参数.行);
   } catch (错误) {
     证据.写后行 = { 读取失败: String((错误 && 错误.message) || 错误) };
   }
+  const 核对 = 判定.成功 ? 核对写后(证据.写前行, 证据.写后行, 类型.列, 清列) : { 通过: false, 问题: [] };
+  证据.核对写后 = 核对;
 
   const 文件 = 落证据(证据);
-  console.log(`\n  改登记行：状态=${判定.状态}`);
+  const 动作 = [];
+  if (Object.keys(类型.列).length) 动作.push(`写 ${Object.entries(类型.列).map(([列, 值]) => `${列}=${值}(${typeof 值})`).join("、")}`);
+  if (清列.length) 动作.push(`清 ${清列.join("、")}`);
+  console.log(`\n  改登记行：状态=${判定.状态}${判定.成功 ? (核对.通过 ? "　回读核对=通过" : "　回读核对=不符") : ""}`);
   console.log(`  订单号 ${参数.订单号}　表 ${参数.表名}　行 ${参数.行}　写脚本 ${写脚本}　查脚本 ${查脚本}`);
   console.log(`  写前身份：第 ${参数.行} 行 J=${身份.当前J || "(空)"}${身份.说明 ? `（${身份.说明}）` : ""}`);
-  console.log(`  要写：${Object.entries(类型.列).map(([列, 值]) => `${列}=${值}(${typeof 值})`).join("、")}`);
+  console.log(`  要动：${动作.join("；")}`);
   if (云端返回 && 云端返回.readBack) console.log(`  云端回读（截断展示）：${JSON.stringify(云端返回.readBack).slice(0, 240)}`);
   if (证据.写后行) console.log(`  写后再读：${JSON.stringify(证据.写后行).slice(0, 320)}`);
   if (!判定.成功) console.log(`  原因：${判定.原因}`);
+  if (核对.问题 && 核对.问题.length) console.log(`  回读核对不符：${核对.问题.join("；")}`);
   if (文件) console.log(`  证据：${path.relative(项目根, 文件)}`);
   console.log("");
   if (!判定.成功) process.exitCode = 4;
+  else if (!核对.通过) process.exitCode = 5;
 }
 
 if (require.main === module) {
@@ -272,7 +349,7 @@ if (require.main === module) {
 }
 
 module.exports = {
-  解析参数, 检查参数, 解析改列, 检查列, 转类型, 推导查脚本,
-  取行值, 判定身份, 检查新行位置, 判定写入, 生成请求,
+  解析参数, 检查参数, 解析改列, 解析清空列, 检查列, 检查清空列, 转类型, 推导查脚本,
+  取行值, 判定身份, 检查新行位置, 判定写入, 核对写后, 生成请求,
   列白名单, 公式列, 数字列,
 };

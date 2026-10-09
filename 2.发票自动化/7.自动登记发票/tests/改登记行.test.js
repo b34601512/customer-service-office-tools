@@ -5,8 +5,8 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const {
-  解析参数, 检查参数, 解析改列, 检查列, 转类型, 推导查脚本,
-  取行值, 判定身份, 检查新行位置, 判定写入, 生成请求,
+  解析参数, 检查参数, 解析改列, 解析清空列, 检查列, 检查清空列, 转类型, 推导查脚本,
+  取行值, 判定身份, 检查新行位置, 判定写入, 核对写后, 生成请求,
   列白名单, 公式列, 数字列,
 } = require("../scripts/改登记行");
 
@@ -240,4 +240,90 @@ test("推导查脚本：write→query、write_jituan→query_jituan、不认识�
   assert.equal(推导查脚本("write"), "query");
   assert.equal(推导查脚本("write_jituan"), "query_jituan");
   assert.equal(推导查脚本("write_other"), "");
+});
+
+// ———————— 显式清空（--清，2026-10-09.1）————————
+// 背景：个人票税号栏 AB 要留空（只有公司抬头才填税号）；--改 的空值仍旧拒，清空必须走 --清 显式声明。
+
+test("--清 解析：单列 / 多列 / 中文逗号 / 列名统一大写", () => {
+  assert.deepEqual(解析清空列("AB").列, ["AB"]);
+  assert.deepEqual(解析清空列(" ab ，aa ").列, ["AB", "AA"]);
+});
+
+test("--清 解析：空 / 不是列字母 / 重复列 → 都拒", () => {
+  assert.match(解析清空列("").错误, /空的/);
+  assert.match(解析清空列("AB=白贵英").错误, /不是列字母/);
+  assert.match(解析清空列("ABC").错误, /不是列字母/);
+  assert.match(解析清空列("AB,AB").错误, /写了两次/);
+});
+
+test("反向断言：--改 的空值仍旧拒（清空必须显式 --清，防打错成空值误清）", () => {
+  assert.match(解析改列("AB=").错误, /解析不了/);
+  assert.match(解析改列("AB= ").错误, /解析不了/);
+  assert.ok(!解析改列("AB=").列, "AB= 不该被当成有效列");
+});
+
+test("检查参数：--改、--清 至少给一个；只给 --清 也放行", () => {
+  const 齐全 = { 订单号: 本单, 表名, 行: 2791, 改: "", 清: "AB", 已确认: true };
+  assert.equal(检查参数(齐全).通过, true);
+  assert.match(检查参数({ ...齐全, 清: "" }).错误, /--改 \/ --清/);
+});
+
+test("检查清空列：白名单列放行；公式列 / 白名单外列拒；空名单通过", () => {
+  assert.equal(检查清空列(["AB"]).通过, true);
+  assert.equal(检查清空列([]).通过, true);
+  assert.match(检查清空列(["C"]).原因, /公式列/);
+  assert.match(检查清空列(["S"]).原因, /不在白名单/);
+  assert.match(检查清空列(["AH"]).原因, /不在白名单/);
+});
+
+test("生成请求：--清 → 带 clearCells；只清不改时 writeCells 为空对象；不带清时形状不变", () => {
+  assert.deepEqual(生成请求(本单, 表名, 2791, {}, ["AB"]), {
+    orderNo: 本单, row: 2791, writeCells: {}, clearCells: ["AB"], allowWrite: true, sheets: [表名],
+  });
+  const 不带清 = 生成请求(本单, 表名, "2788", { J: 本单, U: "300W" });
+  assert.equal("clearCells" in 不带清, false);
+});
+
+test("闸门④：目标列含清空列时，writtenColumns 必须含它（挡云端静默跳过清空）", () => {
+  const 缺 = 判定写入({ ...写入成功样例, writtenColumns: ["U"] }, ["U", "AB"]);
+  assert.equal(缺.成功, false);
+  assert.match(缺.原因, /缺目标列 AB/);
+  const 全 = 判定写入({ ...写入成功样例, writtenColumns: ["AB"] }, ["AB"]);
+  assert.equal(全.成功, true);
+});
+
+// 回读样例行：AB=白贵英（要清）、D/E 是公式列（清后自己重算，不算异常）
+const 写前样例 = { J: 本单, U: "DY22-Q10L", Y: "4091.55", AA: "白贵英", AB: "白贵英", AH: "465276264@qq.com", D: "3" };
+const 写后清空样例 = { J: 本单, U: "DY22-Q10L", Y: "4091.55", AA: "白贵英", AH: "465276264@qq.com", D: "0", E: "1" };
+
+test("回读核对：清空列回读为空 + 其它列没变（公式列 D/E 重算不算） → 通过", () => {
+  const 核对 = 核对写后(写前样例, 写后清空样例, {}, ["AB"]);
+  assert.equal(核对.通过, true);
+  assert.deepEqual(核对.问题, []);
+});
+
+test("回读核对反向：清空列还有值 → 不符", () => {
+  const 核对 = 核对写后(写前样例, { ...写后清空样例, AB: "白贵英" }, {}, ["AB"]);
+  assert.equal(核对.通过, false);
+  assert.match(核对.问题.join("；"), /AB 列要求清空/);
+});
+
+test("回读核对反向：非公式列被连带改了 → 不符（防止误伤别的列）", () => {
+  const 核对 = 核对写后(写前样例, { ...写后清空样例, AH: "别的邮箱" }, {}, ["AB"]);
+  assert.equal(核对.通过, false);
+  assert.match(核对.问题.join("；"), /AH 列不该动/);
+});
+
+test("回读核对：写入列按值核对（数字按数字比）；不一致 → 不符", () => {
+  assert.equal(核对写后({ J: 本单 }, { J: 本单, Y: "593.30" }, { Y: 593.3 }, []).通过, true);
+  const 核对 = 核对写后({ J: 本单 }, { J: 本单, Y: "593.31" }, { Y: 593.3 }, []);
+  assert.equal(核对.通过, false);
+  assert.match(核对.问题.join("；"), /Y 写的是/);
+});
+
+test("回读核对：写后没读到该行（读取失败）→ 不符，不许当通过", () => {
+  const 核对 = 核对写后(写前样例, { 读取失败: "连接金山文档失败" }, {}, ["AB"]);
+  assert.equal(核对.通过, false);
+  assert.match(核对.问题.join("；"), /没读到该行/);
 });
