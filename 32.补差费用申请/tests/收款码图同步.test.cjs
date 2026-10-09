@@ -39,7 +39,7 @@ function 主() {
     断言(解析DISPIMG('=DISPIMG("ID_352FA1A825414A33B3C550B97EAE6B0C",1)') === "ID_352FA1A825414A33B3C550B97EAE6B0C", "解析DISPIMG(标准)");
     断言(解析DISPIMG('=dispimg( "ID_X" , 1 )') === "ID_X", "解析DISPIMG(大小写/空格)");
     断言(解析DISPIMG("6230880020019354729") === null, "解析DISPIMG(银行卡号) = null（没图）");
-    断言(解析DISPIMG("15138007261") === null, "解析DISPIMG(手机号) = null（没图）");
+    断言(解析DISPIMG("151****7261") === null, "解析DISPIMG(手机号) = null（没图）");
     断言(解析DISPIMG("sstatjhking@126.com") === null, "解析DISPIMG(邮箱) = null（没图）");
     断言(解析DISPIMG("#REF!") === null, "解析DISPIMG(#REF!) = null");
     断言(解析DISPIMG("") === null && 解析DISPIMG(null) === null, "解析DISPIMG(空) = null");
@@ -55,11 +55,11 @@ function 主() {
       造明细(454, '=DISPIMG("ID_D",1)', "顾雁婷"),
       造明细(455, "6217856300017063176", "胡兴"),                // 银行卡 → 不进
       造明细(456, '=DISPIMG("ID_E",1)', "谢燕"),
-      造明细(457, "15138007261", "冯彩茹"),
-      造明细(458, "13832492885", "马立山"),
+      造明细(457, "151****7261", "冯彩茹"),
+      造明细(458, "138****2885", "马立山"),
       造明细(459, "sstatjhking@126.com", "林长利"),
       造明细(460, '=DISPIMG("ID_F",1)', "曾安清"),
-      造明细(461, "13576687320", "曾涛"),
+      造明细(461, "135****7320", "曾涛"),
       造明细(462, '=DISPIMG("ID_G",1)', "韩雯")
     ];
     const 清单 = 从批次生成清单(造批次(明细));
