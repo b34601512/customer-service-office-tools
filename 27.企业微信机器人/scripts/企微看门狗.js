@@ -53,7 +53,8 @@ const DEFAULT_STATE_DIR = path.join(ROOT, ".state");
 const LOG_MAX_BYTES = 1024 * 1024;
 
 const 心跳写手 = require("./窗口心跳.cjs");
-const { 判定心跳 } = require("../src/窗口心跳判定");
+const { 判定心跳, 规整键 } = require("../src/窗口心跳判定");
+const 窗口自愈 = require("../src/窗口自愈");
 
 const EXTRA_DEFAULTS = {
   boardRepo: "c34601512-cpu/bot-board",
@@ -81,7 +82,16 @@ const EXTRA_DEFAULTS = {
   heartbeatBootGraceMin: 30,
   heartbeatDedupeMin: 60,
   heartbeatMissingGraceMin: 10,
-  heartbeatListenerName: "监听窗"
+  heartbeatListenerName: "监听窗",
+  // 窗口心跳自愈（2026-10-09 三条 + 赵敏补充两条）：先自愈、成功不发板、失败/反复才 [故障]
+  heartbeatHealWaitSec: 300,        // 补写手后等 2 拍（2×150s）心跳
+  heartbeatHealRetrySec: 600,       // 补写手失败后隔多久允许再补（防连发写手）
+  heartbeatRecheckSec: 240,         // 监听窗死亡“复判”等待（一个巡检周期≈5 分钟，留容差）
+  heartbeatReopenThrottleSec: 300,  // 两次重开至少隔一个巡检周期
+  heartbeatReopenConfirmSec: 90,    // 重开后等心跳出现的确认时间
+  heartbeatFlappingWindowSec: 3600, // “反复重启”统计窗
+  heartbeatFlappingCount: 3,        // 1 小时内重开达到几次算崩溃循环
+  heartbeatListenerMatch: ["27.企业微信机器人", "boot-prompt.md"] // 监听窗进程认窗串
 };
 
 // ---------------------------------------------------------------- 基础工具
@@ -219,6 +229,19 @@ function makeLogger(stateDir, dryRun) {
     } catch {}
     try { fs.appendFileSync(logPath, line + "\n", "utf8"); } catch {}
   };
+}
+
+/** 自愈的本地记录写进与写手同一本 `窗口心跳.log`（何时发现、做了什么、结果）——自愈成功不发板，靠它留痕。 */
+function 记心跳日志(stateDir, 文本, 不落盘 = false) {
+  const 行 = `[${new Date().toISOString()}] [看门狗] ${文本}`;
+  console.log(行);
+  if (不落盘) return;
+  try {
+    const 文件 = path.join(stateDir, "窗口心跳.log");
+    fs.mkdirSync(path.dirname(文件), { recursive: true });
+    if (fs.existsSync(文件) && fs.statSync(文件).size > LOG_MAX_BYTES) fs.renameSync(文件, 文件 + ".1");
+    fs.appendFileSync(文件, 行 + "\n", "utf8");
+  } catch {}
 }
 
 // ---------------------------------------------------------------- 留言板（机器人交流频道）
@@ -443,6 +466,7 @@ function 心跳告警正文(判定, nowMs, cfg) {
   lines.push("pi 窗口挂了（窗口心跳巡检；死了的窗口自己报不了自己）：");
   for (const a of 判定.toAlert) {
     lines.push(`- 窗口「${a.名}」：${a.原因}`);
+    if (a.已试自愈) lines.push(`  已先自愈：${a.已试自愈}`);
     lines.push(`  证据：${a.证据}`);
   }
   lines.push("");
@@ -462,7 +486,11 @@ function 心跳恢复正文(判定, nowMs, cfg) {
   return lines.join("\n");
 }
 
-/** 跑一轮窗口心跳判定（含扫进程/读写文件）；返回 { 留言, 判定, 状态文件, 新状态 }。 */
+/**
+ * 跑一轮窗口心跳判定（含扫进程/读写文件）——只判定，不自愈；
+ * 自愈动作由 main 拿着 判定.toHeal 调 窗口自愈.执行自愈 后，再 生成留言/组装状态。
+ * 返回 { 判定, 状态文件, 记录文件, 登记文件, nowMs, 生成留言(), 组装状态() }。
+ */
 function 巡检窗口心跳({ stateDir, cfg, args, log }) {
   const nowMs = Date.now();
   const 记录文件 = args.心跳记录 ? path.resolve(args.心跳记录) : path.join(stateDir, cfg.heartbeatRecordsFile);
@@ -477,12 +505,26 @@ function 巡检窗口心跳({ stateDir, cfg, args, log }) {
   const 上次原始 = readJson(状态文件) || {};
   const 上次窗口 = 上次原始.窗口 || 上次原始.windows || {};
   const 上线时间Ms = 上次原始.上线At ? Date.parse(上次原始.上线At) : null;
+  // 写手锁快照：补写手前看这个（绝不并发起两个写手）；记录里的窗 + 监听窗各查一把
+  const 写手锁 = {};
+  const 加锁 = (认窗组) => {
+    const 组 = (Array.isArray(认窗组) ? 认窗组 : [认窗组]).map((x) => String(x || "")).filter(Boolean);
+    if (!组.length) return;
+    const 键 = 规整键(组[0]);
+    if (写手锁[键]) return;
+    let 活跃 = false;
+    try { 活跃 = 心跳写手.单例锁活跃(心跳写手.单例锁文件(记录文件, 组[0])); } catch { 活跃 = false; }
+    写手锁[键] = { 活跃 };
+  };
+  for (const r of 记录) 加锁(r && r.认窗);
+  加锁(cfg.heartbeatListenerMatch);
   const 判定 = 判定心跳({
     nowMs,
     bootTimeMs,
     记录,
     任务窗,
     进程列表,
+    写手锁,
     上线时间Ms,
     上次状态: { windows: 上次窗口 },
     config: {
@@ -490,15 +532,32 @@ function 巡检窗口心跳({ stateDir, cfg, args, log }) {
       bootGraceMin: cfg.heartbeatBootGraceMin,
       dedupeMin: cfg.heartbeatDedupeMin,
       missingGraceMin: cfg.heartbeatMissingGraceMin,
-      listenerName: cfg.heartbeatListenerName
+      listenerName: cfg.heartbeatListenerName,
+      listenerMatch: cfg.heartbeatListenerMatch,
+      healWaitSec: cfg.heartbeatHealWaitSec,
+      healRetrySec: cfg.heartbeatHealRetrySec,
+      recheckSec: cfg.heartbeatRecheckSec,
+      reopenThrottleSec: cfg.heartbeatReopenThrottleSec,
+      reopenConfirmSec: cfg.heartbeatReopenConfirmSec,
+      flappingWindowSec: cfg.heartbeatFlappingWindowSec,
+      flappingCount: cfg.heartbeatFlappingCount
     }
   });
-  const 留言 = [];
-  if (判定.toAlert.length) 留言.push(心跳告警正文(判定, nowMs, cfg));
-  if (判定.toResolve.length) 留言.push(心跳恢复正文(判定, nowMs, cfg));
-  log(`窗口心跳：目标=${判定.摘要.目标数} 正常=${判定.摘要.正常} 忽略=${判定.摘要.忽略} 告警=${判定.摘要.告警} 恢复=${判定.摘要.恢复}`);
-  const 新状态 = { ...判定.状态, bootTime: bootTimeMs != null ? new Date(bootTimeMs).toISOString() : null, 摘要: 判定.摘要, 记录文件, 登记文件 };
-  return { 留言, 判定, 状态文件, 新状态 };
+  log(`窗口心跳：目标=${判定.摘要.目标数} 正常=${判定.摘要.正常} 忽略=${判定.摘要.忽略} 告警=${判定.摘要.告警} 恢复=${判定.摘要.恢复} 自愈=${判定.摘要.自愈}`);
+  const 生成留言 = () => {
+    const 留言 = [];
+    if (判定.toAlert.length) 留言.push(心跳告警正文(判定, nowMs, cfg));
+    if (判定.toResolve.length) 留言.push(心跳恢复正文(判定, nowMs, cfg));
+    return 留言;
+  };
+  const 组装状态 = () => ({
+    ...判定.状态,
+    bootTime: bootTimeMs != null ? new Date(bootTimeMs).toISOString() : null,
+    摘要: { ...判定.摘要, 告警: 判定.toAlert.length, 恢复: 判定.toResolve.length, 自愈: (判定.toHeal || []).length },
+    记录文件,
+    登记文件
+  });
+  return { 判定, 状态文件, 记录文件, 登记文件, nowMs, 生成留言, 组装状态 };
 }
 
 // ---------------------------------------------------------------- 主流程
@@ -598,19 +657,47 @@ async function main() {
     }
 
     // ---- 窗口心跳巡检（2026-10-09；独立判定、独立状态，不动上面企微逻辑）----
+    // 自愈三条（2026-10-09）：先自愈——补写手/重开监听窗；成功只记本地日志不发板，失败/反复才 [故障]。
     if (!args.noHeartbeat) {
       try {
         const hb = 巡检窗口心跳({ stateDir, cfg, args, log });
+        const 心跳cfg = {
+          dedupeMin: cfg.heartbeatDedupeMin,
+          healWaitSec: cfg.heartbeatHealWaitSec,
+          healRetrySec: cfg.heartbeatHealRetrySec,
+          recheckSec: cfg.heartbeatRecheckSec,
+          reopenThrottleSec: cfg.heartbeatReopenThrottleSec,
+          reopenConfirmSec: cfg.heartbeatReopenConfirmSec,
+          flappingWindowSec: cfg.heartbeatFlappingWindowSec,
+          flappingCount: cfg.heartbeatFlappingCount,
+          listenerMatch: cfg.heartbeatListenerMatch
+        };
+        // --no-restart 也算演练：只标记不做（避免假状态演练真去动生产窗口）
+        const 自愈演练 = args.dryRun || args.noRestart;
+        await 窗口自愈.执行自愈(hb.判定, {
+          记录文件: hb.记录文件,
+          cfg: 心跳cfg,
+          dryRun: 自愈演练,
+          log,
+          记本地日志: (文本) => 记心跳日志(stateDir, 文本, args.dryRun),
+          保存状态: args.dryRun ? null : () => fs.writeFileSync(hb.状态文件, JSON.stringify(hb.组装状态(), null, 2), "utf8")
+        });
+        if (自愈演练) log(`[演练] 窗口心跳自愈本轮只标记不做（--dry-run/--no-restart）`);
+        else if ((hb.判定.toHeal || []).length) log(`窗口心跳自愈：本轮动作 ${hb.判定.toHeal.map((x) => `${x.动作}(${x.名})`).join("、")}`);
+        for (const x of hb.判定.自愈结果 || []) {
+          记心跳日志(stateDir, `自愈结果：${x.结果}——${x.名} ${x.动作}：${x.说明}`);
+        }
+        const 留言 = hb.生成留言();
         if (!args.dryRun && !args.noBoard) {
-          for (const text of hb.留言) {
+          for (const text of 留言) {
             const r = postBoard(cfg, text);
             if (r.ok) log(`留言板已写窗口心跳：${r.out}`);
             else { enqueue(stateDir, cfg, text); log(`窗口心跳写板失败：${r.err}（已存待发队列）`); }
           }
-        } else if (hb.留言.length) {
-          log(`[dry-run/未发板] 本应写留言板（窗口心跳）：\n${hb.留言.join("\n---\n")}`);
+        } else if (留言.length) {
+          log(`[dry-run/未发板] 本应写留言板（窗口心跳）：\n${留言.join("\n---\n")}`);
         }
-        if (!args.dryRun) fs.writeFileSync(hb.状态文件, JSON.stringify(hb.新状态, null, 2), "utf8");
+        if (!args.dryRun) fs.writeFileSync(hb.状态文件, JSON.stringify(hb.组装状态(), null, 2), "utf8");
       } catch (e) {
         log(`窗口心跳巡检异常（不影响企微判定）：${(e && e.stack) || e}`);
       }

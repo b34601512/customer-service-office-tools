@@ -82,11 +82,13 @@ test("新鲜心跳 + 进程在 → 正常，无告警", () => {
   assert.equal(r.状态.windows[找任务键(r)].状态, "正常");
 });
 
-test("心跳超时（>10 分钟）→ 告警", () => {
+test("心跳超时（>10 分钟）：进程在 → 先补写手（自愈，不发板）", () => {
   const r = 判定心跳(基准({ 记录: [记录({ 最后心跳: new Date(NOW - 20 * MIN).toISOString() }), 监听记录()] }));
-  assert.equal(r.toAlert.length, 1);
-  assert.match(r.toAlert[0].原因, /没有心跳/);
-  assert.match(r.toAlert[0].证据, /pid=40828/);
+  assert.equal(r.toAlert.length, 0, "进程在、只缺心跳 → 先自愈补写手，不发板");
+  assert.equal(r.toHeal.length, 1);
+  assert.equal(r.toHeal[0].动作, "补写手");
+  assert.equal(r.toHeal[0].键, 键A);
+  assert.match(r.toHeal[0].原因, /没有心跳/);
 });
 
 test("认窗 pid 不在 → 告警（心跳还新也没用）", () => {
@@ -121,14 +123,15 @@ test("同一窗口 60 分钟内不重报；超过 60 分钟再报", () => {
   const 刚报过 = {
     windows: { [键A]: { 名: "任务窗·a.md", 告警中: true, lastAlertAt: new Date(NOW - 30 * MIN).toISOString() } }
   };
-  const r1 = 判定心跳(基准({ 记录: 旧记录, 上次状态: 刚报过 }));
+  // 进程扫描不可用 + 心跳超时 → 直接告警（不判 pid、不自愈），用来验去重
+  const r1 = 判定心跳(基准({ 记录: 旧记录, 进程列表: null, 上次状态: 刚报过 }));
   assert.equal(r1.toAlert.length, 0, "30 分钟前报过，60 分钟内不重报");
   assert.equal(r1.状态.windows[键A].告警中, true);
 
   const 很久前 = {
     windows: { [键A]: { 名: "任务窗·a.md", 告警中: true, lastAlertAt: new Date(NOW - 70 * MIN).toISOString() } }
   };
-  const r2 = 判定心跳(基准({ 记录: 旧记录, 上次状态: 很久前 }));
+  const r2 = 判定心跳(基准({ 记录: 旧记录, 进程列表: null, 上次状态: 很久前 }));
   assert.equal(r2.toAlert.length, 1, "超过 60 分钟要再报一次");
 });
 
@@ -173,17 +176,47 @@ test("心跳功能上线前开的历史窗口：无记录也不追着告警", ()
   assert.equal(r.toAlert.length, 0);
 });
 
-test("监听窗：无记录必报；开机宽限内不报；旧记录过了宽限也要报", () => {
-  const 无记录 = 判定心跳(基准({ 记录: [], 任务窗: [] }));
-  assert.equal(无记录.toAlert.length, 1);
-  assert.equal(无记录.toAlert[0].键, "listener");
+test("监听窗无记录：进程在→补写手；进程不在→先复判再重开；扫描不可用→直接报", () => {
+  // 监听窗进程在、只是没记录（写手没挂上）→ 补写手，不报
+  const 写手停 = 判定心跳(基准({ 记录: [], 任务窗: [] }));
+  assert.equal(写手停.toAlert.length, 0);
+  assert.equal(写手停.toHeal.length, 1);
+  assert.equal(写手停.toHeal[0].动作, "补写手");
+  assert.equal(写手停.toHeal[0].类型, "listener");
 
+  // 监听窗进程不在 → 先复判（不立刻报、不立刻重开）
+  const 进程没监听 = [进程(40828, "node pi-coding-agent @D:\\任务\\a.md")];
+  const 首轮 = 判定心跳(基准({ 记录: [], 任务窗: [], 进程列表: 进程没监听 }));
+  assert.equal(首轮.toAlert.length, 0, "死亡先复判，不瞬时报/重开");
+  assert.equal(首轮.toHeal.length, 0);
+  assert.ok(首轮.状态.windows.listener.复判, "要记下复判等待");
+
+  // 下一轮仍不在 → 重开（自愈动作，不发板）
+  const 次轮 = 判定心跳(基准({
+    记录: [],
+    任务窗: [],
+    进程列表: 进程没监听,
+    上次状态: { windows: { listener: { 名: "监听窗", 复判: { 发现At: new Date(NOW - 30 * MIN).toISOString(), 原因: "监听窗进程不在" } } } }
+  }));
+  assert.equal(次轮.toAlert.length, 0);
+  assert.equal(次轮.toHeal.length, 1);
+  assert.equal(次轮.toHeal[0].动作, "重开");
+
+  // 扫描失败不算“不在”：直接报（没有活写手），不重开
+  const 扫描挂 = 判定心跳(基准({ 记录: [], 任务窗: [], 进程列表: null }));
+  assert.equal(扫描挂.toAlert.length, 1);
+  assert.equal(扫描挂.toHeal.length, 0);
+  assert.equal(扫描挂.状态.windows.listener.复判, null);
+
+  // 开机宽限内不报（写手可能还没来得及起来）
   const 宽限内 = 判定心跳(基准({ bootTimeMs: NOW - 5 * MIN, 记录: [], 任务窗: [] }));
   assert.equal(宽限内.toAlert.length, 0);
 
+  // 旧记录过了宽限 → 死亡路径（第一轮复判，不直接报）
   const 旧记录 = 判定心跳(基准({ 记录: [记录({ 类型: "listener", 认窗: ["27.企业微信机器人", "boot-prompt.md"], 最后心跳: new Date(BOOT - MIN).toISOString() })], 任务窗: [] }));
-  assert.equal(旧记录.toAlert.length, 1);
-  assert.match(旧记录.toAlert[0].原因, /早于本次开机/);
+  assert.equal(旧记录.toAlert.length, 0);
+  assert.ok(旧记录.状态.windows.listener.复判);
+  assert.match(旧记录.状态.windows.listener.复判.原因, /早于本次开机/);
 });
 
 test("进程扫描失败（null）不许当成“进程不在”", () => {

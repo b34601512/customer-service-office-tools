@@ -24,12 +24,16 @@
  * 记录落盘：默认 27号/.state/窗口心跳.json，多窗并发写用「读写锁 + 临时文件 rename 原子替换」防打架：
  *   { 更新At, 窗口: { "<认窗[0]>": {名, 类型, pid, 认窗:[...], 启动时间, 最后心跳} } }
  *
+ * 单实例锁（2026-10-09 自愈补写手）：每个窗口一把（<状态文件目录>/窗口心跳锁/<sha1>.json），
+ *   同窗已有活写手时本写手自动退出；每拍刷新，正常退出释放。看门狗补写手前也先查这把锁。
+ *
  * 判定/报警不在这里：见 src/窗口心跳判定.js（纯函数）与 scripts/企微看门狗.js（5 分钟一跑）。
  */
 
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
+const crypto = require("crypto");
 const { spawn, execFileSync } = require("child_process");
 
 const ROOT = path.join(__dirname, "..");
@@ -237,6 +241,120 @@ function 清心跳(文件, 谓词, { 现在 = () => Date.now() } = {}) {
   return 结果 == null ? 0 : 结果;
 }
 
+// ---------------------------------------------------------------- 单实例锁（同一个窗口只许一个写手）
+
+/**
+ * 单实例锁（2026-10-09 窗口心跳自愈·补写手）：
+ * 看门狗发现「进程在、心跳停」会补写手；人工/开机也可能同时重挂。两个写手同窗并跑会
+ * 互相覆盖、退出时互删锁——所以每个写手启动时先认领**本窗**的锁：
+ *   - 已有同窗活锁（pid 在 + 锁新鲜）→ 本写手直接退出，不写心跳；
+ *   - 锁陈旧（pid 不在 / pid 被别的进程复用）→ 接管；
+ *   - 每拍刷新 更新At；正常退出只删自己的锁。
+ * 锁按窗口分（不是全局唯一）：`<状态文件目录>/窗口心跳锁/<sha1(认窗[0])>.json`，
+ * 内容 { 名, 键, pid, 启动At, 更新At }。
+ */
+const 默认锁新鲜毫秒 = 6 * 60 * 1000; // 写手每拍（默认 150s）刷新；6 分钟没刷新视为锁可能死了
+
+function 规整锁键(键) {
+  return String(键 || "").trim().replace(/\//g, "\\").replace(/\\+$/, "").toLowerCase();
+}
+
+function 锁目录(状态文件 = 默认状态文件) {
+  return path.join(path.dirname(状态文件), "窗口心跳锁");
+}
+
+/** 本窗锁文件（按 认窗[0] 归一化后取 sha1，避免中文/路径字符进文件名）。 */
+function 单例锁文件(状态文件, 键) {
+  const 摘要 = crypto.createHash("sha1").update(规整锁键(键)).digest("hex").slice(0, 16);
+  return path.join(锁目录(状态文件 || 默认状态文件), 摘要 + ".json");
+}
+
+function 读单例锁(锁文件) {
+  try {
+    const rec = JSON.parse(fs.readFileSync(锁文件, "utf8"));
+    return rec && typeof rec === "object" ? rec : null;
+  } catch {
+    return null;
+  }
+}
+
+/** 查单个 pid 的命令行（写手身份核验用）。返回行文本或 null（查不到/失败）。 */
+function 查进程行(pid) {
+  const 临时目录 = fs.mkdtempSync(path.join(os.tmpdir(), "写手核验-"));
+  const 脚本文件 = path.join(临时目录, "查.ps1");
+  const 输出文件 = path.join(临时目录, "出.txt");
+  const 脚本 = [
+    `$p = Get-CimInstance Win32_Process -Filter "ProcessId=${Number(pid)}"`,
+    'if ($p) { "$($p.ProcessId)|$($p.Name)|$($p.CommandLine)" | Out-File -FilePath "' + 输出文件 + '" -Encoding utf8 }',
+  ].join("\n");
+  try {
+    fs.writeFileSync(脚本文件, "\uFEFF" + 脚本, "utf8");
+    execFileSync("powershell", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", 脚本文件], { stdio: "ignore", windowsHide: true, timeout: 15000 });
+    return fs.readFileSync(输出文件, "utf8").trim() || null;
+  } catch {
+    return null;
+  } finally {
+    try { fs.rmSync(临时目录, { recursive: true, force: true }); } catch { /* 忽略 */ }
+  }
+}
+
+/** 这个 pid 是不是心跳写手进程。true=是；false=不是；null=查不清楚（不冒进）。 */
+function 是写手进程(pid, { 查询 = 查进程行 } = {}) {
+  const 行 = 查询(pid);
+  if (行 == null) return null;
+  return /node\.exe/i.test(行) && 行.includes("窗口心跳.cjs") ? true : false;
+}
+
+/**
+ * 锁活跃吗：pid 在 + 锁新鲜就是活跃；锁旧了但 pid 还在，核验它是不是真的写手——
+ * 真的（或查不清）算活跃（宁可等，也不双开）；pid 被别的进程复用才算死、可接管。
+ */
+function 单例锁活跃(锁文件, { 现在 = () => Date.now(), 新鲜毫秒 = 默认锁新鲜毫秒, 核验 = 是写手进程 } = {}) {
+  const rec = 读单例锁(锁文件);
+  if (!rec || !rec.pid || !进程在(rec.pid)) return false;
+  const 刷新At = Number(rec.更新At || rec.at || 0);
+  if (Number.isFinite(刷新At) && 现在() - 刷新At <= 新鲜毫秒) return true;
+  return 核验(rec.pid) !== false;
+}
+
+/** 认领本窗锁：成功 true / 已有活锁拿不到 false。陈旧锁会安全接管。 */
+function 认领单例锁(锁文件, { 名 = "", 键 = "", pid = process.pid, 现在 = () => Date.now(), 新鲜毫秒 = 默认锁新鲜毫秒, 核验 = 是写手进程, 等待毫秒 = 2000 } = {}) {
+  fs.mkdirSync(path.dirname(锁文件), { recursive: true });
+  const 起 = 现在();
+  for (;;) {
+    try {
+      const fd = fs.openSync(锁文件, "wx");
+      fs.writeSync(fd, JSON.stringify({ 名, 键, pid, 启动At: new Date(现在()).toISOString(), 更新At: 现在() }));
+      fs.closeSync(fd);
+      return true;
+    } catch (e) {
+      if (e && e.code !== "EEXIST") return false;
+      if (!单例锁活跃(锁文件, { 现在, 新鲜毫秒, 核验 })) {
+        try { fs.unlinkSync(锁文件); } catch { /* 别人先删了 */ }
+        continue; // 接管，下一圈重建
+      }
+      if (现在() - 起 > 等待毫秒) return false;
+      同步睡(150);
+    }
+  }
+}
+
+/** 刷新自己的锁（每拍调一次）。锁不是自己的就不动。 */
+function 刷新单例锁(锁文件, { pid = process.pid, 现在 = () => Date.now() } = {}) {
+  const rec = 读单例锁(锁文件);
+  if (!rec || Number(rec.pid) !== Number(pid)) return false;
+  rec.更新At = 现在();
+  原子写(锁文件, JSON.stringify(rec));
+  return true;
+}
+
+/** 释放自己的锁（正常退出时调）。 */
+function 释放单例锁(锁文件, { pid = process.pid } = {}) {
+  const rec = 读单例锁(锁文件);
+  if (!rec || Number(rec.pid) !== Number(pid)) return false;
+  try { fs.unlinkSync(锁文件); return true; } catch { return false; }
+}
+
 // ---------------------------------------------------------------- 参数与主循环
 
 function 解析参数(argv) {
@@ -278,6 +396,8 @@ function 用法() {
   挂监听窗：  --认窗 "27.企业微信机器人" --认窗 "boot-prompt.md" --名 监听窗 --类型 listener
   挂任务窗：  --认窗 "@<任务文件全路径>" --名 "任务窗·<文件名>" --类型 task
   演练：--拍数 3 --间隔 1 --状态文件 <临时目录>/窗口心跳.json
+单实例锁：每个窗口一把（<状态文件目录>/窗口心跳锁/）；已有同窗活写手时本写手自动退出，
+  看门狗补写手前也先查这把锁，绝不并发起两个写手。
 判定提醒：认窗必须**唯一**命中真实 pi 进程；0 个或 >1 个都会重试后退出，不写心跳。`;
 }
 
@@ -298,60 +418,72 @@ async function 主循环({
   睡眠 = (毫秒) => new Promise((r) => setTimeout(r, 毫秒)),
   认窗超时秒 = 默认认窗超时秒,
   拍数 = null,
+  锁文件 = null,
 } = {}) {
   const 组 = (Array.isArray(认窗组) ? 认窗组 : [认窗组]).map(String).filter(Boolean);
   if (组.length === 0) return { 退出: "没给 --认窗", 写拍数: 0 };
 
-  // 1) 认窗：0 个/多个都重试，超时后退出且不写心跳
-  const 截止 = 现在() + 认窗超时秒 * 1000;
-  let 进程 = null;
-  let 最后原因 = "";
-  for (;;) {
-    const r = 找窗口(组, { 扫描 });
-    if (r.ok) {
-      进程 = r.进程;
-      break;
-    }
-    最后原因 = r.原因;
-    if (现在() >= 截止) {
-      记日志(日志文件, `${名}（${类型}）认不到窗口：${最后原因} → 退出，不写心跳（看门狗会按无记录判）`);
-      return { 退出: "认不到窗口：" + 最后原因, 写拍数: 0 };
-    }
-     await 睡眠(Math.min(5000, Math.max(0, 截止 - 现在())));
+  // 0) 单实例锁：同窗只许一个写手（看门狗补写手 / 人工重挂同时来时，后到的退出，不双开）
+  const 锁 = 锁文件 || 单例锁文件(状态文件, 组[0]);
+  if (!认领单例锁(锁, { 名, 键: 组[0] })) {
+    记日志(日志文件, `${名}：已有同窗心跳写手在跑（锁 ${锁}），本写手退出，不重复写`);
+    return { 退出: "已有写手", 写拍数: 0 };
   }
-
-  const 记 = (最后心跳) => ({
-    名,
-    类型,
-    pid: 进程.pid,
-    认窗: 组,
-    启动时间: new Date(现在()).toISOString(),
-    最后心跳: new Date(最后心跳).toISOString(),
-  });
-  const 写一拍 = (首拍) => {
-    const 条目 = 记(现在());
-    // 后续拍保留首次的启动时间
-    if (!首拍) {
-      const 旧 = 读心跳(状态文件)[组[0]];
-      if (旧 && 旧.启动时间) 条目.启动时间 = 旧.启动时间;
+  try {
+    // 1) 认窗：0 个/多个都重试，超时后退出且不写心跳
+    const 截止 = 现在() + 认窗超时秒 * 1000;
+    let 进程 = null;
+    let 最后原因 = "";
+    for (;;) {
+      const r = 找窗口(组, { 扫描 });
+      if (r.ok) {
+        进程 = r.进程;
+        break;
+      }
+      最后原因 = r.原因;
+      if (现在() >= 截止) {
+        记日志(日志文件, `${名}（${类型}）认不到窗口：${最后原因} → 退出，不写心跳（看门狗会按无记录判）`);
+        return { 退出: "认不到窗口：" + 最后原因, 写拍数: 0 };
+      }
+      await 睡眠(Math.min(5000, Math.max(0, 截止 - 现在())));
     }
-    return 写心跳条目(状态文件, 条目, { 现在 });
-  };
 
-  if (!写一拍(true)) 记日志(日志文件, `${名}（pid ${进程.pid}）首拍写盘失败（锁竞争？），下一拍重试`);
-  else 记日志(日志文件, `${名}（${类型}）心跳启动：认到 pi pid=${进程.pid}，每 ${间隔秒}s 一拍 → ${状态文件}`);
+    const 记 = (最后心跳) => ({
+      名,
+      类型,
+      pid: 进程.pid,
+      认窗: 组,
+      启动时间: new Date(现在()).toISOString(),
+      最后心跳: new Date(最后心跳).toISOString(),
+    });
+    const 写一拍 = (首拍) => {
+      const 条目 = 记(现在());
+      // 后续拍保留首次的启动时间
+      if (!首拍) {
+        const 旧 = 读心跳(状态文件)[组[0]];
+        if (旧 && 旧.启动时间) 条目.启动时间 = 旧.启动时间;
+      }
+      return 写心跳条目(状态文件, 条目, { 现在 });
+    };
 
-  let 写拍数 = 1;
-  for (let i = 1; 拍数 == null || i < 拍数; i++) {
-    await 睡眠(间隔秒 * 1000);
-    const r = 找窗口(组, { 扫描 });
-    if (!r.ok || r.进程.pid !== 进程.pid) {
-      记日志(日志文件, `${名} 停写退出：${r.ok ? `认窗 pid 变了（${进程.pid} → ${r.进程.pid}）` : r.原因}；记录留为过期，等看门狗报警`);
-      return { 退出: r.ok ? "认窗 pid 变了" : r.原因, 写拍数 };
+    if (!写一拍(true)) 记日志(日志文件, `${名}（pid ${进程.pid}）首拍写盘失败（锁竞争？），下一拍重试`);
+    else 记日志(日志文件, `${名}（${类型}）心跳启动：认到 pi pid=${进程.pid}，每 ${间隔秒}s 一拍 → ${状态文件}`);
+
+    let 写拍数 = 1;
+    for (let i = 1; 拍数 == null || i < 拍数; i++) {
+      await 睡眠(间隔秒 * 1000);
+      刷新单例锁(锁, { 现在 });
+      const r = 找窗口(组, { 扫描 });
+      if (!r.ok || r.进程.pid !== 进程.pid) {
+        记日志(日志文件, `${名} 停写退出：${r.ok ? `认窗 pid 变了（${进程.pid} → ${r.进程.pid}）` : r.原因}；记录留为过期，等看门狗报警`);
+        return { 退出: r.ok ? "认窗 pid 变了" : r.原因, 写拍数 };
+      }
+      if (写一拍(false)) 写拍数++;
     }
-    if (写一拍(false)) 写拍数++;
+    return { 退出: "演练结束", 写拍数 };
+  } finally {
+    释放单例锁(锁);
   }
-  return { 退出: "演练结束", 写拍数 };
 }
 
 // ---------------------------------------------------------------- CLI
@@ -365,6 +497,11 @@ async function main() {
   }
   const 类型 = 参数.类型 === "listener" ? "listener" : "task";
   if (参数.后台) {
+    const 预锁 = 单例锁文件(参数.状态文件, 参数.认窗[0]);
+    if (单例锁活跃(预锁)) {
+      console.log(`${参数.名} 已有心跳写手在跑，跳过（不重复起；锁 ${预锁}）`);
+      return;
+    }
     const 子参数 = argv.filter((a) => a !== "--后台");
     const 子 = spawn(process.execPath, [__filename, ...子参数], { detached: true, stdio: "ignore", windowsHide: true, cwd: process.cwd() });
     子.unref();
@@ -406,4 +543,15 @@ module.exports = {
   原子写,
   主循环,
   进程在,
+  默认锁新鲜毫秒,
+  规整锁键,
+  锁目录,
+  单例锁文件,
+  读单例锁,
+  查进程行,
+  是写手进程,
+  单例锁活跃,
+  认领单例锁,
+  刷新单例锁,
+  释放单例锁,
 };
