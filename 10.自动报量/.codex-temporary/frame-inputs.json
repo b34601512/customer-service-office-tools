@@ -1,0 +1,514 @@
+[
+ {
+  "i": 0,
+  "name": null,
+  "id": "rc_select_33",
+  "placeholder": null,
+  "type": "search",
+  "class": "ant-select-selection-search-input"
+ },
+ {
+  "i": 1,
+  "name": null,
+  "id": "325898919274_dateType",
+  "placeholder": null,
+  "type": "search",
+  "class": "ant-select-selection-search-input"
+ },
+ {
+  "i": 2,
+  "name": "payTime",
+  "id": null,
+  "placeholder": "开始日期",
+  "type": null,
+  "class": ""
+ },
+ {
+  "i": 3,
+  "name": "payTime",
+  "id": null,
+  "placeholder": "结束日期",
+  "type": null,
+  "class": ""
+ },
+ {
+  "i": 4,
+  "name": null,
+  "id": "325898919274_shopIds",
+  "placeholder": null,
+  "type": "search",
+  "class": "ant-select-selection-search-input"
+ },
+ {
+  "i": 5,
+  "name": null,
+  "id": null,
+  "placeholder": null,
+  "type": "text",
+  "class": "ant-input ant-input-sm"
+ },
+ {
+  "i": 6,
+  "name": null,
+  "id": null,
+  "placeholder": null,
+  "type": "text",
+  "class": "ant-input ant-input-sm"
+ },
+ {
+  "i": 7,
+  "name": null,
+  "id": null,
+  "placeholder": null,
+  "type": "text",
+  "class": "ant-input ant-input-sm"
+ },
+ {
+  "i": 8,
+  "name": null,
+  "id": null,
+  "placeholder": null,
+  "type": "text",
+  "class": "ant-input ant-input-sm"
+ },
+ {
+  "i": 9,
+  "name": null,
+  "id": "325898919274_assignState",
+  "placeholder": null,
+  "type": "search",
+  "class": "ant-select-selection-search-input"
+ },
+ {
+  "i": 10,
+  "name": null,
+  "id": "325898919274_deliveryState",
+  "placeholder": null,
+  "type": "search",
+  "class": "ant-select-selection-search-input"
+ },
+ {
+  "i": 11,
+  "name": null,
+  "id": "325898919274_distributionOrder",
+  "placeholder": null,
+  "type": "search",
+  "class": "ant-select-selection-search-input"
+ },
+ {
+  "i": 12,
+  "name": null,
+  "id": "325898919274_anchorName",
+  "placeholder": null,
+  "type": "text",
+  "class": "ant-input ant-input-sm"
+ },
+ {
+  "i": 13,
+  "name": null,
+  "id": null,
+  "placeholder": null,
+  "type": "text",
+  "class": "ant-input ant-input-sm"
+ },
+ {
+  "i": 14,
+  "name": null,
+  "id": null,
+  "placeholder": null,
+  "type": "checkbox",
+  "class": "ant-checkbox-input"
+ },
+ {
+  "i": 15,
+  "name": null,
+  "id": null,
+  "placeholder": null,
+  "type": "checkbox",
+  "class": "ant-checkbox-input"
+ },
+ {
+  "i": 16,
+  "name": null,
+  "id": null,
+  "placeholder": null,
+  "type": "checkbox",
+  "class": "ant-checkbox-input"
+ },
+ {
+  "i": 17,
+  "name": null,
+  "id": null,
+  "placeholder": null,
+  "type": "checkbox",
+  "class": "ant-checkbox-input"
+ },
+ {
+  "i": 18,
+  "name": null,
+  "id": null,
+  "placeholder": null,
+  "type": "checkbox",
+  "class": "ant-checkbox-input"
+ },
+ {
+  "i": 19,
+  "name": null,
+  "id": null,
+  "placeholder": null,
+  "type": "checkbox",
+  "class": "ant-checkbox-input"
+ },
+ {
+  "i": 21,
+  "name": null,
+  "id": "ag-input-id-79",
+  "placeholder": null,
+  "type": "checkbox",
+  "class": "ag-input-field-input ag-checkbox-input"
+ },
+ {
+  "i": 27,
+  "name": null,
+  "id": "rc_select_23",
+  "placeholder": null,
+  "type": "search",
+  "class": "ant-select-selection-search-input"
+ },
+ {
+  "i": 28,
+  "name": null,
+  "id": "rc_select_24",
+  "placeholder": null,
+  "type": "search",
+  "class": "ant-select-selection-search-input"
+ },
+ {
+  "i": 29,
+  "name": null,
+  "id": "rc_select_25",
+  "placeholder": null,
+  "type": "search",
+  "class": "ant-select-selection-search-input"
+ },
+ {
+  "i": 30,
+  "name": null,
+  "id": "rc_select_26",
+  "placeholder": null,
+  "type": "search",
+  "class": "ant-select-selection-search-input"
+ },
+ {
+  "i": 31,
+  "name": null,
+  "id": "rc_select_27",
+  "placeholder": null,
+  "type": "search",
+  "class": "ant-select-selection-search-input"
+ },
+ {
+  "i": 32,
+  "name": null,
+  "id": "rc_select_28",
+  "placeholder": null,
+  "type": "search",
+  "class": "ant-select-selection-search-input"
+ },
+ {
+  "i": 33,
+  "name": null,
+  "id": "rc_select_29",
+  "placeholder": null,
+  "type": "search",
+  "class": "ant-select-selection-search-input"
+ },
+ {
+  "i": 34,
+  "name": null,
+  "id": "rc_select_30",
+  "placeholder": null,
+  "type": "search",
+  "class": "ant-select-selection-search-input"
+ },
+ {
+  "i": 35,
+  "name": null,
+  "id": "rc_select_31",
+  "placeholder": null,
+  "type": "search",
+  "class": "ant-select-selection-search-input"
+ },
+ {
+  "i": 36,
+  "name": null,
+  "id": "rc_select_32",
+  "placeholder": null,
+  "type": "search",
+  "class": "ant-select-selection-search-input"
+ },
+ {
+  "i": 47,
+  "name": null,
+  "id": "rc_select_1",
+  "placeholder": null,
+  "type": "search",
+  "class": "ant-select-selection-search-input"
+ },
+ {
+  "i": 48,
+  "name": null,
+  "id": "rc_select_2",
+  "placeholder": null,
+  "type": "search",
+  "class": "ant-select-selection-search-input"
+ },
+ {
+  "i": 49,
+  "name": null,
+  "id": "rc_select_3",
+  "placeholder": null,
+  "type": "search",
+  "class": "ant-select-selection-search-input"
+ },
+ {
+  "i": 50,
+  "name": null,
+  "id": "rc_select_4",
+  "placeholder": null,
+  "type": "search",
+  "class": "ant-select-selection-search-input"
+ },
+ {
+  "i": 51,
+  "name": null,
+  "id": "rc_select_5",
+  "placeholder": null,
+  "type": "search",
+  "class": "ant-select-selection-search-input"
+ },
+ {
+  "i": 52,
+  "name": null,
+  "id": "rc_select_6",
+  "placeholder": null,
+  "type": "search",
+  "class": "ant-select-selection-search-input"
+ },
+ {
+  "i": 53,
+  "name": null,
+  "id": "rc_select_7",
+  "placeholder": null,
+  "type": "search",
+  "class": "ant-select-selection-search-input"
+ },
+ {
+  "i": 54,
+  "name": null,
+  "id": "rc_select_8",
+  "placeholder": null,
+  "type": "search",
+  "class": "ant-select-selection-search-input"
+ },
+ {
+  "i": 55,
+  "name": null,
+  "id": "rc_select_9",
+  "placeholder": null,
+  "type": "search",
+  "class": "ant-select-selection-search-input"
+ },
+ {
+  "i": 56,
+  "name": null,
+  "id": "rc_select_10",
+  "placeholder": null,
+  "type": "search",
+  "class": "ant-select-selection-search-input"
+ },
+ {
+  "i": 57,
+  "name": null,
+  "id": "rc_select_11",
+  "placeholder": null,
+  "type": "search",
+  "class": "ant-select-selection-search-input"
+ },
+ {
+  "i": 58,
+  "name": null,
+  "id": "rc_select_12",
+  "placeholder": null,
+  "type": "search",
+  "class": "ant-select-selection-search-input"
+ },
+ {
+  "i": 59,
+  "name": null,
+  "id": "rc_select_13",
+  "placeholder": null,
+  "type": "search",
+  "class": "ant-select-selection-search-input"
+ },
+ {
+  "i": 60,
+  "name": null,
+  "id": "rc_select_14",
+  "placeholder": null,
+  "type": "search",
+  "class": "ant-select-selection-search-input"
+ },
+ {
+  "i": 61,
+  "name": null,
+  "id": "rc_select_15",
+  "placeholder": null,
+  "type": "search",
+  "class": "ant-select-selection-search-input"
+ },
+ {
+  "i": 62,
+  "name": null,
+  "id": "rc_select_16",
+  "placeholder": null,
+  "type": "search",
+  "class": "ant-select-selection-search-input"
+ },
+ {
+  "i": 63,
+  "name": null,
+  "id": "rc_select_17",
+  "placeholder": null,
+  "type": "search",
+  "class": "ant-select-selection-search-input"
+ },
+ {
+  "i": 64,
+  "name": null,
+  "id": "rc_select_18",
+  "placeholder": null,
+  "type": "search",
+  "class": "ant-select-selection-search-input"
+ },
+ {
+  "i": 65,
+  "name": null,
+  "id": "rc_select_19",
+  "placeholder": null,
+  "type": "search",
+  "class": "ant-select-selection-search-input"
+ },
+ {
+  "i": 66,
+  "name": null,
+  "id": "rc_select_20",
+  "placeholder": null,
+  "type": "search",
+  "class": "ant-select-selection-search-input"
+ },
+ {
+  "i": 67,
+  "name": null,
+  "id": "ag-input-id-580",
+  "placeholder": null,
+  "type": "checkbox",
+  "class": "ag-input-field-input ag-checkbox-input"
+ },
+ {
+  "i": 68,
+  "name": null,
+  "id": "ag-input-id-582",
+  "placeholder": null,
+  "type": "checkbox",
+  "class": "ag-input-field-input ag-checkbox-input"
+ },
+ {
+  "i": 69,
+  "name": null,
+  "id": "ag-input-id-584",
+  "placeholder": null,
+  "type": "checkbox",
+  "class": "ag-input-field-input ag-checkbox-input"
+ },
+ {
+  "i": 70,
+  "name": null,
+  "id": "ag-input-id-586",
+  "placeholder": null,
+  "type": "checkbox",
+  "class": "ag-input-field-input ag-checkbox-input"
+ },
+ {
+  "i": 71,
+  "name": null,
+  "id": "ag-input-id-588",
+  "placeholder": null,
+  "type": "checkbox",
+  "class": "ag-input-field-input ag-checkbox-input"
+ },
+ {
+  "i": 72,
+  "name": null,
+  "id": "ag-input-id-590",
+  "placeholder": null,
+  "type": "checkbox",
+  "class": "ag-input-field-input ag-checkbox-input"
+ },
+ {
+  "i": 73,
+  "name": null,
+  "id": "ag-input-id-592",
+  "placeholder": null,
+  "type": "checkbox",
+  "class": "ag-input-field-input ag-checkbox-input"
+ },
+ {
+  "i": 74,
+  "name": null,
+  "id": "ag-input-id-594",
+  "placeholder": null,
+  "type": "checkbox",
+  "class": "ag-input-field-input ag-checkbox-input"
+ },
+ {
+  "i": 75,
+  "name": null,
+  "id": "ag-input-id-596",
+  "placeholder": null,
+  "type": "checkbox",
+  "class": "ag-input-field-input ag-checkbox-input"
+ },
+ {
+  "i": 76,
+  "name": null,
+  "id": "ag-input-id-598",
+  "placeholder": null,
+  "type": "checkbox",
+  "class": "ag-input-field-input ag-checkbox-input"
+ },
+ {
+  "i": 77,
+  "name": null,
+  "id": "ag-input-id-600",
+  "placeholder": null,
+  "type": "checkbox",
+  "class": "ag-input-field-input ag-checkbox-input"
+ },
+ {
+  "i": 78,
+  "name": null,
+  "id": "ag-input-id-602",
+  "placeholder": null,
+  "type": "checkbox",
+  "class": "ag-input-field-input ag-checkbox-input"
+ },
+ {
+  "i": 79,
+  "name": null,
+  "id": "ag-input-id-604",
+  "placeholder": null,
+  "type": "checkbox",
+  "class": "ag-input-field-input ag-checkbox-input"
+ }
+]
