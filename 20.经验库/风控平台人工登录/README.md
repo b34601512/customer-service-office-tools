@@ -27,11 +27,11 @@
 ## 现成的工具
 
 ```
-node "20.经验大全/风控平台人工登录/打开原生Chrome.cjs" --url "<登录页>" --profile "<画像目录>" [--port 9337]
+node "20.经验库/风控平台人工登录/打开原生Chrome.cjs" --url "<登录页>" --profile "<画像目录>" [--port 9337]
 ```
 
 * 只做三件事：拼参数 → 起 `chrome.exe` → 打印调试口地址与「请人工登录」提示；**不加载 Playwright、不带任何自动化参数**。
-* 参数构造有单测锁死「不许出现 `--enable-automation` / `--headless`」：`node --test "20.经验大全/风控平台人工登录/测试/打开原生Chrome.test.js"`。
+* 参数构造有单测锁死「不许出现 `--enable-automation` / `--headless`」：`node --test "20.经验库/风控平台人工登录/测试/打开原生Chrome.test.js"`。
 
 ## 判断某个页面算不算「风控平台」
 

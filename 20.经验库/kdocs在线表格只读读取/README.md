@@ -26,7 +26,7 @@ node .\读取金山子表.cjs --webhook "<API地址>" --operation list_sheets
 node .\读取金山子表.cjs --webhook "<API地址>" --sheet "2026-9" --out "报量表-2026-9.json"
 ```
 
-单测：`node --test "20.经验大全/kdocs在线表格只读读取/tests/airScriptPasteSafety.test.js"`
+单测：`node --test "20.经验库/kdocs在线表格只读读取/tests/airScriptPasteSafety.test.js"`
 
 ## 实测坑（2026-09-29）
 

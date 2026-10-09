@@ -356,7 +356,7 @@ async function readPage(page) {
     console.log(`[打开] ${args.url}（画像：${args.profile ?? DEFAULTS.profile}）`);
     if (/pinduoduo\.com|taobao\.com|tmall\.com|douyin\.com|jinritemai\.com|jd\.com|kuaishou\.com|xiaohongshu\.com|youzan\.com/i.test(String(args.url || ''))) {
       console.log('[警告] 这是风控平台：本工具用自动化内核浏览器，人工登录/验证码很可能被风控拦住。');
-      console.log('        人工登录请改用：node "20.经验大全/风控平台人工登录/打开原生Chrome.cjs" --url <页面> --profile <画像目录>');
+      console.log('        人工登录请改用：node "20.经验库/风控平台人工登录/打开原生Chrome.cjs" --url <页面> --profile <画像目录>');
     }
     await page.goto(args.url, { waitUntil: 'domcontentloaded', timeout }).catch((e) => console.error(`[警告] 页面加载警告：${e.message}`));
     await page.waitForTimeout(waitBefore);

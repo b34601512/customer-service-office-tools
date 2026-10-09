@@ -26,7 +26,7 @@
 
 ```powershell
 $env:NODE_PATH = "D:\桌面\办公软件\1.客服超时督办\node_modules"
-node "D:\桌面\办公软件\20.经验大全\金山在线Word文档读取\金山在线Word文档读取.cjs" --share-id 分享ID --profile C:/Users/b3460/.pi-edge-auto --out "输出目录"
+node "D:\桌面\办公软件\20.经验库\金山在线Word文档读取\金山在线Word文档读取.cjs" --share-id 分享ID --profile C:/Users/b3460/.pi-edge-auto --out "输出目录"
 ```
 
 不要在脚本或笔记中硬编码Cookie、会话token和图片签名URL。浏览器画像只保存在本机。

@@ -11,7 +11,7 @@
 | `结束进程.ps1` | 按 `-Id` 或 `-Match` 关键字结束进程（先 `-WhatIf` 看一眼再真杀） |
 
 ```powershell
-cd "D:\桌面\办公软件\20.经验大全\Windows进程与占用排查"
+cd "D:\桌面\办公软件\20.经验库\Windows进程与占用排查"
 powershell -ExecutionPolicy Bypass -File .\查进程.ps1                 # 全部 node/python/cmd
 powershell -ExecutionPolicy Bypass -File .\查进程.ps1 -Match 排班     # 只看跟排班有关的
 powershell -ExecutionPolicy Bypass -File .\结束进程.ps1 -Match kdocs -WhatIf   # 只预览
