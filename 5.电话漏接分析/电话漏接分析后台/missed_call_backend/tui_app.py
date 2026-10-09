@@ -459,8 +459,8 @@ class TuiApp:
         for content_line in content_lines:
             lines.append(_fit(content_line, columns, truncate=False))
 
-        lines.append(colorize(_fit("作者：张三 ｜ 微信：account001 ｜ 官网：account001.cc", columns), "gray"))
-        lines.append(colorize(_fit("版权所有 © 张三，保留所有权利", columns), "gray"))
+        lines.append(colorize(_fit("作者：黎路遥 ｜ 微信：luyao2089 ｜ 官网：luyao2089.cc", columns), "gray"))
+        lines.append(colorize(_fit("版权所有 © 黎路遥，保留所有权利", columns), "gray"))
         footer_text = page.footer(self) if page and hasattr(page, "footer") else ""
         footer = footer_text or "↑↓选择 回车执行 ←→/数字键切页 9退出页 Ctrl+C直接退出"
         lines.append(colorize(_fit(footer, columns), "gray"))

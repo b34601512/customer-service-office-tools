@@ -189,7 +189,7 @@ class AutoReportCliTests(unittest.TestCase):
             env=launcher_environment,
         )
         self.assertEqual(completed_process.returncode, 0, completed_process.stdout)
-        self.assertIn("account001.cc", completed_process.stdout)
+        self.assertIn("luyao2089.cc", completed_process.stdout)
         self.assertIn("v0.01", completed_process.stdout)
 
     def test_local_fallback_automatically_uses_latest_available_source(self) -> None:

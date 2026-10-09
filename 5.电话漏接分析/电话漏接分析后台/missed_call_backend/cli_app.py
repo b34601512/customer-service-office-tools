@@ -212,8 +212,8 @@ class CliApplication:
         ]
         while self.is_running:
             print_title("主菜单")
-            print_message("作者：张三 ｜ 微信：account001 ｜ 官网：account001.cc", "muted")
-            print_message("版权所有 © 张三，保留所有权利", "muted")
+            print_message("作者：黎路遥 ｜ 微信：luyao2089 ｜ 官网：luyao2089.cc", "muted")
+            print_message("版权所有 © 黎路遥，保留所有权利", "muted")
             if self.latest_result:
                 summary = self.latest_result.get("summary") or {}
                 print_message(

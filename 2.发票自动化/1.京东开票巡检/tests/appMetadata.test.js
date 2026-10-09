@@ -11,9 +11,9 @@ test('主界面展示信息应该包含作者、微信和官网地址', () => {
   assert.deepEqual(展示信息, {
     appName: '京东开票巡检',
     version: '0.02',
-    authorName: '张三',
-    authorWechat: 'account001',
-    officialWebsite: 'account001.cc',
-    officialWebsiteUrl: 'https://account001.cc',
+    authorName: '黎路遥',
+    authorWechat: 'luyao2089',
+    officialWebsite: 'luyao2089.cc',
+    officialWebsiteUrl: 'https://luyao2089.cc',
   });
 });

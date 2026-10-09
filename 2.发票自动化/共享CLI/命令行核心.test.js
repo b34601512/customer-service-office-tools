@@ -30,14 +30,14 @@ test('CLI首页统一输出作者、微信、官网和版本', () => {
     应用展示信息: {
       appName: '测试项目',
       version: '1.2.3',
-      authorName: '张三',
-      authorWechat: 'account001',
-      officialWebsite: 'account001.cc',
-      officialWebsiteUrl: 'https://account001.cc',
+      authorName: '黎路遥',
+      authorWechat: 'luyao2089',
+      officialWebsite: 'luyao2089.cc',
+      officialWebsiteUrl: 'https://luyao2089.cc',
     },
   });
 
-  assert.match(输出记录.join('\n'), /作者：张三｜微信：account001｜官网：account001\.cc｜版本：v1\.2\.3/);
+  assert.match(输出记录.join('\n'), /作者：黎路遥｜微信：luyao2089｜官网：luyao2089\.cc｜版本：v1\.2\.3/);
   assert.doesNotMatch(输出记录.join('\n'), /\[L\]/);
 });
 

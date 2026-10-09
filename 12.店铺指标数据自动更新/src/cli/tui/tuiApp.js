@@ -388,8 +388,8 @@ class TuiApp {
     }
 
     // 作者与版权信息：放在公共外框中，所有页面统一显示。
-    lines.push(ansi.colorize(fit("作者：张三 ｜ 微信：account001 ｜ 官网：account001.cc", columns), "gray"));
-    lines.push(ansi.colorize(fit("版权所有 © 张三，保留所有权利", columns), "gray"));
+    lines.push(ansi.colorize(fit("作者：黎路遥 ｜ 微信：luyao2089 ｜ 官网：luyao2089.cc", columns), "gray"));
+    lines.push(ansi.colorize(fit("版权所有 © 黎路遥，保留所有权利", columns), "gray"));
 
     // 页脚
     let footerText = "";

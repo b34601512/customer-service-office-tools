@@ -23,10 +23,10 @@ def read_display_version(default: str = "v0.01") -> str:
 APP_METADATA = AppMetadata(
     app_name="退款自动提醒",
     version=read_display_version(),
-    author_name="张三",
-    author_wechat="account001",
-    official_website="account001.cc",
-    official_website_url="https://account001.cc",
+    author_name="黎路遥",
+    author_wechat="luyao2089",
+    official_website="luyao2089.cc",
+    official_website_url="https://luyao2089.cc",
 )
 
 __all__ = ["APP_METADATA", "AppMetadata", "read_display_version"]

@@ -2,9 +2,9 @@ const packageMetadata = require("../../package.json");
 
 const CLI_VERSION = `v${String(packageMetadata.version || "1.0.1")}`;
 const CLI_BRAND_METADATA = Object.freeze({
-  authorDisplayName: "张三",
-  officialWechatId: "account001",
-  officialWebsiteUrl: "https://account001.cc"
+  authorDisplayName: "黎路遥",
+  officialWechatId: "luyao2089",
+  officialWebsiteUrl: "https://luyao2089.cc"
 });
 const PLATFORM_META = {
   tmall: { label: "天猫" },

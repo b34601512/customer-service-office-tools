@@ -243,8 +243,8 @@ class TuiApp:
         lines += [self.build_menu_bar(columns), colorize("─" * columns, "gray")]
         content = self.page.render(self) if self.page and hasattr(self.page, "render") else []
         lines += [fit(content[index] if index < len(content) else "", columns) for index in range(self.content_height)]
-        lines.append(colorize(fit("作者：张三 ｜ 微信：account001 ｜ 官网：account001.cc", columns), "gray"))
-        lines.append(colorize(fit("版权所有 © 张三，保留所有权利", columns), "gray"))
+        lines.append(colorize(fit("作者：黎路遥 ｜ 微信：luyao2089 ｜ 官网：luyao2089.cc", columns), "gray"))
+        lines.append(colorize(fit("版权所有 © 黎路遥，保留所有权利", columns), "gray"))
         footer = self.footer_provider(self)
         if not footer and self.page and hasattr(self.page, "footer"):
             footer = self.page.footer(self)

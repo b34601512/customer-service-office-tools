@@ -17,7 +17,7 @@ test('总入口首页顶部展示作者、微信、官网和版本', () => {
   const 输出记录 = [];
   输出主菜单((文本) => 输出记录.push(文本), { isTTY: false });
   const 首页文本 = 输出记录.join('\n');
-  assert.match(首页文本, /作者：张三｜微信：account001｜官网：account001\.cc｜版本：v0\.01/);
+  assert.match(首页文本, /作者：黎路遥｜微信：luyao2089｜官网：luyao2089\.cc｜版本：v0\.01/);
   assert.equal(总入口应用展示信息.version, '0.01');
 });
 

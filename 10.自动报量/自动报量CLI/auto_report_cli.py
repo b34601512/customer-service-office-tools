@@ -32,9 +32,9 @@ from auto_report_xlsx import MonthWriteResult, build_output_workbook_bytes, read
 
 
 CLI_VERSION = "v0.01"
-AUTHOR_NAME = "张三"
-AUTHOR_WECHAT = "account001"
-AUTHOR_WEBSITE = "account001.cc"
+AUTHOR_NAME = "黎路遥"
+AUTHOR_WECHAT = "luyao2089"
+AUTHOR_WEBSITE = "luyao2089.cc"
 
 
 class CliColors:

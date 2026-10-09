@@ -86,7 +86,7 @@ test('命令行菜单会把编号分发到对应操作并统一清理', async ()
   assert.deepEqual(调用记录, ['status', 'config', 'login', 'download', 'local', 'folder', 'import', 'close']);
   assert.equal(清屏次数, 16);
   assert.match(输出记录.join('\n'), /通用发票下载中心/);
-  assert.match(输出记录.join('\n'), /作者：张三｜微信：account001｜官网：account001\.cc｜版本：v0\.1\.0/);
+  assert.match(输出记录.join('\n'), /作者：黎路遥｜微信：luyao2089｜官网：luyao2089\.cc｜版本：v0\.1\.0/);
   assert.match(输出记录.join('\n'), /账户与登录/);
   assert.match(输出记录.join('\n'), /发票处理/);
   assert.match(输出记录.join('\n'), /下载中心已退出/);

@@ -261,9 +261,9 @@ class ControlServiceTest(unittest.TestCase):
             service = ControlService(config_path=Path(tmp) / "config.json")
             metadata = service.get_snapshot()["appMetadata"]
             self.assertEqual(metadata["version"], "v0.01")
-            self.assertEqual(metadata["author_name"], "张三")
-            self.assertEqual(metadata["author_wechat"], "account001")
-            self.assertEqual(metadata["official_website"], "account001.cc")
+            self.assertEqual(metadata["author_name"], "黎路遥")
+            self.assertEqual(metadata["author_wechat"], "luyao2089")
+            self.assertEqual(metadata["official_website"], "luyao2089.cc")
 
     def test_successful_monitor_count_increments_and_persists(self) -> None:
         class FakeBrowser:
