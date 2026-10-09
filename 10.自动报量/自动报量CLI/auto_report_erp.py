@@ -19,6 +19,7 @@ ERP_REPORT_NAME = "订单商品明细统计"
 ERP_TASK_NAME = "订单商品明细统计报表导出"
 ERP_TASK_CENTER_URL = "/task/task_center"
 ERP_TASK_WAIT_SECONDS = 600
+ERP_DETAIL_GRID_WAIT_SECONDS = 120
 
 
 class ErpAutomationError(RuntimeError):
@@ -465,11 +466,15 @@ def _find_visible_erp_created_time_inputs(page: Any) -> tuple[Any, Any] | None:
 
 
 def _fill_erp_date_input(date_input: Any, date_text: str) -> None:
-    """填写ERP日期控件并触发失焦确认。"""
+    """填写ERP日期控件并按回车确认。
+
+    实测：fill 后按 Tab 不会提交开始时间，随后填写结束时间会把开始时间
+    还原为旧值（制单时间跨度失效）；按回车才会提交。
+    """
     date_input.evaluate("element => element.removeAttribute('readonly')")
     date_input.click()
     date_input.fill(date_text)
-    date_input.press("Tab")
+    date_input.press("Enter")
 
 
 def set_erp_created_time_range(page: Any, export_date_range: ErpExportDateRange) -> None:
@@ -497,6 +502,21 @@ def set_erp_created_time_range(page: Any, export_date_range: ErpExportDateRange)
 def _normalize_erp_button_text(button_text: str) -> str:
     """去掉ERP按钮文字中的排版空格。"""
     return "".join(button_text.split())
+
+
+def _find_visible_erp_button_by_normalized_text(page: Any, button_text: str) -> Any | None:
+    """按去掉排版空格后的文字查找可见ERP按钮。
+
+    ERP按钮文字常带排版空格（如「查 询」），精确文字查找会扑空。
+    """
+    for page_scope in _iter_page_scopes(page):
+        button_candidates = page_scope.locator("button:visible")
+        candidate_count = min(button_candidates.count(), 100)
+        for candidate_index in range(candidate_count):
+            button_candidate = button_candidates.nth(candidate_index)
+            if _normalize_erp_button_text(button_candidate.inner_text()) == button_text:
+                return button_candidate
+    return None
 
 
 def _find_visible_erp_export_confirmation_button(page: Any) -> Any | None:
@@ -540,12 +560,41 @@ def _erp_export_task_is_submitted(page: Any) -> bool:
     )
 
 
+def _erp_report_detail_grid_has_data(page: Any) -> bool:
+    """判断ERP订单商品明细网格是否已出现明细行或合计行。"""
+    for page_scope in _iter_page_scopes(page):
+        if _find_first_visible_text_locator_in_scope(page_scope, "合计", exact=False) is not None:
+            return True
+        grid_rows = page_scope.locator(".ag-row")
+        grid_row_count = min(grid_rows.count(), 50)
+        for grid_row_index in range(grid_row_count):
+            if grid_rows.nth(grid_row_index).is_visible():
+                return True
+    return False
+
+
 def create_erp_csv_export_task(page: Any) -> datetime:
-    """查询汇总并创建订单商品明细CSV导出任务。"""
-    query_button = _find_first_visible_text_locator(page, "查询汇总")
-    if query_button is not None:
-        query_button.click()
+    """查询汇总、等待明细网格加载、再创建订单商品明细CSV导出任务。
+
+    实测：只点「查询汇总」不会加载明细网格，此时导出只会得到表头空表；
+    必须先点「查询」并等明细加载出来再导出。
+    """
+    query_summary_button = _find_first_visible_text_locator(page, "查询汇总")
+    if query_summary_button is not None:
+        query_summary_button.click()
         page.wait_for_timeout(1_000)
+    detail_query_button = _find_visible_erp_button_by_normalized_text(page, "查询")
+    if detail_query_button is None:
+        raise ErpAutomationError("无法识别ERP的查询按钮。")
+    detail_query_button.click()
+    if not _wait_for_condition(
+        page,
+        lambda: _erp_report_detail_grid_has_data(page),
+        timeout_seconds=ERP_DETAIL_GRID_WAIT_SECONDS,
+    ):
+        raise ErpAutomationError(
+            "等待ERP订单商品明细网格加载超时，为避免导出空表已停止导出。"
+        )
     csv_export_button = _find_first_visible_text_locator(page, "CSV导出")
     if csv_export_button is None:
         raise ErpAutomationError("无法识别ERP的CSV导出按钮。")

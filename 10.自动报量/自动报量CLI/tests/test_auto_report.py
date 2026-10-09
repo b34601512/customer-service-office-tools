@@ -44,6 +44,8 @@ from auto_report_credentials import (  # noqa: E402
 from auto_report_csv import read_order_csv_records  # noqa: E402
 from auto_report_erp import (  # noqa: E402
     ErpBrowserClosedError,
+    ErpAutomationError,
+    _find_visible_erp_button_by_normalized_text,
     _wait_for_condition,
     build_erp_browser_launch_options,
     build_erp_export_date_range,
@@ -327,15 +329,21 @@ class AutoReportCliTests(unittest.TestCase):
 
         start_time_input.fill.assert_called_once_with("2026-08-01 00:00:00")
         end_time_input.fill.assert_called_once_with("2026-08-05 00:00:00")
-        start_time_input.press.assert_called_once_with("Tab")
-        end_time_input.press.assert_called_once_with("Tab")
+        # 实测：按 Tab 不会提交（填结束时间时开始时间会还原旧值），必须按回车。
+        start_time_input.press.assert_called_once_with("Enter")
+        end_time_input.press.assert_called_once_with("Enter")
 
     def test_erp_export_confirms_both_real_dialogs(self) -> None:
         browser_page = MagicMock()
-        query_button = MagicMock()
+        query_summary_button = MagicMock()
+        detail_query_button = MagicMock()
         csv_export_button = MagicMock()
         first_confirmation_button = MagicMock()
         second_confirmation_button = MagicMock()
+        call_order: list[str] = []
+        query_summary_button.click.side_effect = lambda: call_order.append("查询汇总")
+        detail_query_button.click.side_effect = lambda: call_order.append("查询")
+        csv_export_button.click.side_effect = lambda: call_order.append("CSV导出")
 
         def find_toolbar_button(
             page: Any,
@@ -345,9 +353,22 @@ class AutoReportCliTests(unittest.TestCase):
             self.assertIs(page, browser_page)
             self.assertTrue(exact)
             return {
-                "查询汇总": query_button,
+                "查询汇总": query_summary_button,
                 "CSV导出": csv_export_button,
             }[visible_text]
+
+        def find_detail_query_button(
+            page: Any,
+            button_text: str,
+        ) -> Any:
+            self.assertIs(page, browser_page)
+            self.assertEqual(button_text, "查询")
+            return detail_query_button
+
+        def report_detail_grid_is_loaded(page: Any) -> bool:
+            self.assertIs(page, browser_page)
+            call_order.append("明细加载")
+            return True
 
         def run_waited_condition(
             page: Any,
@@ -361,6 +382,12 @@ class AutoReportCliTests(unittest.TestCase):
             "auto_report_erp._find_first_visible_text_locator",
             side_effect=find_toolbar_button,
         ), patch(
+            "auto_report_erp._find_visible_erp_button_by_normalized_text",
+            side_effect=find_detail_query_button,
+        ), patch(
+            "auto_report_erp._erp_report_detail_grid_has_data",
+            side_effect=report_detail_grid_is_loaded,
+        ), patch(
             "auto_report_erp._erp_export_task_is_submitted",
             side_effect=[False, False, True],
         ), patch(
@@ -373,10 +400,72 @@ class AutoReportCliTests(unittest.TestCase):
             export_started_at = create_erp_csv_export_task(browser_page)
 
         self.assertIsNotNone(export_started_at)
-        query_button.click.assert_called_once_with()
+        self.assertLess(call_order.index("查询汇总"), call_order.index("查询"))
+        self.assertLess(call_order.index("查询"), call_order.index("明细加载"))
+        self.assertLess(call_order.index("明细加载"), call_order.index("CSV导出"))
+        query_summary_button.click.assert_called_once_with()
+        detail_query_button.click.assert_called_once_with()
         csv_export_button.click.assert_called_once_with()
         first_confirmation_button.click.assert_called_once_with()
         second_confirmation_button.click.assert_called_once_with()
+
+    def test_erp_export_stops_before_csv_export_until_detail_grid_is_loaded(self) -> None:
+        browser_page = MagicMock()
+        query_summary_button = MagicMock()
+        detail_query_button = MagicMock()
+        visible_text_calls: list[str] = []
+
+        def find_toolbar_button(
+            page: Any,
+            visible_text: str,
+            exact: bool = True,
+        ) -> Any:
+            self.assertIs(page, browser_page)
+            visible_text_calls.append(visible_text)
+            if visible_text == "查询汇总":
+                return query_summary_button
+            raise AssertionError("明细未加载时不应该继续查找导出的控件")
+
+        def report_detail_grid_is_loaded(page: Any) -> bool:
+            self.assertIs(page, browser_page)
+            return False
+
+        with patch(
+            "auto_report_erp._find_first_visible_text_locator",
+            side_effect=find_toolbar_button,
+        ), patch(
+            "auto_report_erp._find_visible_erp_button_by_normalized_text",
+            return_value=detail_query_button,
+        ), patch(
+            "auto_report_erp._erp_report_detail_grid_has_data",
+            side_effect=report_detail_grid_is_loaded,
+        ), patch(
+            "auto_report_erp._wait_for_condition",
+            return_value=False,
+        ):
+            with self.assertRaises(ErpAutomationError) as raised_error:
+                create_erp_csv_export_task(browser_page)
+
+        self.assertIn("网格加载超时", str(raised_error.exception))
+        self.assertEqual(visible_text_calls, ["查询汇总"])
+        query_summary_button.click.assert_called_once_with()
+        detail_query_button.click.assert_called_once_with()
+
+    def test_erp_detail_query_button_finder_ignores_layout_spaces(self) -> None:
+        browser_page = MagicMock()
+        browser_page.frames = []
+        query_summary_button = MagicMock()
+        query_summary_button.inner_text.return_value = "查询汇总"
+        detail_query_button = MagicMock()
+        detail_query_button.inner_text.return_value = "查 询"
+        button_candidates = MagicMock()
+        button_candidates.count.return_value = 2
+        button_candidates.nth.side_effect = [query_summary_button, detail_query_button]
+        browser_page.locator.return_value = button_candidates
+
+        found_button = _find_visible_erp_button_by_normalized_text(browser_page, "查询")
+
+        self.assertIs(found_button, detail_query_button)
 
     def test_task_center_uses_erp_own_same_window_entry(self) -> None:
         browser_page = MagicMock()
