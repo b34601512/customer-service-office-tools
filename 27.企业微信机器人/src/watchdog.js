@@ -443,8 +443,21 @@ function reconcileSessions(serverSessions, localLast, cfg, nowMs) {
   return { checked: true, missed };
 }
 
+/**
+ * 公告板轮换（满 50 条关旧开新，bot-board README）：从 gh issue list 结果里挑当前开放贴号。
+ * 标题含「公告板」的开放贴取编号最大者；一个都没有就退回配置兜底值。
+ */
+function pickBoardIssue(openIssues, fallback) {
+  const nums = (openIssues || [])
+    .filter((x) => x && String(x.title || "").includes("公告板"))
+    .map((x) => Number(x.number))
+    .filter((n) => Number.isFinite(n) && n > 0);
+  return nums.length ? Math.max(...nums) : Number(fallback) || 1;
+}
+
 module.exports = {
   alertTag,
+  pickBoardIssue,
   SILENCE_ALERT_KEYS,
   parseServerTime,
   lastByChat,

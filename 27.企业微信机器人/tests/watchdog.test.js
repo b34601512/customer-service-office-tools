@@ -11,7 +11,8 @@ const {
   parseInbox,
   evaluate,
   bootRecoveryOnly,
-  formatJst
+  formatJst,
+  pickBoardIssue
 } = require("../src/watchdog");
 
 const cfg = DEFAULT_CONFIG;
@@ -324,4 +325,21 @@ test("bootGraceMin 可配置：1 分钟窗口外不再带 boot 标记", () => {
   assert.equal(inWin.toAlert.find((x) => x.key === "daemon").boot, true);
   const outWin = evaluate(snapshot({ alive: false, uptimeSec: 2 * 60 }), emptyState(), tight, NOON);
   assert.ok(!outWin.toAlert.find((x) => x.key === "daemon").boot);
+});
+
+test("公告板轮换：开放贴里取编号最大的「公告板」贴", () => {
+  const list = [
+    { number: 5, title: "别的贴" },
+    { number: 2, title: "机器人公告板（2）" },
+    { number: 1, title: "机器人公告板" }
+  ];
+  assert.equal(pickBoardIssue(list, 1), 2, "旧贴还开着也应取新贴（最大号）");
+  assert.equal(pickBoardIssue([{ number: 7, title: "机器人公告板（7）" }], 1), 7);
+});
+
+test("公告板轮换：没有公告板贴/列表为空/解析失败时退回兜底号", () => {
+  assert.equal(pickBoardIssue([{ number: 9, title: "无关贴" }], 7), 7);
+  assert.equal(pickBoardIssue([], 7), 7);
+  assert.equal(pickBoardIssue(null, 7), 7);
+  assert.equal(pickBoardIssue([{ number: "x", title: "机器人公告板" }], 7), 7, "编号不合法不算");
 });

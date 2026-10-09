@@ -45,6 +45,7 @@ const {
   parseConnectionEvents,
   parseDaemonLog,
   parseInbox,
+  pickBoardIssue,
   reconcileSessions
 } = require("../src/watchdog");
 
@@ -58,7 +59,7 @@ const 窗口自愈 = require("../src/窗口自愈");
 
 const EXTRA_DEFAULTS = {
   boardRepo: "c34601512-cpu/bot-board",
-  boardIssue: 1,
+  boardIssue: 2, // 公告板贴号兜底值（评论满 50 条轮换；正常由 resolveBoardIssue 自动解析当前开放贴，仅 gh 查询失败时用它）
   ghCmd: "gh",
   ghConfigDir: path.join(os.homedir(), ".config", "gh-bots"),
   ghFallbackPath: "C:\\Program Files\\GitHub CLI\\gh.exe",
@@ -246,12 +247,30 @@ function 记心跳日志(stateDir, 文本, 不落盘 = false) {
 
 // ---------------------------------------------------------------- 留言板（机器人交流频道）
 
+/** 当前公告板贴号：先按轮换协议解析开放贴（标题含「公告板」取最大号），查不到才退回配置值。 */
+function resolveBoardIssue(cfg) {
+  const env = { ...process.env, GH_CONFIG_DIR: cfg.ghConfigDir };
+  const candidates = [cfg.ghCmd, cfg.ghFallbackPath].filter(Boolean);
+  for (const gh of candidates) {
+    const r = spawnSync(gh, ["issue", "list", "--repo", cfg.boardRepo, "--state", "open", "--limit", "20", "--json", "number,title"], {
+      env, encoding: "utf8", timeout: 30000, windowsHide: true
+    });
+    if (r.status === 0) {
+      let list = [];
+      try { list = JSON.parse(String(r.stdout || "[]")); } catch {}
+      return pickBoardIssue(list, cfg.boardIssue);
+    }
+    if (!(r.error && r.error.code === "ENOENT")) break; // 参数/权限错误没必要换路径重试
+  }
+  return cfg.boardIssue;
+}
+
 function postBoard(cfg, text) {
   const env = { ...process.env, GH_CONFIG_DIR: cfg.ghConfigDir };
   const candidates = [cfg.ghCmd, cfg.ghFallbackPath].filter(Boolean);
   let lastErr = "";
   for (const gh of candidates) {
-    const r = spawnSync(gh, ["issue", "comment", String(cfg.boardIssue), "--repo", cfg.boardRepo, "--body-file", "-"], {
+    const r = spawnSync(gh, ["issue", "comment", String(resolveBoardIssue(cfg)), "--repo", cfg.boardRepo, "--body-file", "-"], {
       input: text, env, encoding: "utf8", timeout: 60000, windowsHide: true
     });
     if (r.status === 0) return { ok: true, out: String(r.stdout || "").trim() };
