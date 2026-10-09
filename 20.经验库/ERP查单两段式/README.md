@@ -19,6 +19,24 @@
 
 > 顺序不能反：订单查询只用来定日期，字段口径仍以「订单商品明细统计」CSV 为准。
 
+### 实测走通（2026-10-09，两单都这样查到并登记）
+登录后在**任意 v2.guanyierp.com 同源页面**直接 fetch 订单查询接口即可（不用进 UI、不读表格 DOM）：
+
+```
+POST /tc/trade/trade_order_header/data/list
+Content-Type: application/x-www-form-urlencoded; charset=UTF-8
+body: page=1&limit=200&start=0&dateType=<0|1|2>
+      &platformCode=<单号1>(enter)<单号2>&separatorPlatform=3
+      &hasInvoice=&refund=&approve=&financeReject=&cancel=&hold=
+```
+
+- `dateType`：**0=最近7天、1=2017年至7天以前、2=2017年以前** → **三档都要查一遍再合并**（不传会漏老单）。
+- `platformCode`：多单号用**字面量 `(enter)`** 连接；`separatorPlatform=3`（逗号）；`cancel=` **留空 = 不过滤作废单**（别传 false）。
+- 返回 `{total, rows:[…170 字段]}`；取数用 `code`(SO单号)、`shopName`、`createDate`/`paytime`、`payment`、`goodsList[]`(`itemCode`/`itemName`/`itemSkuName`/`qty`/`amountAfter`=让利后=买家支付/`type`=`Item`|`PlatformGift`)、`tradeOrderStatusInfo.deliveryDate`。
+- **坑：一个平台单可能对应多个 ERP 单**（原单 + 手动 0 元补发单）——**别只取第一条**（2026-10-09 实例：拼多多单 = 原单 SO689675869360 + 0 元补发单 SO689757956444）。
+- 列表接口**收货人/电话/地址是打码的**；ERP 报表 CSV 的「收货人」列实测全表为空。
+- 老 ERP 登录资料目录：`10.自动报量/自动报量输出/配置/ERP浏览器`（Edge，登录态有效）；24号 `erp1` 资料目录登录态已失效。旧 UI 的「订单查询」文本入口在新版（cerpv2）已不可靠。
+
 ## 工具侧两个已修缺陷（10号 `自动报量CLI/auto_report_erp.py`，2026-10-09）
 1. **制单时间日期框**：`fill` 之后必须 `Enter` 提交；只按 `Tab` 不提交，随后填结束时间会把开始时间**还原成表单旧值**（实测填入 10-02/10-09 回读成 `2024-01-01`/`2026-10-09`，跨度>1 年被表单拒绝）→ 导出范围错。
 2. **导出前必须点「查询」并等明细网格加载**：只点「查询汇总」不点「查询」时明细网格可能一直是 0 行，此时导出只得 **787 B 表头空表**。修法：`查询汇总 → 查询 → 等明细（合计行或 .ag-row，120s 超时则报错停手）→ 才 CSV导出`。
