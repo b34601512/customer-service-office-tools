@@ -16,12 +16,12 @@
 1. `LoopCreate`：triggerType=`event`，trigger=`monitor:output`，recurring=true，
    expiresIn=`30d`，maxFires=`5000`，prompt 用下面这段：
 
-   > 企微来新消息了。`cd "D:/桌面/办公软件/27.企业微信机器人" && node scripts/读新消息.cjs` 读全文、逐条处理；
+   > 企微来新消息了。`cd "D:/桌面/木婉清/27.企业微信机器人" && node scripts/读新消息.cjs` 读全文、逐条处理；
    > 有人 @木婉清 / 单聊 → **可直接回复**（`node scripts/发企微消息.cjs --chat-id "<本次 wecom-cli message aibot sessions list 现取>" --text "…"`，拆条、每条 ≤100 字）；
    > 拿不准 / 碰红线 / 要发给非 @ 的群或他人 → 先问黎路遥；没新消息就安静，不汇报。
    > 汇报一律**私发黎路遥本人**（不发金牌组/群，2026-10-01 他拍板；群 id 会被发消息脚本拒发）。
 
-2. `MonitorCreate`：命令 `cd "D:/桌面/办公软件/27.企业微信机器人" && node scripts/跟读收件箱.cjs`，
+2. `MonitorCreate`：命令 `cd "D:/桌面/木婉清/27.企业微信机器人" && node scripts/跟读收件箱.cjs`，
    timeout=0（不设超时），onDone=`监听停了：按本文件第 1.2 步重挂 Monitor，再跑 node scripts/读新消息.cjs 查漏`。
 
 3. 再补三个常驻循环（**会话重启会丢，开机必须重挂**）：
@@ -44,12 +44,12 @@
      > 小改（挪几份文件、补几行索引）直接做；大改（重建结构）开任务窗；没变化就静默；有异常才私发黎路遥。
 
 4. 挂窗口心跳（监听窗专用；窗口死了自己报不了自己，得靠看门狗）：跑这条，后台起写手——
-   `cd "D:/桌面/办公软件/27.企业微信机器人" && node scripts/窗口心跳.cjs --后台 --认窗 "27.企业微信机器人" --认窗 "boot-prompt.md" --名 监听窗 --类型 listener`
+   `cd "D:/桌面/木婉清/27.企业微信机器人" && node scripts/窗口心跳.cjs --后台 --认窗 "27.企业微信机器人" --认窗 "boot-prompt.md" --名 监听窗 --类型 listener`
    （每 150 秒更新 `.state/窗口心跳.json`；窗口一挂写手就停，看门狗 10 分钟内会在交流频道发 [故障]。）
 
 ## 2. 查漏
 
-`cd "D:/桌面/办公软件/27.企业微信机器人" && node scripts/读新消息.cjs`；有未读就逐条处理。
+`cd "D:/桌面/木婉清/27.企业微信机器人" && node scripts/读新消息.cjs`；有未读就逐条处理。
 （它按 msgid 游标读，不漏不重；打印完自动推进游标。）
 
 ## 3. 回报就绪（只发这一条）
