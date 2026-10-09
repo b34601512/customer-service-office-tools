@@ -8,6 +8,8 @@
 //   node 关任务窗.cjs --守 --任务 <任务文件> --pid <pid> [--最久 4h] [--间隔 20] [--宽限 10]
 //                                             守卫：盯回执文件，落地后自动关窗（开任务窗.cjs 会自动挂它）
 // 登记文件：0.木婉清档案/runtime/任务窗.json（runtime/ 不入库）；守卫日志：runtime/关窗日志.log
+// 心跳配合（2026-10-09）：**正常收窗**顺手清 27号/.state/窗口心跳.json 里对应记录；
+//   异常死亡（进程没了 / 守卫发现窗已经退了）**不清**——留着让看门狗报 [故障]。
 const fs = require('fs');
 const path = require('path');
 const { execFileSync, spawn } = require('child_process');
@@ -178,19 +180,46 @@ function 解析时长(文本, 默认毫秒 = 4 * 3600 * 1000) {
   return n * (单位 === 'h' ? 3600000 : 单位 === 'm' ? 60000 : 1000);
 }
 
+/** 规整认窗串：反斜杠、去尾斜杠、小写（Windows 路径不区分大小写） */
+function 规整认窗(s) {
+  return String(s || '').replace(/\//g, '\\').replace(/\\+$/, '').toLowerCase();
+}
+
+/** 心跳写手模块（懒加载；拿不到就返回 null，关窗不受影响） */
+function 心跳模块() {
+  try {
+    return require(path.join(__dirname, '..', '27.企业微信机器人', 'scripts', '窗口心跳.cjs'));
+  } catch {
+    return null;
+  }
+}
+
+/** 清掉某任务窗的心跳记录（只在正常收窗时调；死窗不调，留记录给看门狗报警）。返回清掉几个。 */
+function 清心跳记录(任务文件, { 心跳文件 } = {}) {
+  if (!任务文件) return 0;
+  const 模 = 心跳模块();
+  if (!模) return 0;
+  const 目标 = 规整认窗('@' + 任务文件);
+  return 模.清心跳(心跳文件 || 模.默认状态文件, (记录) => {
+    const 组 = Array.isArray(记录 && 记录.认窗) ? 记录.认窗 : [记录 && 记录.认窗];
+    return 组.some((x) => 规整认窗(x) === 目标);
+  });
+}
+
 /**
- * 守卫：盯着回执文件，落地（且不早于开窗时间）→ 宽限几秒 → 关窗 + 摘登记。
+ * 守卫：盯着回执文件，落地（且不早于开窗时间）→ 宽限几秒 → 关窗 + 摘登记 + 清心跳。
  * 到「最久」还没回执 → 记日志、自己退出，**不关窗**（窗口可能还在正经干活，宁可留着让人看）。
  */
-function 守卫({ 任务, pid, 最久 = 4 * 3600 * 1000, 间隔 = 20000, 宽限 = 10000, 开窗时间, 现在 = () => Date.now() } = {}) {
-  const 回执 = 回执路径(任务);
+function 守卫({ 任务, pid, 最久 = 4 * 3600 * 1000, 间隔 = 20000, 宽限 = 10000, 开窗时间, 现在 = () => Date.now(), 台账文件 = null, 心跳文件 = null, 回执文件 = null } = {}) {
+  const 回执 = 回执文件 || 回执路径(任务);
+  const 台账 = 台账文件 || 登记文件;
   const 起 = 开窗时间 ? Date.parse(开窗时间) : 现在();
   const 截止 = 起 + 最久;
   记日志(`守卫上岗 pid=${pid}（${path.basename(String(任务))}）→ 回执：${回执}`);
   function 滴() {
     if (!进程在(pid)) {
-      摘登记(pid);
-      记日志(`窗口已自行退出 pid=${pid}（${path.basename(任务)}），摘登记`);
+      摘登记(pid, 台账);
+      记日志(`窗口已自行退出 pid=${pid}（${path.basename(任务)}），摘登记；心跳记录不清（死窗留证给看门狗）`);
       return;
     }
     let 有回执 = false;
@@ -201,9 +230,11 @@ function 守卫({ 任务, pid, 最久 = 4 * 3600 * 1000, 间隔 = 20000, 宽限 
     }
     if (有回执) {
       setTimeout(() => {
+        const 活着 = 进程在(pid);
+        if (活着) 清心跳记录(任务, { 心跳文件 });
         关窗(pid);
-        摘登记(pid);
-        记日志(`回执落地 → 关窗 pid=${pid}（${path.basename(任务)}）`);
+        摘登记(pid, 台账);
+        记日志(`回执落地 → 关窗 pid=${pid}（${path.basename(任务)}）${活着 ? '，已清心跳' : '，窗口已自行退出（心跳留着）'}`);
       }, 宽限);
       return;
     }
@@ -238,9 +269,11 @@ if (require.main === module) {
       console.log(`登记里没有 ${键}（--看 一下；未登记的窗口可以直接给 pid）`);
       process.exit(1);
     }
+    const 活着 = 进程在(pid);
+    if (活着 && 项) 清心跳记录(项.任务);
     关窗(pid);
     摘登记(pid);
-    记日志(`手动关窗 pid=${pid}（${项 ? path.basename(String(项.任务)) : '未登记，按 pid 关'}）`);
+    记日志(`手动关窗 pid=${pid}（${项 ? path.basename(String(项.任务)) : '未登记，按 pid 关'}）${活着 && 项 ? '，已清心跳' : ''}`);
     console.log(`✓ 已关：pid=${pid}${项 ? ' ' + path.basename(String(项.任务)) : ''}`);
   } else if (argv.includes('--守')) {
     const 任务 = 取('--任务');
@@ -266,4 +299,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = { 回执路径, 读登记, 写登记, 加登记, 摘登记, 进程在, 关窗, 看, 扫, 扫机器窗口, 解析窗口行, 守卫, 解析时长, 登记文件, 日志文件 };
+module.exports = { 回执路径, 读登记, 写登记, 加登记, 摘登记, 进程在, 关窗, 看, 扫, 扫机器窗口, 解析窗口行, 守卫, 解析时长, 清心跳记录, 规整认窗, 登记文件, 日志文件 };

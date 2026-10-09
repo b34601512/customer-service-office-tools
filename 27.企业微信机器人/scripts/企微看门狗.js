@@ -14,11 +14,18 @@
  *   node scripts/企微看门狗.js --no-board      # 不写留言板（演练用）
  *   node scripts/企微看门狗.js --no-restart    # 不重启守护（演练用，避免动生产进程）
  *   node scripts/企微看门狗.js --state-dir <目录>  # 用假状态跑演练（配合 --no-restart）
+ *   node scripts/企微看门狗.js --no-heartbeat      # 本轮不查窗口心跳（演练用）
+ *   node scripts/企微看门狗.js --心跳-记录 <文件> --心跳-任务窗 <文件> --开机时刻 <ISO>  # 窗口心跳演练
+ *
+ * 窗口心跳（2026-10-09 黎路遥拍板；赵敏/程灵素对齐）：pi 窗口挂（进程不在/长时间无心跳）→ 板贴 [故障]；
+ *   写手在 scripts/窗口心跳.cjs（随窗口同生共死）、判定在 src/窗口心跳判定.js（纯函数）。
+ *   本看门狗是 5 分钟一跑的独立进程，是“死窗口自己报不了自己”的报警人。
  *
  * 产物（默认都在 27号/.state/；`.state` 已 gitignore）：
  *   看门狗.log          本轮巡检记录（>1MB 轮转 .1）
  *   看门狗状态.json     最近状态 + 连续命中次数 + 告警状态（监听窗可定时读）
  *   看门狗待发留言.jsonl 留言板写失败时的待发队列（下轮先补发）
+ *   窗口心跳-看门狗状态.json  窗口心跳自己的状态（不动企微那份，互不影响）
  */
 
 const fs = require("fs");
@@ -45,6 +52,9 @@ const ROOT = path.join(__dirname, "..");
 const DEFAULT_STATE_DIR = path.join(ROOT, ".state");
 const LOG_MAX_BYTES = 1024 * 1024;
 
+const 心跳写手 = require("./窗口心跳.cjs");
+const { 判定心跳 } = require("../src/窗口心跳判定");
+
 const EXTRA_DEFAULTS = {
   boardRepo: "c34601512-cpu/bot-board",
   boardIssue: 1,
@@ -61,24 +71,40 @@ const EXTRA_DEFAULTS = {
   reconEnabled: true,
   wecomCliJs: path.join(process.env.APPDATA || "", "npm", "node_modules", "@wecom", "cli", "bin", "wecom.js"),
   reconMarginMin: 5,
-  reconMaxAgeMin: 720
+  reconMaxAgeMin: 720,
+  // 窗口心跳（2026-10-09）：独立状态文件，不动上面企微判定的任何阈值
+  heartbeatRecordsFile: "窗口心跳.json",
+  heartbeatStatusFile: "窗口心跳-看门狗状态.json",
+  heartbeatRegistryFile: path.join(ROOT, "..", "0.木婉清档案", "runtime", "任务窗.json"),
+  heartbeatReceiptDir: path.join(ROOT, "..", "0.木婉清档案", "任务回执"),
+  heartbeatStaleMin: 10,
+  heartbeatBootGraceMin: 30,
+  heartbeatDedupeMin: 60,
+  heartbeatMissingGraceMin: 10,
+  heartbeatListenerName: "监听窗"
 };
 
 // ---------------------------------------------------------------- 基础工具
 
 function parseArgs(argv) {
-  const args = { dryRun: false, noBoard: false, noRestart: false, stateDir: "", config: "", testTag: "" };
+  const args = { dryRun: false, noBoard: false, noRestart: false, noHeartbeat: false, stateDir: "", config: "", testTag: "", 心跳记录: "", 心跳任务窗: "", 心跳状态: "", 开机时刻: "" };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--dry-run") args.dryRun = true;
     else if (a === "--no-board") args.noBoard = true;
     else if (a === "--no-restart") args.noRestart = true;
+    else if (a === "--no-heartbeat") args.noHeartbeat = true;
     else if (a === "--state-dir") args.stateDir = argv[++i] || "";
     else if (a === "--config") args.config = argv[++i] || "";
     else if (a === "--test-tag") args.testTag = argv[++i] || "";
+    else if (a === "--心跳-记录") args.心跳记录 = argv[++i] || "";
+    else if (a === "--心跳-任务窗") args.心跳任务窗 = argv[++i] || "";
+    else if (a === "--心跳-状态") args.心跳状态 = argv[++i] || "";
+    else if (a === "--开机时刻") args.开机时刻 = argv[++i] || "";
     else if (a === "--help" || a === "-h") {
-      console.log(`企微守护看门狗（27号）—— 独立巡检长连接守护，异常写机器人留言板。
-用法：node scripts/企微看门狗.js [--dry-run] [--no-board] [--no-restart] [--state-dir <目录>] [--config <文件>] [--test-tag <文字>]`);
+      console.log(`企微守护看门狗（27号）—— 独立巡检长连接守护与 pi 窗口心跳，异常写机器人留言板。
+用法：node scripts/企微看门狗.js [--dry-run] [--no-board] [--no-restart] [--no-heartbeat] [--state-dir <目录>] [--config <文件>] [--test-tag <文字>]
+     演练窗口心跳：--心跳-记录 <文件> --心跳-任务窗 <文件> --开机时刻 <ISO>`);
       process.exit(0);
     } else {
       console.error(`未知参数：${a}（--help 看用法）`);
@@ -370,6 +396,111 @@ function buildStatus(snapshot, result, stateDir, cfg) {
   };
 }
 
+// ---------------------------------------------------------------- 窗口心跳（2026-10-09）
+
+/** 读本次开机时刻（毫秒）；注入优先；读不到用系统运行时长兜底，再读不到返回 null。 */
+function 读开机时刻(注入) {
+  if (注入) {
+    const t = Date.parse(注入);
+    if (Number.isFinite(t)) return t;
+  }
+  const r = spawnSync("powershell", ["-NoProfile", "-Command", "(Get-CimInstance Win32_OperatingSystem).LastBootUpTime.ToString('o')"], { encoding: "utf8", windowsHide: true, timeout: 30000 });
+  const t = Date.parse(String(r.stdout || "").trim());
+  if (Number.isFinite(t)) return t;
+  const uptimeSec = os.uptime();
+  return Number.isFinite(uptimeSec) && uptimeSec > 0 ? Date.now() - uptimeSec * 1000 : null;
+}
+
+/** 读任务窗.json → 应活判定用的快照（绝对路径 + 回执是否已落）。读不到就空数组。 */
+function 读心跳任务窗(文件, cfg) {
+  const 原始 = readJson(文件);
+  const 列表 = 原始 && Array.isArray(原始.窗口) ? 原始.窗口 : [];
+  return 列表
+    .map((x) => {
+      const 任务 = x && x.任务 ? (path.isAbsolute(x.任务) ? x.任务 : path.resolve(path.join(ROOT, ".."), x.任务)) : "";
+      const 回执 = (x && x.回执) || (任务 ? path.join(cfg.heartbeatReceiptDir, path.basename(任务)) : "");
+      return { 任务, 开窗时间: (x && x.开窗时间) || null, 回执已落: !!(回执 && fs.existsSync(回执)) };
+    })
+    .filter((x) => x.任务);
+}
+
+/** 给心跳记录补上“任务回执已落”信息（回执落了的窗不告警，任务已收工等收窗）。 */
+function 给记录配回执状态(记录映射, cfg) {
+  return Object.values(记录映射 || {}).map((r) => {
+    const 组 = Array.isArray(r && r.认窗) ? r.认窗 : [r && r.认窗];
+    const 任务认窗 = 组.find((x) => String(x || "").startsWith("@"));
+    const 任务 = 任务认窗 ? String(任务认窗).slice(1) : "";
+    const 回执 = 任务 ? path.join(cfg.heartbeatReceiptDir, path.basename(任务)) : "";
+    return { ...(r || {}), 已交回执: !!(回执 && fs.existsSync(回执)) };
+  });
+}
+
+function 心跳告警正文(判定, nowMs, cfg) {
+  const lines = [];
+  lines.push(`【木婉清】[故障]${cfg.testTag ? `（${cfg.testTag}）` : ""}`);
+  lines.push(formatJst(nowMs));
+  lines.push("");
+  lines.push("pi 窗口挂了（窗口心跳巡检；死了的窗口自己报不了自己）：");
+  for (const a of 判定.toAlert) {
+    lines.push(`- 窗口「${a.名}」：${a.原因}`);
+    lines.push(`  证据：${a.证据}`);
+  }
+  lines.push("");
+  lines.push("建议人工看一眼窗口，或叫监听窗重新派活/重开窗。");
+  return lines.join("\n");
+}
+
+function 心跳恢复正文(判定, nowMs, cfg) {
+  const lines = [];
+  lines.push(`【木婉清】[已解决]${cfg.testTag ? `（${cfg.testTag}）` : ""}`);
+  lines.push(formatJst(nowMs));
+  lines.push("");
+  lines.push("前述 pi 窗口心跳告警已恢复：");
+  for (const x of 判定.toResolve) {
+    lines.push(`- 窗口「${x.名}」：${x.原因 || "心跳恢复"}${x.最后心跳 ? `（最后心跳 ${x.最后心跳}${x.pid ? `，pid ${x.pid}` : ""}）` : ""}`);
+  }
+  return lines.join("\n");
+}
+
+/** 跑一轮窗口心跳判定（含扫进程/读写文件）；返回 { 留言, 判定, 状态文件, 新状态 }。 */
+function 巡检窗口心跳({ stateDir, cfg, args, log }) {
+  const nowMs = Date.now();
+  const 记录文件 = args.心跳记录 ? path.resolve(args.心跳记录) : path.join(stateDir, cfg.heartbeatRecordsFile);
+  const 状态文件 = args.心跳状态 ? path.resolve(args.心跳状态) : path.join(stateDir, cfg.heartbeatStatusFile);
+  const 登记文件 = args.心跳任务窗 ? path.resolve(args.心跳任务窗) : cfg.heartbeatRegistryFile;
+  const 记录 = 给记录配回执状态(心跳写手.读心跳(记录文件), cfg);
+  const 任务窗 = 读心跳任务窗(登记文件, cfg);
+  const 扫 = 心跳写手.扫pi进程();
+  const 进程列表 = 扫 && 扫.ok ? 扫.列表 : null;
+  if (!进程列表) log(`窗口心跳：进程扫描失败（${(扫 && 扫.错误) || "未知"}），本轮只按心跳新旧判，不判 pid`);
+  const bootTimeMs = 读开机时刻(args.开机时刻);
+  const 上次原始 = readJson(状态文件) || {};
+  const 上次窗口 = 上次原始.窗口 || 上次原始.windows || {};
+  const 上线时间Ms = 上次原始.上线At ? Date.parse(上次原始.上线At) : null;
+  const 判定 = 判定心跳({
+    nowMs,
+    bootTimeMs,
+    记录,
+    任务窗,
+    进程列表,
+    上线时间Ms,
+    上次状态: { windows: 上次窗口 },
+    config: {
+      staleMin: cfg.heartbeatStaleMin,
+      bootGraceMin: cfg.heartbeatBootGraceMin,
+      dedupeMin: cfg.heartbeatDedupeMin,
+      missingGraceMin: cfg.heartbeatMissingGraceMin,
+      listenerName: cfg.heartbeatListenerName
+    }
+  });
+  const 留言 = [];
+  if (判定.toAlert.length) 留言.push(心跳告警正文(判定, nowMs, cfg));
+  if (判定.toResolve.length) 留言.push(心跳恢复正文(判定, nowMs, cfg));
+  log(`窗口心跳：目标=${判定.摘要.目标数} 正常=${判定.摘要.正常} 忽略=${判定.摘要.忽略} 告警=${判定.摘要.告警} 恢复=${判定.摘要.恢复}`);
+  const 新状态 = { ...判定.状态, bootTime: bootTimeMs != null ? new Date(bootTimeMs).toISOString() : null, 摘要: 判定.摘要, 记录文件, 登记文件 };
+  return { 留言, 判定, 状态文件, 新状态 };
+}
+
 // ---------------------------------------------------------------- 主流程
 
 async function main() {
@@ -464,6 +595,25 @@ async function main() {
     } else if (result.toAlert.length || result.toResolve.length) {
       const text = result.toAlert.length ? alertBody(result, cfg, restartNote) : resolveBody(result, cfg);
       log(`[dry-run/未发板] 本应写留言板：\n${text}`);
+    }
+
+    // ---- 窗口心跳巡检（2026-10-09；独立判定、独立状态，不动上面企微逻辑）----
+    if (!args.noHeartbeat) {
+      try {
+        const hb = 巡检窗口心跳({ stateDir, cfg, args, log });
+        if (!args.dryRun && !args.noBoard) {
+          for (const text of hb.留言) {
+            const r = postBoard(cfg, text);
+            if (r.ok) log(`留言板已写窗口心跳：${r.out}`);
+            else { enqueue(stateDir, cfg, text); log(`窗口心跳写板失败：${r.err}（已存待发队列）`); }
+          }
+        } else if (hb.留言.length) {
+          log(`[dry-run/未发板] 本应写留言板（窗口心跳）：\n${hb.留言.join("\n---\n")}`);
+        }
+        if (!args.dryRun) fs.writeFileSync(hb.状态文件, JSON.stringify(hb.新状态, null, 2), "utf8");
+      } catch (e) {
+        log(`窗口心跳巡检异常（不影响企微判定）：${(e && e.stack) || e}`);
+      }
     }
 
     if (!args.dryRun) {
