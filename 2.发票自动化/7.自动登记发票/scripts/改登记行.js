@@ -9,6 +9,8 @@
 //   示例：node scripts/改登记行.js --订单号 240103-***********1794 --表 "德达医疗器械发票登记 --毛叶红" --行 2791 --清 AB --已确认
 //
 // 清空（2026-10-09.1 新增）：列要**留空**（不是打错）时用 `--清 AB` 显式声明 → 请求里带 clearCells（云端 ClearContents），
+//   【2026-10-09.1 修正】clearCells 传**字符串**（多列 "AB,AA"），不传数组：金山过桥会把嵌套数组转成类数组对象，
+//   云端 `instanceof Array` 判 false → 解析成空清单（零写入探针实证）。
 //   清掉的列会进云端 writtenColumns；--改 里的空值仍旧拒（打错就拒的防呆）。清空只放白名单列，只清声明的那几列。
 //
 // 四道闸（顺序不能改；任何一道不过 → 一个字节都不写）：
@@ -220,7 +222,8 @@ function 核对写后(写前, 写后, 写列, 清列) {
 
 function 生成请求(订单号, 表名, 行号, 写值, 清列) {
   const 请求 = { orderNo: 订单号, row: Number(行号), writeCells: 写值 || {}, allowWrite: true, sheets: [表名] };
-  if (Array.isArray(清列) && 清列.length) 请求.clearCells = 清列.slice();
+  // clearCells 只传字符串：金山过桥对嵌套数组会转成类数组对象（非 instanceof Array）→ 云端解析成空清单、静默零写入。
+  if (Array.isArray(清列) && 清列.length) 请求.clearCells = 清列.join(",");
   return 请求;
 }
 

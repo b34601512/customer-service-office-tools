@@ -2,6 +2,7 @@
 // 锁死四道闸：① 身份（J=本单，表尾新行必须 --改 写 J + 探针位置对上）② 列白名单（公式列一律拒）
 // ③ 数字类型（V/Y/A/AK 转数字）④ 云端返回判据（只认 written===true + 每个目标列都在 writtenColumns）。
 // 反向断言：带 status:'已写入' 但没有 written:true 的返回必须判失败（别退回按 status/mode 判）。
+// clearCells 反向断言：必须传字符串——金山过桥把嵌套数组转成类数组对象，云端 instanceof Array 判 false（2026-10-09 实证）。
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const {
@@ -277,12 +278,24 @@ test("检查清空列：白名单列放行；公式列 / 白名单外列拒；�
   assert.match(检查清空列(["AH"]).原因, /不在白名单/);
 });
 
-test("生成请求：--清 → 带 clearCells；只清不改时 writeCells 为空对象；不带清时形状不变", () => {
+test("生成请求：--清 → clearCells 传**字符串**（单列 'AB'）；只清不改时 writeCells 为空对象；不带清时形状不变", () => {
   assert.deepEqual(生成请求(本单, 表名, 2791, {}, ["AB"]), {
-    orderNo: 本单, row: 2791, writeCells: {}, clearCells: ["AB"], allowWrite: true, sheets: [表名],
+    orderNo: 本单, row: 2791, writeCells: {}, clearCells: "AB", allowWrite: true, sheets: [表名],
   });
   const 不带清 = 生成请求(本单, 表名, "2788", { J: 本单, U: "300W" });
   assert.equal("clearCells" in 不带清, false);
+});
+
+test("生成请求：--清 多列 → 逗号拼接字符串 'AB,AA'", () => {
+  assert.equal(生成请求(本单, 表名, 2791, {}, ["AB", "AA"]).clearCells, "AB,AA");
+});
+
+// 反向断言（2026-10-09 实测踩坑）：clearCells 绝不能是数组——金山过桥把嵌套数组转成类数组对象，
+// 云端 instanceof Array 判 false → 解析成空清单、静默零写入还回 written:true（本地闸门④擦觉）。
+test("反向断言：clearCells 必须是字符串，数组形态不许回来", () => {
+  const 请求 = 生成请求(本单, 表名, 2791, {}, ["AB"]);
+  assert.equal(typeof 请求.clearCells, "string");
+  assert.ok(!Array.isArray(请求.clearCells), "clearCells 传数组会被金山过桥转类数组 → 云端解析成空");
 });
 
 test("闸门④：目标列含清空列时，writtenColumns 必须含它（挡云端静默跳过清空）", () => {

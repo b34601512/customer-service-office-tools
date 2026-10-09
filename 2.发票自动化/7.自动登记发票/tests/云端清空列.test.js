@@ -1,6 +1,6 @@
-// 7号：云端写入脚本 v2026-10-09.1 显式清空（clearCells）的离线单测（不触网、不碰真表）。
+// 7号：云端写入脚本 v2026-10-09.2 显式清空（clearCells）的离线单测（不触网、不碰真表）。
 // 背景：个人票税号栏 AB 要留空 → 本地 `改登记行.js --清 AB` 发 clearCells；云端必须：
-//   ① 认 规整清空列()（数组/字符串都行）；② 清空只走 ClearContents + 只认 可写列；
+//   ① 认 规整清空列()（真数组/类数组对象/字符串都行）；② 清空只走 ClearContents + 只认 可写列；
 //   ③ 清掉的列同时进 writtenColumns（本地判据「目标列必须在 writtenColumns」才对得上）；
 //   ④ writeCells 里的空值**仍旧跳过**（防打错成空值误清——清空必须显式声明）。
 // 反向断言写成源码文本检查（与 tests/云端读一行.test.js 同风格）：谁把清空分支删了/改回写空值，这里就红。
@@ -28,6 +28,16 @@ test("规整清空列：数组 / 字符串 / 逗号串 / 大小写 / 空值都�
   assert.deepEqual(规整清空列(""), []);
   assert.deepEqual(规整清空列(null), []);
   assert.deepEqual(规整清空列(undefined), []);
+});
+
+// 2026-10-09 实测踩坑：金山过桥把嵌套数组转成**类数组对象**（非 instanceof Array）→ 旧版只认数组，
+// 解析成空清单、静默零写入还回 written:true（被本地闸门④挡下）。下面锁死「类数组对象」也认。
+test("规整清空列：类数组对象（有 length 且能按下标取）也认——金山过桥的转换产物", { skip: 跳过原因 }, () => {
+  const { 规整清空列 } = 载入云端函数();
+  assert.deepEqual(规整清空列({ 0: "AB", length: 1 }), ["AB"]);
+  assert.deepEqual(规整清空列({ 0: "ab", 1: "AA", length: 2 }), ["AB", "AA"]);
+  assert.deepEqual(规整清空列({ length: 0 }), []);
+  assert.deepEqual(规整清空列({ 0: "AB" }), [], "没有 length 的普通对象不是类数组，应回空表");
 });
 
 test("反向断言：writeCells 里的空值仍被跳过（清空必须走 clearCells，不许拿空值当清空）", { skip: 跳过原因 }, () => {
