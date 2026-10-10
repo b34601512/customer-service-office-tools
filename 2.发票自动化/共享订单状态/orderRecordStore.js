@@ -8,6 +8,7 @@ const {
   从旧记录推断工作流状态,
   读取工作流状态,
   转换订单工作流状态,
+  构建已处理订单状态,
   获取订单统计,
 } = require('./orderWorkflow');
 
@@ -386,7 +387,7 @@ function 创建订单记录仓库(options = {}) {
         },
       };
       if (status === 'success' && 读取工作流状态(existing) !== 工作流状态.已处理) {
-        next = 转换订单工作流状态(next, 工作流状态.已处理, now);
+        next = 构建已处理订单状态(next, now); // 回传成功以平台落账为准，绕过 pending→handled 人工阶段校验
       }
       return next;
     });

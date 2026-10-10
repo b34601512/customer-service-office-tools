@@ -716,6 +716,19 @@ function 格式化拼多多错误文本列表(errorTexts = []) {
   return 最小红字列表;
 }
 
+function 是拼多多录入说明文本(text) {
+  // 解决：录入页常驻“填写说明/规则”面板含“必填”“上传的发票”等字样，不能当校验红字。
+  const value = 标准化可见文本(text);
+  if (!value) return false;
+  if (/^\d+[\.．、]/.test(value) && /(必填|文件名|抬头|税号|\.pdf|PDF)/i.test(value)) return true;
+  if (/订单号、抬头类型、发票抬头、发票文件名必填/.test(value)) return true;
+  if (/企业税号仅企业抬头需填写/.test(value)) return true;
+  if (/填写的文件名无需带\.pdf后缀/.test(value)) return true;
+  if (/仅支持上传PDF文件，单个文件大小不超过/i.test(value)) return true;
+  if (/上传的发票文件名需与发票信息中填写的文件名一致/.test(value)) return true;
+  return false;
+}
+
 async function 读取拼多多录入发票错误文本列表(page) {
   // 解决：提交前后主动读取红字，避免明确失败被拖成超时。
   const errorTexts = await page.evaluate(() => {
@@ -731,7 +744,19 @@ async function 读取拼多多录入发票错误文本列表(page) {
     const text = (element) => String(element.innerText || element.textContent || '')
       .replace(/\s+/g, ' ')
       .trim();
-    const errorRule = /请完善信息|请填写|发票号码需为|上传的发票|发票抬头|校验失败|提交失败|操作失败|不能为空|必填|不一致|失败/;
+    const isInstruction = (value) => {
+      if (!value) return false;
+      if (/^\d+[\.．、]/.test(value) && /(必填|文件名|抬头|税号|\.pdf|PDF)/i.test(value)) return true;
+      if (/订单号、抬头类型、发票抬头、发票文件名必填/.test(value)) return true;
+      if (/企业税号仅企业抬头需填写/.test(value)) return true;
+      if (/填写的文件名无需带\.pdf后缀/.test(value)) return true;
+      if (/仅支持上传PDF文件，单个文件大小不超过/i.test(value)) return true;
+      if (/上传的发票文件名需与发票信息中填写的文件名一致/.test(value)) return true;
+      return false;
+    };
+    // 无 error/danger class 时只用强失败短语；“必填/上传的发票”留给说明面板，避免假阳性。
+    const strongFailureRule = /请完善信息|请填写|发票号码需为|校验失败|提交失败|操作失败|不能为空|不一致/;
+    const errorClassRule = /请完善信息|请填写|发票号码需为|上传的发票|发票抬头|校验失败|提交失败|操作失败|不能为空|必填|不一致|失败/;
     return Array.from(document.querySelectorAll('body *'))
       .filter(visible)
       .map((element) => ({
@@ -743,13 +768,16 @@ async function 读取拼多多录入发票错误文本列表(page) {
         // 解决：页面底部“开票失败”筛选标签和弹窗“发票抬头”字段名不能当成错误。
         if (value === '发票抬头') return false;
         if (value === '开票失败' && ['BUTTON', 'A'].includes(tagName)) return false;
+        if (isInstruction(value)) return false;
         const className = String(element.className || '').toLowerCase();
-        return className.includes('error') || className.includes('danger') || /请完善信息|请填写|发票号码需为|上传的发票|校验失败|提交失败|操作失败|不能为空|必填|不一致/.test(value);
+        const hasErrorClass = className.includes('error') || className.includes('danger');
+        if (hasErrorClass) return errorClassRule.test(value);
+        return strongFailureRule.test(value);
       })
       .map(({ value }) => value)
-      .filter((item) => item && item.length <= 160 && errorRule.test(item));
+      .filter((item) => item && item.length <= 160);
   }).catch(() => []);
-  return 格式化拼多多错误文本列表(errorTexts);
+  return 格式化拼多多错误文本列表(errorTexts).filter((text) => !是拼多多录入说明文本(text));
 }
 
 async function 确认拼多多录入发票无错误(page, label = '拼多多录入发票校验失败') {
@@ -913,6 +941,8 @@ module.exports = {
   上传拼多多发票文件,
   填写拼多多发票号码,
   填写拼多多发票代码,
+  格式化拼多多错误文本列表,
+  是拼多多录入说明文本,
   读取拼多多录入发票错误文本列表,
   确认拼多多录入发票无错误,
   点击拼多多确认回传按钮,

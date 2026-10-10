@@ -117,6 +117,20 @@ test('已处理归档订单再次同步不会复活，手动明确恢复才重�
   assert.equal(restored.records[0].workflowStatus, 工作流状态.待处理);
 });
 
+
+test('pending 直接回传成功也可进入已处理', () => {
+  const setup = 创建测试仓库();
+  setup.repository.同步订单记录([{ key: 's:1', storeId: 's', orderNumber: '1' }]);
+  assert.equal(setup.repository.记录转列表()[0].workflowStatus, 工作流状态.待处理);
+  const success = setup.repository.记录订单回传尝试('s:1', {
+    status: 'success',
+    message: '回传成功',
+    invoiceFilePath: 'D:\\invoice\\1.pdf',
+  });
+  assert.equal(success.workflowStatus, 工作流状态.已处理);
+  assert.equal(success.lastReturnAttempt.status, 'success');
+  assert.ok(success.handledAt);
+});
 test('回传失败或跳过保留发票已登记，成功才自动进入已处理', () => {
   const setup = 创建测试仓库();
   setup.repository.同步订单记录([{ key: 's:1', storeId: 's', orderNumber: '1' }]);
