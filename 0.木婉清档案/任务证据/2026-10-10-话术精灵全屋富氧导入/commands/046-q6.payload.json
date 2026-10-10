@@ -1,0 +1,15 @@
+{
+ "workspace_id": "ce8030da7243118d007db49cd53647136de749bedf5a3a1bb3f6987771024b0e",
+ "scope": "team",
+ "dry_run": false,
+ "idempotency_key": "qf-fy-20261010-q6",
+ "category_id": "15c42887-971d-437f-863d-1414cd574e4b",
+ "question": "氧舱是什么、和富氧机是一起的吗？",
+ "content": [
+  {
+   "type": "text",
+   "text": "氧舱是另一条产品线——微高压氧舱，人进去坐着/躺着吸氧，舱内压力在 1.0-1.6ATA（MINI 舱 1.0-1.5ATA）。它和全屋富氧机是两个产品，可以单独买，也可以按方案配在一起。"
+  }
+ ],
+ "expected_category_revision": 1
+}

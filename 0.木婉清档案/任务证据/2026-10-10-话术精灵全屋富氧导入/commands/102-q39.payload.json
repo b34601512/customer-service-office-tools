@@ -1,0 +1,15 @@
+{
+ "workspace_id": "ce8030da7243118d007db49cd53647136de749bedf5a3a1bb3f6987771024b0e",
+ "scope": "team",
+ "dry_run": false,
+ "idempotency_key": "qf-fy-20261010-q39",
+ "category_id": "5f477865-b2b3-4911-889f-b8a16dac892c",
+ "question": "在富氧房间里能抽烟、点香薰、用明火吗？",
+ "content": [
+  {
+   "type": "text",
+   "text": "不行。设备上明确印着\"弥散出氧 严禁烟火\"——富氧环境遇到明火风险会升高，这条要跟客户说死。"
+  }
+ ],
+ "expected_category_revision": 1
+}

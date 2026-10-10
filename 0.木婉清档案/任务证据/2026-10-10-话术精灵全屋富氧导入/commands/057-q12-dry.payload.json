@@ -1,0 +1,15 @@
+{
+ "workspace_id": "ce8030da7243118d007db49cd53647136de749bedf5a3a1bb3f6987771024b0e",
+ "scope": "team",
+ "dry_run": true,
+ "idempotency_key": "qf-fy-20261010-q12",
+ "category_id": "dc0a0983-6668-493f-8074-079bf3877e34",
+ "question": "主机和终端能分开买吗？",
+ "content": [
+  {
+   "type": "text",
+   "text": "不行，要配套购买、缺一不可：主机负责流量供给，终端负责流量释放和多功能控制。买之前一定要按方案把配套的主机和终端确认好。"
+  }
+ ],
+ "expected_category_revision": 1
+}

@@ -1,0 +1,15 @@
+{
+ "workspace_id": "ce8030da7243118d007db49cd53647136de749bedf5a3a1bb3f6987771024b0e",
+ "scope": "team",
+ "dry_run": false,
+ "idempotency_key": "qf-fy-20261010-q30",
+ "category_id": "30dae5f9-3919-4782-a040-e1dd627922b3",
+ "question": "鼻吸要加水或湿化吗？",
+ "content": [
+  {
+   "type": "text",
+   "text": "N2、N5 的鼻吸端口是带湿化的；怎么加水、多久换一次水，以随机说明书为准，客服别自行指导。"
+  }
+ ],
+ "expected_category_revision": 1
+}

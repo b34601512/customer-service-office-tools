@@ -1,0 +1,15 @@
+{
+ "workspace_id": "ce8030da7243118d007db49cd53647136de749bedf5a3a1bb3f6987771024b0e",
+ "scope": "team",
+ "dry_run": true,
+ "idempotency_key": "qf-fy-20261010-q33",
+ "category_id": "30433984-3b2a-4482-9b38-6be570c8964d",
+ "question": "用坏了找谁、售后流程是什么？",
+ "content": [
+  {
+   "type": "text",
+   "text": "售后是厂家直营服务：定期巡检、快速响应、原厂耗材更换、终身支持，还有全天候服务热线（走官方渠道）。客服这边先记录问题、走官方售后对接；平台上不发任何联系方式。"
+  }
+ ],
+ "expected_category_revision": 1
+}

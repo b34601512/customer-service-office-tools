@@ -1,0 +1,15 @@
+{
+ "workspace_id": "ce8030da7243118d007db49cd53647136de749bedf5a3a1bb3f6987771024b0e",
+ "scope": "team",
+ "dry_run": false,
+ "idempotency_key": "qf-fy-20261010-q23",
+ "category_id": "b59ad8ae-5ecf-418a-8bb0-3df48df53cda",
+ "question": "MINI 舱能进电梯、进家门吗？",
+ "content": [
+  {
+   "type": "text",
+   "text": "资料写 MINI 舱是\"整舱入户\"，可以整舱入电梯，底部配万向轮；家用舱是拼接舱。具体能不能进，以现场尺寸勘测为准。"
+  }
+ ],
+ "expected_category_revision": 1
+}

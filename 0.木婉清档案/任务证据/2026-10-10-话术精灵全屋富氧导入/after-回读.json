@@ -1,0 +1,348 @@
+{
+ "readback_at": "2026-10-10T15:45:04",
+ "phrase_set": 6,
+ "expected": {
+  "lv1": 7,
+  "lv2": 7,
+  "phrases": 19,
+  "per_category": {
+   "产品介绍": 5,
+   "型号选择": 3,
+   "安装与场地": 5,
+   "使用与耗材": 2,
+   "售后与保修": 1,
+   "安全与禁忌": 2,
+   "常见误会": 1
+  }
+ },
+ "actual": {
+  "lv1": 7,
+  "lv2": 7,
+  "phrases": 19,
+  "per_category": {
+   "产品介绍": 5,
+   "安装与场地": 5,
+   "使用与耗材": 2,
+   "型号选择": 3,
+   "安全与禁忌": 2,
+   "售后与保修": 1,
+   "常见误会": 1
+  }
+ },
+ "lv1": [
+  {
+   "category_id": "113711ad-c9df-4f6a-94de-8fd0b243e41d",
+   "scope": "team",
+   "phrase_set": 6,
+   "level": 1,
+   "parent_id": null,
+   "name": "常见误会",
+   "name_truncated": false,
+   "background": "",
+   "sort_order": 70,
+   "revision": 1,
+   "created_origin": "automation",
+   "last_modified_origin": "automation"
+  },
+  {
+   "category_id": "1342a629-e52c-4955-99b9-ebece3160b20",
+   "scope": "team",
+   "phrase_set": 6,
+   "level": 1,
+   "parent_id": null,
+   "name": "售后与保修",
+   "name_truncated": false,
+   "background": "",
+   "sort_order": 50,
+   "revision": 1,
+   "created_origin": "automation",
+   "last_modified_origin": "automation"
+  },
+  {
+   "category_id": "335cc5e2-1494-4add-b726-f70b4f71bb01",
+   "scope": "team",
+   "phrase_set": 6,
+   "level": 1,
+   "parent_id": null,
+   "name": "安全与禁忌",
+   "name_truncated": false,
+   "background": "",
+   "sort_order": 60,
+   "revision": 1,
+   "created_origin": "automation",
+   "last_modified_origin": "automation"
+  },
+  {
+   "category_id": "b1e5f6a5-024e-4a23-98fe-52e193d4a904",
+   "scope": "team",
+   "phrase_set": 6,
+   "level": 1,
+   "parent_id": null,
+   "name": "安装与场地",
+   "name_truncated": false,
+   "background": "",
+   "sort_order": 30,
+   "revision": 1,
+   "created_origin": "automation",
+   "last_modified_origin": "automation"
+  },
+  {
+   "category_id": "b966f8db-77c1-4283-be0e-bacd7338c6f6",
+   "scope": "team",
+   "phrase_set": 6,
+   "level": 1,
+   "parent_id": null,
+   "name": "型号选择",
+   "name_truncated": false,
+   "background": "",
+   "sort_order": 20,
+   "revision": 1,
+   "created_origin": "automation",
+   "last_modified_origin": "automation"
+  },
+  {
+   "category_id": "d2e46ddd-a2b6-4f9a-a026-a6796e411fe1",
+   "scope": "team",
+   "phrase_set": 6,
+   "level": 1,
+   "parent_id": null,
+   "name": "产品介绍",
+   "name_truncated": false,
+   "background": "",
+   "sort_order": 10,
+   "revision": 1,
+   "created_origin": "automation",
+   "last_modified_origin": "automation"
+  },
+  {
+   "category_id": "de2acb62-187c-48be-b503-514d9eeaf69d",
+   "scope": "team",
+   "phrase_set": 6,
+   "level": 1,
+   "parent_id": null,
+   "name": "使用与耗材",
+   "name_truncated": false,
+   "background": "",
+   "sort_order": 40,
+   "revision": 1,
+   "created_origin": "automation",
+   "last_modified_origin": "automation"
+  }
+ ],
+ "lv2": [
+  {
+   "category_id": "15c42887-971d-437f-863d-1414cd574e4b",
+   "scope": "team",
+   "phrase_set": 6,
+   "level": 2,
+   "parent_id": "d2e46ddd-a2b6-4f9a-a026-a6796e411fe1",
+   "name": "客户常见问题",
+   "name_truncated": false,
+   "background": "",
+   "sort_order": 10,
+   "revision": 1,
+   "created_origin": "automation",
+   "last_modified_origin": "automation"
+  },
+  {
+   "category_id": "30433984-3b2a-4482-9b38-6be570c8964d",
+   "scope": "team",
+   "phrase_set": 6,
+   "level": 2,
+   "parent_id": "1342a629-e52c-4955-99b9-ebece3160b20",
+   "name": "客户常见问题",
+   "name_truncated": false,
+   "background": "",
+   "sort_order": 10,
+   "revision": 1,
+   "created_origin": "automation",
+   "last_modified_origin": "automation"
+  },
+  {
+   "category_id": "30dae5f9-3919-4782-a040-e1dd627922b3",
+   "scope": "team",
+   "phrase_set": 6,
+   "level": 2,
+   "parent_id": "de2acb62-187c-48be-b503-514d9eeaf69d",
+   "name": "客户常见问题",
+   "name_truncated": false,
+   "background": "",
+   "sort_order": 10,
+   "revision": 1,
+   "created_origin": "automation",
+   "last_modified_origin": "automation"
+  },
+  {
+   "category_id": "5f477865-b2b3-4911-889f-b8a16dac892c",
+   "scope": "team",
+   "phrase_set": 6,
+   "level": 2,
+   "parent_id": "335cc5e2-1494-4add-b726-f70b4f71bb01",
+   "name": "客户常见问题",
+   "name_truncated": false,
+   "background": "",
+   "sort_order": 10,
+   "revision": 1,
+   "created_origin": "automation",
+   "last_modified_origin": "automation"
+  },
+  {
+   "category_id": "b59ad8ae-5ecf-418a-8bb0-3df48df53cda",
+   "scope": "team",
+   "phrase_set": 6,
+   "level": 2,
+   "parent_id": "b1e5f6a5-024e-4a23-98fe-52e193d4a904",
+   "name": "客户常见问题",
+   "name_truncated": false,
+   "background": "",
+   "sort_order": 10,
+   "revision": 1,
+   "created_origin": "automation",
+   "last_modified_origin": "automation"
+  },
+  {
+   "category_id": "c5fb5c84-310e-4816-b7fe-177d5dbd8e49",
+   "scope": "team",
+   "phrase_set": 6,
+   "level": 2,
+   "parent_id": "113711ad-c9df-4f6a-94de-8fd0b243e41d",
+   "name": "客户常见问题",
+   "name_truncated": false,
+   "background": "",
+   "sort_order": 10,
+   "revision": 1,
+   "created_origin": "automation",
+   "last_modified_origin": "automation"
+  },
+  {
+   "category_id": "dc0a0983-6668-493f-8074-079bf3877e34",
+   "scope": "team",
+   "phrase_set": 6,
+   "level": 2,
+   "parent_id": "b966f8db-77c1-4283-be0e-bacd7338c6f6",
+   "name": "客户常见问题",
+   "name_truncated": false,
+   "background": "",
+   "sort_order": 10,
+   "revision": 1,
+   "created_origin": "automation",
+   "last_modified_origin": "automation"
+  }
+ ],
+ "phrases": [
+  {
+   "phrase_id": "080b93a7-d0e3-4155-8c10-b3fcb5a6c2ad",
+   "question": "全屋富氧装了有什么好处？",
+   "category_id": "15c42887-971d-437f-863d-1414cd574e4b",
+   "revision": 1
+  },
+  {
+   "phrase_id": "09285008-54ca-4aec-95fb-723cd546264f",
+   "question": "主机一般放在哪里？",
+   "category_id": "b59ad8ae-5ecf-418a-8bb0-3df48df53cda",
+   "revision": 1
+  },
+  {
+   "phrase_id": "096420b2-eb17-4263-8631-50ca27f70925",
+   "question": "安装流程是什么样的？",
+   "category_id": "b59ad8ae-5ecf-418a-8bb0-3df48df53cda",
+   "revision": 1
+  },
+  {
+   "phrase_id": "0fc22c72-824c-4bb3-a663-cf1dddad203d",
+   "question": "全屋富氧费电吗？",
+   "category_id": "30dae5f9-3919-4782-a040-e1dd627922b3",
+   "revision": 1
+  },
+  {
+   "phrase_id": "30a498eb-5c17-4e06-b558-59d58b7e55ed",
+   "question": "别墅、大平层几百平怎么配？",
+   "category_id": "dc0a0983-6668-493f-8074-079bf3877e34",
+   "revision": 1
+  },
+  {
+   "phrase_id": "4c1509e4-58d2-4d3e-9e19-c313e5088760",
+   "question": "主机和终端能分开买吗？",
+   "category_id": "dc0a0983-6668-493f-8074-079bf3877e34",
+   "revision": 1
+  },
+  {
+   "phrase_id": "52ee7eda-9e0f-4f96-8f3c-a317ede4292a",
+   "question": "MINI 舱能进电梯、进家门吗？",
+   "category_id": "b59ad8ae-5ecf-418a-8bb0-3df48df53cda",
+   "revision": 1
+  },
+  {
+   "phrase_id": "6286ffd7-a684-407d-93a4-c1e3d3ca0f58",
+   "question": "鼻吸要加水或湿化吗？",
+   "category_id": "30dae5f9-3919-4782-a040-e1dd627922b3",
+   "revision": 1
+  },
+  {
+   "phrase_id": "6583fee4-1127-45e4-a296-8e4a8a0079dd",
+   "question": "全屋富氧一般装在什么地方？",
+   "category_id": "15c42887-971d-437f-863d-1414cd574e4b",
+   "revision": 1
+  },
+  {
+   "phrase_id": "6a813680-a90d-4beb-9315-e49aa089cd8c",
+   "question": "全屋富氧是什么、装在家里干什么用？",
+   "category_id": "15c42887-971d-437f-863d-1414cd574e4b",
+   "revision": 1
+  },
+  {
+   "phrase_id": "6d3404ff-c847-4924-9a91-a92e6257024c",
+   "question": "下单后多久能装好？",
+   "category_id": "b59ad8ae-5ecf-418a-8bb0-3df48df53cda",
+   "revision": 1
+  },
+  {
+   "phrase_id": "82eecbfd-5c90-4bb2-8f4e-15ab63f3f250",
+   "question": "能治病吗？能治好失眠、高血压吗？",
+   "category_id": "5f477865-b2b3-4911-889f-b8a16dac892c",
+   "revision": 1
+  },
+  {
+   "phrase_id": "878418ae-0e04-45a7-8521-6ae3fb81bec3",
+   "question": "在富氧房间里能抽烟、点香薰、用明火吗？",
+   "category_id": "5f477865-b2b3-4911-889f-b8a16dac892c",
+   "revision": 1
+  },
+  {
+   "phrase_id": "9eac1269-f745-49f5-868c-90d332b0ae48",
+   "question": "一个房间要装几个终端？",
+   "category_id": "dc0a0983-6668-493f-8074-079bf3877e34",
+   "revision": 1
+  },
+  {
+   "phrase_id": "abd1e9af-44f1-4114-b81d-aa0595fe68a1",
+   "question": "用坏了找谁、售后流程是什么？",
+   "category_id": "30433984-3b2a-4482-9b38-6be570c8964d",
+   "revision": 1
+  },
+  {
+   "phrase_id": "ced11f09-66d8-4973-b647-5e1508f3c6bd",
+   "question": "全屋富氧和医院的高压氧舱一样吗？",
+   "category_id": "c5fb5c84-310e-4816-b7fe-177d5dbd8e49",
+   "revision": 1
+  },
+  {
+   "phrase_id": "dfff612a-70f3-4223-8f73-89871447a078",
+   "question": "装修前装还是装修后也能装？",
+   "category_id": "b59ad8ae-5ecf-418a-8bb0-3df48df53cda",
+   "revision": 1
+  },
+  {
+   "phrase_id": "edfd968c-96b1-49a7-aa94-a5f3270dfc84",
+   "question": "氧舱是什么、和富氧机是一起的吗？",
+   "category_id": "15c42887-971d-437f-863d-1414cd574e4b",
+   "revision": 1
+  },
+  {
+   "phrase_id": "ee1d853e-c17a-42e8-aaca-279e061250ad",
+   "question": "全屋富氧和空气净化器有什么不一样？",
+   "category_id": "15c42887-971d-437f-863d-1414cd574e4b",
+   "revision": 1
+  }
+ ]
+}

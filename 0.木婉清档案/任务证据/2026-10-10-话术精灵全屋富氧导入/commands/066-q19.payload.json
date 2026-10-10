@@ -1,0 +1,15 @@
+{
+ "workspace_id": "ce8030da7243118d007db49cd53647136de749bedf5a3a1bb3f6987771024b0e",
+ "scope": "team",
+ "dry_run": false,
+ "idempotency_key": "qf-fy-20261010-q19",
+ "category_id": "b59ad8ae-5ecf-418a-8bb0-3df48df53cda",
+ "question": "装修前装还是装修后也能装？",
+ "content": [
+  {
+   "type": "text",
+   "text": "都可以。支持跟装修同时预埋，也支持装修后加装；单房间装、全屋装都行。装修前预埋会更美观，装修后有全案方案。"
+  }
+ ],
+ "expected_category_revision": 1
+}

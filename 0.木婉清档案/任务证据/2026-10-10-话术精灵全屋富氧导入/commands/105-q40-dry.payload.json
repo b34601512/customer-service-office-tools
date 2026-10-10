@@ -1,0 +1,15 @@
+{
+ "workspace_id": "ce8030da7243118d007db49cd53647136de749bedf5a3a1bb3f6987771024b0e",
+ "scope": "team",
+ "dry_run": true,
+ "idempotency_key": "qf-fy-20261010-q40",
+ "category_id": "c5fb5c84-310e-4816-b7fe-177d5dbd8e49",
+ "question": "全屋富氧和医院的高压氧舱一样吗？",
+ "content": [
+  {
+   "type": "text",
+   "text": "不一样。医院用的是医用高压氧治疗设备；我们的是\"微高压氧舱\"（1.0-1.6ATA），定位是家庭/商用健康场景，不做治疗宣传。别把两者混着说，更不能说\"和医院效果一样\"。"
+  }
+ ],
+ "expected_category_revision": 1
+}

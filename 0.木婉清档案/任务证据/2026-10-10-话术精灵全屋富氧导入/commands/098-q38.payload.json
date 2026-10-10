@@ -1,0 +1,15 @@
+{
+ "workspace_id": "ce8030da7243118d007db49cd53647136de749bedf5a3a1bb3f6987771024b0e",
+ "scope": "team",
+ "dry_run": false,
+ "idempotency_key": "qf-fy-20261010-q38",
+ "category_id": "5f477865-b2b3-4911-889f-b8a16dac892c",
+ "question": "能治病吗？能治好失眠、高血压吗？",
+ "content": [
+  {
+   "type": "text",
+   "text": "不能这样承诺。产品定位是改善室内环境的健康设备和吸氧体验，不能治病、不能替代医疗；资料里\"慢病调理\"\"改善睡眠\"这类表述，客服不外扩、不承诺效果。客户有疾病相关问题，建议先遵医嘱。"
+  }
+ ],
+ "expected_category_revision": 1
+}

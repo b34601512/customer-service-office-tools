@@ -1,0 +1,15 @@
+{
+ "workspace_id": "ce8030da7243118d007db49cd53647136de749bedf5a3a1bb3f6987771024b0e",
+ "scope": "team",
+ "dry_run": false,
+ "idempotency_key": "qf-fy-20261010-q24",
+ "category_id": "b59ad8ae-5ecf-418a-8bb0-3df48df53cda",
+ "question": "下单后多久能装好？",
+ "content": [
+  {
+   "type": "text",
+   "text": "话术里的说法是\"下单后看距离，一般大约 7 天左右上门安装交付\"，实际以排期为准。"
+  }
+ ],
+ "expected_category_revision": 1
+}

@@ -1,0 +1,15 @@
+{
+ "workspace_id": "ce8030da7243118d007db49cd53647136de749bedf5a3a1bb3f6987771024b0e",
+ "scope": "team",
+ "dry_run": true,
+ "idempotency_key": "qf-fy-20261010-q2",
+ "category_id": "15c42887-971d-437f-863d-1414cd574e4b",
+ "question": "全屋富氧装了有什么好处？",
+ "content": [
+  {
+   "type": "text",
+   "text": "资料里列的核心体验有五项：增强免疫能力、加速运动恢复、延缓细胞衰老、改善睡眠质量、促进新陈代谢；对应到生活场景就是\"卧室深睡、富氧运动、学习提神、工作醒脑\"。我们对外就讲这些场景和体验，涉及身体状况改善的具体效果不承诺，更不说治病。"
+  }
+ ],
+ "expected_category_revision": 1
+}

@@ -1,0 +1,10 @@
+{
+ "workspace_id": "ce8030da7243118d007db49cd53647136de749bedf5a3a1bb3f6987771024b0e",
+ "scope": "team",
+ "dry_run": true,
+ "idempotency_key": "qf-fy-20261010-cat-lv2-shouhou",
+ "level": 2,
+ "name": "客户常见问题",
+ "parent_id": "1342a629-e52c-4955-99b9-ebece3160b20",
+ "expected_parent_revision": 1
+}

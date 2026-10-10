@@ -1,0 +1,15 @@
+{
+ "workspace_id": "ce8030da7243118d007db49cd53647136de749bedf5a3a1bb3f6987771024b0e",
+ "scope": "team",
+ "dry_run": false,
+ "idempotency_key": "qf-fy-20261010-q27",
+ "category_id": "30dae5f9-3919-4782-a040-e1dd627922b3",
+ "question": "全屋富氧费电吗？",
+ "content": [
+  {
+   "type": "text",
+   "text": "资料给的功率照抄如下：主机 500W~3000W（按型号）；氧舱 0.8KW~2.8KW（MINI 0.8KW / 家用 1.2KW / 商用四人 2.8KW）；N7 终端 80W，N6 系统 ≤15VA。话术里讲的是\"直流变频技术、功率小、能耗低、更省电\"——就讲这个，别夸\"几乎不耗电\"，电费按实际使用时长算。"
+  }
+ ],
+ "expected_category_revision": 1
+}

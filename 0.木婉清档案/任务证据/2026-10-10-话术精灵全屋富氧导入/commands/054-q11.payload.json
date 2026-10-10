@@ -1,0 +1,15 @@
+{
+ "workspace_id": "ce8030da7243118d007db49cd53647136de749bedf5a3a1bb3f6987771024b0e",
+ "scope": "team",
+ "dry_run": false,
+ "idempotency_key": "qf-fy-20261010-q11",
+ "category_id": "dc0a0983-6668-493f-8074-079bf3877e34",
+ "question": "一个房间要装几个终端？",
+ "content": [
+  {
+   "type": "text",
+   "text": "终端流量 0-20L/min 可调（N5 是 0-10L/min），每个房间可以单独配 1 个控制；房间大建议每 20-30㎡ 增加 1 个终端，不然流量供给不够。"
+  }
+ ],
+ "expected_category_revision": 1
+}

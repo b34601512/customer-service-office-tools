@@ -1,0 +1,15 @@
+{
+ "workspace_id": "ce8030da7243118d007db49cd53647136de749bedf5a3a1bb3f6987771024b0e",
+ "scope": "team",
+ "dry_run": true,
+ "idempotency_key": "qf-fy-20261010-q3",
+ "category_id": "15c42887-971d-437f-863d-1414cd574e4b",
+ "question": "全屋富氧和空气净化器有什么不一样？",
+ "content": [
+  {
+   "type": "text",
+   "text": "不是一个东西。净化器只是把屋里的空气来回过滤一遍，不产氧、也不处理二氧化碳；我们这套是主动制氧补氧，还能吸附分解二氧化碳、释放负离子，这几项净化器做不到。"
+  }
+ ],
+ "expected_category_revision": 1
+}

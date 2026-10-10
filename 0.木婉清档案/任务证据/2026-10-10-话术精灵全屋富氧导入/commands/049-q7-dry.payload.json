@@ -1,0 +1,15 @@
+{
+ "workspace_id": "ce8030da7243118d007db49cd53647136de749bedf5a3a1bb3f6987771024b0e",
+ "scope": "team",
+ "dry_run": true,
+ "idempotency_key": "qf-fy-20261010-q7",
+ "category_id": "15c42887-971d-437f-863d-1414cd574e4b",
+ "question": "全屋富氧一般装在什么地方？",
+ "content": [
+  {
+   "type": "text",
+   "text": "家用常见客厅、卧室、书房、老人房；商用常见办公室、健身房、棋牌室、酒店、会所、月子中心。资料里主推的三个场景是卧室、健身房、棋牌室。氧舱主要用在家、老板办公室、养生会所、企业员工休息区这类场景。"
+  }
+ ],
+ "expected_category_revision": 1
+}

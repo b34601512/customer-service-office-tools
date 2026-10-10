@@ -1,0 +1,9 @@
+{
+ "workspace_id": "ce8030da7243118d007db49cd53647136de749bedf5a3a1bb3f6987771024b0e",
+ "scope": "team",
+ "dry_run": false,
+ "idempotency_key": "qf-fy-20261010-cat-lv1-xinghao",
+ "level": 1,
+ "name": "型号选择",
+ "phrase_set": 6
+}

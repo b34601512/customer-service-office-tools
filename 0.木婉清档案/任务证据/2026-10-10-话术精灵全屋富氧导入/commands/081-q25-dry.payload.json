@@ -1,0 +1,15 @@
+{
+ "workspace_id": "ce8030da7243118d007db49cd53647136de749bedf5a3a1bb3f6987771024b0e",
+ "scope": "team",
+ "dry_run": true,
+ "idempotency_key": "qf-fy-20261010-q25",
+ "category_id": "b59ad8ae-5ecf-418a-8bb0-3df48df53cda",
+ "question": "安装流程是什么样的？",
+ "content": [
+  {
+   "type": "text",
+   "text": "图片物料的六步版：咨询下单 → 场景勘测 → 预约收货 → 上门安装 → 验收 → 售后保障；手册里还有十步版（多了方案设计、操作培训、定期巡检、耗材更换、终身支持等）。总的说就是\"先勘测设计、再安装调试、后售后维护\"。"
+  }
+ ],
+ "expected_category_revision": 1
+}

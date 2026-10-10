@@ -1,0 +1,15 @@
+{
+ "workspace_id": "ce8030da7243118d007db49cd53647136de749bedf5a3a1bb3f6987771024b0e",
+ "scope": "team",
+ "dry_run": true,
+ "idempotency_key": "qf-fy-20261010-q13",
+ "category_id": "dc0a0983-6668-493f-8074-079bf3877e34",
+ "question": "别墅、大平层几百平怎么配？",
+ "content": [
+  {
+   "type": "text",
+   "text": "超大空间要做多台主机组合 + 智能增压系统，由工程师先评估出方案、按适配空间和数量推荐；增压系统就是保证每个楼层、每个房间的出氧压力均衡。"
+  }
+ ],
+ "expected_category_revision": 1
+}

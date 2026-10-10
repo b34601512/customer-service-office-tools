@@ -1,0 +1,15 @@
+{
+ "workspace_id": "ce8030da7243118d007db49cd53647136de749bedf5a3a1bb3f6987771024b0e",
+ "scope": "team",
+ "dry_run": true,
+ "idempotency_key": "qf-fy-20261010-q20",
+ "category_id": "b59ad8ae-5ecf-418a-8bb0-3df48df53cda",
+ "question": "主机一般放在哪里？",
+ "content": [
+  {
+   "type": "text",
+   "text": "主机放室外或设备间，不占室内空间、不影响室内装修美观。"
+  }
+ ],
+ "expected_category_revision": 1
+}

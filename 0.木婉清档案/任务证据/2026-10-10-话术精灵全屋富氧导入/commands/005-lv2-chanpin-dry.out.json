@@ -1,0 +1,1 @@
+{"api_version": 1, "request_id": "29d1ddc9-1c32-4d3d-9fcd-2360fef9de0d", "operation_id": "73ad6d52-88b0-4239-b835-db3af26576d5", "ok": true, "data": {"outcome": "PREVIEW", "command": "category.create", "scope": "team", "target_scope": "team", "human_approval_required": false, "execution_will_revalidate": true}}
