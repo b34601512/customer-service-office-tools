@@ -1,0 +1,13 @@
+[
+  {
+    "name": "德迩杰-trace明细-6ac9f1e0",
+    "endpoint": "/api/im/agent-trace/trace",
+    "method": "POST",
+    "body": { "cardId": "6ac9f1e08c18ba3ebb3b1371", "thirdShopId": "2748943863350558955" }
+  },
+  {
+    "name": "卡详情-6ac0b51de1041c390582e5a3",
+    "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6ac0b51de1041c390582e5a3",
+    "method": "GET"
+  }
+]

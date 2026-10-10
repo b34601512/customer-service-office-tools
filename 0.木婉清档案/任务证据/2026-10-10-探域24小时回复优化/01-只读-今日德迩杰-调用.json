@@ -1,0 +1,14 @@
+[
+  {
+    "name": "德迩杰-今日16点段",
+    "endpoint": "/api/im/agent-trace/paginateV2",
+    "method": "POST",
+    "body": {
+      "thirdShopId": "2748943863350558955",
+      "pageIndex": 1,
+      "pageSize": 200,
+      "beginTime": "2026-10-10 16:00:00",
+      "endTime": "2026-10-10 16:30:00"
+    }
+  }
+]

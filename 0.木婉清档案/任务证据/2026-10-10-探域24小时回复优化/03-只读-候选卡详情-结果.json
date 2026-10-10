@@ -1,0 +1,918 @@
+[
+  {
+    "name": "卡详情-6ac0b51de1041c390582e5a3",
+    "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6ac0b51de1041c390582e5a3",
+    "method": "GET",
+    "httpStatus": 200,
+    "businessCode": 1,
+    "message": "操作成功!",
+    "data": {
+      "id": "6ac0b51de1041c390582e5a3",
+      "title": "使用建议/制氧机每天吸氧多久？可以24小时连续吸吗？",
+      "content": [
+        {
+          "id": "6ac0b51de1041c390582e5a4",
+          "content": "Q：老人每天吸氧多长时间？一天吸几次？\nA：每次吸多久、每天吸几次，应按医生为个人制定的用氧方案执行，不能统一建议“早中晚各多少分钟”，也不要凭感觉或“越高越好”自行加减。没有明确用氧建议时，请先由医生评估是否需要吸氧。",
+          "knowledgeDigest": "ca530424461cac2f33c8a2e681b19131",
+          "chunkLength": null,
+          "chunkLearnStatus": "FINISH",
+          "index": 1
+        },
+        {
+          "id": "6ac0b51de1041c390582e5a5",
+          "content": "Q：可以24小时连续使用吗？\nA：连续运行时长应以具体型号说明书和机身警示为准，不能统一承诺24小时不停机；若机身标签写明不建议24小时运行，请遵照执行。可提供型号和标签照片，我们向厂家核对。依赖持续用氧者请提前与医生安排适合连续供氧及备用的方案。",
+          "knowledgeDigest": "0d591636dc66b15a0a68a50e5b7ef60f",
+          "chunkLength": null,
+          "chunkLearnStatus": "FINISH",
+          "index": 2
+        },
+        {
+          "id": "6ac0b51de1041c390582e5a6",
+          "content": "机器使用中出现异常或需要长时间连续使用时，请先联系我们核实，不要带故障长时间运行。",
+          "knowledgeDigest": "3f7e001f3d0cea8c80750890ab5e54b6",
+          "chunkLength": null,
+          "chunkLearnStatus": "FINISH",
+          "index": 3
+        }
+      ],
+      "labels": [],
+      "labelInfos": null,
+      "ifBelievable": true,
+      "ifLearning": false,
+      "ifOpen": true,
+      "version": "V2",
+      "type": "SHOP",
+      "includeCondition": {
+        "spu": [],
+        "shop": [
+          {
+            "thirdShopId": "2748947402403971286",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748944481825915146",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748943863350558955",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748947711641649387",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748945753136365819",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748946698029269223",
+            "cids": []
+          }
+        ],
+        "rules": [],
+        "productGroupId": [],
+        "sellerGroup": [],
+        "platform": []
+      },
+      "excludeCondition": {
+        "spu": [],
+        "shop": [],
+        "rules": [],
+        "productGroupId": [],
+        "sellerGroup": [],
+        "platform": []
+      },
+      "timeliness": null,
+      "cycleTimeliness": null,
+      "orderStatus": [
+        "PRE_SALE",
+        "SALE",
+        "AFTER_SALE"
+      ],
+      "lastUpdatedAt": "2026-10-03 15:56:13",
+      "createdAt": "2026-10-03 15:56:13",
+      "source": null,
+      "productCondition": null,
+      "ifOpenSync": null,
+      "ifHasUrl": false,
+      "urlInfos": []
+    }
+  },
+  {
+    "name": "卡详情-6ac0b5a8e1041c390582e5d5",
+    "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6ac0b5a8e1041c390582e5d5",
+    "method": "GET",
+    "httpStatus": 200,
+    "businessCode": 1,
+    "message": "操作成功!",
+    "data": {
+      "id": "6ac0b5a8e1041c390582e5d5",
+      "title": "售后现象/制氧机发热、散热口发烫正常吗？",
+      "content": [
+        {
+          "id": "6ac0b5a8e1041c390582e5d6",
+          "content": "Q：机器用一两个小时后发热、散热口发烫，正常吗？\nA：运行中的散热部位发热属于正常现象，但不能仅凭手摸或一个通用温度值判断是否正常。请保持机器通风、不覆盖机器；连续运行时长以该型号说明书为准。",
+          "knowledgeDigest": "b8f30ab746f8f3ad5500c7929806bcc2",
+          "chunkLength": null,
+          "chunkLearnStatus": "FINISH",
+          "index": 1
+        },
+        {
+          "id": "6ac0b5a8e1041c390582e5d7",
+          "content": "如有烫伤风险、焦糊味、冒烟或持续报警，请在安全前提下停用断电并联系我们处理售后；依赖持续供氧者请使用医生预先安排的备用方案。",
+          "knowledgeDigest": "5d0a81938267275bbc23f8ed1a9e5be5",
+          "chunkLength": null,
+          "chunkLearnStatus": "FINISH",
+          "index": 2
+        }
+      ],
+      "labels": [],
+      "labelInfos": null,
+      "ifBelievable": true,
+      "ifLearning": false,
+      "ifOpen": true,
+      "version": "V2",
+      "type": "SHOP",
+      "includeCondition": {
+        "spu": [],
+        "shop": [
+          {
+            "thirdShopId": "2748947402403971286",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748944481825915146",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748943863350558955",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748947711641649387",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748945753136365819",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748946698029269223",
+            "cids": []
+          }
+        ],
+        "rules": [],
+        "productGroupId": [],
+        "sellerGroup": [],
+        "platform": []
+      },
+      "excludeCondition": {
+        "spu": [],
+        "shop": [],
+        "rules": [],
+        "productGroupId": [],
+        "sellerGroup": [],
+        "platform": []
+      },
+      "timeliness": null,
+      "cycleTimeliness": null,
+      "orderStatus": [
+        "PRE_SALE",
+        "SALE",
+        "AFTER_SALE"
+      ],
+      "lastUpdatedAt": "2026-10-03 15:58:32",
+      "createdAt": "2026-10-03 15:58:32",
+      "source": null,
+      "productCondition": null,
+      "ifOpenSync": null,
+      "ifHasUrl": false,
+      "urlInfos": []
+    }
+  },
+  {
+    "name": "卡详情-6ac0b5cbe1041c390582e5df",
+    "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6ac0b5cbe1041c390582e5df",
+    "method": "GET",
+    "httpStatus": 200,
+    "businessCode": 1,
+    "message": "操作成功!",
+    "data": {
+      "id": "6ac0b5cbe1041c390582e5df",
+      "title": "使用教程/流量档位怎么调？为什么档位越高浓度越低？",
+      "content": [
+        {
+          "id": "6ac0b5cbe1041c390582e5e0",
+          "content": "Q：流量/档位怎么调？为什么档位越高、浓度越低？\nA：请按该型号流量调节旋钮的标记和说明书缓慢调整到医生规定的流量，读数方法以该型号流量计说明为准；不要固定转多少圈，也不要先开到最大再试。保健机型≥90%的高浓度出氧通常对应固定小流量（如1L/min），档位调大后气流变大、参与更多空气，浓度会相应降低，属于原理性现象。",
+          "knowledgeDigest": "9e159d32c0d3013cf80ab81c617a9c7a",
+          "chunkLength": null,
+          "chunkLearnStatus": "FINISH",
+          "index": 1
+        },
+        {
+          "id": "6ac0b5cbe1041c390582e5e1",
+          "content": "Q：每次开机都要重新调流量吗？\nA：部分机型开机后回到初始档位，部分医用机型有记忆功能会保留上次设置；以该型号说明书为准。",
+          "knowledgeDigest": "f14cec8b4f1c61d4847616051f3ab312",
+          "chunkLength": null,
+          "chunkLearnStatus": "FINISH",
+          "index": 2
+        },
+        {
+          "id": "6ac0b5cbe1041c390582e5e2",
+          "content": "不确定操作方向或读数方式时，请提供完整型号和流量计照片，我们帮您核对；正在按医嘱吸氧的人，请按医生规定的流量设置，不要自行加减。",
+          "knowledgeDigest": "f94821e7651a5718c4d10fadfaf73889",
+          "chunkLength": null,
+          "chunkLearnStatus": "FINISH",
+          "index": 3
+        }
+      ],
+      "labels": [],
+      "labelInfos": null,
+      "ifBelievable": true,
+      "ifLearning": false,
+      "ifOpen": true,
+      "version": "V2",
+      "type": "SHOP",
+      "includeCondition": {
+        "spu": [],
+        "shop": [
+          {
+            "thirdShopId": "2748947402403971286",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748944481825915146",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748943863350558955",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748947711641649387",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748945753136365819",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748946698029269223",
+            "cids": []
+          }
+        ],
+        "rules": [],
+        "productGroupId": [],
+        "sellerGroup": [],
+        "platform": []
+      },
+      "excludeCondition": {
+        "spu": [],
+        "shop": [],
+        "rules": [],
+        "productGroupId": [],
+        "sellerGroup": [],
+        "platform": []
+      },
+      "timeliness": null,
+      "cycleTimeliness": null,
+      "orderStatus": [
+        "PRE_SALE",
+        "SALE",
+        "AFTER_SALE"
+      ],
+      "lastUpdatedAt": "2026-10-03 15:59:07",
+      "createdAt": "2026-10-03 15:59:07",
+      "source": null,
+      "productCondition": null,
+      "ifOpenSync": null,
+      "ifHasUrl": false,
+      "urlInfos": []
+    }
+  },
+  {
+    "name": "卡详情-6ac0b5a1e4bec5475483146b",
+    "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6ac0b5a1e4bec5475483146b",
+    "method": "GET",
+    "httpStatus": 200,
+    "businessCode": 1,
+    "message": "操作成功!",
+    "data": {
+      "id": "6ac0b5a1e4bec5475483146b",
+      "title": "售后现象/制氧机关机后风扇还在转、内部还有声音是正常的吗？",
+      "content": [
+        {
+          "id": "6ac0b5a1e4bec5475483146c",
+          "content": "Q：制氧机关机后内部还有声音、风扇还在转，正常吗？\nA：关机后风扇继续转动几分钟，是制氧机的正常设计：用于排出机器内部残余热量、避免温度堆积，有助于延长机器寿命；一般约3分钟会自动停下，可以放心（不同型号以说明书为准）。",
+          "knowledgeDigest": "e6efdd0dfd51849c881d7e214e084409",
+          "chunkLength": null,
+          "chunkLearnStatus": "FINISH",
+          "index": 1
+        },
+        {
+          "id": "6ac0b5a1e4bec5475483146d",
+          "content": "如果关机后长时间不停、伴随报警或异响，请提供完整型号和短视频，我们核实后再判断是否需要检测/售后。请保持机器通风、进出风口畅通，不要用布或泡沫覆盖机器。",
+          "knowledgeDigest": "92c5f3b4b8118ae6064bbb13449d69de",
+          "chunkLength": null,
+          "chunkLearnStatus": "FINISH",
+          "index": 2
+        }
+      ],
+      "labels": [],
+      "labelInfos": null,
+      "ifBelievable": true,
+      "ifLearning": false,
+      "ifOpen": true,
+      "version": "V2",
+      "type": "SHOP",
+      "includeCondition": {
+        "spu": [],
+        "shop": [
+          {
+            "thirdShopId": "2748947402403971286",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748944481825915146",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748943863350558955",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748947711641649387",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748945753136365819",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748946698029269223",
+            "cids": []
+          }
+        ],
+        "rules": [],
+        "productGroupId": [],
+        "sellerGroup": [],
+        "platform": []
+      },
+      "excludeCondition": {
+        "spu": [],
+        "shop": [],
+        "rules": [],
+        "productGroupId": [],
+        "sellerGroup": [],
+        "platform": []
+      },
+      "timeliness": null,
+      "cycleTimeliness": null,
+      "orderStatus": [
+        "PRE_SALE",
+        "SALE",
+        "AFTER_SALE"
+      ],
+      "lastUpdatedAt": "2026-10-03 15:58:25",
+      "createdAt": "2026-10-03 15:58:25",
+      "source": null,
+      "productCondition": null,
+      "ifOpenSync": null,
+      "ifHasUrl": false,
+      "urlInfos": []
+    }
+  },
+  {
+    "name": "卡详情-6ac0b516e4bec54754831450",
+    "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6ac0b516e4bec54754831450",
+    "method": "GET",
+    "httpStatus": 200,
+    "businessCode": 1,
+    "message": "操作成功!",
+    "data": {
+      "id": "6ac0b516e4bec54754831450",
+      "title": "雾化/制氧机雾化出来的是氧气吗？做雾化影响吸氧浓度吗？",
+      "content": [
+        {
+          "id": "6ac0b516e4bec54754831451",
+          "content": "Q：雾化口出来的是氧气还是空气？做雾化对吸氧浓度有影响吗？\nA：不能把雾化口直接当作吸氧口。压缩空气式雾化通常由空气驱动，制氧+雾化一体机的驱动气源和切换方式以该型号说明书为准；部分机型打开雾化口时气流从雾化口出来、盖上后回到制氧口，请以实物标识和说明书为准。",
+          "knowledgeDigest": "fb8791c38c6ac589dde1506fd4e2703d",
+          "chunkLength": null,
+          "chunkLearnStatus": "FINISH",
+          "index": 1
+        },
+        {
+          "id": "6ac0b516e4bec54754831452",
+          "content": "Q：吸氧和雾化可以同时使用吗？\nA：能否同时开启须按具体型号说明书确认；正在按医嘱持续吸氧的人，不要为做雾化自行中断供氧，请先向医生确认安排再操作。",
+          "knowledgeDigest": "9148f429b3c65e466d213adc8a241ecc",
+          "chunkLength": null,
+          "chunkLearnStatus": "FINISH",
+          "index": 2
+        },
+        {
+          "id": "6ac0b516e4bec54754831453",
+          "content": "如雾化量小、不出雾、断断续续，或对雾化浓度有疑问，请提供完整型号、雾化配件连接照片和操作视频，我们核实后协助处理；药液使用请遵医嘱。",
+          "knowledgeDigest": "f30bea7512ce8729362753064fb8c982",
+          "chunkLength": null,
+          "chunkLearnStatus": "FINISH",
+          "index": 3
+        }
+      ],
+      "labels": [],
+      "labelInfos": null,
+      "ifBelievable": true,
+      "ifLearning": false,
+      "ifOpen": true,
+      "version": "V2",
+      "type": "SHOP",
+      "includeCondition": {
+        "spu": [],
+        "shop": [
+          {
+            "thirdShopId": "2748947402403971286",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748944481825915146",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748943863350558955",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748947711641649387",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748945753136365819",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748946698029269223",
+            "cids": []
+          }
+        ],
+        "rules": [],
+        "productGroupId": [],
+        "sellerGroup": [],
+        "platform": []
+      },
+      "excludeCondition": {
+        "spu": [],
+        "shop": [],
+        "rules": [],
+        "productGroupId": [],
+        "sellerGroup": [],
+        "platform": []
+      },
+      "timeliness": null,
+      "cycleTimeliness": null,
+      "orderStatus": [
+        "PRE_SALE",
+        "SALE",
+        "AFTER_SALE"
+      ],
+      "lastUpdatedAt": "2026-10-03 15:56:06",
+      "createdAt": "2026-10-03 15:56:06",
+      "source": null,
+      "productCondition": null,
+      "ifOpenSync": null,
+      "ifHasUrl": false,
+      "urlInfos": []
+    }
+  },
+  {
+    "name": "卡详情-6ac0b500e4bec54754831447",
+    "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6ac0b500e4bec54754831447",
+    "method": "GET",
+    "httpStatus": 200,
+    "businessCode": 1,
+    "message": "操作成功!",
+    "data": {
+      "id": "6ac0b500e4bec54754831447",
+      "title": "故障/报警提示/制氧机屏幕出现感叹号、报警声或故障代码怎么办？",
+      "content": [
+        {
+          "id": "6ac0b500e4bec54754831448",
+          "content": "Q：屏幕出现感叹号、报警提示音或故障代码（如E1、E3等），怎么办？\nA：制氧机的报警提示用于提醒异常；不同型号的代码含义不同，需要先确认完整型号和屏幕上的显示内容。请提供：①机器完整型号；②屏幕显示内容或报警代码（可拍照）；③报警出现的经过（开机就报、使用中出现、还是断电后出现）。",
+          "knowledgeDigest": "ce149887bf7122c7b31818049c7b2e68",
+          "chunkLength": null,
+          "chunkLearnStatus": "FINISH",
+          "index": 1
+        },
+        {
+          "id": "6ac0b500e4bec54754831449",
+          "content": "常见的一种是断电报警：屏幕显示红点并伴随长鸣或“嘟嘟”提示音，通常是机器断电或关机顺序不正确。可先检查：①电源线是否插紧、插座是否接触良好；②是否停电；③关机顺序应为先关机器开关、再关电源开关；重新通电后按正确顺序开机。如需立即停止报警声，可关闭机器背后的电源保险开关（以该型号说明书为准）。",
+          "knowledgeDigest": "91158925aa818284e533cbcfc4940c7d",
+          "chunkLength": null,
+          "chunkLearnStatus": "FINISH",
+          "index": 2
+        },
+        {
+          "id": "6ac0b500e4bec5475483144a",
+          "content": "请保持进出风口畅通，按该型号说明书检查用户可操作的外部连接；不要拆机、不要取下过滤器运行、不要反复把档位调到最大试机。若报警持续，或伴随焦糊味、冒烟、异常发热，请在安全前提下停用断电并联系我们核实售后。依赖持续供氧者请按医生预先制定的备用供氧方案处理，不要等待排查而中断必需用氧。",
+          "knowledgeDigest": "0ddb8534ca907f90c9db3844a3c4e4b9",
+          "chunkLength": null,
+          "chunkLearnStatus": "FINISH",
+          "index": 3
+        }
+      ],
+      "labels": [],
+      "labelInfos": null,
+      "ifBelievable": true,
+      "ifLearning": false,
+      "ifOpen": true,
+      "version": "V2",
+      "type": "SHOP",
+      "includeCondition": {
+        "spu": [],
+        "shop": [
+          {
+            "thirdShopId": "2748947402403971286",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748944481825915146",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748943863350558955",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748947711641649387",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748945753136365819",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748946698029269223",
+            "cids": []
+          }
+        ],
+        "rules": [],
+        "productGroupId": [],
+        "sellerGroup": [],
+        "platform": []
+      },
+      "excludeCondition": {
+        "spu": [],
+        "shop": [],
+        "rules": [],
+        "productGroupId": [],
+        "sellerGroup": [],
+        "platform": []
+      },
+      "timeliness": null,
+      "cycleTimeliness": null,
+      "orderStatus": [
+        "PRE_SALE",
+        "SALE",
+        "AFTER_SALE"
+      ],
+      "lastUpdatedAt": "2026-10-03 15:55:44",
+      "createdAt": "2026-10-03 15:55:44",
+      "source": null,
+      "productCondition": null,
+      "ifOpenSync": null,
+      "ifHasUrl": false,
+      "urlInfos": []
+    }
+  },
+  {
+    "name": "卡详情-6a9a3c3d644e354d71a3f7f2",
+    "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6a9a3c3d644e354d71a3f7f2",
+    "method": "GET",
+    "httpStatus": 200,
+    "businessCode": 1,
+    "message": "操作成功!",
+    "data": {
+      "id": "6a9a3c3d644e354d71a3f7f2",
+      "title": "售前/品质/可以24小时使用吗？（售后咨询）",
+      "content": [
+        {
+          "id": "6abb5e70e4bec54754823f51",
+          "content": "Q:可以24小时使用吗？（售后咨询）\nA:连续运行时长应以具体型号说明书和机身警示为准，不能统一承诺24小时不停机。若标签写明不建议24小时运行，请不要忽略；可提供型号与标签照片，由我们向厂家核对。依赖持续用氧者应提前与医生安排适合连续供氧及备用的方案。",
+          "knowledgeDigest": "25845e9d133521647a18e4aa6005f86d",
+          "chunkLength": null,
+          "chunkLearnStatus": "FINISH",
+          "index": 1
+        }
+      ],
+      "labels": [],
+      "labelInfos": null,
+      "ifBelievable": true,
+      "ifLearning": false,
+      "ifOpen": true,
+      "version": "V2",
+      "type": "SHOP",
+      "includeCondition": {
+        "spu": [],
+        "shop": [
+          {
+            "thirdShopId": "2095398963959042048",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2104457457798483968",
+            "cids": []
+          }
+        ],
+        "rules": [],
+        "productGroupId": [],
+        "sellerGroup": [],
+        "platform": []
+      },
+      "excludeCondition": {
+        "spu": [],
+        "shop": [],
+        "rules": [],
+        "productGroupId": [],
+        "sellerGroup": [],
+        "platform": []
+      },
+      "timeliness": null,
+      "cycleTimeliness": null,
+      "orderStatus": [
+        "PRE_SALE"
+      ],
+      "lastUpdatedAt": "2026-09-29 14:45:04",
+      "createdAt": "2026-09-04 11:34:21",
+      "source": null,
+      "productCondition": null,
+      "ifOpenSync": null,
+      "ifHasUrl": false,
+      "urlInfos": []
+    }
+  },
+  {
+    "name": "卡详情-6a9a3c3d644e354d71a3f7f6",
+    "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6a9a3c3d644e354d71a3f7f6",
+    "method": "GET",
+    "httpStatus": 200,
+    "businessCode": 1,
+    "message": "操作成功!",
+    "data": {
+      "id": "6a9a3c3d644e354d71a3f7f6",
+      "title": "售前/品质/不建议24小时使用标签",
+      "content": [
+        {
+          "id": "6abb5e70e4bec54754823f50",
+          "content": "Q:不建议24小时使用标签\nA:连续运行时长应以具体型号说明书和机身警示为准，不能统一承诺24小时不停机。若标签写明不建议24小时运行，请不要忽略；可提供型号与标签照片，由我们向厂家核对。依赖持续用氧者应提前与医生安排适合连续供氧及备用的方案。",
+          "knowledgeDigest": "bdc439c907bc72698d22726f31e98f81",
+          "chunkLength": null,
+          "chunkLearnStatus": "FINISH",
+          "index": 1
+        }
+      ],
+      "labels": [],
+      "labelInfos": null,
+      "ifBelievable": true,
+      "ifLearning": false,
+      "ifOpen": true,
+      "version": "V2",
+      "type": "SHOP",
+      "includeCondition": {
+        "spu": [],
+        "shop": [
+          {
+            "thirdShopId": "2095398963959042048",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2104457457798483968",
+            "cids": []
+          }
+        ],
+        "rules": [],
+        "productGroupId": [],
+        "sellerGroup": [],
+        "platform": []
+      },
+      "excludeCondition": {
+        "spu": [],
+        "shop": [],
+        "rules": [],
+        "productGroupId": [],
+        "sellerGroup": [],
+        "platform": []
+      },
+      "timeliness": null,
+      "cycleTimeliness": null,
+      "orderStatus": [
+        "PRE_SALE"
+      ],
+      "lastUpdatedAt": "2026-09-29 14:45:04",
+      "createdAt": "2026-09-04 11:34:21",
+      "source": null,
+      "productCondition": null,
+      "ifOpenSync": null,
+      "ifHasUrl": false,
+      "urlInfos": []
+    }
+  },
+  {
+    "name": "卡详情-6a9a3c48644e354d71a3fa02",
+    "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6a9a3c48644e354d71a3fa02",
+    "method": "GET",
+    "httpStatus": 200,
+    "businessCode": 1,
+    "message": "操作成功!",
+    "data": {
+      "id": "6a9a3c48644e354d71a3fa02",
+      "title": "使用教程/使用问题/制氧机是否存在每多少天停机休息多久时间会对机器使用寿命更好的说法？",
+      "content": [
+        {
+          "id": "6abb5e63e4bec54754823f2d",
+          "content": "Q:制氧机是否存在每多少天停机休息多久时间会对机器使用寿命更好的说法？\nA:连续运行时长应以具体型号说明书和机身警示为准，不能统一承诺24小时不停机。若标签写明不建议24小时运行，请不要忽略；可提供型号与标签照片，由我们向厂家核对。依赖持续用氧者应提前与医生安排适合连续供氧及备用的方案。",
+          "knowledgeDigest": "a087704ae48193331e3fe36cfb7beb00",
+          "chunkLength": null,
+          "chunkLearnStatus": "FINISH",
+          "index": 1
+        }
+      ],
+      "labels": [],
+      "labelInfos": null,
+      "ifBelievable": true,
+      "ifLearning": false,
+      "ifOpen": true,
+      "version": "V2",
+      "type": "SHOP",
+      "includeCondition": {
+        "spu": [],
+        "shop": [
+          {
+            "thirdShopId": "2095398963959042048",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2104457457798483968",
+            "cids": []
+          }
+        ],
+        "rules": [],
+        "productGroupId": [],
+        "sellerGroup": [],
+        "platform": []
+      },
+      "excludeCondition": {
+        "spu": [],
+        "shop": [],
+        "rules": [],
+        "productGroupId": [],
+        "sellerGroup": [],
+        "platform": []
+      },
+      "timeliness": null,
+      "cycleTimeliness": null,
+      "orderStatus": [
+        "PRE_SALE",
+        "AFTER_SALE"
+      ],
+      "lastUpdatedAt": "2026-09-29 14:44:51",
+      "createdAt": "2026-09-04 11:34:32",
+      "source": null,
+      "productCondition": null,
+      "ifOpenSync": null,
+      "ifHasUrl": false,
+      "urlInfos": []
+    }
+  },
+  {
+    "name": "卡详情-6a9a3c3d644e354d71a3f802",
+    "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6a9a3c3d644e354d71a3f802",
+    "method": "GET",
+    "httpStatus": 200,
+    "businessCode": 1,
+    "message": "操作成功!",
+    "data": {
+      "id": "6a9a3c3d644e354d71a3f802",
+      "title": "售前/售后担忧/这种制氧机能使用多长时间？",
+      "content": [
+        {
+          "id": "6abf3a02e4bec5475482f047",
+          "content": "Q:这种制氧机能使用多长时间？\nA:机器一次可连续运行多久，应按具体型号说明书和机身警示确认，不能统一承诺24小时。长期使用还需要按说明书维护过滤器等部件；设备寿命不能仅根据保修年限推算。请提供型号核对。",
+          "knowledgeDigest": "e0391b06c74af30aa00eeaa308ce7be5",
+          "chunkLength": null,
+          "chunkLearnStatus": "FINISH",
+          "index": 1
+        }
+      ],
+      "labels": [],
+      "labelInfos": null,
+      "ifBelievable": true,
+      "ifLearning": false,
+      "ifOpen": true,
+      "version": "V2",
+      "type": "SHOP",
+      "includeCondition": {
+        "spu": [],
+        "shop": [
+          {
+            "thirdShopId": "2095398963959042048",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2104457457798483968",
+            "cids": []
+          }
+        ],
+        "rules": [],
+        "productGroupId": [],
+        "sellerGroup": [],
+        "platform": []
+      },
+      "excludeCondition": {
+        "spu": [],
+        "shop": [],
+        "rules": [],
+        "productGroupId": [],
+        "sellerGroup": [],
+        "platform": []
+      },
+      "timeliness": null,
+      "cycleTimeliness": null,
+      "orderStatus": [
+        "PRE_SALE",
+        "AFTER_SALE"
+      ],
+      "lastUpdatedAt": "2026-10-02 12:58:42",
+      "createdAt": "2026-09-04 11:34:21",
+      "source": null,
+      "productCondition": null,
+      "ifOpenSync": null,
+      "ifHasUrl": false,
+      "urlInfos": []
+    }
+  },
+  {
+    "name": "卡详情-6a9a3c3e644e354d71a3f828",
+    "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6a9a3c3e644e354d71a3f828",
+    "method": "GET",
+    "httpStatus": 200,
+    "businessCode": 1,
+    "message": "操作成功!",
+    "data": {
+      "id": "6a9a3c3e644e354d71a3f828",
+      "title": "售前/使用成本/114制氧机可以无限产氧吗？制氧机会不会用完氧气？能用多久？",
+      "content": [
+        {
+          "id": "6ac46c89e1041c3905832c48",
+          "content": "Q:114制氧机可以无限产氧吗？制氧机会不会用完氧气？能用多久？\nA:亲亲～制氧机是不会用完氧气的哈～  \n它是从空气中提取氧气分子来使用，而空气是源源不断的～  \n只要有电，它就可以持续产氧，不需要充气，也不会耗尽氧气哦～连续运行时长请以该型号说明书和机身警示为准～😊",
+          "knowledgeDigest": "78b34c0d71c63dec991bea996f831a9c",
+          "chunkLength": null,
+          "chunkLearnStatus": "FINISH",
+          "index": 1
+        }
+      ],
+      "labels": [],
+      "labelInfos": null,
+      "ifBelievable": true,
+      "ifLearning": false,
+      "ifOpen": true,
+      "version": "V2",
+      "type": "SHOP",
+      "includeCondition": {
+        "spu": [],
+        "shop": [
+          {
+            "thirdShopId": "2095398963959042048",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2104457457798483968",
+            "cids": []
+          }
+        ],
+        "rules": [],
+        "productGroupId": [],
+        "sellerGroup": [],
+        "platform": []
+      },
+      "excludeCondition": {
+        "spu": [],
+        "shop": [],
+        "rules": [],
+        "productGroupId": [],
+        "sellerGroup": [],
+        "platform": []
+      },
+      "timeliness": null,
+      "cycleTimeliness": null,
+      "orderStatus": [
+        "PRE_SALE"
+      ],
+      "lastUpdatedAt": "2026-10-06 11:35:37",
+      "createdAt": "2026-09-04 11:34:22",
+      "source": null,
+      "productCondition": null,
+      "ifOpenSync": null,
+      "ifHasUrl": false,
+      "urlInfos": []
+    }
+  }
+]

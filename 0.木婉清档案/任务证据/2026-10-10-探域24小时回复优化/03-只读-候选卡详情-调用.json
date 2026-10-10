@@ -1,0 +1,57 @@
+[
+ {
+  "name": "卡详情-6ac0b51de1041c390582e5a3",
+  "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6ac0b51de1041c390582e5a3",
+  "method": "GET"
+ },
+ {
+  "name": "卡详情-6ac0b5a8e1041c390582e5d5",
+  "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6ac0b5a8e1041c390582e5d5",
+  "method": "GET"
+ },
+ {
+  "name": "卡详情-6ac0b5cbe1041c390582e5df",
+  "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6ac0b5cbe1041c390582e5df",
+  "method": "GET"
+ },
+ {
+  "name": "卡详情-6ac0b5a1e4bec5475483146b",
+  "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6ac0b5a1e4bec5475483146b",
+  "method": "GET"
+ },
+ {
+  "name": "卡详情-6ac0b516e4bec54754831450",
+  "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6ac0b516e4bec54754831450",
+  "method": "GET"
+ },
+ {
+  "name": "卡详情-6ac0b500e4bec54754831447",
+  "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6ac0b500e4bec54754831447",
+  "method": "GET"
+ },
+ {
+  "name": "卡详情-6a9a3c3d644e354d71a3f7f2",
+  "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6a9a3c3d644e354d71a3f7f2",
+  "method": "GET"
+ },
+ {
+  "name": "卡详情-6a9a3c3d644e354d71a3f7f6",
+  "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6a9a3c3d644e354d71a3f7f6",
+  "method": "GET"
+ },
+ {
+  "name": "卡详情-6a9a3c48644e354d71a3fa02",
+  "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6a9a3c48644e354d71a3fa02",
+  "method": "GET"
+ },
+ {
+  "name": "卡详情-6a9a3c3d644e354d71a3f802",
+  "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6a9a3c3d644e354d71a3f802",
+  "method": "GET"
+ },
+ {
+  "name": "卡详情-6a9a3c3e644e354d71a3f828",
+  "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6a9a3c3e644e354d71a3f828",
+  "method": "GET"
+ }
+]

@@ -1,0 +1,230 @@
+[
+  {
+    "name": "德迩杰-trace明细-6ac9f1e0",
+    "endpoint": "/api/im/agent-trace/trace",
+    "method": "POST",
+    "httpStatus": 200,
+    "businessCode": 1,
+    "message": "操作成功!",
+    "data": {
+      "id": "6ac9f1e08c18ba3ebb3b1371",
+      "outerId": "6ac9f1e08c18ba3ebb3b1371",
+      "status": 1,
+      "buyerAccount": "jd_voeqtqfpgaqs",
+      "shopName": null,
+      "platform": 7,
+      "sellerAccount": "715027:dedakj器械店--璇璇",
+      "productInfo": {
+        "spuId": "145****5365",
+        "skuId": "70208233091",
+        "shopCode": "1SW01",
+        "goodsCode": null,
+        "spuTitle": "DEDAKJ德国家用制氧机老人专用吸氧机呼吸雾化一体氧气机十大牌子便携式",
+        "img": "http://img11.360buyimg.com/imgzone/jfs/t1/528372/10/12938/189582/6ac6e327F286c7230/0083320320a33797.jpg",
+        "detailUrl": "https://item.jd.com/70208233091.html"
+      },
+      "orderState": "售前(未下单)",
+      "orderStatusDesc": "未下单",
+      "orderId": "",
+      "type": "CONSULT_REPLY",
+      "ifSend": true,
+      "sendType": 1,
+      "question": "你好这种\n24小时开着有问题吗？\n",
+      "questionMsgId": 2742143830590502400,
+      "topicName": "买家询问该制氧机24小时持续运行是否有问题",
+      "consultIntentId": "",
+      "replyIntentId": "",
+      "replyIntentName": "",
+      "consultIntentName": "",
+      "logIsCredible": 1,
+      "topicCategory": 3,
+      "riskRating": 0,
+      "content": "连续运行时长请以该型号说明书和机身警示为准，若机身标签写明不建议24小时运行，请遵照执行\n机器使用中如有异常或需要长时间连续使用，请先联系我们核实，不要带故障长时间运行",
+      "noSendReason": null,
+      "prohibitedWordHitDetail": null,
+      "ifDeepThinking": false,
+      "traceList": null,
+      "snapShots": [
+        {
+          "docId": "6ac1b40f8d902f20ed572940",
+          "chunkId": "6ac0b51de1041c390582e5a5",
+          "type": "SHOP",
+          "label": null,
+          "content": "Q：可以24小时连续使用吗？\nA：连续运行时长应以具体型号说明书和机身警示为准，不能统一承诺24小时不停机；若机身标签写明不建议24小时运行，请遵照执行。可提供型号和标签照片，我们向厂家核对。依赖持续用氧者请提前与医生安排适合连续供氧及备用的方案。",
+          "sourceId": "6ac0b51de1041c390582e5a3",
+          "sourceBizId": "6ac0b51de1041c390582e5a3",
+          "ifQuote": false
+        },
+        {
+          "docId": "6ac1b765ddc9db45db5a9bd2",
+          "chunkId": "6ac0b5cbe1041c390582e5e1",
+          "type": "SHOP",
+          "label": null,
+          "content": "Q：每次开机都要重新调流量吗？\nA：部分机型开机后回到初始档位，部分医用机型有记忆功能会保留上次设置；以该型号说明书为准。",
+          "sourceId": "6ac0b5cbe1041c390582e5df",
+          "sourceBizId": "6ac0b5cbe1041c390582e5df",
+          "ifQuote": false
+        },
+        {
+          "docId": "6ac1b7ebc9f2a900b99a8719",
+          "chunkId": "6ac0b5b6e4bec54754831471",
+          "type": "SHOP",
+          "label": null,
+          "content": "首次使用请按说明书的开机步骤操作，并核对型号与配件清单；如配件缺失或连接不上，请拍照联系我们，不要自行拆机。",
+          "sourceId": "6ac0b5b6e4bec5475483146f",
+          "sourceBizId": "6ac0b5b6e4bec5475483146f",
+          "ifQuote": false
+        },
+        {
+          "docId": "6ac1c61fc9f2a900b99a982f",
+          "chunkId": "6ac10802e1041c390582edd4",
+          "type": "DETAIL",
+          "label": null,
+          "content": "【特殊注意事项】\n- 氧气机禁止倒置或横卧。\n- 氧气机使用时，避免吸氧管折弯，否则水箱会溢水。\n- 氧气是助燃气体，使用时禁止吸烟并远离火源，以免发生火灾危险。\n- 不可频繁启、闭氧气机，关机3-5分钟后可再开机，以免影响压缩机使用寿命。\n- 氧气机应放置在室内通风处，避免阳光直射，四周距离墙壁及其他物体应在30CM以上。\n- 机器侧面进气孔和背面透气孔禁止堆放杂物，防止进气、排气堵塞引起温度过高而造成停机或氧浓度下降。\n- 制氧机不得置于以下环境中：热源及明暗火源附近、潮湿、有烟雾、污染、温度过高或过低的环境。",
+          "sourceId": "6ac0a08e74ca1f0fc8123277",
+          "sourceBizId": "6ac0a08e74ca1f0fc8123277",
+          "ifQuote": false
+        },
+        {
+          "docId": "6ac1c6a4ea5b2c73dbfbfd29",
+          "chunkId": "6ac0b51de1041c390582e5a6",
+          "type": "SHOP",
+          "label": null,
+          "content": "机器使用中出现异常或需要长时间连续使用时，请先联系我们核实，不要带故障长时间运行。",
+          "sourceId": "6ac0b51de1041c390582e5a3",
+          "sourceBizId": "6ac0b51de1041c390582e5a3",
+          "ifQuote": false
+        },
+        {
+          "docId": "6ac4c827ddc9db45db5cdd80",
+          "chunkId": "6ac0b5afe1041c390582e5d9",
+          "type": "SHOP",
+          "label": null,
+          "content": "Q：机器声音大、有震动或“噗呲”声，正常吗？\nA：请说明声音出现的时机（开机就有、使用中突然变大）、是否有报警，并提供完整型号和短视频；正常工作声与异常噪声需要结合实际情况判断，不能直接让您适应，也不能保证不影响睡眠。开关机瞬间的轻微抖动多为压缩机的正常现象。",
+          "sourceId": "6ac0b5afe1041c390582e5d8",
+          "sourceBizId": "6ac0b5afe1041c390582e5d8",
+          "ifQuote": false
+        },
+        {
+          "docId": "6ac4c828c9f2a900b99cd385",
+          "chunkId": "6ac0b5a8e1041c390582e5d6",
+          "type": "SHOP",
+          "label": null,
+          "content": "Q：机器用一两个小时后发热、散热口发烫，正常吗？\nA：运行中的散热部位发热属于正常现象，但不能仅凭手摸或一个通用温度值判断是否正常。请保持机器通风、不覆盖机器；连续运行时长以该型号说明书为准。",
+          "sourceId": "6ac0b5a8e1041c390582e5d5",
+          "sourceBizId": "6ac0b5a8e1041c390582e5d5",
+          "ifQuote": false
+        }
+      ],
+      "agentId": "default",
+      "agentName": null,
+      "botName": "SHOP_AGENT_G5",
+      "reviewStatus": 1,
+      "ifLabel": 0,
+      "ifWithdraw": null,
+      "labels": null,
+      "digest": null,
+      "wfTraceId": null
+    }
+  },
+  {
+    "name": "卡详情-6ac0b51de1041c390582e5a3",
+    "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6ac0b51de1041c390582e5a3",
+    "method": "GET",
+    "httpStatus": 200,
+    "businessCode": 1,
+    "message": "操作成功!",
+    "data": {
+      "id": "6ac0b51de1041c390582e5a3",
+      "title": "使用建议/制氧机每天吸氧多久？可以24小时连续吸吗？",
+      "content": [
+        {
+          "id": "6ac0b51de1041c390582e5a4",
+          "content": "Q：老人每天吸氧多长时间？一天吸几次？\nA：每次吸多久、每天吸几次，应按医生为个人制定的用氧方案执行，不能统一建议“早中晚各多少分钟”，也不要凭感觉或“越高越好”自行加减。没有明确用氧建议时，请先由医生评估是否需要吸氧。",
+          "knowledgeDigest": "ca530424461cac2f33c8a2e681b19131",
+          "chunkLength": null,
+          "chunkLearnStatus": "FINISH",
+          "index": 1
+        },
+        {
+          "id": "6ac0b51de1041c390582e5a5",
+          "content": "Q：可以24小时连续使用吗？\nA：连续运行时长应以具体型号说明书和机身警示为准，不能统一承诺24小时不停机；若机身标签写明不建议24小时运行，请遵照执行。可提供型号和标签照片，我们向厂家核对。依赖持续用氧者请提前与医生安排适合连续供氧及备用的方案。",
+          "knowledgeDigest": "0d591636dc66b15a0a68a50e5b7ef60f",
+          "chunkLength": null,
+          "chunkLearnStatus": "FINISH",
+          "index": 2
+        },
+        {
+          "id": "6ac0b51de1041c390582e5a6",
+          "content": "机器使用中出现异常或需要长时间连续使用时，请先联系我们核实，不要带故障长时间运行。",
+          "knowledgeDigest": "3f7e001f3d0cea8c80750890ab5e54b6",
+          "chunkLength": null,
+          "chunkLearnStatus": "FINISH",
+          "index": 3
+        }
+      ],
+      "labels": [],
+      "labelInfos": null,
+      "ifBelievable": true,
+      "ifLearning": false,
+      "ifOpen": true,
+      "version": "V2",
+      "type": "SHOP",
+      "includeCondition": {
+        "spu": [],
+        "shop": [
+          {
+            "thirdShopId": "2748947402403971286",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748944481825915146",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748943863350558955",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748947711641649387",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748945753136365819",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748946698029269223",
+            "cids": []
+          }
+        ],
+        "rules": [],
+        "productGroupId": [],
+        "sellerGroup": [],
+        "platform": []
+      },
+      "excludeCondition": {
+        "spu": [],
+        "shop": [],
+        "rules": [],
+        "productGroupId": [],
+        "sellerGroup": [],
+        "platform": []
+      },
+      "timeliness": null,
+      "cycleTimeliness": null,
+      "orderStatus": [
+        "PRE_SALE",
+        "SALE",
+        "AFTER_SALE"
+      ],
+      "lastUpdatedAt": "2026-10-03 15:56:13",
+      "createdAt": "2026-10-03 15:56:13",
+      "source": null,
+      "productCondition": null,
+      "ifOpenSync": null,
+      "ifHasUrl": false,
+      "urlInfos": []
+    }
+  }
+]
