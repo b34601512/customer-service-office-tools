@@ -1,0 +1,58 @@
+{
+ "url": "https://merchant.tanyuai.com/turingSubAccount/index",
+ "title": "子账号管理",
+ "chipText": "DEDAKJ京东自营旗舰店（供应商编码:szddkj）",
+ "buttons": [
+  {
+   "text": "【通知详情】",
+   "cls": "el-button tb-cloud-modal__alert-button el-button--text el-button--small",
+   "id": ""
+  },
+  {
+   "text": "需调整的店铺",
+   "cls": "el-button el-button--primary el-button--small",
+   "id": ""
+  },
+  {
+   "text": "搜索",
+   "cls": "el-button el-button--default el-button--small is-round button-wrapper",
+   "id": ""
+  },
+  {
+   "text": "查 询",
+   "cls": "ant-btn",
+   "id": ""
+  },
+  {
+   "text": "添加供应商子账号",
+   "cls": "ant-btn ant-btn-primary",
+   "id": ""
+  },
+  {
+   "text": "批量编辑",
+   "cls": "ant-btn",
+   "id": ""
+  },
+  {
+   "text": "分组管理",
+   "cls": "ant-btn",
+   "id": ""
+  },
+  {
+   "text": "转交设置",
+   "cls": "ant-btn",
+   "id": ""
+  },
+  {
+   "text": "添加子账号",
+   "cls": "ant-btn ant-btn-primary",
+   "id": ""
+  }
+ ],
+ "icons": [
+  {
+   "title": "切换店铺",
+   "cls": "iconfont icon-qiehuan1 mg-left hover-cursor"
+  }
+ ]
+}

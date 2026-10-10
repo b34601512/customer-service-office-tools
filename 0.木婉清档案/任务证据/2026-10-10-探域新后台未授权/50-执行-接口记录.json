@@ -1,0 +1,86 @@
+[
+ {
+  "url": "https://merchant.tanyuai.com/api/gc/chatbot/listGroupAllThirdShop?pageNum=1&pageSize=200",
+  "status": 200,
+  "post": null,
+  "body": "{\"code\":1,\"msg\":\"操作成功!\",\"data\":{\"pageIndex\":200,\"pageSize\":1,\"total\":9,\"results\":[{\"groupId\":\"2094743970688012288\",\"thirdShopId\":\"2095398963959042048\",\"chatbotShopId\":\"2095399454105407488\",\"platform\":1,\"shopName\":\"德达医疗旗舰店\",\"ifJdSelf\":false,\"qaEnable\":false,\"salesTrackerEnable\":false,\"seatsCount\":999,\"ifDemo\":0,\"packages\":[{\"packageId\":\"2485436450616528450\",\"packageName\":\"智能体赠送\",\"startDay\":\"2026-09-03\",\"endDay\":\"2026-09-10\"},{\"packageId\":\"2485436450616528450\",\"packageName\":\"智能体赠送\",\"startDay\":\"2026-09-28\",\"endDay\":\"2027-09-28\"}],\"thirdAppNames\":[],\"auths\":[],\"firstStartDay\":\"2026-09-03\",\"lastEndDay\":\"2027-09-28\",\"name\":\"德达医疗旗舰店\",\"id\":\"2095398963959042048\"},{\"groupId\":\"2094743970688012288\",\"thirdShopId\":\"2104457457798483968\",\"chatbotShopId\":\"2104457503365402624\",\"platform\":1,\"shopName\":\"DEDAKJ医疗器械官方旗舰店\",\"ifJdSelf\":false,\"qaEnable\":false,\"salesTrackerEnable\":false,\"seatsCount\":999,\"ifDemo\":0,\"packages\":[{\"packageId\":\"2485436450616528450\",\"packageName\":\"智能体赠送\",\"startDay\":\"2026-09-28\",\"endDay\":\"2027-09-28\"}],\"thirdAppNames\":[],\"auths\":[],\"firstStartDay\":\"2026-09-28\",\"lastEndDay\":\"2027-09-28\",\"name\":\"DEDAKJ医疗器械官方旗舰店\",\"id\":\"2104457457798483968\"},{\"groupId\":\"2094743970688012288\",\"thirdShopId\":\"2748943863350558955\",\"chatbotShopId\":\"2105607285182042112\",\"platform\":7,\"shopName\":\"德迩杰官方旗舰店\",\"ifJdSelf\":false,\"qaEnable\":false,\"salesTrackerEnable\":false,\"seatsCount\":999,\"ifDemo\":0,\"packages\":[{\"packageId\":\"2485436450616528450\",\"packageName\":\"智能体赠送\",\"startDay\":\"2026-09-28\",\"endDay\":\"2027-09-28\"}],\"thirdAppNames\":[],\"auths\":[],\"firstStartDay\":\"2026-09-28\",\"lastEndDay\":\"2027-09-28\",\"name\":\"德迩杰官方旗舰店\",\"id\":\"2748943863350558955\"},{\"groupId\":\"2094743970688012288\",\"thirdShopId\":\"2748944481825915146\",\"chatbotShopId\":\"2105606999134703616\",\"platform\":7,\"shopName\":\"DEDAKJ官方旗舰店\",\"ifJdSelf\":false,\"qaEnable\":false,\"salesTrackerEnable\":false,\"seatsCount\":999,\"ifDemo\":0,\"packages\":[{\"packageId\":\"2485436450616528450\",\"packageName\":\"智能体赠送\",\"startDay\":\"2026-09-28\",\"endDay\":\"2027-09-28\"}],\"thirdAppNames\":[],\"auths\":[],\"firstStartDay\":\"2026-09-28\",\"lastEndDay\":\"2027-09-28\",\"name\":\"DEDAKJ官方旗舰店\",\"id\":\"2748944481825915146\"},{\"groupId\":\"2094743970688012288\",\"thirdShopId\":\"2748945753136365819\",\"chatbotShopId\":\"2105612602351554560\",\"platform\":5,\"shopName\":\"德达医疗康养器械旗舰店\",\"ifJdSelf\":false,\"qaEnable\":false,\"salesTrackerEnable\":false,\"seatsCount\":999,\"ifDemo\":0,\"packages\":[{\"packageId\":\"2485436450616528450\",\"packageName\":\"智能体赠送\",\"startDay\":\"2026-09-28\",\"endDay\":\"2027-09-28\"}],\"thirdAppNames\":[],\"auths\":[],\"firstStartDay\":\"2026-09-28\",\"lastEndDay\":\"2027-09-28\",\"name\":\"德达医疗康养器械旗舰店\",\"id\":\"2748945753136365819\"},{\"groupId\":\"2094743970688012288\",\"thirdShopId\":\"2748946698029269223\",\"chatbotShopId\":\"2105617546987180032\",\"platform\":5,\"shopName\":\"DEDAKJ医疗器械旗舰店\",\"ifJdSelf\":false,\"qaEnable\":false,\"salesTrackerEnable\":false,\"seatsCount\":999,\"ifDemo\":0,\"packages\":[{\"packageId\":\"2485436450616528450\",\"packageName\":\"智能体赠送\",\"startDay\":\"2026-09-28\",\"endDay\":\"2027-09-28\"}],\"thirdAppNames\":[],\"auths\":[],\"firstStartDay\":\"2026-09-28\",\"lastEndDay\":\"2027-09-28\",\"name\":\"DEDAKJ医疗器械旗舰店\",\"id\":\"2748946698029269223\"},{\"groupId\":\"2094743970688012288\",\"thirdShopId\":\"2748947084576361329\",\"chatbotShopId\":\"2107774500664774656\",\"platform\":7,\"shopName\":\"DEDAKJ京东自营旗舰店（供应商编码:szddkj）\",\"ifJdSelf\":false,\"qaEnable\":false,\"salesTrackerEnable\":false,\"seatsCount\":999,\"ifDemo\":0,\"packages\":[{\"packageId\":\"2485436450616528450\",\"packageName\":\"智能体赠送\",\"startDay\":\"2026-09-28\",\"endDay\":\"2027-09-28\"}],\"thirdAppNames\":[],\"auths\":[],\"firstStartDay\":\"2026-09-28\",\"lastEndDay\":\"2027-09-28\",\"name\":\"DEDAKJ京东自营旗舰店（供应商编码:szddkj）\",\"id\":\"2748947084576361329\"},{\"groupId\":\"2094743970688012288\",\"thirdShopId\":\"2748947402403971286\",\"chatbotShopId\":\"2105600437305479168\",\"platform\":7,\"shopName\":\"德达官方旗舰店\",\"ifJdSelf\":false,\"qaEnable\":false,\"salesTrackerEnable\":false,\"seatsCount\":999,\"ifDemo\":0,\"packages\":[{\"packageId\":\"2485436450616528450\",\"packageName\":\"智能体赠送\",\"startDay\":\"2026-09-28\",\"endDay\":\"2027-09-28\"}],\"thirdAppNames\":[],\"auths\":[],\"firstStartDay\":\"2026-09-28\",\"lastEndDay\":\"2027-09-28\",\"name\":\"德达官方旗舰店\",\"id\":\"2748947402403971286\"},{\"groupId\":\"2094743970688012288\",\"thirdShopId\":\"2748947711641649387\",\"chatbotShopId\":\"2105609873860333568\",\"platform\":0,\"shopName\":\"dedakj旗舰店\",\"ifJdSelf\":false,\"qaEnable\":false,\"salesTrackerEnable\":false,\"seatsCount\":999,\"ifDemo\":0,\"packages\":[{\"packageId\":\"2485436450616528450\",\"packageName\":\"智能体赠送\",\"startDay\":\"2026-09-28\",\"endDay\":\"2027-09-28\"}],\"thirdAppNames\":[],\"auths\":[],\"firstStartDay\":\"2026-09-28\",\"lastEndDay\":\"2027-09-28\",\"name\":\"dedakj旗舰店\",\"id\":\"2748947711641649387\"}],\"startRow\":199},\"success\":true}"
+ },
+ {
+  "url": "https://merchant.tanyuai.com/api/gc/chatbot/countSeats?thirdShopId=2748947084576361329",
+  "status": 200,
+  "post": null,
+  "body": "{\"code\":1,\"msg\":\"操作成功!\",\"data\":{\"usedSeatCount\":0,\"totalSeatCount\":999},\"success\":true}"
+ },
+ {
+  "url": "https://merchant.tanyuai.com/api/gc/sellerAccount/querySellerAccountGroupList?thirdShopId=2748947084576361329",
+  "status": 200,
+  "post": null,
+  "body": "{\"code\":1,\"msg\":\"操作成功!\",\"data\":[],\"success\":true}"
+ },
+ {
+  "url": "https://merchant.tanyuai.com/api/gc/sellerAccount/querySellerAccountList",
+  "status": 200,
+  "post": "{\"pageSize\":20,\"pageIndex\":1,\"nick\":\"\",\"thirdShopId\":\"2748947084576361329\",\"chatbotShopId\":\"2107774500664774656\"}",
+  "body": "{\"code\":1,\"msg\":\"操作成功!\",\"data\":{\"pageIndex\":1,\"pageSize\":20,\"total\":0,\"results\":[],\"startRow\":0},\"success\":true}"
+ },
+ {
+  "url": "https://merchant.tanyuai.com/api/gc/sellerAccount/querySellerAccountList",
+  "status": 200,
+  "post": "{\"thirdShopId\":\"2748947084576361329\",\"pageIndex\":1,\"pageSize\":50}",
+  "body": "{\"code\":1,\"msg\":\"操作成功!\",\"data\":{\"pageIndex\":1,\"pageSize\":50,\"total\":0,\"results\":[],\"startRow\":0},\"success\":true}"
+ },
+ {
+  "url": "https://merchant.tanyuai.com/api/gc/chatbot/countSeats?thirdShopId=2748947084576361329",
+  "status": 200,
+  "post": null,
+  "body": "{\"code\":1,\"msg\":\"操作成功!\",\"data\":{\"usedSeatCount\":0,\"totalSeatCount\":999},\"success\":true}"
+ },
+ {
+  "url": "https://merchant.tanyuai.com/api/gc/sellerAccount/createSellerAccount",
+  "status": 200,
+  "post": "{\"nick\":\"dedakj自营--璇璇\",\"thirdShopId\":\"2748947084576361329\",\"addSupplierSellerAccount\":true,\"chatbotShopId\":\"2107774500664774656\"}",
+  "body": "{\"code\":1,\"msg\":\"操作成功!\",\"data\":\"2754628716427261005\",\"success\":true}"
+ },
+ {
+  "url": "https://merchant.tanyuai.com/api/gc/sellerAccount/querySellerAccountList",
+  "status": 200,
+  "post": "{\"pageSize\":20,\"pageIndex\":1,\"nick\":\"\",\"thirdShopId\":\"2748947084576361329\",\"chatbotShopId\":\"2107774500664774656\"}",
+  "body": "{\"code\":1,\"msg\":\"操作成功!\",\"data\":{\"pageIndex\":1,\"pageSize\":20,\"total\":1,\"results\":[{\"id\":\"2754628716427261005\",\"groupId\":\"2094743970688012288\",\"authAppId\":\"1000236020_szddkj\",\"platform\":\"7\",\"type\":\"1\",\"state\":\"1\",\"accountMode\":\"1\",\"accountType\":\"2\",\"nick\":\"dedakj自营--璇璇\",\"sellerNick\":\"szddkj\",\"oauthStatus\":\"1\",\"workStatus\":\"0\",\"officialWorkStatus\":\"0\",\"autoType\":\"2\",\"sellerAccount\":\"szddkj:dedakj自营--璇璇\",\"sellerAccountGroupList\":[],\"isOnline\":false,\"learnChatLogStatus\":false,\"limitStatus\":false}],\"startRow\":0},\"success\":true}"
+ },
+ {
+  "url": "https://merchant.tanyuai.com/api/gc/sellerAccount/querySellerAccountList",
+  "status": 200,
+  "post": "{\"thirdShopId\":\"2748947084576361329\",\"pageIndex\":1,\"pageSize\":50}",
+  "body": "{\"code\":1,\"msg\":\"操作成功!\",\"data\":{\"pageIndex\":1,\"pageSize\":50,\"total\":1,\"results\":[{\"id\":\"2754628716427261005\",\"groupId\":\"2094743970688012288\",\"authAppId\":\"1000236020_szddkj\",\"platform\":\"7\",\"type\":\"1\",\"state\":\"1\",\"accountMode\":\"1\",\"accountType\":\"2\",\"nick\":\"dedakj自营--璇璇\",\"sellerNick\":\"szddkj\",\"oauthStatus\":\"1\",\"workStatus\":\"0\",\"officialWorkStatus\":\"0\",\"autoType\":\"2\",\"sellerAccount\":\"szddkj:dedakj自营--璇璇\",\"sellerAccountGroupList\":[],\"isOnline\":false,\"learnChatLogStatus\":false,\"limitStatus\":false}],\"startRow\":0},\"success\":true}"
+ },
+ {
+  "url": "https://merchant.tanyuai.com/api/gc/chatbot/listGroupAllThirdShop?pageNum=1&pageSize=200",
+  "status": 200,
+  "post": null,
+  "body": "{\"code\":1,\"msg\":\"操作成功!\",\"data\":{\"pageIndex\":200,\"pageSize\":1,\"total\":9,\"results\":[{\"groupId\":\"2094743970688012288\",\"thirdShopId\":\"2095398963959042048\",\"chatbotShopId\":\"2095399454105407488\",\"platform\":1,\"shopName\":\"德达医疗旗舰店\",\"ifJdSelf\":false,\"qaEnable\":false,\"salesTrackerEnable\":false,\"seatsCount\":999,\"ifDemo\":0,\"packages\":[{\"packageId\":\"2485436450616528450\",\"packageName\":\"智能体赠送\",\"startDay\":\"2026-09-03\",\"endDay\":\"2026-09-10\"},{\"packageId\":\"2485436450616528450\",\"packageName\":\"智能体赠送\",\"startDay\":\"2026-09-28\",\"endDay\":\"2027-09-28\"}],\"thirdAppNames\":[],\"auths\":[],\"firstStartDay\":\"2026-09-03\",\"lastEndDay\":\"2027-09-28\",\"name\":\"德达医疗旗舰店\",\"id\":\"2095398963959042048\"},{\"groupId\":\"2094743970688012288\",\"thirdShopId\":\"2104457457798483968\",\"chatbotShopId\":\"2104457503365402624\",\"platform\":1,\"shopName\":\"DEDAKJ医疗器械官方旗舰店\",\"ifJdSelf\":false,\"qaEnable\":false,\"salesTrackerEnable\":false,\"seatsCount\":999,\"ifDemo\":0,\"packages\":[{\"packageId\":\"2485436450616528450\",\"packageName\":\"智能体赠送\",\"startDay\":\"2026-09-28\",\"endDay\":\"2027-09-28\"}],\"thirdAppNames\":[],\"auths\":[],\"firstStartDay\":\"2026-09-28\",\"lastEndDay\":\"2027-09-28\",\"name\":\"DEDAKJ医疗器械官方旗舰店\",\"id\":\"2104457457798483968\"},{\"groupId\":\"2094743970688012288\",\"thirdShopId\":\"2748943863350558955\",\"chatbotShopId\":\"2105607285182042112\",\"platform\":7,\"shopName\":\"德迩杰官方旗舰店\",\"ifJdSelf\":false,\"qaEnable\":false,\"salesTrackerEnable\":false,\"seatsCount\":999,\"ifDemo\":0,\"packages\":[{\"packageId\":\"2485436450616528450\",\"packageName\":\"智能体赠送\",\"startDay\":\"2026-09-28\",\"endDay\":\"2027-09-28\"}],\"thirdAppNames\":[],\"auths\":[],\"firstStartDay\":\"2026-09-28\",\"lastEndDay\":\"2027-09-28\",\"name\":\"德迩杰官方旗舰店\",\"id\":\"2748943863350558955\"},{\"groupId\":\"2094743970688012288\",\"thirdShopId\":\"2748944481825915146\",\"chatbotShopId\":\"2105606999134703616\",\"platform\":7,\"shopName\":\"DEDAKJ官方旗舰店\",\"ifJdSelf\":false,\"qaEnable\":false,\"salesTrackerEnable\":false,\"seatsCount\":999,\"ifDemo\":0,\"packages\":[{\"packageId\":\"2485436450616528450\",\"packageName\":\"智能体赠送\",\"startDay\":\"2026-09-28\",\"endDay\":\"2027-09-28\"}],\"thirdAppNames\":[],\"auths\":[],\"firstStartDay\":\"2026-09-28\",\"lastEndDay\":\"2027-09-28\",\"name\":\"DEDAKJ官方旗舰店\",\"id\":\"2748944481825915146\"},{\"groupId\":\"2094743970688012288\",\"thirdShopId\":\"2748945753136365819\",\"chatbotShopId\":\"2105612602351554560\",\"platform\":5,\"shopName\":\"德达医疗康养器械旗舰店\",\"ifJdSelf\":false,\"qaEnable\":false,\"salesTrackerEnable\":false,\"seatsCount\":999,\"ifDemo\":0,\"packages\":[{\"packageId\":\"2485436450616528450\",\"packageName\":\"智能体赠送\",\"startDay\":\"2026-09-28\",\"endDay\":\"2027-09-28\"}],\"thirdAppNames\":[],\"auths\":[],\"firstStartDay\":\"2026-09-28\",\"lastEndDay\":\"2027-09-28\",\"name\":\"德达医疗康养器械旗舰店\",\"id\":\"2748945753136365819\"},{\"groupId\":\"2094743970688012288\",\"thirdShopId\":\"2748946698029269223\",\"chatbotShopId\":\"2105617546987180032\",\"platform\":5,\"shopName\":\"DEDAKJ医疗器械旗舰店\",\"ifJdSelf\":false,\"qaEnable\":false,\"salesTrackerEnable\":false,\"seatsCount\":999,\"ifDemo\":0,\"packages\":[{\"packageId\":\"2485436450616528450\",\"packageName\":\"智能体赠送\",\"startDay\":\"2026-09-28\",\"endDay\":\"2027-09-28\"}],\"thirdAppNames\":[],\"auths\":[],\"firstStartDay\":\"2026-09-28\",\"lastEndDay\":\"2027-09-28\",\"name\":\"DEDAKJ医疗器械旗舰店\",\"id\":\"2748946698029269223\"},{\"groupId\":\"2094743970688012288\",\"thirdShopId\":\"2748947084576361329\",\"chatbotShopId\":\"2107774500664774656\",\"platform\":7,\"shopName\":\"DEDAKJ京东自营旗舰店（供应商编码:szddkj）\",\"ifJdSelf\":false,\"qaEnable\":false,\"salesTrackerEnable\":false,\"seatsCount\":999,\"ifDemo\":0,\"packages\":[{\"packageId\":\"2485436450616528450\",\"packageName\":\"智能体赠送\",\"startDay\":\"2026-09-28\",\"endDay\":\"2027-09-28\"}],\"thirdAppNames\":[],\"auths\":[],\"firstStartDay\":\"2026-09-28\",\"lastEndDay\":\"2027-09-28\",\"name\":\"DEDAKJ京东自营旗舰店（供应商编码:szddkj）\",\"id\":\"2748947084576361329\"},{\"groupId\":\"2094743970688012288\",\"thirdShopId\":\"2748947402403971286\",\"chatbotShopId\":\"2105600437305479168\",\"platform\":7,\"shopName\":\"德达官方旗舰店\",\"ifJdSelf\":false,\"qaEnable\":false,\"salesTrackerEnable\":false,\"seatsCount\":999,\"ifDemo\":0,\"packages\":[{\"packageId\":\"2485436450616528450\",\"packageName\":\"智能体赠送\",\"startDay\":\"2026-09-28\",\"endDay\":\"2027-09-28\"}],\"thirdAppNames\":[],\"auths\":[],\"firstStartDay\":\"2026-09-28\",\"lastEndDay\":\"2027-09-28\",\"name\":\"德达官方旗舰店\",\"id\":\"2748947402403971286\"},{\"groupId\":\"2094743970688012288\",\"thirdShopId\":\"2748947711641649387\",\"chatbotShopId\":\"2105609873860333568\",\"platform\":0,\"shopName\":\"dedakj旗舰店\",\"ifJdSelf\":false,\"qaEnable\":false,\"salesTrackerEnable\":false,\"seatsCount\":999,\"ifDemo\":0,\"packages\":[{\"packageId\":\"2485436450616528450\",\"packageName\":\"智能体赠送\",\"startDay\":\"2026-09-28\",\"endDay\":\"2027-09-28\"}],\"thirdAppNames\":[],\"auths\":[],\"firstStartDay\":\"2026-09-28\",\"lastEndDay\":\"2027-09-28\",\"name\":\"dedakj旗舰店\",\"id\":\"2748947711641649387\"}],\"startRow\":199},\"success\":true}"
+ },
+ {
+  "url": "https://merchant.tanyuai.com/api/gc/sellerAccount/querySellerAccountList",
+  "status": 200,
+  "post": "{\"pageSize\":20,\"pageIndex\":1,\"nick\":\"\",\"thirdShopId\":\"2748947084576361329\",\"chatbotShopId\":\"2107774500664774656\"}",
+  "body": "{\"code\":1,\"msg\":\"操作成功!\",\"data\":{\"pageIndex\":1,\"pageSize\":20,\"total\":1,\"results\":[{\"id\":\"2754628716427261005\",\"groupId\":\"2094743970688012288\",\"authAppId\":\"1000236020_szddkj\",\"platform\":\"7\",\"type\":\"1\",\"state\":\"1\",\"accountMode\":\"1\",\"accountType\":\"2\",\"nick\":\"dedakj自营--璇璇\",\"sellerNick\":\"szddkj\",\"oauthStatus\":\"1\",\"workStatus\":\"0\",\"officialWorkStatus\":\"0\",\"autoType\":\"2\",\"sellerAccount\":\"szddkj:dedakj自营--璇璇\",\"sellerAccountGroupList\":[],\"isOnline\":false,\"learnChatLogStatus\":false,\"limitStatus\":false}],\"startRow\":0},\"success\":true}"
+ },
+ {
+  "url": "https://merchant.tanyuai.com/api/gc/sellerAccount/querySellerAccountGroupList?thirdShopId=2748947084576361329",
+  "status": 200,
+  "post": null,
+  "body": "{\"code\":1,\"msg\":\"操作成功!\",\"data\":[],\"success\":true}"
+ },
+ {
+  "url": "https://merchant.tanyuai.com/api/gc/chatbot/countSeats?thirdShopId=2748947084576361329",
+  "status": 200,
+  "post": null,
+  "body": "{\"code\":1,\"msg\":\"操作成功!\",\"data\":{\"usedSeatCount\":0,\"totalSeatCount\":999},\"success\":true}"
+ },
+ {
+  "url": "https://merchant.tanyuai.com/api/gc/sellerAccount/querySellerAccountList",
+  "status": 200,
+  "post": "{\"thirdShopId\":\"2748947084576361329\",\"pageIndex\":1,\"pageSize\":50}",
+  "body": "{\"code\":1,\"msg\":\"操作成功!\",\"data\":{\"pageIndex\":1,\"pageSize\":50,\"total\":1,\"results\":[{\"id\":\"2754628716427261005\",\"groupId\":\"2094743970688012288\",\"authAppId\":\"1000236020_szddkj\",\"platform\":\"7\",\"type\":\"1\",\"state\":\"1\",\"accountMode\":\"1\",\"accountType\":\"2\",\"nick\":\"dedakj自营--璇璇\",\"sellerNick\":\"szddkj\",\"oauthStatus\":\"1\",\"workStatus\":\"0\",\"officialWorkStatus\":\"0\",\"autoType\":\"2\",\"sellerAccount\":\"szddkj:dedakj自营--璇璇\",\"sellerAccountGroupList\":[],\"isOnline\":false,\"learnChatLogStatus\":false,\"limitStatus\":false}],\"startRow\":0},\"success\":true}"
+ }
+]

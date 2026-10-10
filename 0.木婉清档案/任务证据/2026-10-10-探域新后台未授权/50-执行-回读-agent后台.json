@@ -1,0 +1,37 @@
+{
+ "http": 200,
+ "d": {
+  "code": 1,
+  "msg": "操作成功!",
+  "data": {
+   "pageIndex": 1,
+   "pageSize": 20,
+   "total": 1,
+   "results": [
+    {
+     "id": "2754628716427261005",
+     "groupId": "2094743970688012288",
+     "authAppId": "1000236020_szddkj",
+     "platform": "7",
+     "type": "1",
+     "state": "1",
+     "accountMode": "1",
+     "accountType": "2",
+     "nick": "dedakj自营--璇璇",
+     "sellerNick": "szddkj",
+     "oauthStatus": "1",
+     "workStatus": "0",
+     "officialWorkStatus": "0",
+     "autoType": "2",
+     "sellerAccount": "szddkj:dedakj自营--璇璇",
+     "sellerAccountGroupList": [],
+     "isOnline": false,
+     "learnChatLogStatus": false,
+     "limitStatus": false
+    }
+   ],
+   "startRow": 0
+  },
+  "success": true
+ }
+}

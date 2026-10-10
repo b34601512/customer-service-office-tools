@@ -1,0 +1,8 @@
+[
+ {
+  "url": "https://merchant.tanyuai.com/api/gc/sellerAccount/createSellerAccount",
+  "status": 200,
+  "post": "{\"nick\":\"dedakj自营--璇璇\",\"thirdShopId\":\"2748947084576361329\",\"addSupplierSellerAccount\":true,\"chatbotShopId\":\"2107774500664774656\"}",
+  "body": "{\"code\":1,\"msg\":\"操作成功!\",\"data\":\"2754628716427261005\",\"success\":true}"
+ }
+]

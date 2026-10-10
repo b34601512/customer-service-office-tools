@@ -1,0 +1,29 @@
+{
+ "list": {
+  "http": 200,
+  "d": {
+   "code": 1,
+   "msg": "操作成功!",
+   "data": {
+    "pageIndex": 1,
+    "pageSize": 50,
+    "total": 0,
+    "results": [],
+    "startRow": 0
+   },
+   "success": true
+  }
+ },
+ "seats": {
+  "http": 200,
+  "d": {
+   "code": 1,
+   "msg": "操作成功!",
+   "data": {
+    "usedSeatCount": 0,
+    "totalSeatCount": 999
+   },
+   "success": true
+  }
+ }
+}
