@@ -1,0 +1,101 @@
+{
+ "readAt": "2026-10-10 (live, 写前)",
+ "total": 7837,
+ "currentPageSize": 7837,
+ "pdd卡": {
+  "id": "6a9a3c3e4a45121da4d7c648",
+  "title": "售前/使用成本/94买了制氧机还需要买别的吗？",
+  "ifBelievable": true,
+  "ifOpen": true,
+  "version": "V2",
+  "type": "SHOP",
+  "labels": [],
+  "orderStatus": [
+   "PRE_SALE"
+  ],
+  "timeliness": null,
+  "cycleTimeliness": null,
+  "excludeCondition": {
+   "spu": [],
+   "shop": [],
+   "rules": [],
+   "productGroupId": [],
+   "sellerGroup": [],
+   "platform": []
+  },
+  "includeCondition": {
+   "spu": [],
+   "shop": [
+    {
+     "thirdShopId": "2095398963959042048",
+     "cids": []
+    },
+    {
+     "thirdShopId": "2104457457798483968",
+     "cids": []
+    }
+   ],
+   "rules": [],
+   "productGroupId": [],
+   "sellerGroup": [],
+   "platform": []
+  },
+  "lastUpdatedAt": "2026-09-29 12:13:39",
+  "createdAt": "2026-09-04 11:34:22"
+ },
+ "pdd卡正文段数": 1,
+ "pdd卡正文": [
+  "Q:94买了制氧机还需要买别的吗？\nA:亲亲～「收到就可以使用」啦～\n机器是「配件齐全」的，带吸氧管，插电就能制氧，无需另外购买哈～"
+ ],
+ "目标标题在库命中数": 1,
+ "目标标题绑淘宝命中数": 0,
+ "含'买别的'标题卡": [
+  {
+   "id": "6a9a3c3e4a45121da4d7c648",
+   "title": "售前/使用成本/94买了制氧机还需要买别的吗？",
+   "shops": [
+    "2095398963959042048",
+    "2104457457798483968"
+   ]
+  }
+ ],
+ "淘宝绑卡数": 36,
+ "淘宝绑卡_id列表": [
+  "6a9a3c3d4a45121da4d7c631",
+  "6a9a3c3d644e354d71a3f806",
+  "6a9a3c3d644e354d71a3f807",
+  "6a9a3c404a45121da4d7c6a3",
+  "6a9a3c404a45121da4d7c6a8",
+  "6a9a3c404a45121da4d7c6aa",
+  "6a9a3c404a45121da4d7c6b0",
+  "6a9a3c404a45121da4d7c6b1",
+  "6a9a3c404a45121da4d7c6b4",
+  "6a9a3c404a45121da4d7c6b8",
+  "6a9a3c40644e354d71a3f882",
+  "6a9a3c40644e354d71a3f884",
+  "6a9a3c40644e354d71a3f88a",
+  "6a9a3c40644e354d71a3f895",
+  "6a9a3c42644e354d71a3f8ef",
+  "6a9a3c42644e354d71a3f8f1",
+  "6a9a56c14a45121da4d7cffc",
+  "6a9a56c1644e354d71a4022b",
+  "6a9a61c34a45121da4d7d432",
+  "6ac0b500e4bec54754831447",
+  "6ac0b508e1041c390582e598",
+  "6ac0b50fe4bec5475483144c",
+  "6ac0b516e4bec54754831450",
+  "6ac0b51de1041c390582e5a3",
+  "6ac0b5a1e4bec5475483146b",
+  "6ac0b5a8e1041c390582e5d5",
+  "6ac0b5afe1041c390582e5d8",
+  "6ac0b5b6e4bec5475483146f",
+  "6ac0b5bde1041c390582e5db",
+  "6ac0b5c4e4bec54754831473",
+  "6ac0b5cbe1041c390582e5df",
+  "6ac107c0e1041c390582ed80",
+  "6ac1b4bfe1041c390582f243",
+  "6ac1b900e4bec54754832201",
+  "6ac38522e4bec54754834d1b",
+  "6ac48906e4bec54754835d8e"
+ ]
+}

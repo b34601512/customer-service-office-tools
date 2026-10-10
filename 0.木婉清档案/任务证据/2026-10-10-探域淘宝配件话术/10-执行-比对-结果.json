@@ -1,0 +1,114 @@
+{
+ "checks": [
+  {
+   "check": "新卡标题==期望(PDD同题)",
+   "ok": true,
+   "actual": "'售前/使用成本/94买了制氧机还需要买别的吗？'"
+  },
+  {
+   "check": "新卡正文段==期望(逐字)",
+   "ok": true,
+   "actual": "['Q:94买了制氧机还需要买别的吗？\\nA:亲亲～「收到就可以使用」啦～\\n机器是「配件齐全」的，带吸氧管，插电就能制氧，无需另外购买哈～']"
+  },
+  {
+   "check": "新卡正文SHA==期望",
+   "ok": true,
+   "actual": "c328933e869689102cc570044342c17478778b459e41a14a6bcf0b4ee1926b73"
+  },
+  {
+   "check": "新卡业务字段(可信/启用/V2/SHOP/labels/orderStatus/timeliness)照PDD",
+   "ok": true,
+   "actual": {
+    "ifBelievable": true,
+    "ifOpen": true,
+    "version": "V2",
+    "type": "SHOP",
+    "labels": [],
+    "orderStatus": [
+     "PRE_SALE"
+    ],
+    "timeliness": null,
+    "cycleTimeliness": null
+   }
+  },
+  {
+   "check": "新卡excludeCondition=空",
+   "ok": true,
+   "actual": "{\"spu\": [], \"shop\": [], \"rules\": [], \"productGroupId\": [], \"sellerGroup\": [], \"platform\": []}"
+  },
+  {
+   "check": "新卡includeCondition=仅淘宝(其余空)",
+   "ok": true,
+   "actual": "{\"spu\": [], \"shop\": [{\"thirdShopId\": \"2748947711641649387\", \"cids\": []}], \"rules\": [], \"productGroupId\": [], \"sellerGroup\": [], \"platform\": []}"
+  },
+  {
+   "check": "PDD同题卡标题+正文未变",
+   "ok": true,
+   "actual": "售前/使用成本/94买了制氧机还需要买别的吗？"
+  },
+  {
+   "check": "PDD同题卡绑店/启用/阶段未变",
+   "ok": true,
+   "actual": [
+    "2095398963959042048",
+    "2104457457798483968"
+   ]
+  },
+  {
+   "check": "PDD同题卡lastUpdatedAt未变",
+   "ok": true,
+   "actual": "2026-09-29 12:13:39"
+  },
+  {
+   "check": "全库+1且仅新增新卡(无删除/无重复)",
+   "ok": true,
+   "actual": {
+    "total": 7838,
+    "added": [
+     "6aca29ade4a34d7c7e27d1eb"
+    ],
+    "removed": []
+   }
+  },
+  {
+   "check": "目标标题在库恰2张(PDD+淘宝)、绑淘宝恰1张",
+   "ok": true,
+   "actual": {
+    "same": 2,
+    "same_tb": 1
+   }
+  },
+  {
+   "check": "淘宝绑卡36→37",
+   "ok": true,
+   "actual": 37
+  },
+  {
+   "check": "回读==独立复核(新卡核心字段)",
+   "ok": true,
+   "actual": "equal"
+  },
+  {
+   "check": "回读==独立复核(PDD卡核心字段)",
+   "ok": true,
+   "actual": "equal"
+  },
+  {
+   "check": "独立复核: total一致且正文SHA==期望",
+   "ok": true,
+   "actual": {
+    "total": 7838,
+    "sha": "c328933e869689102cc570044342c17478778b459e41a14a6bcf0b4ee1926b73"
+   }
+  }
+ ],
+ "allPass": true,
+ "newCardId": "6aca29ade4a34d7c7e27d1eb",
+ "createdAt": "2026-10-10 20:03:57",
+ "newCardTitle": "售前/使用成本/94买了制氧机还需要买别的吗？",
+ "newCardShops": [
+  "2748947711641649387"
+ ],
+ "newCardSegSha256": "c328933e869689102cc570044342c17478778b459e41a14a6bcf0b4ee1926b73",
+ "expectedSha256": "c328933e869689102cc570044342c17478778b459e41a14a6bcf0b4ee1926b73"
+}

@@ -1,0 +1,144 @@
+[
+ {
+  "name": "新卡detail",
+  "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6aca29ade4a34d7c7e27d1eb",
+  "method": "GET",
+  "httpStatus": 200,
+  "businessCode": 1,
+  "message": "操作成功!",
+  "data": {
+   "id": "6aca29ade4a34d7c7e27d1eb",
+   "title": "售前/使用成本/94买了制氧机还需要买别的吗？",
+   "content": [
+    {
+     "id": "6aca29ade4a34d7c7e27d1ec",
+     "content": "Q:94买了制氧机还需要买别的吗？\nA:亲亲～「收到就可以使用」啦～\n机器是「配件齐全」的，带吸氧管，插电就能制氧，无需另外购买哈～",
+     "knowledgeDigest": "5d827154a876e1c65ce7714d862f753d",
+     "chunkLength": null,
+     "chunkLearnStatus": "FINISH",
+     "index": 1
+    }
+   ],
+   "labels": [],
+   "labelInfos": null,
+   "ifBelievable": true,
+   "ifLearning": false,
+   "ifOpen": true,
+   "version": "V2",
+   "type": "SHOP",
+   "includeCondition": {
+    "spu": [],
+    "shop": [
+     {
+      "thirdShopId": "2748947711641649387",
+      "cids": []
+     }
+    ],
+    "rules": [],
+    "productGroupId": [],
+    "sellerGroup": [],
+    "platform": []
+   },
+   "excludeCondition": {
+    "spu": [],
+    "shop": [],
+    "rules": [],
+    "productGroupId": [],
+    "sellerGroup": [],
+    "platform": []
+   },
+   "timeliness": null,
+   "cycleTimeliness": null,
+   "orderStatus": [
+    "PRE_SALE"
+   ],
+   "lastUpdatedAt": "2026-10-10 20:03:57",
+   "createdAt": "2026-10-10 20:03:57",
+   "source": null,
+   "productCondition": null,
+   "ifOpenSync": null,
+   "ifHasUrl": false,
+   "urlInfos": []
+  }
+ },
+ {
+  "name": "PDD同题卡detail",
+  "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6a9a3c3e4a45121da4d7c648",
+  "method": "GET",
+  "httpStatus": 200,
+  "businessCode": 1,
+  "message": "操作成功!",
+  "data": {
+   "id": "6a9a3c3e4a45121da4d7c648",
+   "title": "售前/使用成本/94买了制氧机还需要买别的吗？",
+   "content": [
+    {
+     "id": "6abb3af3729b323bc4441449",
+     "content": "Q:94买了制氧机还需要买别的吗？\nA:亲亲～「收到就可以使用」啦～\n机器是「配件齐全」的，带吸氧管，插电就能制氧，无需另外购买哈～",
+     "knowledgeDigest": "5d827154a876e1c65ce7714d862f753d",
+     "chunkLength": null,
+     "chunkLearnStatus": "FINISH",
+     "index": 1
+    }
+   ],
+   "labels": [],
+   "labelInfos": null,
+   "ifBelievable": true,
+   "ifLearning": false,
+   "ifOpen": true,
+   "version": "V2",
+   "type": "SHOP",
+   "includeCondition": {
+    "spu": [],
+    "shop": [
+     {
+      "thirdShopId": "2095398963959042048",
+      "cids": []
+     },
+     {
+      "thirdShopId": "2104457457798483968",
+      "cids": []
+     }
+    ],
+    "rules": [],
+    "productGroupId": [],
+    "sellerGroup": [],
+    "platform": []
+   },
+   "excludeCondition": {
+    "spu": [],
+    "shop": [],
+    "rules": [],
+    "productGroupId": [],
+    "sellerGroup": [],
+    "platform": []
+   },
+   "timeliness": null,
+   "cycleTimeliness": null,
+   "orderStatus": [
+    "PRE_SALE"
+   ],
+   "lastUpdatedAt": "2026-09-29 12:13:39",
+   "createdAt": "2026-09-04 11:34:22",
+   "source": null,
+   "productCondition": null,
+   "ifOpenSync": null,
+   "ifHasUrl": false,
+   "urlInfos": []
+  }
+ },
+ {
+  "name": "全库after",
+  "endpoint": "/api/kbe/v1/knowledge-card/page",
+  "method": "POST",
+  "httpStatus": 200,
+  "businessCode": 1,
+  "message": "操作成功!",
+  "data": {
+   "total": 7838,
+   "pageSize": 10000,
+   "currentPageSize": 7838,
+   "resultsCount": 7838
+  }
+ }
+]

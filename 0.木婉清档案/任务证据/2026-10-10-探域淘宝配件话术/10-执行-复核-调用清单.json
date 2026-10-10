@@ -1,0 +1,18 @@
+[
+  {
+    "name": "新卡detail",
+    "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6aca29ade4a34d7c7e27d1eb",
+    "method": "GET"
+  },
+  {
+    "name": "PDD同题卡detail",
+    "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6a9a3c3e4a45121da4d7c648",
+    "method": "GET"
+  },
+  {
+    "name": "全库after",
+    "endpoint": "/api/kbe/v1/knowledge-card/page",
+    "method": "POST",
+    "body": { "pageNo": 1, "pageSize": 10000 }
+  }
+]

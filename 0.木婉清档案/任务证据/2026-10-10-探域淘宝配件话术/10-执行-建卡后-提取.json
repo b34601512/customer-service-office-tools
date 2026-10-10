@@ -1,0 +1,68 @@
+{
+ "total_before": 7837,
+ "total_after": 7838,
+ "delta": 1,
+ "added_ids": [
+  "6aca29ade4a34d7c7e27d1eb"
+ ],
+ "removed_ids": [],
+ "new_card": {
+  "id": "6aca29ade4a34d7c7e27d1eb",
+  "title": "售前/使用成本/94买了制氧机还需要买别的吗？",
+  "ifBelievable": true,
+  "ifOpen": true,
+  "version": "V2",
+  "type": "SHOP",
+  "labels": [],
+  "orderStatus": [
+   "PRE_SALE"
+  ],
+  "timeliness": null,
+  "cycleTimeliness": null,
+  "includeCondition": {
+   "spu": [],
+   "shop": [
+    {
+     "thirdShopId": "2748947711641649387",
+     "cids": []
+    }
+   ],
+   "rules": [],
+   "productGroupId": [],
+   "sellerGroup": [],
+   "platform": []
+  },
+  "excludeCondition": {
+   "spu": [],
+   "shop": [],
+   "rules": [],
+   "productGroupId": [],
+   "sellerGroup": [],
+   "platform": []
+  },
+  "lastUpdatedAt": "2026-10-10 20:03:57",
+  "createdAt": "2026-10-10 20:03:57"
+ },
+ "new_card_正文": [
+  "Q:94买了制氧机还需要买别的吗？\nA:亲亲～「收到就可以使用」啦～\n机器是「配件齐全」的，带吸氧管，插电就能制氧，无需另外购买哈～"
+ ],
+ "new_card_seg_sha256": "c328933e869689102cc570044342c17478778b459e41a14a6bcf0b4ee1926b73",
+ "目标标题在库命中数": 2,
+ "目标标题命中_每卡绑店": [
+  {
+   "id": "6aca29ade4a34d7c7e27d1eb",
+   "shops": [
+    "2748947711641649387"
+   ]
+  },
+  {
+   "id": "6a9a3c3e4a45121da4d7c648",
+   "shops": [
+    "2095398963959042048",
+    "2104457457798483968"
+   ]
+  }
+ ],
+ "淘宝绑卡数_after": 37,
+ "含买别的标题数": 2
+}

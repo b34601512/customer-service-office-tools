@@ -1,0 +1,8 @@
+[
+  {
+    "name": "全库live",
+    "endpoint": "/api/kbe/v1/knowledge-card/page",
+    "method": "POST",
+    "body": { "pageNo": 1, "pageSize": 10000 }
+  }
+]

@@ -1,0 +1,40 @@
+{
+ "title": "售前/使用成本/94买了制氧机还需要买别的吗？",
+ "segments": [
+  "Q:94买了制氧机还需要买别的吗？\nA:亲亲～「收到就可以使用」啦～\n机器是「配件齐全」的，带吸氧管，插电就能制氧，无需另外购买哈～"
+ ],
+ "seg_sha256": "c328933e869689102cc570044342c17478778b459e41a14a6bcf0b4ee1926b73",
+ "fields": {
+  "ifBelievable": true,
+  "ifOpen": true,
+  "version": "V2",
+  "type": "SHOP",
+  "labels": [],
+  "orderStatus": [
+   "PRE_SALE"
+  ],
+  "timeliness": null,
+  "cycleTimeliness": null,
+  "excludeCondition": {
+   "spu": [],
+   "shop": [],
+   "rules": [],
+   "productGroupId": [],
+   "sellerGroup": [],
+   "platform": []
+  }
+ },
+ "target_includeCondition": {
+  "spu": [],
+  "shop": [
+   {
+    "thirdShopId": "2748947711641649387",
+    "cids": []
+   }
+  ],
+  "rules": [],
+  "productGroupId": [],
+  "sellerGroup": [],
+  "platform": []
+ }
+}
