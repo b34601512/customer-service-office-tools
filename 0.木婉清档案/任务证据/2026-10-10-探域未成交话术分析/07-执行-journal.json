@@ -1,0 +1,80 @@
+{
+  "runId": "2026-10-10T10-11-04-542Z",
+  "action": "apply",
+  "taskFile": "17.探域科技AI自动配置/02.业务专用/德达医疗/任务/2026-10-10-探域选型卡执行/选型卡-执行任务.json",
+  "company": "德达医疗",
+  "scope": "探域客服知识卡 6 店共用卡 6ac0b5bde1041c390582e5db；只改正文段 2，不动段1/标题/绑店/审核/可信/orderStatus",
+  "approvedBy": "黎路遥",
+  "businessPatchKeys": null,
+  "deleteIds": [],
+  "startedAt": "2026-10-10T10:11:04.542Z",
+  "entries": [
+    {
+      "id": "6ac0b5bde1041c390582e5db",
+      "note": "段2→A案分级建议（口语、简短）；段1及其余字段不动。写前 live detail 与 before 不一致即停。",
+      "currentSha256": "4e8ba7c94268827f32c41d4dafc014ef707005ef3657158f083d4205a6760973",
+      "expectedDiffs": [],
+      "status": "verified",
+      "businessPatch": "unchanged",
+      "expectBusinessSha256": "8b09d526ad4171e0d79358f092cc7f366dc43b331fbbd304a41ad0e5196b8fc5",
+      "approvedBy": "黎路遥",
+      "response": true,
+      "afterSha256": "407da2b79341c03ee47a438ae129defbf78fd6b9edf2f096d2001276e3221371",
+      "scopeShop": {
+        "before": [
+          {
+            "thirdShopId": "2748947402403971286",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748944481825915146",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748943863350558955",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748947711641649387",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748945753136365819",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748946698029269223",
+            "cids": []
+          }
+        ],
+        "after": [
+          {
+            "thirdShopId": "2748947402403971286",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748944481825915146",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748943863350558955",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748947711641649387",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748945753136365819",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748946698029269223",
+            "cids": []
+          }
+        ]
+      }
+    }
+  ],
+  "finishedAt": "2026-10-10T10:11:09.351Z"
+}

@@ -1,0 +1,84 @@
+{
+  "id": "6ac0b5bde1041c390582e5db",
+  "title": "选款/不知道怎么选型号？制氧机怎么选？",
+  "content": [
+    {
+      "id": "6ac0b5bde1041c390582e5dc",
+      "content": "Q：不知道该买什么型号，怎么选？\nA：请先说明：①居家使用还是外出携带；②医生要求的供氧方式、流量和使用时长（有医嘱或血氧数据可一并提供）；③正在考虑的型号。我们会按具体机型的额定流量—浓度逐项核对是否满足，不只按疾病名称或一张对比图推荐。",
+      "knowledgeDigest": "9e5dac3f0ce43c0e3e9b5d90a93f556f",
+      "chunkLength": null,
+      "chunkLearnStatus": "FINISH",
+      "index": 1
+    },
+    {
+      "id": "6ac0b5bde1041c390582e5dd",
+      "content": "是否需要吸氧、选几升、每天吸多久应由医生评估和制定，不能仅凭疾病名称、年龄或单次血氧读数推荐；如当前用氧效果不佳或出现不适，请及时联系医生；严重气促、胸痛、意识异常等情况请立即拨打120，不要等待换机或调档测试。",
+      "knowledgeDigest": "f6f5894743c7cc44aca60fe1134b7a3e",
+      "chunkLength": null,
+      "chunkLearnStatus": "FINISH",
+      "index": 2
+    }
+  ],
+  "labels": [],
+  "labelInfos": null,
+  "ifBelievable": true,
+  "ifLearning": false,
+  "ifOpen": true,
+  "version": "V2",
+  "type": "SHOP",
+  "includeCondition": {
+    "spu": [],
+    "shop": [
+      {
+        "thirdShopId": "2748947402403971286",
+        "cids": []
+      },
+      {
+        "thirdShopId": "2748944481825915146",
+        "cids": []
+      },
+      {
+        "thirdShopId": "2748943863350558955",
+        "cids": []
+      },
+      {
+        "thirdShopId": "2748947711641649387",
+        "cids": []
+      },
+      {
+        "thirdShopId": "2748945753136365819",
+        "cids": []
+      },
+      {
+        "thirdShopId": "2748946698029269223",
+        "cids": []
+      }
+    ],
+    "rules": [],
+    "productGroupId": [],
+    "sellerGroup": [],
+    "platform": []
+  },
+  "excludeCondition": {
+    "spu": [],
+    "shop": [],
+    "rules": [],
+    "productGroupId": [],
+    "sellerGroup": [],
+    "platform": []
+  },
+  "timeliness": null,
+  "cycleTimeliness": null,
+  "orderStatus": [
+    "PRE_SALE",
+    "SALE",
+    "AFTER_SALE"
+  ],
+  "lastUpdatedAt": "2026-10-03 15:58:53",
+  "createdAt": "2026-10-03 15:58:53",
+  "source": null,
+  "productCondition": null,
+  "ifOpenSync": null,
+  "ifHasUrl": false,
+  "urlInfos": []
+}

@@ -1,0 +1,7 @@
+[
+ {
+  "name": "卡-选型卡-写前",
+  "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6ac0b5bde1041c390582e5db",
+  "method": "GET"
+ }
+]

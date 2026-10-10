@@ -1,0 +1,84 @@
+{
+  "id": "6ac0b5bde1041c390582e5db",
+  "title": "选款/不知道怎么选型号？制氧机怎么选？",
+  "content": [
+    {
+      "id": "6aca0f2c3e4462430e4a680e",
+      "content": "Q：不知道该买什么型号，怎么选？\nA：请先说明：①居家使用还是外出携带；②医生要求的供氧方式、流量和使用时长（有医嘱或血氧数据可一并提供）；③正在考虑的型号。我们会按具体机型的额定流量—浓度逐项核对是否满足，不只按疾病名称或一张对比图推荐。",
+      "knowledgeDigest": "9e5dac3f0ce43c0e3e9b5d90a93f556f",
+      "chunkLength": null,
+      "chunkLearnStatus": "WAIT",
+      "index": 1
+    },
+    {
+      "id": "6aca0f2c3e4462430e4a680f",
+      "content": "Q：应该买几升？\nA：不同缺氧程度适合不同的机型：\n1. 轻微缺氧，日常保健，适用家用级1升机。\n2. 轻度缺氧，呼吸急促，适用家用级2升机。\n3. 呼吸较困难费力，中度缺氧，建议3升医用机。\n4. 呼吸困难，严重缺氧， 建议5升医用机。\n5. 呼吸很困难，重度缺氧，建议医用10升机。\n轻度心脏病、轻度矽肺、轻度哮喘，选3升就够；中重度矽肺、中重度哮喘，建议选5升；家里多人轮流保健选2升，日常疲劳、亚健康选1升就好啦～\n肿瘤、植物人、慢阻肺急性发作等重症请先就医、遵医嘱；严重气促、胸痛、意识异常请立即拨打120。有医嘱以医嘱为准哦～",
+      "knowledgeDigest": "776b38f84e9d54a42aac364d04490377",
+      "chunkLength": null,
+      "chunkLearnStatus": "WAIT",
+      "index": 2
+    }
+  ],
+  "labels": [],
+  "labelInfos": null,
+  "ifBelievable": true,
+  "ifLearning": true,
+  "ifOpen": true,
+  "version": "V2",
+  "type": "SHOP",
+  "includeCondition": {
+    "spu": [],
+    "shop": [
+      {
+        "thirdShopId": "2748947402403971286",
+        "cids": []
+      },
+      {
+        "thirdShopId": "2748944481825915146",
+        "cids": []
+      },
+      {
+        "thirdShopId": "2748943863350558955",
+        "cids": []
+      },
+      {
+        "thirdShopId": "2748947711641649387",
+        "cids": []
+      },
+      {
+        "thirdShopId": "2748945753136365819",
+        "cids": []
+      },
+      {
+        "thirdShopId": "2748946698029269223",
+        "cids": []
+      }
+    ],
+    "rules": [],
+    "productGroupId": [],
+    "sellerGroup": [],
+    "platform": []
+  },
+  "excludeCondition": {
+    "spu": [],
+    "shop": [],
+    "rules": [],
+    "productGroupId": [],
+    "sellerGroup": [],
+    "platform": []
+  },
+  "timeliness": null,
+  "cycleTimeliness": null,
+  "orderStatus": [
+    "PRE_SALE",
+    "SALE",
+    "AFTER_SALE"
+  ],
+  "lastUpdatedAt": "2026-10-10 18:10:52",
+  "createdAt": "2026-10-03 15:58:53",
+  "source": null,
+  "productCondition": null,
+  "ifOpenSync": null,
+  "ifHasUrl": false,
+  "urlInfos": []
+}
