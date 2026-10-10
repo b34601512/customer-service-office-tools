@@ -1,0 +1,7 @@
+[
+  {
+    "name": "独立复核-卡详情-6ac0b51de1041c390582e5a3",
+    "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6ac0b51de1041c390582e5a3",
+    "method": "GET"
+  }
+]

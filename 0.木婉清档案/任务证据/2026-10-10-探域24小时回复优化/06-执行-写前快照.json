@@ -1,0 +1,92 @@
+{
+  "id": "6ac0b51de1041c390582e5a3",
+  "title": "使用建议/制氧机每天吸氧多久？可以24小时连续吸吗？",
+  "content": [
+    {
+      "id": "6ac0b51de1041c390582e5a4",
+      "content": "Q：老人每天吸氧多长时间？一天吸几次？\nA：每次吸多久、每天吸几次，应按医生为个人制定的用氧方案执行，不能统一建议“早中晚各多少分钟”，也不要凭感觉或“越高越好”自行加减。没有明确用氧建议时，请先由医生评估是否需要吸氧。",
+      "knowledgeDigest": "ca530424461cac2f33c8a2e681b19131",
+      "chunkLength": null,
+      "chunkLearnStatus": "FINISH",
+      "index": 1
+    },
+    {
+      "id": "6ac0b51de1041c390582e5a5",
+      "content": "Q：可以24小时连续使用吗？\nA：连续运行时长应以具体型号说明书和机身警示为准，不能统一承诺24小时不停机；若机身标签写明不建议24小时运行，请遵照执行。可提供型号和标签照片，我们向厂家核对。依赖持续用氧者请提前与医生安排适合连续供氧及备用的方案。",
+      "knowledgeDigest": "0d591636dc66b15a0a68a50e5b7ef60f",
+      "chunkLength": null,
+      "chunkLearnStatus": "FINISH",
+      "index": 2
+    },
+    {
+      "id": "6ac0b51de1041c390582e5a6",
+      "content": "机器使用中出现异常或需要长时间连续使用时，请先联系我们核实，不要带故障长时间运行。",
+      "knowledgeDigest": "3f7e001f3d0cea8c80750890ab5e54b6",
+      "chunkLength": null,
+      "chunkLearnStatus": "FINISH",
+      "index": 3
+    }
+  ],
+  "labels": [],
+  "labelInfos": null,
+  "ifBelievable": true,
+  "ifLearning": false,
+  "ifOpen": true,
+  "version": "V2",
+  "type": "SHOP",
+  "includeCondition": {
+    "spu": [],
+    "shop": [
+      {
+        "thirdShopId": "2748947402403971286",
+        "cids": []
+      },
+      {
+        "thirdShopId": "2748944481825915146",
+        "cids": []
+      },
+      {
+        "thirdShopId": "2748943863350558955",
+        "cids": []
+      },
+      {
+        "thirdShopId": "2748947711641649387",
+        "cids": []
+      },
+      {
+        "thirdShopId": "2748945753136365819",
+        "cids": []
+      },
+      {
+        "thirdShopId": "2748946698029269223",
+        "cids": []
+      }
+    ],
+    "rules": [],
+    "productGroupId": [],
+    "sellerGroup": [],
+    "platform": []
+  },
+  "excludeCondition": {
+    "spu": [],
+    "shop": [],
+    "rules": [],
+    "productGroupId": [],
+    "sellerGroup": [],
+    "platform": []
+  },
+  "timeliness": null,
+  "cycleTimeliness": null,
+  "orderStatus": [
+    "PRE_SALE",
+    "SALE",
+    "AFTER_SALE"
+  ],
+  "lastUpdatedAt": "2026-10-03 15:56:13",
+  "createdAt": "2026-10-03 15:56:13",
+  "source": null,
+  "productCondition": null,
+  "ifOpenSync": null,
+  "ifHasUrl": false,
+  "urlInfos": []
+}

@@ -1,0 +1,84 @@
+{
+  "id": "6ac0b51de1041c390582e5a3",
+  "title": "使用建议/制氧机每天吸氧多久？可以24小时连续吸吗？",
+  "content": [
+    {
+      "id": "6aca02dbe4a34d7c7e27c953",
+      "content": "Q：老人每天吸氧多长时间？一天吸几次？\nA：每次吸多久、每天吸几次，应按医生为个人制定的用氧方案执行，不能统一建议“早中晚各多少分钟”，也不要凭感觉或“越高越好”自行加减。没有明确用氧建议时，请先由医生评估是否需要吸氧。",
+      "knowledgeDigest": "ca530424461cac2f33c8a2e681b19131",
+      "chunkLength": null,
+      "chunkLearnStatus": "WAIT",
+      "index": 1
+    },
+    {
+      "id": "6aca02dbe4a34d7c7e27c954",
+      "content": "Q：可以24小时连续使用吗？\nA：亲亲～这款是支持24小时连续使用的哦✅365天持续供氧。\n\n只要注意放在通风良好的地方，底部不要垫泡沫或布料，避免影响散热就可以啦～\n\n制氧本身是免耗材设计，只需要定期更换过滤器，插电后一键就能开启制氧，使用非常方便哈～😊",
+      "knowledgeDigest": "d2148866cc8b0deb9392f065808167b3",
+      "chunkLength": null,
+      "chunkLearnStatus": "WAIT",
+      "index": 2
+    }
+  ],
+  "labels": [],
+  "labelInfos": null,
+  "ifBelievable": true,
+  "ifLearning": true,
+  "ifOpen": true,
+  "version": "V2",
+  "type": "SHOP",
+  "includeCondition": {
+    "spu": [],
+    "shop": [
+      {
+        "thirdShopId": "2748947402403971286",
+        "cids": []
+      },
+      {
+        "thirdShopId": "2748944481825915146",
+        "cids": []
+      },
+      {
+        "thirdShopId": "2748943863350558955",
+        "cids": []
+      },
+      {
+        "thirdShopId": "2748947711641649387",
+        "cids": []
+      },
+      {
+        "thirdShopId": "2748945753136365819",
+        "cids": []
+      },
+      {
+        "thirdShopId": "2748946698029269223",
+        "cids": []
+      }
+    ],
+    "rules": [],
+    "productGroupId": [],
+    "sellerGroup": [],
+    "platform": []
+  },
+  "excludeCondition": {
+    "spu": [],
+    "shop": [],
+    "rules": [],
+    "productGroupId": [],
+    "sellerGroup": [],
+    "platform": []
+  },
+  "timeliness": null,
+  "cycleTimeliness": null,
+  "orderStatus": [
+    "PRE_SALE",
+    "SALE",
+    "AFTER_SALE"
+  ],
+  "lastUpdatedAt": "2026-10-10 17:18:19",
+  "createdAt": "2026-10-03 15:56:13",
+  "source": null,
+  "productCondition": null,
+  "ifOpenSync": null,
+  "ifHasUrl": false,
+  "urlInfos": []
+}
