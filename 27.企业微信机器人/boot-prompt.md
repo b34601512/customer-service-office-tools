@@ -27,13 +27,7 @@
    timeout=0（不设超时），onDone=`监听停了：按本文件第 1.2 步重挂 Monitor，再跑 node scripts/读新消息.cjs 查漏`。
 
 3. 再补常驻循环（**会话重启会丢，开机必须重挂**；2026-10-10 起恢复正常，不再跳过）：
-   （探域每日例检 2026-10-11 已交探域专员·殷素素——**不再重挂 9 点循环**）
-   - `LoopCreate` cron `*/30 * * * *`，recurring=true，expiresIn=`30d`，maxFires=`1400`，prompt：
-
-     > 看门狗/频道巡检（每 30 分钟）：读 27.企业微信机器人/.state/看门狗状态.json；看机器人交流频道有没有新 [故障]
-     > （`GH_CONFIG_DIR=C:\Users\b3460\.config\gh-bots gh issue list --repo c34601512-cpu/silicon-company --state open`）；
-     > 一切正常就安静；有异常/新故障才处理并私发黎路遥；顺手清频道历史垃圾（过时评论删、办完的关）。
-
+   （探域每日例检已交殷素素；**公告板 2026-10-11 21:49 起降级「存档群」——不轮询、不主动唤醒，急事走企微** → 30 分钟看板循环也不再重挂）
    - `LoopCreate` cron `30 19 * * *`，recurring=true，expiresIn=`90d`，maxFires=`95`，prompt：
 
      > 笔记维护（每天 19:30，黎路遥 2026-10-09 定）：看 `0.木婉清档案/任务/`、`任务回执/` 有无该归档的流水账、
