@@ -117,6 +117,8 @@ test('跑群机器人命令行：--help 只打印用法；--send 走 --webhook�
 });
 
 test('反向断言：22/24/25 号的壳里不许再自带发送逻辑（只许转发到共享核心）', () => {
+  // 2026-10-11 起：22/24/25 陆续物理搬去新主人名下（老板定「谁负责谁管理」）——
+  // 搬走的条目自动跳过：本断言只锁「还留在这个仓库里的」壳；搬出去的那份规矩随代码走。
   const 壳 = [
     '22.后台售后服务单分析/src/tools/send-wecom-notice.js',
     '24.平台退款复查/src/tools/send-wecom-notice.js',
@@ -124,6 +126,7 @@ test('反向断言：22/24/25 号的壳里不许再自带发送逻辑（只许�
   ];
   for (const f of 壳) {
     const 全路径 = path.join(__dirname, '..', '..', f);
+    if (!fs.existsSync(全路径)) continue; // 已搬出本仓库（2026-10-11 搬迁）
     const 源 = fs.readFileSync(全路径, 'utf8');
     assert.ok(!/fetch\(/.test(源), `${f} 里还在自己 fetch，应调用共享核心`);
     assert.ok(!/msgtype\s*:/.test(源), `${f} 里还在自己拼消息体，应调用共享核心`);
