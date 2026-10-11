@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>订单号提取</title>
+    <link rel="stylesheet" href="./src/styles.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="page-header">
+        <div>
+          <p class="eyebrow">本地工具</p>
+          <h1>订单号提取</h1>
+        </div>
+        <div class="summary-grid" aria-label="提取统计">
+          <div class="summary-item">
+            <span class="summary-label">匹配</span>
+            <strong id="totalCount">0</strong>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">去重</span>
+            <strong id="uniqueCount">0</strong>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">重复</span>
+            <strong id="duplicateCount">0</strong>
+          </div>
+        </div>
+      </header>
+
+      <section class="control-band" aria-label="处理设置">
+        <fieldset class="platform-group">
+          <legend>店铺类型</legend>
+          <label class="platform-option">
+            <input type="radio" name="platform" value="pinduoduo" checked>
+            <span>拼多多订单号</span>
+          </label>
+          <label class="platform-option">
+            <input type="radio" name="platform" value="tmall">
+            <span>天猫退款编号</span>
+          </label>
+        </fieldset>
+
+        <div class="button-row">
+          <label id="tmallFilePicker" class="file-picker hidden" for="tmallFileInput">
+            <span>选择xlsx</span>
+            <input id="tmallFileInput" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+          </label>
+          <button id="pasteButton" class="button secondary" type="button">粘贴</button>
+          <button id="extractButton" class="button primary" type="button">提取</button>
+          <button id="copyButton" class="button secondary" type="button" disabled>复制结果</button>
+          <button id="copyOrderButton" class="button secondary hidden" type="button" disabled>复制订单号</button>
+          <button id="clearButton" class="button ghost" type="button">清空</button>
+        </div>
+      </section>
+
+      <section class="workspace-grid">
+        <label class="text-panel">
+          <span class="panel-title">原始信息</span>
+          <textarea id="sourceText" spellcheck="false" placeholder="粘贴文本"></textarea>
+        </label>
+
+        <label id="normalResultPanel" class="text-panel">
+          <span class="panel-title">提取结果</span>
+          <textarea id="resultText" spellcheck="false" readonly></textarea>
+        </label>
+
+        <label id="matchedRefundPanel" class="text-panel hidden">
+          <span class="panel-title">匹配退款编号</span>
+          <textarea id="matchedRefundText" spellcheck="false" readonly></textarea>
+        </label>
+
+        <label id="matchedOrderPanel" class="text-panel hidden">
+          <span class="panel-title">匹配订单编号</span>
+          <textarea id="matchedOrderText" spellcheck="false" readonly></textarea>
+        </label>
+      </section>
+
+      <section id="statusPanel" class="status-panel neutral" aria-live="polite">
+        等待处理
+      </section>
+    </main>
+
+    <script src="./src/extractor.js" defer></script>
+    <script src="./src/xlsxExtractor.js" defer></script>
+    <script src="./src/app.js" defer></script>
+    <footer style="padding:14px 0 8px;text-align:center;font-size:12px;color:#5d6b7a;">作者：黎路遥 ｜ 微信：luyao2089 ｜ 话术精灵官网：luyao2089.cc ｜ 版权所有 © 黎路遥，保留所有权利</footer>
+  </body>
+</html>

@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8">
+    <title>xlsx浏览器验证</title>
+  </head>
+  <body>
+    <pre id="result">正在验证</pre>
+    <script src="../src/xlsxExtractor.js"></script>
+    <script>
+      async function runBrowserXlsxVerification() {
+        // 解决自动化环境不能直接操作系统文件选择框时仍能验证浏览器解析链路的问题。
+        const response = await fetch('../2683563586_1781408985609_180%20(1).xlsx');
+        if (!response.ok) {
+          throw new Error(`读取测试xlsx失败：${response.status}`);
+        }
+
+        const extractionResult = await window.TmallXlsxOrderExtractor.matchTmallOrderNumbersByRefundNumbersFromXlsxArrayBuffer(
+          await response.arrayBuffer(),
+          [
+            '257632752998108342',
+            '257676961525176339',
+            '257754471715176339',
+            '999999999999999999'
+          ],
+          'browser-test.xlsx'
+        );
+        const verificationResult = {
+          matchedRefunds: extractionResult.matchedRefundNumbers.length,
+          unmatchedRefunds: extractionResult.unmatchedRefundNumbers.length,
+          rows: extractionResult.displayLines.length,
+          unique: extractionResult.uniqueIdentifiers.length,
+          duplicate: extractionResult.duplicateCount,
+          firstLine: extractionResult.displayLines[0],
+          lastLine: extractionResult.displayLines[extractionResult.displayLines.length - 1]
+        };
+        document.querySelector('#result').textContent = JSON.stringify(verificationResult, null, 2);
+        document.body.dataset.status = 'success';
+      }
+
+      runBrowserXlsxVerification().catch((error) => {
+        document.querySelector('#result').textContent = error.message;
+        document.body.dataset.status = 'error';
+      });
+    </script>
+  </body>
+</html>
