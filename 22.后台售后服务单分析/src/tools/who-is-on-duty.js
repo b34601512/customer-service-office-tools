@@ -24,8 +24,9 @@ const { log } = require("../engine/log");
 const CONFIG_FILE = projectPath("project-config", "wecom-notify.json");
 const SHIFT_STOP_WORDS = ["早班", "晚班", "休息", "上班人数", "年假", "本月休息天数", "本月天数"];
 // 值班口径的唯一出处在 28号（用户 2026-09-30：「统一迁移到这里」）
-const 值班库 = require("../../../28.排班与派活/src/lib/值班");
-const 排班库 = require("../../../28.排班与派活/src/lib/排班读取");
+// 2026-10-11 28号 物理搬走 → 引用改新址（备份：D:\备份文件夹\2026-10-11-焦宛儿-改28引用前备份\）
+const 值班库 = require("D:/硅基公司/员工/排班派活专员·焦宛儿/专项/28.排班与派活/src/lib/值班");
+const 排班库 = require("D:/硅基公司/员工/排班派活专员·焦宛儿/专项/28.排班与派活/src/lib/排班读取");
 
 function readConfig() {
   if (!fs.existsSync(CONFIG_FILE)) {
