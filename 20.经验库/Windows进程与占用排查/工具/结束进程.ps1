@@ -1,12 +1,17 @@
-﻿# 结束进程：按 PID 或命令行关键字（危险操作，先 -WhatIf 预览再真杀）
-#   用法: powershell -ExecutionPolicy Bypass -File .\结束进程.ps1 -Match kdocs -WhatIf
-#         powershell -ExecutionPolicy Bypass -File .\结束进程.ps1 -Id 12345 -Force
+﻿# 结束进程：按 PID 或命令行关键字（危险操作；先 -WhatIf 预览，用户确认后再真杀）
+#   用法: powershell -NoProfile -ExecutionPolicy Bypass -File .\结束进程.ps1 -Match <关键字> -WhatIf    # 只预览
+#         powershell -NoProfile -ExecutionPolicy Bypass -File .\结束进程.ps1 -Id 12345 -Force          # 真杀
 param(
   [string]$Match = "",
   [int[]]$Id = @(),
   [switch]$WhatIf,
   [switch]$Force
 )
+
+# —— 控制台统一 UTF-8（中文不乱码，管道里也能读）——
+& chcp.com 65001 > $null
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding           = [System.Text.Encoding]::UTF8
 
 # 先校验参数（此时还不能设 SilentlyContinue，否则 throw 会被吞掉）
 if (-not $Match -and $Id.Count -eq 0) {

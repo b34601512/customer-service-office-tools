@@ -1,9 +1,14 @@
-﻿# 列出 node/python/cmd 进程的 PID + 完整命令行（只读）
-#   用法: powershell -ExecutionPolicy Bypass -File .\查进程.ps1 [-Match 关键字] [-Full]
+﻿# 列出常见进程的 PID + 完整命令行（只读）
+#   用法: powershell -NoProfile -ExecutionPolicy Bypass -File .\查进程.ps1 [-Match 关键字] [-Full]
 param(
   [string]$Match = "",
   [switch]$Full
 )
+# —— 控制台统一 UTF-8（中文不乱码，管道里也能读）——
+& chcp.com 65001 > $null
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding           = [System.Text.Encoding]::UTF8
+
 $ErrorActionPreference = "SilentlyContinue"
 $names = @("node.exe", "python.exe", "pythonw.exe", "cmd.exe", "msedge.exe", "chrome.exe")
 $procs = Get-CimInstance Win32_Process | Where-Object { $names -contains $_.Name }
