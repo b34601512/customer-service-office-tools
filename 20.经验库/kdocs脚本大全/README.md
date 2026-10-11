@@ -5,7 +5,7 @@
 
 - 文档：`https://www.kdocs.cn/l/<脚本大全文档分享ID>`（表内子表 `工作表1`）
 - 它自己的两个脚本（读/写）也登记在里面；webhook 存在
-  `2.发票自动化/7.自动登记发票/project-config/kdocs-airscript.json`（不入库），键名 `脚本大全_读取` / `脚本大全_写入`
+  `20.经验库/kdocs脚本大全/project-config/kdocs-airscript.json`（自足副本，本机不入库；2026-10-11 起不再跨到 2号 家），键名 `脚本大全_读取` / `脚本大全_写入`
 
 ## 本地两个工具（一个脚本一个动作）
 
