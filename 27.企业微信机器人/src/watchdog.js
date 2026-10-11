@@ -444,7 +444,7 @@ function reconcileSessions(serverSessions, localLast, cfg, nowMs) {
 }
 
 /**
- * 公告板轮换（满 50 条关旧开新，bot-board README）：从 gh issue list 结果里挑当前开放贴号。
+ * 公告板轮换（满 50 条关旧开新）：从 gh issue list 结果里挑当前开放贴号（2026-10-11 起频道在 silicon-company）。
  * 标题含「公告板」的开放贴取编号最大者；一个都没有就退回配置兜底值。
  */
 function pickBoardIssue(openIssues, fallback) {

@@ -30,7 +30,7 @@
    - `LoopCreate` cron `*/30 * * * *`，recurring=true，expiresIn=`30d`，maxFires=`1400`，prompt：
 
      > 看门狗/频道巡检（每 30 分钟）：读 27.企业微信机器人/.state/看门狗状态.json；看机器人交流频道有没有新 [故障]
-     > （`GH_CONFIG_DIR=C:\Users\b3460\.config\gh-bots gh issue list --repo c34601512-cpu/bot-board --state open`）；
+     > （`GH_CONFIG_DIR=C:\Users\b3460\.config\gh-bots gh issue list --repo c34601512-cpu/silicon-company --state open`）；
      > 一切正常就安静；有异常/新故障才处理并私发黎路遥；顺手清频道历史垃圾（过时评论删、办完的关）。
 
    - `LoopCreate` cron `0 9 * * *`，recurring=true，expiresIn=`90d`，maxFires=`95`，prompt：

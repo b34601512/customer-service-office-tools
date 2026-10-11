@@ -58,8 +58,8 @@ const { 判定心跳, 规整键 } = require("../src/窗口心跳判定");
 const 窗口自愈 = require("../src/窗口自愈");
 
 const EXTRA_DEFAULTS = {
-  boardRepo: "c34601512-cpu/bot-board",
-  boardIssue: 2, // 公告板贴号兜底值（评论满 50 条轮换；正常由 resolveBoardIssue 自动解析当前开放贴，仅 gh 查询失败时用它）
+  boardRepo: "c34601512-cpu/silicon-company",
+  boardIssue: 1, // 公告板贴号兜底值（评论满 50 条轮换；正常由 resolveBoardIssue 自动解析当前开放贴，仅 gh 查询失败时用它。2026-10-11 频道迁到 silicon-company）
   ghCmd: "gh",
   ghConfigDir: path.join(os.homedir(), ".config", "gh-bots"),
   ghFallbackPath: "C:\\Program Files\\GitHub CLI\\gh.exe",
