@@ -1,0 +1,3 @@
+# 本包的换行规矩（脚本源码默认 LF；别把它改成 CRLF）
+*.cjs text eol=lf
+*.js text eol=lf

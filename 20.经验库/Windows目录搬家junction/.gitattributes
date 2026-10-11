@@ -1,0 +1,4 @@
+# 本包的换行规矩（Windows 脚本规范；别改成 LF）
+*.cmd text eol=crlf
+*.bat text eol=crlf
+*.ps1 text eol=crlf
