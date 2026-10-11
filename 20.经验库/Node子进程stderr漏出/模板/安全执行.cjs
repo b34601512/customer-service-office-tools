@@ -10,7 +10,8 @@ function 安全执行(命令, 参数 = [], { 超时毫秒 = 30000, 工作目录 
       cwd: 工作目录,
       windowsHide: true,
       // ★ 收口这一行：子进程 stderr 收进异常对象（e.stderr），不往父进程漏
-      stdio: ["ignore", "pipe", "pipe"],
+      //   用 ["pipe","pipe","pipe"]：带 input 也能正常喂进去；若确定不喂 input，["ignore",…] 也行
+      stdio: ["pipe", "pipe", "pipe"],
     });
     return { 成功: true, 状态码: 0, 输出: 输出.trim(), 错误: "" };
   } catch (e) {

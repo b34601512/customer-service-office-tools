@@ -30,17 +30,22 @@ Node 的 `execFileSync`（以及 `execSync`，实测同样）默认把子进程 
 const 输出 = execFileSync("gh", ["api", q], {
   encoding: "utf8",
   timeout: 30000,
-  stdio: ["ignore", "pipe", "pipe"],   // ★ 收口：子进程 stderr 只进异常对象，不外漏
+  stdio: ["pipe", "pipe", "pipe"],   // ★ 收口：子进程 stderr 只进异常对象，不外漏
 });
 ```
 
 一般规律：**监听 / 守护 / 循环脚本里调外部命令，一律收口**；失败信息只落日志或告警，
 不许「顺手」漏到 stderr。
 
+> 为什么用 `["pipe","pipe","pipe"]` 而不是 `["ignore","pipe","pipe"]`：
+> **只要你的调用可能带 `input`（往子进程 stdin 喂数据），stdin 写 `"ignore"` 会把 input 静默吞掉**——
+> 子进程收到空输入、`status` 还是 0、不报错（2026-10-11 实测）。`"pipe"` 两头都稳：
+> 带 input 正常喂进去，stderr 照样收口。确定不喂 input 的监听脚本，用 `"ignore"` 也没问题。
+
 ## 四、给 AI 的执行说明（照做）
 
 1. **找**：搜代码里的 `execFileSync` / `execSync` / `spawnSync` 调用点；
-2. **改**：加 `stdio: ["ignore", "pipe", "pipe"]`（spawn 系按同样思路配），补上 `try/catch` 与 `timeout`；
+2. **改**：加 `stdio: ["pipe", "pipe", "pipe"]`（有 `input` 也安全），补上 `try/catch` 与 `timeout`；spawn/spawnSync 默认本就是 pipe、不会漏，显式写只是保险；
 3. **验证**（怎么算修好了）：
    - 故意让子命令失败（跑一条必报错的命令），**父进程 stderr 应当为空**；
    - 失败信息能在返回值/日志里看到（`e.stderr`、`e.status`）；
@@ -65,6 +70,10 @@ stderr.log 里只有 1 行：
 
 `execSync` 默认同样会漏（实测：父进程 stderr 出现子进程的报错行）。
 
+追加实测（2026-10-11，复核：巡检员·霍青桐）：带 `input` 时——
+`stdio: ["ignore","pipe","pipe"]` → 子进程收到**空输入**（静默吞掉、status 仍 0）；
+`stdio: ["pipe","pipe","pipe"]` → 输入正常送达、stderr 照样收口。
+
 `node 模板\安全执行.cjs` 自测：
 
 ```
@@ -75,5 +84,5 @@ stderr.log 里只有 1 行：
 
 ## 七、出处与许可
 
-- 「硅基公司」实践沉淀（原始整理：巡检员·霍青桐，2026-10-11 监听脚本实测）；对外改写＋实测：推广专员·钟灵（2026-10-11）。
+- 「硅基公司」实践沉淀（原始整理：巡检员·霍青桐，2026-10-11 监听脚本实测）；对外改写＋实测：推广专员·钟灵（2026-10-11）；`input` 口径复核与补测：巡检员·霍青桐（2026-10-11）。
 - 随便用、随便改、随便分享。
