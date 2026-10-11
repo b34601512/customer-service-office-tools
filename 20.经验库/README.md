@@ -24,6 +24,7 @@
 | [Python路径转义坑](./Python路径转义坑/) | 路径里的 `\` 是转义符：`"C:\2026\7月"` 静默变怪串 → raw＋pathlib＋repr 回读；带扫描工具 | `工具\查转义.py`、`模板\安全路径.py`、`复现\转义现场.py` |
 | [Node子进程stderr漏出](./Node子进程stderr漏出/) | execFileSync/execSync 默认把子进程 stderr 漏到父进程（日志污染/假唤醒）→ 一行 stdio 收口 | `模板\安全执行.cjs`、`复现\对比实验.cjs` |
 | [Windows目录搬家junction](./Windows目录搬家junction/) | 目录改名/挪盘、旧路径不断档：junction（传送门）＋删门安全实测 | `工具\建联接.cmd`、`工具\查联接.ps1` |
+| [pi窗口互发私信](./pi窗口互发私信/) | 多个 pi 窗口互相通知/叫醒：本地信箱（JSONL）＋收信扩展注入用户消息；关窗补投 | `扩展\私信收.ts`、`工具\发信.cjs`、`测试\冒烟测试.mjs` |
 
 ## 使用约定
 
