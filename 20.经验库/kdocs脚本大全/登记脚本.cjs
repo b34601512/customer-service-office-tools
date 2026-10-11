@@ -6,7 +6,7 @@
 // 没有 --已确认 只做预览，不写表。
 const path = require("path");
 const fs = require("fs");
-const { 跑脚本 } = require(path.resolve(__dirname, "../../2.发票自动化/7.自动登记发票/src/金山脚本客户端"));
+const { 跑脚本 } = require(path.resolve(__dirname, "金山脚本客户端"));
 
 function 现在() {
   const d = new Date();

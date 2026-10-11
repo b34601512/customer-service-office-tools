@@ -176,3 +176,6 @@ tools/git-secret-store.json.bak
 
 # 探域全库快照（含客户电话等真值，只留本机，不入公共仓库）
 *全库*.json
+
+# 金山 AirScript 客户端配置（含令牌与 webhook，本机保留不入库）
+**/project-config/kdocs-airscript.json

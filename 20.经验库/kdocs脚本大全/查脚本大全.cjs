@@ -4,10 +4,10 @@
 //   node 查脚本大全.cjs --项目 "7号"           → 只看某项目
 //   node 查脚本大全.cjs --动作 write_jituan --正文   → 打印某脚本正文全文
 //   node 查脚本大全.cjs --动作 write_jituan --导出 ../x.md  → 正文写到本地文件
-// 配置：2.发票自动化/7.自动登记发票/project-config/kdocs-airscript.json（含 apiToken 与 脚本大全_读取 的 webhook，不入库）
+// 配置：本目录 project-config/kdocs-airscript.json（自足副本；含 apiToken 与 脚本大全_读取 的 webhook，不入库）
 const path = require("path");
 const fs = require("fs");
-const { 跑脚本 } = require(path.resolve(__dirname, "../../2.发票自动化/7.自动登记发票/src/金山脚本客户端"));
+const { 跑脚本 } = require(path.resolve(__dirname, "金山脚本客户端"));
 
 async function main() {
   const argv = process.argv.slice(2);
