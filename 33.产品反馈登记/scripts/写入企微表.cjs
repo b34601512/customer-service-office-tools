@@ -16,7 +16,12 @@ const { execFileSync } = require("node:child_process");
 const 项目根 = path.resolve(__dirname, "..");
 const WECOM = "C:/Users/b3460/AppData/Roaming/npm/node_modules/@wecom/cli/bin/wecom.js";
 const 配置路径 = path.join(项目根, "project-config", "企微产品问题表.local.json");
-const 预期表头 = ["登记日期", "反馈人", "产品型号", "问题描述", "反馈对象", "反馈日期", "处理进度", "处理结果", "备注"];
+const 文字列 = ["登记日期", "反馈人", "产品型号", "问题描述", "反馈对象", "反馈日期", "处理进度", "处理结果", "备注"];
+// 表头 = 9 个文字列 + 若干「图片N」列（2026-10-12 表里已加到 图片4；图片列由人工贴图，API 不能写图片单元格）
+function 表头合规(表头) {
+  if (表头.length < 9 || JSON.stringify(表头.slice(0, 9)) !== JSON.stringify(文字列)) return false;
+  return 表头.slice(9).every((列) => /^图片\d+$/.test(列));
+}
 
 function 解析参数(argv) {
   const 参 = { 数据: "", 预演: false, docid: "", sheetId: "" };
@@ -79,7 +84,7 @@ if (!参.数据 || !fs.existsSync(数据全路径)) throw new Error(`数据文�
 const 数据 = JSON.parse(fs.readFileSync(数据全路径, "utf8"));
 if (!Array.isArray(数据.行) || !数据.行.length) throw new Error("数据文件没有「行」数组");
 for (const 行 of 数据.行) {
-  if (!Array.isArray(行) || 行.length !== 9) throw new Error(`每行应为 9 格（登记日期|反馈人|产品型号|问题描述|反馈对象|反馈日期|处理进度|处理结果|备注），实得 ${Array.isArray(行) ? 行.length : "非数组"}`);
+  if (!Array.isArray(行) || 行.length !== 9) throw new Error(`每行应为 9 个文字格（登记日期|反馈人|产品型号|问题描述|反馈对象|反馈日期|处理进度|处理结果|备注），实得 ${Array.isArray(行) ? 行.length : "非数组"}`);
 }
 console.log(`33号 写企微表：${数据.日期 || "(无日期)"}，${数据.行.length} 行；数据文件 ${path.relative(项目根, 数据全路径)}`);
 
@@ -87,10 +92,13 @@ console.log(`33号 写企微表：${数据.日期 || "(无日期)"}，${数据.�
 const 前CSV = 读现表CSV(配置);
 const 前非空 = 非空行(前CSV);
 const 表头 = (前非空[0] || "").split(",");
-if (JSON.stringify(表头) !== JSON.stringify(预期表头)) {
-  throw new Error(`表头与预期不符，停手报人：\n  实际：${JSON.stringify(表头)}\n  预期：${JSON.stringify(预期表头)}`);
+if (!表头合规(表头)) {
+  throw new Error(`表头与预期不符，停手报人：\n  实际：${JSON.stringify(表头)}\n  预期：前 9 列 ${JSON.stringify(文字列)}，其后只能是「图片N」`);
 }
 console.log(`现表：${前非空.length} 行（表头+数据），将在第 ${前非空.length + 1} 行起追加 ${数据.行.length} 行`);
+
+// 文字行补齐到表头列数（图片列留空，由人工贴图）
+const 补齐 = (行) => [...行, ...Array(表头.length - 9).fill("")];
 
 if (参.预演) {
   for (const 行 of 数据.行) console.log("  [预演] " + 行.map((格) => String(格 == null ? "" : 格).slice(0, 30)).join(" | "));
@@ -100,7 +108,7 @@ if (参.预演) {
   for (const 行 of 数据.行) {
     const 返回 = 取返回载荷(调企微([
       "sheet", "rows", "append", "--docid", 配置.docid, "--sheet-id", 配置.sheet_id,
-      "--row", JSON.stringify(行转企微(行))
+      "--row", JSON.stringify(行转企微(补齐(行)))
     ]));
     console.log(`追加返回：errcode=${返回.errcode}（${返回.errmsg || "ok"}）`);
   }
