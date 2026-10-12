@@ -69,9 +69,12 @@ function 非空行(csv) {
   return csv.split(/\r?\n/).filter((行) => 行.trim() !== "");
 }
 
+// 统一 12 号字（2026-10-12 老板定）：不设的话追加行默认是 8 号
+const 字格式 = { text_format: { font: "SimSun", font_size: 12, color: { alpha: 255 } } };
+
 function 行转企微(cells) {
   return {
-    values: cells.map((值) => ({ cell_value: { text: String(值 == null ? "" : 值) }, data_type: "TEXT" }))
+    values: cells.map((值) => ({ cell_format: 字格式, cell_value: { text: String(值 == null ? "" : 值) }, data_type: "TEXT" }))
   };
 }
 
