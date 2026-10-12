@@ -23,6 +23,7 @@
 - ✅ **首写完成**：9 列表头 + 湿化瓶 1 行（第 2 行）；探针/写表头/预演/写入回读全 0 差异 + 独立只读回读（24号）逐格 0 差异。
 - 已登记《AirScript 脚本大全》第 17 行（`write_product_issue`）；脚本已由黎路遥粘贴、webhook 已配（`project-config/kdocs-airscript.local.json`）；`node --test tests/airscript模拟.test.cjs` → **16/16**。
 - ✅ 终验 bug 已修（调用器终验改 `写.末行` + 回归测试锁死）。
+- 令牌回退链（2026-10-12 更新）：本机配置 → `../12.店铺指标数据自动更新/project-config/platform-config.json`（`kdocsDataSourceSync.apiToken`）。
 - 待办：仅「列头要改就说」；后续进度/结果人工在表里改。
 
 ## 红线

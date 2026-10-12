@@ -3,7 +3,7 @@
 //
 // 数据通道：目标文档里贴好的 AirScript「产品问题-写入」（kdocs-scripts/AirScript-产品问题-写入.md，
 // 普通 AirScript 即可，不需要 2.0 Beta）→ 本机存的同步 webhook。
-// webhook / 令牌都不入库：project-config/kdocs-airscript.local.json（令牌回退链：本配置 → 7号）。
+// webhook / 令牌都不入库：project-config/kdocs-airscript.local.json（令牌回退链：本配置 → 12号 platform-config 的 kdocsDataSourceSync.apiToken；2026-10-12 修：2号 迁走后不再指旧路径）。
 // 失败不自动重试（用户铁律）；每一步回读差异都必须为 0，否则停手报人。
 //
 // 用法：
