@@ -13,7 +13,9 @@ const path = require("node:path");
 
 const 项目根 = path.resolve(__dirname, "..");
 const 仓库根 = path.resolve(项目根, "..");
-const 读表CLI = path.join(仓库根, "24.平台退款复查", "src", "tools", "read-kdocs.js");
+// 24号 2026-10-11 迁到 后台专员·骆冰 名下（原地相对路径失效；2026-10-12 改绝对路径）。
+const 读表项目根 = "D:/硅基公司/员工/后台专员·骆冰/专项/24.平台退款复查";
+const 读表CLI = path.join(读表项目根, "src", "tools", "read-kdocs.js");
 
 // 表链接放本机 project-config/links.local.json（不入库）。
 function 读链接() {
@@ -35,7 +37,7 @@ function 读工作表({ 表, 工作表, 落盘 = "", 超时毫秒 = 240000 }) {
   fs.mkdirSync(path.dirname(输出), { recursive: true });
   const 参数 = [读表CLI, "--url", 链接, "--sheet", 工作表, "--out", 输出];
   const 进程 = spawnSync(process.execPath, 参数, {
-    cwd: path.join(仓库根, "24.平台退款复查"),
+    cwd: 读表项目根,
     encoding: "utf8",
     timeout: 超时毫秒,
     maxBuffer: 128 * 1024 * 1024
