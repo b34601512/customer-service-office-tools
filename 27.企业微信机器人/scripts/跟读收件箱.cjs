@@ -2,17 +2,27 @@
 // 跟读收件箱：挂在 Monitor 上，收件箱一有新行就打印一行 —— 打印会触发 monitor:output 事件，
 // 事件唤醒 AI（消息一到就秒级响应，不必定时轮询）。平时保持安静：没新消息不输出，免得假唤醒。
 //
+// 2026-10-13 v2（对齐王语嫣核心 .40 的修复，防「空响」）——两道保险：
+//   ① 消息级去重：同一条（认 msgid/reqId，认不出按整行指纹）不重播；文件被重写/轮转回读、
+//      事件重放时，旧消息不会再打一遍（一次重放＝一串假唤醒，能防就防）。
+//   ② 游标续跟：记住「已跟到第几条、最后一条的 ID」（.state/收件箱跟读.json）；监听重启后从
+//      断点接着打——停机期间进来的消息启动时补打，旧消息不重打；断点对不上（文件大改）→
+//      静默从当前末尾跟，不回溯重放。
+//
 // 只打印「时间 + 单聊/群聊 + 类型 + 正文摘要」，**不打印任何内部 ID**（userid / chat_id / msgid）。
 //
 // 用法：
-//   node scripts/跟读收件箱.cjs              # 从当前文件末尾开始跟（守护已在跑时用这个）
-//   node scripts/跟读收件箱.cjs --从头        # 先把已有消息打一遍（调试用）
+//   node scripts/跟读收件箱.cjs              # 从游标续跟（首次从末尾起）
+//   node scripts/跟读收件箱.cjs --从头        # 忽略游标，把已有消息全打一遍（调试用）
 //   node scripts/跟读收件箱.cjs --文件 <路径> # 改读别的文件（联调用，不碰真实收件箱）
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 
 const 根目录 = path.resolve(__dirname, '..');
 const 默认收件箱 = path.join(根目录, '.state', 'inbox.jsonl');
+const 默认状态文件 = path.join(根目录, '.state', '收件箱跟读.json');
+const 去重窗口 = 500; // 记住最近这么多条消息的身份证（够盖住整箱重写）
 const 轮询毫秒 = 1500;
 
 /** 从「偏移」处读出新增的完整行；返回新偏移（半行不读，留到下一轮拼接）。 */
@@ -59,6 +69,105 @@ function 摘要行(行) {
   return `【新消息】${时间} ${谁}[${类}]${引用} ${正文}${附件}`.trimEnd();
 }
 
+/** 一条记录的「身份证」：优先 msgid/reqId；都没有就用整行指纹。 */
+function 行ID(行) {
+  try {
+    const r = JSON.parse(行);
+    const id = String(r.msgid || r.reqId || '').trim();
+    if (id) return id;
+  } catch {
+    /* 落到指纹 */
+  }
+  return 'fp:' + crypto.createHash('sha1').update(行).digest('hex').slice(0, 20);
+}
+
+/** 造一个去重器：同一个 ID 只放行一次；窗口滚动（保序列表 + 集合）。 */
+function 造去重器(近ID表, 近ID集) {
+  return (id) => {
+    if (近ID集.has(id)) return false;
+    近ID集.add(id);
+    近ID表.push(id);
+    if (近ID表.length > 去重窗口) {
+      for (const x of 近ID表.splice(0, 近ID表.length - 去重窗口)) 近ID集.delete(x);
+    }
+    return true;
+  };
+}
+
+function 载状态(状态文件) {
+  try {
+    const j = JSON.parse(fs.readFileSync(状态文件, 'utf8'));
+    return {
+      已播条数: Math.max(0, Math.trunc(Number(j.已播条数) || 0)),
+      尾ID: String(j.尾ID || ''),
+      近ID: Array.isArray(j.近ID) ? j.近ID.map(String) : [],
+    };
+  } catch {
+    return { 已播条数: 0, 尾ID: '', 近ID: [] };
+  }
+}
+
+function 存状态(状态文件, 状态) {
+  try {
+    fs.mkdirSync(path.dirname(状态文件), { recursive: true });
+    const 临时 = 状态文件 + '.tmp';
+    fs.writeFileSync(临时, JSON.stringify({ ...状态, 更新时间: new Date().toISOString() }, null, 2), 'utf8');
+    fs.renameSync(临时, 状态文件);
+  } catch {
+    /* 写不进去不致命：大不了下次重启从末尾起跟 */
+  }
+}
+
+/** 启动读一遍：按游标续跟（补打停机期间的新消息）/ 首次从末尾起；返回运行态，供跟读循环用。 */
+function 启动读一遍(收件箱, 状态文件, 从头, 输出) {
+  const 旧状态 = 载状态(状态文件);
+  const 近ID表 = 旧状态.近ID.slice(-去重窗口);
+  const 近ID集 = new Set(近ID表);
+  const 记ID = 造去重器(近ID表, 近ID集);
+
+  let 已播条数 = 0;
+  let 尾ID = '';
+  const 打一行 = (行, 忽略去重 = false) => {
+    const id = 行ID(行);
+    if (!忽略去重 && !记ID(id)) return false; // 见过 → 不重播
+    输出(摘要行(行));
+    return true;
+  };
+
+  const 原始 = fs.existsSync(收件箱) ? fs.readFileSync(收件箱, 'utf8') : '';
+  const 尾切 = 原始.lastIndexOf('\n');
+  const 全部 = (尾切 >= 0 ? 原始.slice(0, 尾切) : '').split('\n').map((l) => l.trim()).filter(Boolean);
+  const 末行ID = () => (全部.length ? 行ID(全部[全部.length - 1]) : '');
+
+  if (从头) {
+    // 调试：全打一遍（去重不生效、随后按本次位置建游标）
+    for (const l of 全部) 打一行(l, true);
+    近ID表.length = 0;
+    近ID集.clear();
+    for (const l of 全部.slice(-去重窗口)) 记ID(行ID(l));
+    已播条数 = 全部.length;
+    尾ID = 末行ID();
+  } else if (
+    旧状态.已播条数 > 0 &&
+    旧状态.已播条数 <= 全部.length &&
+    行ID(全部[旧状态.已播条数 - 1]) === 旧状态.尾ID
+  ) {
+    // 续跟：断点对得上 → 补打停机期间的新消息（旧消息被近ID挡着，不会重播）
+    const 新 = 全部.slice(旧状态.已播条数);
+    for (const l of 新) 打一行(l);
+    已播条数 = 旧状态.已播条数 + 新.length;
+    尾ID = 新.length ? 行ID(新[新.length - 1]) : 旧状态.尾ID;
+  } else {
+    // 首次，或文件动过对不上：从当前末尾起跟（不回溯重放）；末尾这些记进去重表，
+    // 将来文件被重写回读时也不会重播
+    已播条数 = 全部.length;
+    尾ID = 末行ID();
+    for (const l of 全部.slice(-去重窗口)) 记ID(行ID(l));
+  }
+  存状态(状态文件, { 已播条数, 尾ID, 近ID: 近ID表 });
+  return { 已播条数, 尾ID, 近ID表, 近ID集 };
+}
+
 /** 解析命令行（纯函数，便于单测）。 */
 function 取参数(argv) {
   const 参数 = { 从头: false, 文件: 默认收件箱 };
@@ -74,16 +183,30 @@ function 取参数(argv) {
 
 function 主流程() {
   const 参数 = 取参数(process.argv.slice(2));
-  let 偏移 = 参数.从头 ? 0 : (fs.existsSync(参数.文件) ? fs.statSync(参数.文件).size : 0);
+  const 状态文件 = 参数.文件 === 默认收件箱 ? 默认状态文件 : 参数.文件 + '.跟读状态.json';
+  const 运行态 = 启动读一遍(参数.文件, 状态文件, 参数.从头, (行) => console.log(行));
+  const 记ID = 造去重器(运行态.近ID表, 运行态.近ID集);
+
+  const 原始 = fs.existsSync(参数.文件) ? fs.readFileSync(参数.文件, 'utf8') : '';
+  const 尾切 = 原始.lastIndexOf('\n');
+  let 偏移 = 尾切 >= 0 ? Buffer.byteLength(原始.slice(0, 尾切 + 1), 'utf8') : 0;
+
   const 跟 = () => {
     const 结果 = 读新字节(参数.文件, 偏移);
+    const 轮转过 = 结果.偏移 < 偏移; // 文件被清空/重写：这一轮读到的是全体行
+    for (const 行 of 结果.行) {
+      if (记ID(行ID(行))) console.log(摘要行(行));
+    }
     偏移 = 结果.偏移;
-    for (const 行 of 结果.行) console.log(摘要行(行));
+    if (结果.行.length) {
+      运行态.已播条数 = 轮转过 ? 结果.行.length : 运行态.已播条数 + 结果.行.length;
+      运行态.尾ID = 行ID(结果.行[结果.行.length - 1]);
+      存状态(状态文件, { 已播条数: 运行态.已播条数, 尾ID: 运行态.尾ID, 近ID: 运行态.近ID表 });
+    }
   };
-  if (参数.从头) 跟();
   setInterval(跟, 轮询毫秒);
 }
 
 if (require.main === module) 主流程();
 
-module.exports = { 读新字节, 摘要行, 本地时分, 取参数, 默认收件箱 };
+module.exports = { 读新字节, 摘要行, 本地时分, 取参数, 默认收件箱, 行ID, 造去重器, 启动读一遍 };

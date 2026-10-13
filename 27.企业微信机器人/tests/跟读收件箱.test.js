@@ -5,7 +5,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const { 读新字节, 摘要行, 本地时分, 取参数, 默认收件箱 } = require('../scripts/跟读收件箱.cjs');
+const { 读新字节, 摘要行, 本地时分, 取参数, 默认收件箱, 行ID, 造去重器, 启动读一遍 } = require('../scripts/跟读收件箱.cjs');
 
 test('本地时分：ISO（UTC）要换算成本地时间，不能直接切末尾', () => {
   // 2026-10-01T05:31:24.272Z 在 GMT+8 就是 13:31（2026-10-01 实踩：显示成 05:31）
@@ -71,4 +71,82 @@ test('读新字节：文件被清空/轮转 → 偏移自愈从头读', () => {
   const 结果 = 读新字节(文件, 尾);
   assert.deepEqual(结果.行, ['新']);
   fs.rmSync(目录, { recursive: true, force: true });
+});
+
+test('行ID：优先 msgid；没有 msgid 用整行指纹（稳定、不泄露）', () => {
+  const 有ID = JSON.stringify({ msgid: 'm-9', text: 'x' });
+  assert.equal(行ID(有ID), 'm-9');
+  const 无ID = JSON.stringify({ text: '没有 msgid 的一行' });
+  const 指纹 = 行ID(无ID);
+  assert.match(指纹, /^fp:[0-9a-f]{20}$/);
+  assert.equal(行ID(无ID), 指纹); // 同一行指纹稳定
+  assert.notEqual(行ID(JSON.stringify({ text: '另一行' })), 指纹);
+});
+
+test('去重器：同一 ID 只放行一次，不同 ID 照常放行', () => {
+  const 表 = [];
+  const 集 = new Set();
+  const 记ID = 造去重器(表, 集);
+  assert.equal(记ID('a'), true);
+  assert.equal(记ID('a'), false); // 重播被拦
+  assert.equal(记ID('b'), true);
+  assert.deepEqual(表, ['a', 'b']);
+});
+
+test('启动读一遍：首次静默、续跟补打、重写不重播、断点失效不回溯、从头全打', () => {
+  const 目录 = fs.mkdtempSync(path.join(os.tmpdir(), '跟读游标-'));
+  const 文件 = path.join(目录, 'inbox.jsonl');
+  const 状态 = path.join(目录, '跟读状态.json');
+  const 行 = (id, 文) => JSON.stringify({ at: '2026-10-13 18:00:00', msgid: id, chattype: 'single', kind: 'text', text: 文 });
+  fs.writeFileSync(文件, 行('m1', '一') + '\n' + 行('m2', '二') + '\n', 'utf8');
+  const 收 = [];
+  const 输出 = (s) => 收.push(s);
+
+  // 首次：静默从末尾起（不回溯重放旧消息）
+  启动读一遍(文件, 状态, false, 输出);
+  assert.deepEqual(收, []);
+
+  // 续跟：停机期间追加的 m3 启动时补打
+  fs.appendFileSync(文件, 行('m3', '三') + '\n', 'utf8');
+  启动读一遍(文件, 状态, false, 输出);
+  assert.deepEqual(收, ['【新消息】18:00 单聊[text] 三']);
+
+  // 文件被整箱重写（内容一致）：游标对得上 → 不重播
+  fs.writeFileSync(文件, 行('m1', '一') + '\n' + 行('m2', '二') + '\n' + 行('m3', '三') + '\n', 'utf8');
+  启动读一遍(文件, 状态, false, 输出);
+  assert.deepEqual(收, ['【新消息】18:00 单聊[text] 三']); // 没有新增输出
+
+  // 文件被大改（行数缩水）：断点对不上 → 静默从末尾起，不回溯
+  fs.writeFileSync(文件, 行('m9', '九') + '\n', 'utf8');
+  启动读一遍(文件, 状态, false, 输出);
+  assert.deepEqual(收, ['【新消息】18:00 单聊[text] 三']); // 仍无新增
+
+  // --从头：全打一遍
+  收.length = 0;
+  启动读一遍(文件, 状态, true, 输出);
+  assert.deepEqual(收, ['【新消息】18:00 单聊[text] 九']);
+
+  fs.rmSync(目录, { recursive: true, force: true });
+});
+
+test('主流程冒烟：--文件 模式能跟到新行（spawn）', async () => {
+  const { spawn } = require('node:child_process');
+  const 目录 = fs.mkdtempSync(path.join(os.tmpdir(), '跟读冒烟-'));
+  const 文件 = path.join(目录, 'inbox.jsonl');
+  fs.writeFileSync(文件, '', 'utf8');
+  const 子 = spawn(process.execPath, [path.join(__dirname, '..', 'scripts', '跟读收件箱.cjs'), '--文件', 文件], { stdio: ['ignore', 'pipe', 'pipe'] });
+  let 输出 = '';
+  子.stdout.on('data', (d) => { 输出 += String(d); });
+  try {
+    await new Promise((r) => setTimeout(r, 500)); // 等启动
+    fs.appendFileSync(文件, JSON.stringify({ at: '2026-10-13 18:30:00', msgid: 'sp1', chattype: 'single', kind: 'text', text: '冒烟' }) + '\n', 'utf8');
+    const 截止 = Date.now() + 6000;
+    while (Date.now() < 截止 && !输出.includes('冒烟')) await new Promise((r) => setTimeout(r, 200));
+    assert.match(输出, /【新消息】18:30 单聊\[text\] 冒烟/);
+    assert.doesNotMatch(输出, /sp1/); // 反向锁：内部 ID 不许打印
+  } finally {
+    子.kill();
+    await new Promise((r) => setTimeout(r, 200));
+    fs.rmSync(目录, { recursive: true, force: true, maxRetries: 3 });
+  }
 });
