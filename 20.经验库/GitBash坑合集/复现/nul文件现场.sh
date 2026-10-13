@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # 演示：Git Bash 里 `> nul` 会真的建出一个「nul」文件；并演示正确的清理姿势。
 # 注：.sh 里变量名用 ASCII——中文变量名 bash 不认（本包第 4 条坑，整理本包时又踩了一次）。
-# 运行：bash 复现/nul文件现场.sh    （一次性目录里跑；脚本自带清理）
+# 运行：bash 复现/nul文件现场.sh    （一次性目录里跑；清理 nul 本体，备份与工作目录会留下，看完可自行删）
 set -u
 DIR="${TMPDIR:-/tmp}/gitbash-nul-demo-$$"
 mkdir -p "$DIR" && cd "$DIR" || exit 1
@@ -46,3 +46,4 @@ echo "4) 收尾："
 ls -la
 echo
 echo "教训：bash 里屏输出用  > /dev/null 2>&1 ；『nul』这个名字在 Windows 上碰不得。"
+echo "（工作目录与 nul.内容备份.bin 留在 $DIR，看完可自行删除整个目录。）"

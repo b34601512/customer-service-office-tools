@@ -31,6 +31,9 @@
 | [程序弹黑窗-windowsHide](./程序弹黑窗-windowsHide/) | 起控制台子进程没带 windowsHide→屏幕多出空白黑窗；修法＝spawn 加 windowsHide:true＋存量窗 ShowWindow 藏掉；含对照实验与列窗工具 | `复现\对比实验.js`、`模板\静默起进程.cjs`、`工具\列可见窗.ps1` |
 | [W32Time本机校时](./W32Time本机校时/) | 「服务器差 20 秒」先对本机：w32time 可能从未启动；修法＝启动/自启/重注册/逐源对时；含多源偏移检查脚本与提权/转义坑 | `工具\查时间偏移.py` |
 | [GitBash坑合集](./GitBash坑合集/) | MSYS Git Bash 六个坑：>nul 建文件、反引号被吃、中文变量名、/tmp 两套理解、heredoc 吃转义、斜杠参数被转路径；附现场复现与清保留名工具 | `复现\nul文件现场.sh`、`模板\清保留名文件.py` |
+| [官网扒前端三招](./官网扒前端三招/) | 官网 SPA 搜不到直链/功能只在 App 里：①JS bundle 找接口 ②扫 app.asar 文案 ③大文件偏移切片（附工具，别用 grep -P 卡死） | `工具\大文件找上下文.cjs` |
+| [SPA官网抓直链](./SPA官网抓直链/) | 直链是点击时 JS 拼的：装钩子（window.open／<a>.click／捕获点击）→ 触发按钮 → 读记录；含同名多按钮的坑 | `模板\抓点击URL.js` |
+| [搜索与API限额备胎](./搜索与API限额备胎/) | Bing 弹验证→DDG HTML；GitHub 未认证 API 60次/时→r.jina.ai 代理/已登录 CLI；附 DDG 搜索工具（风控自动走代理） | `工具\ddg搜索.sh` |
 
 ## 使用约定
 
