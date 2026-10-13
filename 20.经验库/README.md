@@ -27,6 +27,10 @@
 | [pi窗口互发私信](./pi窗口互发私信/) | 多个 pi 窗口互相通知/叫醒：本地信箱（JSONL）＋收信扩展注入用户消息；关窗补投 | `扩展\私信收.ts`、`工具\发信.cjs`、`测试\冒烟测试.mjs` |
 | [企微AI员工体系-从零搭建](./企微AI员工体系-从零搭建/) | 从零搭一套「企微机器人＋AI 员工队」：收件守护（唯一长连接）→ 收件箱 JSONL → 监听唤醒 → 按需叫醒/闲置收窗 → 私信 → 看门狗/睡眠整理；九级台阶＋验收清单＋实测坑 | `骨架\守护骨架.mjs`、`骨架\直连骨架.mjs`、`工具\跟读JSONL.mjs`、`工具\读JSONL游标.mjs`、`测试\冒烟测试.mjs` |
 | [agents.md](./agents.md/) | 一份「全局 AGENTS.md」示例（用户主目录级、给各 AI 工具读的总规矩）：对 AI 的担忧、行动边界（不可逆操作要口令确认）、Issue 与沟通偏好——可直接照抄按自家规矩改 | 暂无 |
+| [PowerShell输出GBK-Python乱码](./PowerShell输出GBK-Python乱码/) | 中文机上 PowerShell 默认按 GBK 写 stdout，Python 按 UTF-8 读→中文乱码还静默；对策＝先切 OutputEncoding 再读，含复现与安全读封装 | `复现\乱码现场.py`、`模板\安全读PowerShell.py` |
+| [程序弹黑窗-windowsHide](./程序弹黑窗-windowsHide/) | 起控制台子进程没带 windowsHide→屏幕多出空白黑窗；修法＝spawn 加 windowsHide:true＋存量窗 ShowWindow 藏掉；含对照实验与列窗工具 | `复现\对比实验.js`、`模板\静默起进程.cjs`、`工具\列可见窗.ps1` |
+| [W32Time本机校时](./W32Time本机校时/) | 「服务器差 20 秒」先对本机：w32time 可能从未启动；修法＝启动/自启/重注册/逐源对时；含多源偏移检查脚本与提权/转义坑 | `工具\查时间偏移.py` |
+| [GitBash坑合集](./GitBash坑合集/) | MSYS Git Bash 六个坑：>nul 建文件、反引号被吃、中文变量名、/tmp 两套理解、heredoc 吃转义、斜杠参数被转路径；附现场复现与清保留名工具 | `复现\nul文件现场.sh`、`模板\清保留名文件.py` |
 
 ## 使用约定
 
