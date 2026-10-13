@@ -300,10 +300,14 @@ async function 离线自检() {
 }
 
 // ---------------------------------------------------------------------------
-if (参.帮助) {
-  console.log("用法：node 守护骨架.mjs [--check|--离线自检|--接管] [--凭据 <文件>] [--收件箱 <目录>] [--端口 <n>]");
-} else if (参.离线自检) {
-  await 离线自检();
-} else {
-  await 连上常驻();
+export async function main() {
+  if (参.帮助) {
+    console.log("用法：node 守护骨架.mjs [--check|--离线自检|--接管] [--凭据 <文件>] [--收件箱 <目录>] [--端口 <n>]");
+  } else if (参.离线自检) {
+    await 离线自检();
+  } else {
+    await 连上常驻();
+  }
 }
+
+if (process.argv[1] && process.argv[1].replace(/\\/g, "/").endsWith("守护骨架.mjs")) await main();
