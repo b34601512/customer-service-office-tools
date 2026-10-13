@@ -7,14 +7,19 @@ q="${1:?用法：bash ddg搜索.sh \"关键词\" [条数]}"
 n="${2:-8}"
 UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
 
-resp=$(curl -s -A "$UA" -G --data-urlencode "q=$q" "https://html.duckduckgo.com/html/")
+resp=$(curl -s -m 20 -A "$UA" -G --data-urlencode "q=$q" "https://html.duckduckgo.com/html/")
 
 if printf '%s' "$resp" | grep -q "anomaly"; then
   # 直连被风控：改走 r.jina.ai 代理（实测能拿到结果页）
   echo "（直连被 DuckDuckGo 风控，改走 r.jina.ai 代理）" 1>&2
   enc=$(python -c "import sys,urllib.parse;print(urllib.parse.quote(sys.argv[1]))" "$q")
   resp=$(curl -s -m 45 "https://r.jina.ai/https://html.duckduckgo.com/html/?q=$enc")
-  printf '%s\n' "$resp" | grep -oE '^## \[[^]]+\]\([^)]+\)' | head -n "$n" | while IFS= read -r line; do
+  out=$(printf '%s\n' "$resp" | grep -oE '^## \[[^]]+\]\([^)]+\)' | head -n "$n")
+  if [ -z "$out" ]; then
+    echo "（代理也没抓到结果：稍后重试或换出口）"
+    exit 1
+  fi
+  printf '%s\n' "$out" | while IFS= read -r line; do
     title=$(printf '%s' "$line" | sed -nE 's/^## \[([^]]+)\].*/\1/p')
     link=$(printf '%s' "$line" | sed -nE 's/^## \[[^]]+\]\(([^)]+)\).*/\1/p')
     real=$(printf '%s' "$link" | sed -nE 's/.*[?&]uddg=([^&]+).*/\1/p')
@@ -29,10 +34,12 @@ if printf '%s' "$resp" | grep -q "anomaly"; then
   exit 0
 fi
 
-printf '%s' "$resp" | tr '\n' ' ' \
-  | grep -oE '<a[^>]*class="result__a"[^>]*>[^<]*' \
-  | head -n "$n" \
-  | while IFS= read -r line; do
+out=$(printf '%s' "$resp" | tr '\n' ' ' | grep -oE '<a[^>]*class="result__a"[^>]*>[^<]*' | head -n "$n")
+if [ -z "$out" ]; then
+  echo "（没抓到结果：直连返回里没有结果块——可能被风控/网络问题；可重试或换出口）"
+  exit 1
+fi
+printf '%s\n' "$out" | while IFS= read -r line; do
       link=$(printf '%s' "$line" | sed -nE 's/.*href="([^"]+)".*/\1/p')
       title=$(printf '%s' "$line" | sed -nE 's/.*>([^>]*)$/\1/p')
       real=$(printf '%s' "$link" | sed -nE 's/.*[?&]uddg=([^&]+).*/\1/p')
