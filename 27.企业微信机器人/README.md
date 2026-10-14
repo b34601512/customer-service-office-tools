@@ -265,7 +265,7 @@ Windows「启动」文件夹 木婉清-企微守护.lnk
 ```
 Windows「启动」文件夹 木婉清-开机开窗.lnk
   → 27.企业微信机器人\scripts\open-pi-window.cmd   （纯 ASCII，路径走 %~dp0）
-    → 在仓库根 D:\桌面\办公软件 起 pi，首条指令 = @27.企业微信机器人\boot-prompt.md
+    → 在仓库根 D:\桌面\木婉清 起 pi，首条指令 = @27.企业微信机器人\boot-prompt.md
       → 窗口自己：LoopCreate（事件 monitor:output）+ MonitorCreate（跟读收件箱.cjs）
         → 有新消息就被叫醒、按 boot-prompt.md 处理
 ```

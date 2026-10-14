@@ -48,7 +48,7 @@
 - 有配套脚本时优先直接运行，不要重写。脚本依赖借用已有项目即可：
 
 ```powershell
-$env:NODE_PATH = "D:\桌面\办公软件\1.客服超时督办\node_modules"
+$env:NODE_PATH = "D:\桌面\木婉清\12.店铺指标数据自动更新\node_modules"
 node "<脚本路径>" --help
 ```
 

@@ -18,7 +18,7 @@
 
 ## 使用方式（AI 驱动，无界面）
 
-所有命令在 `D:\桌面\办公软件\13.客服培训课件制作` 目录下执行，做法看 **SKILL.md**：
+所有命令在 `D:\桌面\木婉清\13.客服培训课件制作` 目录下执行，做法看 **SKILL.md**：
 
 1. 取数：`node src/cli.js fetch:full <顾客ID> --save <sid>`（京东，全量含机器人自动回复；自动回复会画成灰框）或 `node src/cli.js import <文件>`（手动）。
 2. AI 按 SKILL.md 契约写解析文件 `runtime/review/<基名>.review.json`。
@@ -28,7 +28,7 @@
 
 - 需 Chrome 已登录京东客服后台，并以**带调试端口 + 专用 profile** 启动（别用日常 profile，避免占用）：
   ```
-  chrome.exe --remote-debugging-port=9223 --user-data-dir="D:\桌面\办公软件\13.客服培训课件制作\runtime\browser-profile-jd6"
+  chrome.exe --remote-debugging-port=9223 --user-data-dir="D:\桌面\木婉清\13.客服培训课件制作\runtime\browser-profile-jd6"
   ```
 - 配置在 `runtime/config/config.json`（调试端口/页面标题匹配/接口地址/每页条数；不入库），模板见 `config.example.json`。
 - 取数一律走 `fetch:full`（CDP 驱动页面「查询 → 查看 → 切换为该用户全部聊天信息」并抓 `queryLastLogs`，含机器人自动回复；日期范围程序会自动放开）。旧接口 `kf.jd.com/chatLog/queryList.action`（单日、旧口径）**已不作课件取数用**。

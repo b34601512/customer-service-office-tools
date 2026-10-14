@@ -25,8 +25,8 @@
 - 本机无全局 `playwright-core`，借用已有项目的依赖即可，不要为读一次文档去重装：
 
 ```powershell
-$env:NODE_PATH = "D:\桌面\办公软件\1.客服超时督办\node_modules"
-node "D:\桌面\办公软件\20.经验库\金山在线Word文档读取\金山在线Word文档读取.cjs" --share-id 分享ID --profile C:/Users/b3460/.pi-edge-auto --out "输出目录"
+$env:NODE_PATH = "D:\桌面\木婉清\12.店铺指标数据自动更新\node_modules"
+node "D:\桌面\木婉清\20.经验库\金山在线Word文档读取\金山在线Word文档读取.cjs" --share-id 分享ID --profile C:/Users/b3460/.pi-edge-auto --out "输出目录"
 ```
 
 不要在脚本或笔记中硬编码Cookie、会话token和图片签名URL。浏览器画像只保存在本机。
@@ -140,7 +140,7 @@ node "金山在线Word文档读取.cjs" --share-id 分享ID --profile C:/Users/b
 在已打开文档的页面里换签名地址并逐张下载，不用再手写这一段。
 
 ```powershell
-set NODE_PATH=D:\桌面\办公软件\1.客服超时督办\node_modules
+set NODE_PATH=D:\桌面\木婉清\12.店铺指标数据自动更新\node_modules
 node "下载文档图片.cjs" --share-id 分享ID --pics online-pics.json --out "输出目录" [--limit 3]
 ```
 
