@@ -44,13 +44,14 @@ function 解析参数(argv) {
 function 加载playwright() {
   const 候选 = [
     path.join(项目根, "node_modules", "playwright-core"),
-    path.join(项目根, "..", "24.平台退款复查", "node_modules", "playwright-core"),
-    path.join(项目根, "..", "1.客服超时督办", "node_modules", "playwright-core")
+    path.join(项目根, "..", "12.店铺指标数据自动更新", "node_modules", "playwright-core"),
+    path.join(项目根, "..", "23.进店咨询导航问答优化", "node_modules", "playwright-core"),
+    path.join(项目根, "..", "31.京东售前业绩统计", "node_modules", "playwright-core")
   ];
   for (const p of 候选) {
     try { return require(p); } catch (错误) { /* 继续找 */ }
   }
-  throw new Error("找不到 playwright-core（32号没有 node_modules，尝试过 24号/1号）");
+  throw new Error("找不到 playwright-core（32号没有 node_modules，尝试过 12号/23号/31号）");
 }
 
 function 读链接(key) {

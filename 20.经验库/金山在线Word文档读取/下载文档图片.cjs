@@ -5,7 +5,7 @@
 //         需要看截图里的内容（培训文档、图片版教程）时用；只要正文不必跑这个。
 //
 // 用法：
-//   set NODE_PATH=D:\桌面\办公软件\1.客服超时督办\node_modules
+//   set NODE_PATH=D:\桌面\木婉清\12.店铺指标数据自动更新\node_modules
 //   node "下载文档图片.cjs" --share-id 分享ID --pics online-pics.json --out "输出目录"
 //   node "下载文档图片.cjs" --url "https://www.kdocs.cn/l/xxxx" --pics online-pics.json --out . --limit 3
 //

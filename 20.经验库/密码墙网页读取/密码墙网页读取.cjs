@@ -6,7 +6,7 @@
  *      输密码、点「确定」、读正文并截图。适用于飞书 wiki 分享页、探域后台页面等。
  *
  * 用法（先设 NODE_PATH 借用已有项目依赖，见同目录《密码墙网页读取经验.md》）：
- *   $env:NODE_PATH = "D:\桌面\办公软件\1.客服超时督办\node_modules"
+ *   $env:NODE_PATH = "D:\桌面\木婉清\12.店铺指标数据自动更新\node_modules"
  *   $env:PAGE_PASSWORD = "<密码>"
  *   node "密码墙网页读取.cjs" --url "https://my.feishu.cn/wiki/分享ID" --password-env PAGE_PASSWORD --out "C:/Users/b3460/.pi-edge-work"
  *
@@ -27,7 +27,7 @@ try {
   ({ chromium } = require('playwright-core'));
 } catch (e) {
   console.error('[错误] 找不到 playwright-core。请先设置 NODE_PATH 指向已有项目依赖，例如：');
-  console.error('  $env:NODE_PATH = "D:\\桌面\\办公软件\\1.客服超时督办\\node_modules"');
+  console.error('  $env:NODE_PATH = "D:\\桌面\\木婉清\\12.店铺指标数据自动更新\\node_modules"');
   process.exit(4);
 }
 

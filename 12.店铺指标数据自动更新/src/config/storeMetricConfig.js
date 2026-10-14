@@ -3,8 +3,28 @@ const path = require("path");
 const appConfig = require("./appConfig");
 const { readJsonFile, writeJsonFileAtomic } = require("../shared/fileStore");
 
-const neighborProjectConfigPath =
-  "D:\\桌面\\办公软件\\9.客服数据自动更新\\project-config\\platform-config.json";
+// 12号 平台配置只读「自持」这份（凭据各人各档、不跨家读——巡检员·霍青桐 2026-10-14 口径）：
+// ① 环境变量 PLATFORM_CONFIG_PATH 显式覆盖（测试/特殊场景）→ ② 12号自持 project-config/platform-config.json。
+const platformConfigCandidates = [
+  String(process.env.PLATFORM_CONFIG_PATH || "").trim(),
+  path.join(appConfig.projectRoot, "project-config", "platform-config.json")
+].filter(Boolean);
+
+let platformConfigWarned = false;
+
+function resolvePlatformConfigPath(candidates = platformConfigCandidates) {
+  const resolvedPath = (Array.isArray(candidates) ? candidates : []).find((candidate) => fs.existsSync(candidate));
+  if (resolvedPath) return resolvedPath;
+  if (!platformConfigWarned) {
+    platformConfigWarned = true;
+    console.warn(
+      "[WARN] 找不到 12号自持平台配置（project-config/platform-config.json）；" +
+      "将导致店铺账号/密码为空——请恢复该文件（凭据仅存本机、不入库），或设置环境变量 PLATFORM_CONFIG_PATH。"
+    );
+  }
+  return "";
+}
+
 const jdShopStarUrl = "https://jdsz.jd.com/szweb/view/service/shop-experience-score.html";
 const jdNegativeServiceUrl = "https://jdsz.jd.com/szweb/view/service/negative-service-temp.html";
 const jdComplianceUrl = "https://illegal-jdm.shop.jd.com/legal";
@@ -21,33 +41,35 @@ function createDefaultManualDateConfig(baseDate = new Date()) {
   };
 }
 
-function readNeighborStoreConfiguration(platformKey, storeKey, displayName) {
-  if (!fs.existsSync(neighborProjectConfigPath)) {
+function readOwnStoreConfiguration(platformKey, storeKey, displayName) {
+  const platformConfigPath = resolvePlatformConfigPath();
+  if (!platformConfigPath) {
     return { username: "", password: "" };
   }
-  const neighborConfig = readJsonFile(neighborProjectConfigPath, "9号项目配置");
-  const neighborStore = (neighborConfig?.[platformKey]?.stores || []).find(
+  const platformConfig = readJsonFile(platformConfigPath, "12号平台配置");
+  const storeEntry = (platformConfig?.[platformKey]?.stores || []).find(
     (store) => store?.key === storeKey || store?.displayName === displayName
   ) || {};
   return {
-    username: String(neighborStore.username || ""),
-    password: String(neighborStore.password || "")
+    username: String(storeEntry.username || ""),
+    password: String(storeEntry.password || "")
   };
 }
 
-function readNeighborDouyinStoreConfiguration(storeKey, displayName) {
-  if (!fs.existsSync(neighborProjectConfigPath)) {
+function readOwnDouyinStoreConfiguration(storeKey, displayName) {
+  const platformConfigPath = resolvePlatformConfigPath();
+  if (!platformConfigPath) {
     return { username: "", password: "", platformStoreId: "", platformStoreName: "" };
   }
-  const neighborConfig = readJsonFile(neighborProjectConfigPath, "9号项目配置");
-  const neighborStore = (neighborConfig?.douyin?.stores || []).find(
+  const platformConfig = readJsonFile(platformConfigPath, "12号平台配置");
+  const storeEntry = (platformConfig?.douyin?.stores || []).find(
     (store) => store?.key === storeKey || store?.displayName === displayName
   ) || {};
   return {
-    username: String(neighborStore.username || ""),
-    password: String(neighborStore.password || ""),
-    platformStoreId: String(neighborStore.platformStoreId || ""),
-    platformStoreName: String(neighborStore.platformStoreName || "")
+    username: String(storeEntry.username || ""),
+    password: String(storeEntry.password || ""),
+    platformStoreId: String(storeEntry.platformStoreId || ""),
+    platformStoreName: String(storeEntry.platformStoreName || "")
   };
 }
 
@@ -148,11 +170,11 @@ function normalizeStoreKeyInput(platformKey, rawStoreKey) {
 }
 
 function createDefaultStoreMetricConfig(baseDate = new Date()) {
-  const neighborJdOneConfiguration = readNeighborStoreConfiguration("jd", "jd1", "京东1店");
-  const neighborTmallOneConfiguration = readNeighborStoreConfiguration("tmall", "tmall1", "天猫1店");
-  const neighborPddTwoConfiguration = readNeighborStoreConfiguration("pdd", "pdd02", "德达拼多多02");
-  const neighborDouyinOneConfiguration = readNeighborDouyinStoreConfiguration("douyin1", "德达抖音");
-  const neighborDouyinTwoConfiguration = readNeighborDouyinStoreConfiguration("douyin2", "dedakj抖音");
+  const jdOneConfiguration = readOwnStoreConfiguration("jd", "jd1", "京东1店");
+  const tmallOneConfiguration = readOwnStoreConfiguration("tmall", "tmall1", "天猫1店");
+  const pddTwoConfiguration = readOwnStoreConfiguration("pdd", "pdd02", "德达拼多多02");
+  const douyinOneConfiguration = readOwnDouyinStoreConfiguration("douyin1", "德达抖音");
+  const douyinTwoConfiguration = readOwnDouyinStoreConfiguration("douyin2", "dedakj抖音");
   return {
     workbook: {
       path: path.join(
@@ -176,8 +198,8 @@ function createDefaultStoreMetricConfig(baseDate = new Date()) {
         createJdStoreConfig({
           key: "jd1",
           displayName: "京东1店",
-          username: neighborJdOneConfiguration.username,
-          password: neighborJdOneConfiguration.password
+          username: jdOneConfiguration.username,
+          password: jdOneConfiguration.password
         })
       ]
     },
@@ -186,8 +208,8 @@ function createDefaultStoreMetricConfig(baseDate = new Date()) {
         createTmallStoreConfig({
           key: "tmall1",
           displayName: "天猫1店",
-          username: neighborTmallOneConfiguration.username,
-          password: neighborTmallOneConfiguration.password
+          username: tmallOneConfiguration.username,
+          password: tmallOneConfiguration.password
         })
       ]
     },
@@ -196,8 +218,8 @@ function createDefaultStoreMetricConfig(baseDate = new Date()) {
         createPddStoreConfig({
           key: "pdd02",
           displayName: "德达拼多多02",
-          username: neighborPddTwoConfiguration.username,
-          password: neighborPddTwoConfiguration.password
+          username: pddTwoConfiguration.username,
+          password: pddTwoConfiguration.password
         })
       ]
     },
@@ -206,18 +228,18 @@ function createDefaultStoreMetricConfig(baseDate = new Date()) {
         createDouyinStoreConfig({
           key: "douyin1",
           displayName: "德达抖音",
-          platformStoreId: neighborDouyinOneConfiguration.platformStoreId || "162329841",
-          platformStoreName: neighborDouyinOneConfiguration.platformStoreName || "德达医疗康养器械旗舰店",
-          username: neighborDouyinOneConfiguration.username,
-          password: neighborDouyinOneConfiguration.password
+          platformStoreId: douyinOneConfiguration.platformStoreId || "162329841",
+          platformStoreName: douyinOneConfiguration.platformStoreName || "德达医疗康养器械旗舰店",
+          username: douyinOneConfiguration.username,
+          password: douyinOneConfiguration.password
         }),
         createDouyinStoreConfig({
           key: "douyin2",
           displayName: "dedakj抖音",
-          platformStoreId: neighborDouyinTwoConfiguration.platformStoreId || "29502951",
-          platformStoreName: neighborDouyinTwoConfiguration.platformStoreName || "DEDAKJ医疗器械旗舰店",
-          username: neighborDouyinTwoConfiguration.username,
-          password: neighborDouyinTwoConfiguration.password
+          platformStoreId: douyinTwoConfiguration.platformStoreId || "29502951",
+          platformStoreName: douyinTwoConfiguration.platformStoreName || "DEDAKJ医疗器械旗舰店",
+          username: douyinTwoConfiguration.username,
+          password: douyinTwoConfiguration.password
         })
       ]
     }
@@ -658,5 +680,6 @@ module.exports = {
   createNextDouyinStore,
   createDefaultStoreMetricConfig,
   normalizeStoreMetricConfig,
-  normalizeKdocsDataSourceSync
+  normalizeKdocsDataSourceSync,
+  resolvePlatformConfigPath
 };

@@ -8,7 +8,7 @@
  * 不导出、不打印 Cookie 和请求头，也不默认保存 session 响应（其中含临时 token）。
  *
  * 用法：
- *   $env:NODE_PATH = "D:\桌面\办公软件\1.客服超时督办\node_modules"
+ *   $env:NODE_PATH = "D:\桌面\木婉清\12.店铺指标数据自动更新\node_modules"
  *   node .\金山在线Word文档读取.cjs --share-id 分享ID --profile C:/Users/b3460/.pi-edge-auto --out 输出目录
  *
  * 参数：
@@ -48,7 +48,7 @@ try {
   ({ chromium } = require('playwright-core'));
 } catch (e) {
   console.error('找不到 playwright-core。请设置 NODE_PATH 指向已有依赖，例如：');
-  console.error('  $env:NODE_PATH = "D:\\桌面\\办公软件\\1.客服超时督办\\node_modules"');
+  console.error('  $env:NODE_PATH = "D:\\桌面\\木婉清\\12.店铺指标数据自动更新\\node_modules"');
   process.exit(2);
 }
 
