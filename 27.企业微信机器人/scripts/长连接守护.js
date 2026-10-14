@@ -27,7 +27,11 @@ const CHECK_ONLY = args.has("--check");
 const DUMP = args.has("--dump");
 
 function log(msg) {
-  const t = new Date().toLocaleTimeString("zh-CN", { hour12: false });
+  // 2026-10-14：行首带完整日期 —— 无日期 [HH:MM:SS] 会被看门狗误补成"今天"（假告警根因），
+  // 且 parseLogTime 现在只认带日期的行；这里输出 [YYYY-MM-DD HH:MM:SS]（本机时区）。
+  const d = new Date();
+  const pad = (n) => String(n).padStart(2, "0");
+  const t = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
   console.log(`[${t}] ${msg}`);
 }
 

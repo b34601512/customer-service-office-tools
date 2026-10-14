@@ -6,6 +6,7 @@ const {
   DEFAULT_CONFIG,
   mergeConfig,
   silenceMinutes,
+  parseLogTime,
   parseDaemonLog,
   parseConnectionEvents,
   parseInbox,
@@ -162,7 +163,7 @@ test("parseDaemonLog：取出最后认证 / 最后断开 / 30 分钟内 WARN", (
   const text = [
     "[2026-10-06T02:00:00.000Z] [AiBotSDK] [ERROR] WebSocket error: read ECONNRESET",
     "[2026-10-06T03:00:00.000Z] [AiBotSDK] [INFO] Authentication successful",
-    "[11:30:00] 长连接认证并订阅成功（只收不回）",
+    "[2026-10-06 11:30:00] 长连接认证并订阅成功（只收不回）",
     "[2026-10-06T03:50:00.000Z] [AiBotSDK] [WARN] Received disconnected_event: a new connection has been established"
   ].join("\n");
   const r = parseDaemonLog(text, now);
@@ -170,6 +171,63 @@ test("parseDaemonLog：取出最后认证 / 最后断开 / 30 分钟内 WARN", (
   assert.equal(r.lastDisconnectAt, Date.parse("2026-10-06T03:50:00.000Z"));
   assert.match(r.disconnectReason, /disconnected_event/);
   assert.equal(r.recentWarnings.length, 1, "2 小时前的 ERROR 不算近期 WARN");
+});
+
+// ================= 假告警根因修复（2026-10-14） =================
+// 根因：旧 parseLogTime 把无日期的 `[HH:MM:SS]` 按"今天"补日期 → 10-13 的旧连接行被当成今天 →
+// deaf=true → 两轮 [故障] 误报（13:43、16:33）。修复后：无日期行不参与任何时间判定。
+
+/** 测试用：拿解析出的 log 直接构造快照。 */
+function snapshotWithLog(log) {
+  return {
+    daemon: { alive: true, pid: 1234, reason: "" },
+    log,
+    messages: { group: { count: 0, lastAt: null }, single: { count: 0, lastAt: null } }
+  };
+}
+
+const 旧连接行 = [
+  "[16:34:09] 长连接认证并订阅成功（只收不回）",
+  "[16:34:16] 连接断开：New connection established, server disconnected this connection"
+].join("\n");
+
+test("parseLogTime：只认带完整日期的行（ISO 与空格两种格式），无日期一律 null", () => {
+  assert.equal(parseLogTime("2026-10-14 17:02:35"), new Date(2026, 9, 14, 17, 2, 35).getTime(), "空格分隔按本机时区");
+  assert.equal(parseLogTime("2026-10-13T08:34:16.176Z"), Date.parse("2026-10-13T08:34:16.176Z"), "ISO 按原样（UTC）解析");
+  assert.equal(parseLogTime("16:34:09"), null, "无日期不补今天");
+  assert.equal(parseLogTime(""), null);
+  assert.equal(parseLogTime("不是时间"), null);
+});
+
+test("防误报（16:33 轮）：10-13 旧行（无日期）不得补成今天，不得出 connection 告警", () => {
+  const now = new Date(2026, 9, 14, 16, 33, 26).getTime();
+  const r = parseDaemonLog(旧连接行, now);
+  assert.equal(r.lastAuthAt, null, "无日期行不作认证证据");
+  assert.equal(r.lastDisconnectAt, null, "无日期行不作断开证据");
+  const ev = evaluate(snapshotWithLog(r), emptyState(), cfg, now);
+  assert.notEqual(ev.log.deaf, true, "不得判聋");
+  assert.equal(ev.conditions.connection.hit, false);
+  assert.ok(!ev.toAlert.some((a) => a.key === "connection"), "不得出 connection 告警");
+});
+
+test("防误报（13:43 轮）：旧行时间晚于当前时刻（原会被回退 24h）同样不告警", () => {
+  const now = new Date(2026, 9, 14, 13, 43, 26).getTime();
+  const r = parseDaemonLog(旧连接行, now);
+  assert.equal(r.lastAuthAt, null);
+  assert.equal(r.lastDisconnectAt, null);
+  const ev = evaluate(snapshotWithLog(r), emptyState(), cfg, now);
+  assert.notEqual(ev.log.deaf, true);
+  assert.equal(ev.conditions.connection.hit, false);
+});
+
+test("不误杀：真·带日期的断开（其后无认证）仍判 deaf=true 并出 connection 告警", () => {
+  const now = new Date(2026, 9, 14, 16, 33, 26).getTime();
+  const text = "[2026-10-14T08:00:00.000Z] [AiBotSDK] [WARN] Received disconnected_event: a new connection has been established, this connection will be closed by server";
+  const r = parseDaemonLog(text, now);
+  assert.equal(r.lastDisconnectAt, Date.parse("2026-10-14T08:00:00.000Z"));
+  const ev = evaluate(snapshotWithLog(r), emptyState(), cfg, now);
+  assert.equal(ev.log.deaf, true);
+  assert.ok(ev.toAlert.some((a) => a.key === "connection"), "真故障必须照报");
 });
 
 test("parseInbox：群 / 单聊分开取最后一条", () => {

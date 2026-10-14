@@ -69,7 +69,8 @@ function install() {
     "try {",
     "  if ((Test-Path $outLog) -and ((Get-Item $outLog).Length -gt 1MB)) { Move-Item -Force $outLog ($outLog + '.1') }",
     "} catch {}",
-    "& $node $script *>&1 | Out-File -FilePath $outLog -Append -Encoding utf8",
+    "# 2026-10-13 全员按需：窗口可关，不再查窗口心跳（技术·王语嫣）——与已装启动器保持一致，改这里别只改本机",
+    "& $node $script --no-heartbeat *>&1 | Out-File -FilePath $outLog -Append -Encoding utf8",
     "exit $LASTEXITCODE",
     ""
   ].join("\r\n");

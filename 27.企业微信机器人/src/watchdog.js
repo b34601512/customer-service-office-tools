@@ -109,21 +109,21 @@ function silenceMinutes(lastAtMs, nowMs, cfg) {
   return Math.round(workWindowOverlapMin(start, nowMs, cfg));
 }
 
-/** 解析日志行首的时间戳：ISO 原样解析；`HH:MM:SS` 按"今天（本地）"补日期，跨天自动回退。 */
-function parseLogTime(raw, nowMs) {
+/**
+ * 解析日志行首的时间戳：**只认带完整日期的行**，支持 ISO（`2026-10-13T08:34:16.176Z`）
+ * 与空格分隔（`2026-10-14 17:02:35`，本机时区）两种格式。
+ *
+ * 无日期的 `[HH:MM:SS]` 行返回 null —— **绝不按"今天"补日期**：
+ * 2026-10-14 假告警实例：10-13 的旧行 `[16:34:09] 认证…`＋`[16:34:16] 连接断开…` 被补成今天，
+ * 导致 lastAuthAt < lastDisconnectAt → deaf=true → 留言板 [故障] 误报。宁可无证据，也不给假证据。
+ * （这些人读友好的行仍留在 daemon.log 里，只是不参与任何时间判定。）
+ */
+function parseLogTime(raw) {
   if (!raw) return null;
   const s = String(raw).trim();
-  if (/^\d{4}-\d{2}-\d{2}T/.test(s)) {
-    const t = Date.parse(s);
-    return Number.isNaN(t) ? null : t;
-  }
-  const m = s.match(/^(\d{1,2}):(\d{2}):(\d{2})/);
-  if (!m) return null;
-  const d = new Date(nowMs);
-  d.setHours(Number(m[1]), Number(m[2]), Number(m[3]), 0);
-  let t = d.getTime();
-  if (t > nowMs + MINUTE) t -= 24 * HOUR; // 日志跨了午夜
-  return t;
+  if (!/^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}/.test(s)) return null;
+  const t = Date.parse(s.replace(/^(\d{4}-\d{2}-\d{2}) /, "$1T"));
+  return Number.isNaN(t) ? null : t;
 }
 
 const AUTH_RE = /认证并订阅成功|Authentication successful/;
@@ -133,7 +133,10 @@ const WARN_LINE_RE = /\[(WARN|ERROR)\]/;
 
 /**
  * 解析 `daemon.log`（尾部若干 KB）：最后认证时间 / 最后断开时间 / 断开原文 / 近期 WARN&ERROR 行。
- * 注意：这是一次"只读最近现场"，全文不需要。
+ * 注意：
+ *  - 这是一次"只读最近现场"，全文不需要；
+ *  - 时间判定只用带完整日期的行（见 parseLogTime）——无日期的 [HH:MM:SS] 行既不参与连接证据，
+ *    也不参与告警窗口（其 WARN/ERROR 同样不可信，可能来自任意旧日期）。
  */
 function parseDaemonLog(text, nowMs, options = {}) {
   const warnWindowMin = Number(options.warnWindowMin) > 0 ? Number(options.warnWindowMin) : 30;
@@ -141,7 +144,7 @@ function parseDaemonLog(text, nowMs, options = {}) {
   for (const line of String(text || "").split(/\r?\n/)) {
     if (!line.trim()) continue;
     const m = line.match(/^\[([^\]]+)\]/);
-    const ts = m ? parseLogTime(m[1], nowMs) : null;
+    const ts = m ? parseLogTime(m[1]) : null;
     if (AUTH_RE.test(line) && ts != null) {
       out.lastAuthAt = Math.max(out.lastAuthAt || 0, ts);
     }
