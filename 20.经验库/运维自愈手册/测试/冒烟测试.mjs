@@ -146,6 +146,7 @@ try {
   }
 } finally {
   杀含tmp的node进程();
+  try { fs.rmSync(TMP, { recursive: true, force: true }); } catch { /* 删不掉就算了，反正下次建新的 */ }
 }
 
 console.log(`\n结果：${过} 过 / ${败} 败`);

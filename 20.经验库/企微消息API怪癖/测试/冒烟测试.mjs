@@ -31,6 +31,8 @@ function run(...args) {
   return spawnSync(process.execPath, [工具, ...args], { encoding: "utf8", windowsHide: true, timeout: 60000 });
 }
 const 等 = (毫秒) => new Promise((r) => setTimeout(r, 毫秒));
+// 跑完自清临时目录（含异常退出）：不留 %TEMP% 垃圾
+process.on("exit", () => { try { fs.rmSync(TMP, { recursive: true, force: true }); } catch { /* 删不掉就算了 */ } });
 
 let 过 = 0, 败 = 0;
 function 断言(名, 条件, 详情 = "") {
@@ -83,4 +85,5 @@ console.log("5) 帮助页");
 }
 
 console.log(`\n结果：${过} 过 / ${败} 败`);
+try { fs.rmSync(TMP, { recursive: true, force: true }); } catch { /* exit 钩子雷同清理 */ }
 process.exit(败 ? 1 : 0);
