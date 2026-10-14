@@ -1,0 +1,20 @@
+{
+  "log": "自巡查.log",
+  "tasks": [
+    {
+      "name": "叫醒器",
+      "match": "(^|[\\\\/\\s\"])叫醒器[.]cjs",
+      "exe": "node",
+      "args": ["D:\\path\\叫醒器.cjs"],
+      "hide": true
+    },
+    {
+      "name": "清理任务（附日志新鲜度检查）",
+      "match": "(^|[\\\\/\\s\"])清理[.]cjs",
+      "exe": "node",
+      "args": ["D:\\path\\清理.cjs"],
+      "hide": true,
+      "staleLog": { "path": "D:\\path\\清理.log", "maxAgeMin": 120 }
+    }
+  ]
+}
