@@ -30,6 +30,10 @@
 |---|---|---|---|---|
 | `.bat` / `.cmd`（双击入口） | 只负责调用 ps1 | **纯 ASCII、不要 BOM** | CRLF | ❌ 一个中文都不要写（文件名可以是中文） |
 | `.ps1`（干活＋所有中文提示） | 逻辑与显示 | **UTF-8 with BOM（必须带）** | CRLF | ✅ 中文都放这里 |
+| `.vbs`（静默启动 / 无黑窗） | 只起进程 | **UTF-16LE with BOM** | CRLF | ✅ 中文放这里（UTF-8 存的 vbs 编译失败） |
+
+> `.vbs` 为什么单列：WSH 只认 UTF-16LE（带 BOM）或本机 ANSI——
+> UTF-8 带 BOM 报「无效字符」，UTF-8 无 BOM 有中文报「未结束的字符串常量」（2026-10-17 实测）。
 
 `.ps1` 开头固定加「三件套」，控制台输出中文就不会乱：
 
@@ -47,14 +51,21 @@ $OutputEncoding           = [System.Text.Encoding]::UTF8
 找到用户的启动器：`.bat` 是入口，真正的逻辑和中文提示可能在它里面。
 
 ### 第 1 步：体检
-用本包的 `工具\检查编码.ps1`（Windows 自带 PowerShell，直接跑）：
+用本包的 `工具\检查脚本编码.ps1`（Windows 自带 PowerShell，直接跑）：
 
 ```
-powershell -NoProfile -ExecutionPolicy Bypass -File "工具\检查编码.ps1" "用户的启动器.bat" "用户的脚本.ps1"
+# 只检查（给文件或整个目录）
+powershell -NoProfile -ExecutionPolicy Bypass -File "工具\检查脚本编码.ps1" "用户的启动器.bat" "用户的脚本.ps1"
+
+# 连目录一起扫，并自动修能机器修的那些
+powershell -NoProfile -ExecutionPolicy Bypass -File "工具\检查脚本编码.ps1" -Fix -Recurse "D:\某个项目"
 ```
 
-它会报告：BOM 有无、非 ASCII 字节数、换行是否正常，并给「合格/不合格」结论。
-没装 PowerShell 也没关系，按第 2 步的规范直接改。
+它按 `.bat/.cmd`、`.ps1`、`.vbs` 各自的标准回报「合格/不合格」，并逐条说清病因；
+`-Fix` 改之前会**自动备份**成 `文件名.bak-<时间戳>`，改完**自己复检**一遍再报结论；
+**修不了的（bat 里的中文、GBK 编码的旧脚本）只报不动**——绝不把内容写成问号。
+
+> 老的 `工具\检查编码.ps1` 只查 .bat/.ps1，仍然能用；新活请用「检查脚本编码」。
 
 ### 第 2 步：改造（两个文件）
 
@@ -101,8 +112,29 @@ $e.Count
 ## 六、包里有什么
 
 - `模板\launcher.bat` ＋ `模板\launcher.ps1` —— 可以直接抄的骨架（已按规范存好）；
-- `工具\检查编码.ps1` —— 一键体检（跑一下就知道合不合格）；
+- `工具\检查编码.ps1` —— 老体检工具（只查 .bat/.ps1）；
+- `工具\检查脚本编码.ps1` —— **一键体检＋自动修复**（.bat/.cmd/.ps1/.vbs/.js 全查，`-Fix` 能修）；
 - 本 `README.md`。
+
+## 六之二、2026-10-17 实测台账（本机 Win10 10.0.26300 / PowerShell 5.1）
+
+| 组合 | 结果 |
+|---|---|
+| `.bat` LF + UTF-8 有中文 | ❌ 中文被拆成伪命令（`'5001' 不是内部或外部命令`） |
+| `.bat` CRLF + UTF-8 无 BOM + `chcp 65001` | ✅ 本机能跑 |
+| `.bat` CRLF + UTF-8 **有 BOM** | ❌ `'﻿@echo' 不是内部或外部命令`（BOM 粘在 @echo 前） |
+| `.bat` 中文进了 `goto`/`call :`/`set 变量名` | ❌ 必报错（实测 `goto 结束` → `'结束' 不是内部或外部命令`） |
+| `.bat` 中文只在 `echo` 参数里 | ⚠️ 本机能跑，但不合标准（换机器/换码页就乱） |
+| `.bat` 内嵌 PS 负载（`#==POWERSHELL==` + `ReadAllText(...,UTF8)`） | ✅ 合格（18号 CopyPath 就是这套） |
+| `.ps1` UTF-8 **无 BOM** 有中文 | ❌ 按 GBK 读 → `字符串缺少终止符` 解析报错 |
+| `.ps1` UTF-8 带 BOM | ✅ 中文正常（LF/CRLF 都能跑；标准仍定 CRLF） |
+| `.vbs` UTF-8 无 BOM + 中文 | ❌ `未结束的字符串常量` |
+| `.vbs` UTF-8 **带 BOM** | ❌ `无效字符`（第 1 行第 1 列） |
+| `.vbs` UTF-16LE ± BOM | ✅ 中文正常（标准要求带 BOM） |
+| `.vbs` GBK/ANSI | ✅ 本机能跑，但别机器会乱 → 标准要求转 UTF-16LE |
+
+> 提示行的报错在中文 Windows 上常显示成乱码（如 `'?@echo' 不是内部或外部命令`），**别被乱码骗了**：
+> 真正原因是 BOM 进了命令行，不是「中文没编码好」。
 
 ## 七、出处与许可
 
