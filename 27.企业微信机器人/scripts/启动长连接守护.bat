@@ -1,8 +1,8 @@
 @echo off
+rem Launcher ONLY. Pure ASCII (no Chinese, no BOM), CRLF.
+rem All Chinese text lives in daemon-launcher.ps1 (UTF-8 with BOM).
+rem NOTE: do NOT put a Chinese file name in here - those bytes are Chinese too.
 chcp 65001 >nul
-cd /d "%~dp0.."
-echo 企业微信长连接守护（官方 SDK，只收不回，记录到 .state\inbox.jsonl）
-echo 关掉本窗口即停止。
-echo.
-node scripts\长连接守护.js
-pause
+cd /d "%~dp0"
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0daemon-launcher.ps1"
+if errorlevel 1 pause

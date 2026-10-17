@@ -1,4 +1,4 @@
-# List all VISIBLE top-level windows (handle / class / title). ASCII-only (PS 5.1 safe).
+﻿# List all VISIBLE top-level windows (handle / class / title). ASCII-only (PS 5.1 safe).
 # Usage:  powershell -NoProfile -ExecutionPolicy Bypass -File <this-script.ps1>   (run inside its folder)
 Add-Type -TypeDefinition @"
 using System;
