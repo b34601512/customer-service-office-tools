@@ -26,6 +26,12 @@ test('构造记录：可指定负责人与截止时间', () => {
   assert.equal(rec.截止时间, '2026-10-01 00:00:00');
 });
 
+test('反向断言：只传 --owner 不传 --owner-name 必须报错，不许落成「售后」假名（2026-10-18 焦宛儿实测坑）', () => {
+  assert.throws(() => 构造记录({ content: 'x', ownerId: 'u1' }), /--owner-name/);
+  // 真名可以正常落
+  assert.equal(构造记录({ content: 'x', ownerId: 'u1', ownerName: '陈某某（售后客服）' }).values.负责人[0].userName, '陈某某（售后客服）');
+});
+
 test('常量：目标表就是「金牌组待办清单」的售后待办清单', () => {
   assert.equal(SHEET, '售后待办清单');
   // docid 是公司私有数据，不许写回代码（2026-09-30 用户要求打码）：只从本机配置/环境变量读

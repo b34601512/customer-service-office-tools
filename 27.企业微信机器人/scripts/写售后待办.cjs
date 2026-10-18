@@ -79,8 +79,14 @@ function 解析参数(argv) {
 }
 
 function 构造记录({ content, ownerId, ownerName, deadline, 优先级 }) {
+  // 2026-10-18 惨案（焦宛儿报，29 号实测同一坑）：只传 --owner 不传 --owner-name 时，
+  // 以前会落成「售后」两个字——表里看上去像派了人、实际不是真人名（微信里也 @ 不到）。
+  // 现在：给了 userId 但没给名字，宁可抛错不静默编个假名（宁可停下问人，不许猜）。
+  if (ownerId && !ownerName) {
+    throw new Error('传了 --owner 就必须同时传 --owner-name（否则负责人会显示成「售后」这种假名，不是真人）；不知道名字就改用 --owner auto');
+  }
   const 负责人 = ownerId
-    ? [{ userId: ownerId, userName: ownerName || '售后' }]
+    ? [{ userId: ownerId, userName: ownerName }]
     : [默认负责人];
   return {
     values: {
