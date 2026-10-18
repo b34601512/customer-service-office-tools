@@ -11,6 +11,12 @@
 //
 // 只打印「时间 + 单聊/群聊 + 类型 + 正文摘要」，**不打印任何内部 ID**（userid / chat_id / msgid）。
 //
+// 2026-10-18 v3 单实例闸（技术·王语嫣报「机器上同时跑着 3 个跟读进程，前两个父进程早已死」）——
+//   根源不是「这次重复了」，是**结构性重复**：每次续窗/重启都新起一个，旧的没人收，
+//   而程序启动时从不问「我是不是已经在跟了」。只杀一遍＝小修小补（老板 2026-10-18 20:19 令：要挖根源）。
+//   做法：启动先看锁文件里的 pid 还活不活；活着就自己退出（exit 0，不算故障）。
+//   锁只认自己的 `.state` 目录 → 各家互不干扰。--文件 模式（联调/单测）不设闸，避免互锁。
+//
 // 用法：
 //   node scripts/跟读收件箱.cjs              # 从游标续跟（首次从末尾起）
 //   node scripts/跟读收件箱.cjs --从头        # 忽略游标，把已有消息全打一遍（调试用）
@@ -22,6 +28,7 @@ const crypto = require('crypto');
 const 根目录 = path.resolve(__dirname, '..');
 const 默认收件箱 = path.join(根目录, '.state', 'inbox.jsonl');
 const 默认状态文件 = path.join(根目录, '.state', '收件箱跟读.json');
+const 默认锁文件 = path.join(根目录, '.state', '跟读收件箱.pid');
 const 去重窗口 = 500; // 记住最近这么多条消息的身份证（够盖住整箱重写）
 const 轮询毫秒 = 1500;
 
@@ -181,9 +188,52 @@ function 取参数(argv) {
   return 参数;
 }
 
+/** 单实例闸：锁文件里的 pid 还活着就返回它（只探不杀）；不存在/已死/读不了 → 返回 0。 */
+function 已有实例在跟(锁文件 = 默认锁文件) {
+  try {
+    const 旧 = Number(String(fs.readFileSync(锁文件, 'utf8')).trim());
+    if (!旧 || 旧 === process.pid) return 0;
+    process.kill(旧, 0); // 只探不杀：进程在 → 不抛；不在 → 抛
+    return 旧;
+  } catch {
+    return 0;
+  }
+}
+
+/** 占锁 + 挂退出清理（只清自己的锁，别人的不碰）；返回清理函数，便于单测。 */
+function 占锁(锁文件 = 默认锁文件) {
+  try {
+    fs.mkdirSync(path.dirname(锁文件), { recursive: true });
+    fs.writeFileSync(锁文件, String(process.pid), 'utf8');
+  } catch {
+    /* 写不了锁不致命：照样跟读，只是防不住重复 */
+  }
+  const 清锁 = () => {
+    try {
+      if (Number(String(fs.readFileSync(锁文件, 'utf8')).trim()) === process.pid) fs.unlinkSync(锁文件);
+    } catch {
+      /* ignore */
+    }
+  };
+  process.once('exit', 清锁);
+  for (const 信号 of ['SIGINT', 'SIGTERM', 'SIGHUP']) process.once(信号, () => { 清锁(); process.exit(0); });
+  return 清锁;
+}
+
 function 主流程() {
   const 参数 = 取参数(process.argv.slice(2));
   const 状态文件 = 参数.文件 === 默认收件箱 ? 默认状态文件 : 参数.文件 + '.跟读状态.json';
+
+  // 单实例闸只在「跟真实收件箱」时生效：--文件 是联调/单测通道，不该被彼此挡住
+  if (参数.文件 === 默认收件箱) {
+    const 旧 = 已有实例在跟();
+    if (旧) {
+      console.error(`[跟读收件箱] 已有实例在跑（pid ${旧}），本进程退出——同一条收件箱只许挂一条监听。`);
+      process.exit(0);
+    }
+    占锁();
+  }
+
   const 运行态 = 启动读一遍(参数.文件, 状态文件, 参数.从头, (行) => console.log(行));
   const 记ID = 造去重器(运行态.近ID表, 运行态.近ID集);
 
@@ -209,4 +259,4 @@ function 主流程() {
 
 if (require.main === module) 主流程();
 
-module.exports = { 读新字节, 摘要行, 本地时分, 取参数, 默认收件箱, 行ID, 造去重器, 启动读一遍 };
+module.exports = { 读新字节, 摘要行, 本地时分, 取参数, 默认收件箱, 行ID, 造去重器, 启动读一遍, 已有实例在跟, 占锁, 默认锁文件 };

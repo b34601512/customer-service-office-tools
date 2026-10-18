@@ -5,7 +5,8 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const { 读新字节, 摘要行, 本地时分, 取参数, 默认收件箱, 行ID, 造去重器, 启动读一遍 } = require('../scripts/跟读收件箱.cjs');
+const { spawn } = require('node:child_process');
+const { 读新字节, 摘要行, 本地时分, 取参数, 默认收件箱, 行ID, 造去重器, 启动读一遍, 已有实例在跟, 占锁 } = require('../scripts/跟读收件箱.cjs');
 
 test('本地时分：ISO（UTC）要换算成本地时间，不能直接切末尾', () => {
   // 2026-10-01T05:31:24.272Z 在 GMT+8 就是 13:31（2026-10-01 实踩：显示成 05:31）
@@ -149,4 +150,52 @@ test('主流程冒烟：--文件 模式能跟到新行（spawn）', async () => 
     await new Promise((r) => setTimeout(r, 200));
     fs.rmSync(目录, { recursive: true, force: true, maxRetries: 3 });
   }
+});
+
+// ── v3 单实例闸（2026-10-18 老板 20:19 令：挖根源，不许小修小补）──────────────
+// 根因：程序启动时从不问「我是不是已经在跟了」→ 每次续窗/重启都多长一个监听，
+// 旧的父进程死了也没人收。只「杀一遍」下次还会长回来，所以要用锁锁死。
+// 反向断言：同类进程存在时，第二个必须**自己退出**，不是"两个都跑、靠人去杀"。
+
+test('已有实例在跟：锁里 pid 活着 → 返回它；同一 pid 视为自己；不存在/已死 → 0', () => {
+  const 目录 = fs.mkdtempSync(path.join(os.tmpdir(), '跟读锁-'));
+  const 锁 = path.join(目录, '跟读收件箱.pid');
+  assert.equal(已有实例在跟(锁), 0);                       // 没有锁文件
+
+  fs.writeFileSync(锁, String(process.pid), 'utf8');
+  assert.equal(已有实例在跟(锁), 0);                       // 是自己 → 不挡自己
+
+  const 别的 = spawn(process.execPath, ['-e', 'setTimeout(()=>{}, 60000)'], { stdio: 'ignore' });
+  try {
+    fs.writeFileSync(锁, String(别的.pid), 'utf8');
+    assert.equal(已有实例在跟(锁), 别的.pid);              // 有活着的同类 → 报它出来
+  } finally {
+    别的.kill();
+  }
+
+  // 进程死后，残留锁文件不该挡住下一个（这才叫自愈，不是要人删文件）
+  const 截止 = Date.now() + 3000;
+  while (Date.now() < 截止 && 已有实例在跟(锁) !== 0) {
+    // 等子进程真正退出（kill 是异步生效的）
+  }
+  assert.equal(已有实例在跟(锁), 0);
+  fs.rmSync(目录, { recursive: true, force: true, maxRetries: 3 });
+});
+
+test('占锁：写自己的 pid，退出清理只清自己那把锁（别人的锁不碰）', () => {
+  const 目录 = fs.mkdtempSync(path.join(os.tmpdir(), '跟读锁2-'));
+  const 锁 = path.join(目录, '跟读收件箱.pid');
+
+  fs.writeFileSync(锁, '999999', 'utf8');                  // 别人的锁
+  const 清锁 = 占锁(锁);
+  assert.equal(fs.readFileSync(锁, 'utf8').trim(), String(process.pid));
+
+  fs.writeFileSync(锁, '999999', 'utf8');                  // 锁被别人抢走
+  清锁();
+  assert.equal(fs.readFileSync(锁, 'utf8').trim(), '999999'); // 不许删别人的
+
+  fs.writeFileSync(锁, String(process.pid), 'utf8');       // 还是自己的
+  清锁();
+  assert.equal(fs.existsSync(锁), false);                  // 自己的要清掉
+  fs.rmSync(目录, { recursive: true, force: true, maxRetries: 3 });
 });
