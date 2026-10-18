@@ -37,7 +37,7 @@
 ## 常用命令
 ```bash
 cd "D:/桌面/木婉清/27.企业微信机器人" && node scripts/读新消息.cjs        # 读企微新消息（增量）
-node scripts/发企微消息.cjs --chat-id "<当次现取>" --text "…"                 # 发消息（整条发、不拆条；见 27号/跟老板沟通的原则.md）
+node scripts/发企微消息.cjs --chat-id "<当次现取>" --text "…"                 # 发消息（整条发、不拆条；口径见《沟通规矩标准》§一.3）
 cd "D:/硅基公司/员工/排班派活专员·焦宛儿/专项/28.排班与派活" && node src/tools/今天谁值班.cjs --json    # 今天谁值班（底色口径）
 cd "D:/桌面/木婉清/27.企业微信机器人" && node scripts/写售后待办.cjs --content "…" --owner auto
 ```
