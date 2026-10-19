@@ -88,8 +88,25 @@ function main() {
   const 输出 = `${结果.stdout || ''}${结果.stderr || ''}`;
   const 成功 = /"success"\s*:\s*true/.test(输出) && 结果.status === 0;
   if (!成功) {
-    const 错误码 = (输出.match(/"code"\s*:\s*(\d+)/) || [])[1] || '?';
+    // 2026-10-19 事故：原来的正则只认 `"code"`，但企微错误返回的是 `errcode`，
+    // 于是「消息权限过期（850003）」只被报成 `code=?`——**看得到失败，看不出为什么**。
+    // 现在两个键都认，并对 850003 单独说人话（它是「权限过期」，不是「参数错」）。
+    const 错误码 = (输出.match(/"(?:errcode|code)"\s*:\s*(\d+)/) || [])[1] || '?';
+    const 因权限过期 = 错误码 === '850003';
     console.error(`[发企微] 发送失败（exit=${结果.status} code=${错误码}）`);
+    if (因权限过期) {
+      console.error(
+        [
+          '',
+          '  ✗ 机器人「消息」权限已过期（850003）——不是参数错，是授权到期。',
+          '    收消息/私信仍正常，只有发送全停。',
+          '    只能由创建者点：企业微信 → 工作台 → 智能机器人 → 工作秘书·木婉清 → 授权「消息」。',
+          '    降级通道（不依赖 aibot）：',
+          '      node scripts/发群消息.js --webhook <project-config/群机器人.local.json 里的 url> --text "…" --send',
+          '',
+        ].join('\n'),
+      );
+    }
     console.error(输出.replace(/"extra_identity_context"[\s\S]*?\}/g, '').slice(-600));
     return 1;
   }
