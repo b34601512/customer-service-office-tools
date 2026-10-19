@@ -1,0 +1,42 @@
+[
+  {
+    "method": "GET",
+    "url": "https://after-sales.tanyuai.com/api/gc/personal/detailV2",
+    "post": null
+  },
+  {
+    "method": "GET",
+    "url": "https://after-sales.tanyuai.com/api/gc/personal/getThirdShopDetailPage?pageNum=1&pageSize=1000&productCode=after-sales",
+    "post": null
+  },
+  {
+    "method": "POST",
+    "url": "https://after-sales.tanyuai.com/api/smart-workorder/common/config/get-shop-scene-package",
+    "post": null
+  },
+  {
+    "method": "GET",
+    "url": "https://after-sales.tanyuai.com/api/smart-workorder-engine/work-order-scene/page?pageSize=20",
+    "post": null
+  },
+  {
+    "method": "GET",
+    "url": "https://after-sales.tanyuai.com/api/smart-workorder-engine/work-order-scene/list",
+    "post": null
+  },
+  {
+    "method": "POST",
+    "url": "https://after-sales.tanyuai.com/api/smart-workorder/common/config/get-shop-scene-package",
+    "post": null
+  },
+  {
+    "method": "POST",
+    "url": "https://after-sales.tanyuai.com/api/smart-workorder-engine/work-order-shop-scene-relation/list-auth-shop",
+    "post": "{\"openAfterSales\":false}"
+  },
+  {
+    "method": "GET",
+    "url": "https://after-sales.tanyuai.com/api/smart-workorder-engine/work-order-shop-scene-relation/shop-list?pageSize=20",
+    "post": null
+  }
+]

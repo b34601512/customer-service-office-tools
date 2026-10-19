@@ -1,0 +1,137 @@
+[
+ {
+  "name": "德迩杰-98185a-send0",
+  "endpoint": "/api/im/agent-trace/trace",
+  "method": "POST",
+  "body": {
+   "cardId": "6aca0210fe0b4017ae98185a",
+   "thirdShopId": "2748943863350558955"
+  }
+ },
+ {
+  "name": "德迩杰-981810-send0",
+  "endpoint": "/api/im/agent-trace/trace",
+  "method": "POST",
+  "body": {
+   "cardId": "6aca0207fe0b4017ae981810",
+   "thirdShopId": "2748943863350558955"
+  }
+ },
+ {
+  "name": "德迩杰-cd1483-send0",
+  "endpoint": "/api/im/agent-trace/trace",
+  "method": "POST",
+  "body": {
+   "cardId": "6ac83d9f69e0ee6db7cd1483",
+   "thirdShopId": "2748943863350558955"
+  }
+ },
+ {
+  "name": "京东DEDAKJ-d54155-send1",
+  "endpoint": "/api/im/agent-trace/trace",
+  "method": "POST",
+  "body": {
+   "cardId": "6ac8d36f5dacf83cd5d54155",
+   "thirdShopId": "2748944481825915146"
+  }
+ },
+ {
+  "name": "京东DEDAKJ-d54049-send0",
+  "endpoint": "/api/im/agent-trace/trace",
+  "method": "POST",
+  "body": {
+   "cardId": "6ac8d34d5dacf83cd5d54049",
+   "thirdShopId": "2748944481825915146"
+  }
+ },
+ {
+  "name": "京东DEDAKJ-1334e5-send1",
+  "endpoint": "/api/im/agent-trace/trace",
+  "method": "POST",
+  "body": {
+   "cardId": "6ac8536d5e9aef41661334e5",
+   "thirdShopId": "2748944481825915146"
+  }
+ },
+ {
+  "name": "京东德达-d5c1a1-send0",
+  "endpoint": "/api/im/agent-trace/trace",
+  "method": "POST",
+  "body": {
+   "cardId": "6ac9fb8d69e0ee6db7d5c1a1",
+   "thirdShopId": "2748947402403971286"
+  }
+ },
+ {
+  "name": "京东德达-d5c04a-send1",
+  "endpoint": "/api/im/agent-trace/trace",
+  "method": "POST",
+  "body": {
+   "cardId": "6ac9fb5c69e0ee6db7d5c04a",
+   "thirdShopId": "2748947402403971286"
+  }
+ },
+ {
+  "name": "京东德达-a1cbe7-send1",
+  "endpoint": "/api/im/agent-trace/trace",
+  "method": "POST",
+  "body": {
+   "cardId": "6ac83717140e32334ba1cbe7",
+   "thirdShopId": "2748947402403971286"
+  }
+ },
+ {
+  "name": "PDD德达-3ba2a2-send1",
+  "endpoint": "/api/im/agent-trace/trace",
+  "method": "POST",
+  "body": {
+   "cardId": "6ac9f9ed2938d127c53ba2a2",
+   "thirdShopId": "2095398963959042048"
+  }
+ },
+ {
+  "name": "PDD德达-c1d395-send1",
+  "endpoint": "/api/im/agent-trace/trace",
+  "method": "POST",
+  "body": {
+   "cardId": "6ac9f2f5436b5b2411c1d395",
+   "thirdShopId": "2095398963959042048"
+  }
+ },
+ {
+  "name": "PDD德达-bcc5a6-send0",
+  "endpoint": "/api/im/agent-trace/trace",
+  "method": "POST",
+  "body": {
+   "cardId": "6ac83c89cfb49e4026bcc5a6",
+   "thirdShopId": "2095398963959042048"
+  }
+ },
+ {
+  "name": "PDD-DEDAKJ-93219f-send1",
+  "endpoint": "/api/im/agent-trace/trace",
+  "method": "POST",
+  "body": {
+   "cardId": "6aca009ec361642ad293219f",
+   "thirdShopId": "2104457457798483968"
+  }
+ },
+ {
+  "name": "PDD-DEDAKJ-931316-send1",
+  "endpoint": "/api/im/agent-trace/trace",
+  "method": "POST",
+  "body": {
+   "cardId": "6ac9fe5fc361642ad2931316",
+   "thirdShopId": "2104457457798483968"
+  }
+ },
+ {
+  "name": "PDD-DEDAKJ-464252-send1",
+  "endpoint": "/api/im/agent-trace/trace",
+  "method": "POST",
+  "body": {
+   "cardId": "6ac83661797207036d464252",
+   "thirdShopId": "2104457457798483968"
+  }
+ }
+]

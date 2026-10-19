@@ -1,0 +1,6 @@
+[
+  { "name": "trace-配件回答-6aca13a2", "endpoint": "/api/im/agent-trace/trace", "method": "POST", "body": { "cardId": "6aca13a28c18ba3ebb3c0d17", "thirdShopId": "2748947711641649387" } },
+  { "name": "trace-卖点记录-6aca139b", "endpoint": "/api/im/agent-trace/trace", "method": "POST", "body": { "cardId": "6aca139b8c18ba3ebb3c0cdd", "thirdShopId": "2748947711641649387" } },
+  { "name": "trace-可以直接吸氧-6aca13bb", "endpoint": "/api/im/agent-trace/trace", "method": "POST", "body": { "cardId": "6aca13bb8c18ba3ebb3c0deb", "thirdShopId": "2748947711641649387" } },
+  { "name": "chat-整段会话", "endpoint": "/api/im/agent-trace/get-chat-list?thirdShopId=2748947711641649387&cardId=6aca13a28c18ba3ebb3c0d17", "method": "GET" }
+]

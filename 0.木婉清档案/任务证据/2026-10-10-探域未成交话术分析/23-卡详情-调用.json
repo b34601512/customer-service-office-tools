@@ -1,0 +1,52 @@
+[
+ {
+  "name": "卡-维修范围",
+  "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6a9a3c40644e354d71a3f88a",
+  "method": "GET"
+ },
+ {
+  "name": "卡-礼品",
+  "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6a9a3c4f644e354d71a3fb27",
+  "method": "GET"
+ },
+ {
+  "name": "卡-PDD-24h标签",
+  "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6a9a3c3d644e354d71a3f7f6",
+  "method": "GET"
+ },
+ {
+  "name": "卡-PDD-24h售后咨询",
+  "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6a9a3c3d644e354d71a3f7f2",
+  "method": "GET"
+ },
+ {
+  "name": "卡-配件怎么买",
+  "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6abe2b80e4bec5475482e0d2",
+  "method": "GET"
+ },
+ {
+  "name": "卡-太干购买湿化瓶",
+  "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6a9a3c3f644e354d71a3f854",
+  "method": "GET"
+ },
+ {
+  "name": "卡-如何联系人工处理售后",
+  "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6a9a3c3a644e354d71a3f782",
+  "method": "GET"
+ },
+ {
+  "name": "卡-京东仓发货",
+  "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6ac0d595e1041c390582eafa",
+  "method": "GET"
+ },
+ {
+  "name": "卡-选型卡",
+  "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6ac0b5bde1041c390582e5db",
+  "method": "GET"
+ },
+ {
+  "name": "卡-太干赠送湿化瓶",
+  "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6a9a3c3f4a45121da4d7c677",
+  "method": "GET"
+ }
+]

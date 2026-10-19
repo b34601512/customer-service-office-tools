@@ -1,0 +1,2947 @@
+[
+  {
+    "url": "https://merchant.tanyuai.com/api/gc/personal/detailV2",
+    "json": {
+      "code": 1,
+      "msg": "操作成功!",
+      "data": {
+        "group": {
+          "id": "2094743970688012288",
+          "name": "深圳市德达医疗科技集团有限公司",
+          "chatbotGroupId": "2094743970688012288",
+          "mobile": "188****0989",
+          "ifEnable": true,
+          "createAt": "2026-09-01 19:07:35"
+        },
+        "account": {
+          "id": "2094743970688012288",
+          "chatbotAccountId": "2094743970688012288",
+          "account": "188****0989",
+          "headImgUrl": "",
+          "type": 1,
+          "ifEnable": true,
+          "createAt": "2026-09-01 19:07:35",
+          "ifBindWx": false
+        },
+        "openChatbot": true,
+        "openScrm": false,
+        "openAfterSales": true,
+        "openCopilot": false,
+        "openAiCC": false,
+        "openAiLabs": false,
+        "mainOpenShopAgents": true,
+        "openShopAgents": true,
+        "openSqs": false,
+        "openPdAgent": true,
+        "product": {
+          "weworkCorps": [],
+          "system": {
+            "productCode": "system",
+            "productName": "系统管理",
+            "menus": [
+              {
+                "id": "1865611893620637696",
+                "productCode": "system",
+                "code": "team",
+                "name": "团队管理",
+                "displayName": "团队管理",
+                "ifEnable": true,
+                "sortBy": 100,
+                "ifRoute": false,
+                "apis": [],
+                "buttons": [
+                  "add",
+                  "edit",
+                  "delete",
+                  "view",
+                  "inner",
+                  "innerTest",
+                  "markClick",
+                  "cupTrans",
+                  "similarAdmin"
+                ],
+                "subMenus": [
+                  {
+                    "id": "1865611893620637697",
+                    "parentId": "1865611893620637696",
+                    "productCode": "system",
+                    "code": "team.account",
+                    "name": "账号管理",
+                    "displayName": "账号管理",
+                    "ifEnable": true,
+                    "sortBy": 100,
+                    "ifRoute": true,
+                    "apis": [
+                      "team.account.add",
+                      "team.account.edit",
+                      "team.account.list",
+                      "team.account.detail",
+                      "team.account.updatePassword",
+                      "team.account.delete"
+                    ],
+                    "buttons": [
+                      "add",
+                      "edit",
+                      "delete",
+                      "view",
+                      "inner",
+                      "innerTest",
+                      "markClick",
+                      "cupTrans",
+                      "similarAdmin"
+                    ],
+                    "subMenus": []
+                  },
+                  {
+                    "id": "1865611893620637698",
+                    "parentId": "1865611893620637696",
+                    "productCode": "system",
+                    "code": "team.role",
+                    "name": "角色管理",
+                    "displayName": "角色管理",
+                    "ifEnable": true,
+                    "sortBy": 100,
+                    "ifRoute": true,
+                    "apis": [
+                      "team.role.list",
+                      "team.role.upsert",
+                      "team.role.detail",
+                      "team.role.delete"
+                    ],
+                    "buttons": [
+                      "add",
+                      "edit",
+                      "delete",
+                      "view",
+                      "inner",
+                      "innerTest",
+                      "markClick",
+                      "cupTrans",
+                      "similarAdmin"
+                    ],
+                    "subMenus": []
+                  }
+                ]
+              },
+              {
+                "id": "2056274966805021004",
+                "productCode": "system",
+                "code": "group_settings",
+                "name": "集团配置",
+                "displayName": "集团配置",
+                "ifEnable": true,
+                "sortBy": 100,
+                "ifRoute": true,
+                "apis": [],
+                "buttons": [],
+                "subMenus": [
+                  {
+                    "id": "2056274966805021005",
+                    "parentId": "2056274966805021004",
+                    "productCode": "system",
+                    "code": "group_settings.pay_auth",
+                    "name": "支付授权（新）",
+                    "displayName": "支付授权",
+                    "ifEnable": true,
+                    "sortBy": 100,
+                    "ifRoute": true,
+                    "apis": [],
+                    "buttons": [],
+                    "subMenus": []
+                  },
+                  {
+                    "id": "2160372561812848640",
+                    "parentId": "2056274966805021004",
+                    "productCode": "system",
+                    "code": "group_settings.product_charge",
+                    "name": "套餐充值",
+                    "displayName": "套餐充值",
+                    "ifEnable": true,
+                    "sortBy": 100,
+                    "ifRoute": true,
+                    "apis": [],
+                    "buttons": [],
+                    "subMenus": []
+                  },
+                  {
+                    "id": "2160372561812848641",
+                    "parentId": "2056274966805021004",
+                    "productCode": "system",
+                    "code": "group_settings.charge_record",
+                    "name": "充值记录",
+                    "displayName": "充值记录",
+                    "ifEnable": true,
+                    "sortBy": 100,
+                    "ifRoute": true,
+                    "apis": [],
+                    "buttons": [],
+                    "subMenus": []
+                  },
+                  {
+                    "id": "2093416804672735585",
+                    "parentId": "2056274966805021004",
+                    "productCode": "system",
+                    "code": "group_settings.logistic",
+                    "name": "物流订阅",
+                    "displayName": "物流订阅",
+                    "ifEnable": true,
+                    "sortBy": 100,
+                    "ifRoute": true,
+                    "apis": [],
+                    "buttons": [],
+                    "subMenus": []
+                  }
+                ]
+              },
+              {
+                "id": "306",
+                "productCode": "system",
+                "code": "group_sms",
+                "name": "短信管理",
+                "displayName": "短信管理",
+                "icon": "iconfont icon-duanxinguanli1",
+                "ifEnable": true,
+                "sortBy": 87,
+                "ifRoute": false,
+                "apis": [],
+                "buttons": [
+                  "add",
+                  "edit",
+                  "delete",
+                  "view",
+                  "inner",
+                  "innerTest",
+                  "markClick",
+                  "cupTrans",
+                  "similarAdmin"
+                ],
+                "subMenus": [
+                  {
+                    "id": "308",
+                    "parentId": "306",
+                    "productCode": "system",
+                    "code": "group_sms.send_record",
+                    "componentId": "57",
+                    "name": "发送记录",
+                    "displayName": "发送记录",
+                    "icon": "",
+                    "ifEnable": true,
+                    "sortBy": 100,
+                    "ifRoute": true,
+                    "apis": [],
+                    "buttons": [
+                      "add",
+                      "edit",
+                      "delete",
+                      "view",
+                      "inner",
+                      "innerTest",
+                      "markClick",
+                      "cupTrans",
+                      "similarAdmin"
+                    ],
+                    "component": {
+                      "id": "57",
+                      "name": "发送记录",
+                      "path": "messageManage/sendRecord",
+                      "routeName": "messageSendRecord",
+                      "routePath": "/messageManage/sendRecord"
+                    },
+                    "subMenus": []
+                  },
+                  {
+                    "id": "309",
+                    "parentId": "306",
+                    "productCode": "system",
+                    "code": "group_sms.template",
+                    "componentId": "58",
+                    "name": "短信模板",
+                    "displayName": "短信模板",
+                    "icon": "",
+                    "ifEnable": true,
+                    "sortBy": 100,
+                    "ifRoute": true,
+                    "apis": [],
+                    "buttons": [
+                      "add",
+                      "edit",
+                      "delete",
+                      "view",
+                      "inner",
+                      "innerTest",
+                      "markClick",
+                      "cupTrans",
+                      "similarAdmin"
+                    ],
+                    "component": {
+                      "id": "58",
+                      "name": "短信模板",
+                      "path": "messageManage/template",
+                      "routeName": "messageTemplate",
+                      "routePath": "/messageManage/template"
+                    },
+                    "subMenus": []
+                  }
+                ]
+              },
+              {
+                "id": "307",
+                "productCode": "system",
+                "code": "MENU0728324331156440242AC1100020",
+                "componentId": "59",
+                "name": "短信签名",
+                "displayName": "短信签名",
+                "icon": "",
+                "ifEnable": true,
+                "sortBy": 100,
+                "ifRoute": true,
+                "apis": [],
+                "buttons": [
+                  "add",
+                  "edit",
+                  "delete",
+                  "view",
+                  "inner",
+                  "innerTest",
+                  "markClick",
+                  "cupTrans",
+                  "similarAdmin"
+                ],
+                "component": {
+                  "id": "59",
+                  "name": "短信签名",
+                  "path": "messageManage/sign",
+                  "routeName": "messageSign",
+                  "routePath": "/messageManage/sign"
+                },
+                "subMenus": []
+              },
+              {
+                "id": "2021559785479110798",
+                "productCode": "system",
+                "code": "product",
+                "name": "产品管理",
+                "displayName": "产品管理",
+                "ifEnable": true,
+                "sortBy": 100,
+                "ifRoute": true,
+                "apis": [],
+                "buttons": [],
+                "subMenus": [
+                  {
+                    "id": "2021559785479110799",
+                    "parentId": "2021559785479110798",
+                    "productCode": "system",
+                    "code": "product.thirdShop",
+                    "name": "店铺管理(新)",
+                    "displayName": "店铺管理",
+                    "ifEnable": true,
+                    "sortBy": 100,
+                    "ifRoute": true,
+                    "apis": [],
+                    "buttons": [],
+                    "subMenus": []
+                  },
+                  {
+                    "id": "2244951463072825374",
+                    "parentId": "2021559785479110798",
+                    "productCode": "system",
+                    "code": "product.seat",
+                    "name": "坐席管理",
+                    "displayName": "坐席管理",
+                    "ifEnable": true,
+                    "sortBy": 100,
+                    "ifRoute": true,
+                    "apis": [],
+                    "buttons": [],
+                    "subMenus": []
+                  }
+                ]
+              }
+            ],
+            "packages": [
+              {
+                "packageId": "1",
+                "packageName": "默认",
+                "startDay": "2026-10-10",
+                "endDay": "2027-10-10"
+              }
+            ],
+            "firstStartDay": "2026-10-10",
+            "lastEndDay": "2027-10-10"
+          },
+          "afterSales": {
+            "productCode": "after-sales",
+            "productName": "智能售后",
+            "menus": [
+              {
+                "id": "2011194440251113538",
+                "productCode": "after-sales",
+                "code": "smart-workorder",
+                "name": "智能工单-smart-workorder",
+                "displayName": "智能工单",
+                "ifEnable": true,
+                "sortBy": 100,
+                "ifRoute": true,
+                "apis": [],
+                "buttons": [],
+                "subMenus": [
+                  {
+                    "id": "2011194440251113539",
+                    "parentId": "2011194440251113538",
+                    "productCode": "after-sales",
+                    "code": "smart-workorder.mine-workbench",
+                    "name": "我的工作台-smart-workorder.mine-workbench",
+                    "displayName": "我的工作台",
+                    "ifEnable": true,
+                    "sortBy": 100,
+                    "ifRoute": true,
+                    "apis": [],
+                    "buttons": [],
+                    "subMenus": []
+                  },
+                  {
+                    "id": "2056274966805021003",
+                    "parentId": "2011194440251113538",
+                    "productCode": "after-sales",
+                    "code": "smart-workorder.transfer-record",
+                    "name": "转账记录-smart-workorder.transfer-record",
+                    "displayName": "打款记录",
+                    "ifEnable": true,
+                    "sortBy": 101,
+                    "ifRoute": true,
+                    "apis": [],
+                    "buttons": [],
+                    "subMenus": []
+                  },
+                  {
+                    "id": "2011194440251113541",
+                    "parentId": "2011194440251113538",
+                    "productCode": "after-sales",
+                    "code": "smart-workorder.workorder-data",
+                    "name": "工单数据-smart-workorder.workorder-data",
+                    "displayName": "工单数据",
+                    "ifEnable": true,
+                    "sortBy": 100,
+                    "ifRoute": true,
+                    "apis": [],
+                    "buttons": [],
+                    "subMenus": []
+                  },
+                  {
+                    "id": "2011194440251113540",
+                    "parentId": "2011194440251113538",
+                    "productCode": "after-sales",
+                    "code": "smart-workorder.template-center",
+                    "name": "模板中心-smart-workorder.template-center",
+                    "displayName": "模板中心",
+                    "ifEnable": true,
+                    "sortBy": 100,
+                    "ifRoute": true,
+                    "apis": [],
+                    "buttons": [],
+                    "subMenus": []
+                  }
+                ]
+              },
+              {
+                "id": "2011194440251113534",
+                "productCode": "after-sales",
+                "code": "base-config",
+                "name": "基础配置-base-config",
+                "displayName": "基础配置",
+                "ifEnable": true,
+                "sortBy": 100,
+                "ifRoute": true,
+                "apis": [],
+                "buttons": [],
+                "subMenus": [
+                  {
+                    "id": "2011194440251113537",
+                    "parentId": "2011194440251113534",
+                    "productCode": "after-sales",
+                    "code": "base-config.shop-list",
+                    "name": "店铺列表-base-config.shop-list",
+                    "displayName": "店铺列表",
+                    "ifEnable": true,
+                    "sortBy": 100,
+                    "ifRoute": true,
+                    "apis": [],
+                    "buttons": [],
+                    "subMenus": []
+                  },
+                  {
+                    "id": "2011194440251113536",
+                    "parentId": "2011194440251113534",
+                    "productCode": "after-sales",
+                    "code": "base-config.sense-common-config",
+                    "name": "场景通用配置-base-config.sense-common-config",
+                    "displayName": "场景通用配置",
+                    "ifEnable": true,
+                    "sortBy": 100,
+                    "ifRoute": true,
+                    "apis": [],
+                    "buttons": [],
+                    "subMenus": []
+                  },
+                  {
+                    "id": "2011194440251113535",
+                    "parentId": "2011194440251113534",
+                    "productCode": "after-sales",
+                    "code": "base-config.notice-channel",
+                    "name": "通知渠道-base-config.notice-channel",
+                    "displayName": "通知渠道",
+                    "ifEnable": true,
+                    "sortBy": 100,
+                    "ifRoute": true,
+                    "apis": [],
+                    "buttons": [],
+                    "subMenus": []
+                  }
+                ]
+              }
+            ],
+            "packages": [
+              {
+                "packageId": "2020744600686002186",
+                "packageName": "探域智能工单（专业版）",
+                "startDay": "2026-09-28",
+                "endDay": "2027-09-28"
+              }
+            ],
+            "firstStartDay": "2026-09-28",
+            "lastEndDay": "2027-09-28"
+          },
+          "aiAfterSales": {
+            "productCode": "after-sales",
+            "productName": "智能售后",
+            "menus": [
+              {
+                "id": "2011194440251113538",
+                "productCode": "after-sales",
+                "code": "smart-workorder",
+                "name": "智能工单-smart-workorder",
+                "displayName": "智能工单",
+                "ifEnable": true,
+                "sortBy": 100,
+                "ifRoute": true,
+                "apis": [],
+                "buttons": [],
+                "subMenus": [
+                  {
+                    "id": "2011194440251113539",
+                    "parentId": "2011194440251113538",
+                    "productCode": "after-sales",
+                    "code": "smart-workorder.mine-workbench",
+                    "name": "我的工作台-smart-workorder.mine-workbench",
+                    "displayName": "我的工作台",
+                    "ifEnable": true,
+                    "sortBy": 100,
+                    "ifRoute": true,
+                    "apis": [],
+                    "buttons": [],
+                    "subMenus": []
+                  },
+                  {
+                    "id": "2056274966805021003",
+                    "parentId": "2011194440251113538",
+                    "productCode": "after-sales",
+                    "code": "smart-workorder.transfer-record",
+                    "name": "转账记录-smart-workorder.transfer-record",
+                    "displayName": "打款记录",
+                    "ifEnable": true,
+                    "sortBy": 101,
+                    "ifRoute": true,
+                    "apis": [],
+                    "buttons": [],
+                    "subMenus": []
+                  },
+                  {
+                    "id": "2011194440251113541",
+                    "parentId": "2011194440251113538",
+                    "productCode": "after-sales",
+                    "code": "smart-workorder.workorder-data",
+                    "name": "工单数据-smart-workorder.workorder-data",
+                    "displayName": "工单数据",
+                    "ifEnable": true,
+                    "sortBy": 100,
+                    "ifRoute": true,
+                    "apis": [],
+                    "buttons": [],
+                    "subMenus": []
+                  },
+                  {
+                    "id": "2011194440251113540",
+                    "parentId": "2011194440251113538",
+                    "productCode": "after-sales",
+                    "code": "smart-workorder.template-center",
+                    "name": "模板中心-smart-workorder.template-center",
+                    "displayName": "模板中心",
+                    "ifEnable": true,
+                    "sortBy": 100,
+                    "ifRoute": true,
+                    "apis": [],
+                    "buttons": [],
+                    "subMenus": []
+                  }
+                ]
+              },
+              {
+                "id": "2011194440251113534",
+                "productCode": "after-sales",
+                "code": "base-config",
+                "name": "基础配置-base-config",
+                "displayName": "基础配置",
+                "ifEnable": true,
+                "sortBy": 100,
+                "ifRoute": true,
+                "apis": [],
+                "buttons": [],
+                "subMenus": [
+                  {
+                    "id": "2011194440251113537",
+                    "parentId": "2011194440251113534",
+                    "productCode": "after-sales",
+                    "code": "base-config.shop-list",
+                    "name": "店铺列表-base-config.shop-list",
+                    "displayName": "店铺列表",
+                    "ifEnable": true,
+                    "sortBy": 100,
+                    "ifRoute": true,
+                    "apis": [],
+                    "buttons": [],
+                    "subMenus": []
+                  },
+                  {
+                    "id": "2011194440251113536",
+                    "parentId": "2011194440251113534",
+                    "productCode": "after-sales",
+                    "code": "base-config.sense-common-config",
+                    "name": "场景通用配置-base-config.sense-common-config",
+                    "displayName": "场景通用配置",
+                    "ifEnable": true,
+                    "sortBy": 100,
+                    "ifRoute": true,
+                    "apis": [],
+                    "buttons": [],
+                    "subMenus": []
+                  },
+                  {
+                    "id": "2011194440251113535",
+                    "parentId": "2011194440251113534",
+                    "productCode": "after-sales",
+                    "code": "base-config.notice-channel",
+                    "name": "通知渠道-base-config.notice-channel",
+                    "displayName": "通知渠道",
+                    "ifEnable": true,
+                    "sortBy": 100,
+                    "ifRoute": true,
+                    "apis": [],
+                    "buttons": [],
+                    "subMenus": []
+                  }
+                ]
+              }
+            ],
+            "packages": [
+              {
+                "packageId": "2020744600686002186",
+                "packageName": "探域智能工单（专业版）",
+                "startDay": "2026-09-28",
+                "endDay": "2027-09-28"
+              }
+            ],
+            "shopLimit": 999,
+            "sceneLimit": 99,
+            "firstStartDay": "2026-09-28",
+            "lastEndDay": "2027-09-28"
+          },
+          "shopAgents": {
+            "productCode": "shopAgents",
+            "productName": "ShopAgents",
+            "menus": [
+              {
+                "id": "2551586489818021973",
+                "productCode": "shopAgents",
+                "code": "group-shop-root",
+                "name": "集团与店铺",
+                "displayName": "集团与店铺",
+                "ifEnable": true,
+                "sortBy": 3,
+                "ifRoute": true,
+                "apis": [],
+                "buttons": [],
+                "subMenus": [
+                  {
+                    "id": "2687117070218882737",
+                    "parentId": "2551586489818021973",
+                    "productCode": "shopAgents",
+                    "code": "common-config",
+                    "name": "通用设置",
+                    "displayName": "通用设置",
+                    "ifEnable": true,
+                    "sortBy": 100,
+                    "ifRoute": true,
+                    "apis": [],
+                    "buttons": [],
+                    "subMenus": [
+                      {
+                        "id": "2687117070218882738",
+                        "parentId": "2687117070218882737",
+                        "productCode": "shopAgents",
+                        "code": "common-config.timelimit",
+                        "name": "时效管理v2",
+                        "displayName": "时效管理",
+                        "ifEnable": true,
+                        "sortBy": 100,
+                        "ifRoute": true,
+                        "apis": [],
+                        "buttons": [],
+                        "subMenus": []
+                      }
+                    ]
+                  },
+                  {
+                    "id": "2551586489818021974",
+                    "parentId": "2551586489818021973",
+                    "productCode": "shopAgents",
+                    "code": "group-sub-account",
+                    "name": "集团子账号",
+                    "displayName": "集团子账号",
+                    "ifEnable": true,
+                    "sortBy": 1,
+                    "ifRoute": true,
+                    "apis": [],
+                    "buttons": [],
+                    "subMenus": [
+                      {
+                        "id": "2551586489818021975",
+                        "parentId": "2551586489818021974",
+                        "productCode": "shopAgents",
+                        "code": "personal-center.roles",
+                        "name": "角色管理",
+                        "displayName": "角色管理",
+                        "ifEnable": true,
+                        "sortBy": 1,
+                        "ifRoute": true,
+                        "apis": [],
+                        "buttons": [],
+                        "subMenus": []
+                      },
+                      {
+                        "id": "2551586489818021976",
+                        "parentId": "2551586489818021974",
+                        "productCode": "shopAgents",
+                        "code": "personal-center.accouts",
+                        "name": "子账号管理",
+                        "displayName": "子账号管理",
+                        "ifEnable": true,
+                        "sortBy": 2,
+                        "ifRoute": true,
+                        "apis": [],
+                        "buttons": [],
+                        "subMenus": []
+                      }
+                    ]
+                  },
+                  {
+                    "id": "2551586489818021980",
+                    "parentId": "2551586489818021973",
+                    "productCode": "shopAgents",
+                    "code": "product-management",
+                    "name": "商品管理",
+                    "displayName": "商品管理",
+                    "ifEnable": true,
+                    "sortBy": 3,
+                    "ifRoute": true,
+                    "apis": [],
+                    "buttons": [],
+                    "subMenus": [
+                      {
+                        "id": "2551586489818021982",
+                        "parentId": "2551586489818021980",
+                        "productCode": "shopAgents",
+                        "code": "ai-learning-rules",
+                        "name": "AI商品学习规则",
+                        "displayName": "AI商品学习规则",
+                        "ifEnable": true,
+                        "sortBy": 2,
+                        "ifRoute": true,
+                        "apis": [],
+                        "buttons": [],
+                        "subMenus": []
+                      },
+                      {
+                        "id": "2551586489818021981",
+                        "parentId": "2551586489818021980",
+                        "productCode": "shopAgents",
+                        "code": "knowledge-base.product",
+                        "name": "商品列表",
+                        "displayName": "商品列表",
+                        "ifEnable": true,
+                        "sortBy": 1,
+                        "ifRoute": true,
+                        "apis": [],
+                        "buttons": [],
+                        "subMenus": []
+                      },
+                      {
+                        "id": "2551586489818021985",
+                        "parentId": "2551586489818021980",
+                        "productCode": "shopAgents",
+                        "code": "knowledge-base.product-group",
+                        "name": "商品分组",
+                        "displayName": "商品分组",
+                        "ifEnable": true,
+                        "sortBy": 5,
+                        "ifRoute": true,
+                        "apis": [],
+                        "buttons": [],
+                        "subMenus": []
+                      }
+                    ]
+                  },
+                  {
+                    "id": "2551586489818021977",
+                    "parentId": "2551586489818021973",
+                    "productCode": "shopAgents",
+                    "code": "shop-management",
+                    "name": "店铺管理",
+                    "displayName": "店铺管理",
+                    "ifEnable": true,
+                    "sortBy": 2,
+                    "ifRoute": true,
+                    "apis": [],
+                    "buttons": [],
+                    "subMenus": [
+                      {
+                        "id": "2551586489818021979",
+                        "parentId": "2551586489818021977",
+                        "productCode": "shopAgents",
+                        "code": "sub-account",
+                        "name": "店铺子账号管理",
+                        "displayName": "店铺子账号管理",
+                        "ifEnable": true,
+                        "sortBy": 2,
+                        "ifRoute": true,
+                        "apis": [],
+                        "buttons": [],
+                        "subMenus": []
+                      },
+                      {
+                        "id": "2551586489818021978",
+                        "parentId": "2551586489818021977",
+                        "productCode": "shopAgents",
+                        "code": "personal-center.shops",
+                        "name": "店铺列表",
+                        "displayName": "店铺列表",
+                        "ifEnable": true,
+                        "sortBy": 1,
+                        "ifRoute": true,
+                        "apis": [],
+                        "buttons": [],
+                        "subMenus": []
+                      }
+                    ]
+                  },
+                  {
+                    "id": "2551586489818021986",
+                    "parentId": "2551586489818021973",
+                    "productCode": "shopAgents",
+                    "code": "finance-center",
+                    "name": "财务中心",
+                    "displayName": "财务中心",
+                    "ifEnable": true,
+                    "sortBy": 4,
+                    "ifRoute": true,
+                    "apis": [],
+                    "buttons": [],
+                    "subMenus": [
+                      {
+                        "id": "2551586489818021988",
+                        "parentId": "2551586489818021986",
+                        "productCode": "shopAgents",
+                        "code": "personal-center.points-details",
+                        "name": "积分消耗明细",
+                        "displayName": "积分消耗明细",
+                        "ifEnable": true,
+                        "sortBy": 2,
+                        "ifRoute": true,
+                        "apis": [],
+                        "buttons": [],
+                        "subMenus": []
+                      },
+                      {
+                        "id": "2551586489818021987",
+                        "parentId": "2551586489818021986",
+                        "productCode": "shopAgents",
+                        "code": "personal-center.subs",
+                        "name": "订阅记录",
+                        "displayName": "订阅记录",
+                        "ifEnable": true,
+                        "sortBy": 1,
+                        "ifRoute": true,
+                        "apis": [],
+                        "buttons": [],
+                        "subMenus": []
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "2551586489818021969",
+                "productCode": "shopAgents",
+                "code": "optimization-root",
+                "name": "诊断与优化",
+                "displayName": "诊断与优化",
+                "ifEnable": true,
+                "sortBy": 2,
+                "ifRoute": true,
+                "apis": [],
+                "buttons": [],
+                "subMenus": [
+                  {
+                    "id": "2551586489818021972",
+                    "parentId": "2551586489818021969",
+                    "productCode": "shopAgents",
+                    "code": "optimization.agent-record",
+                    "name": "工具记录",
+                    "displayName": "工具记录",
+                    "ifEnable": true,
+                    "sortBy": 3,
+                    "ifRoute": true,
+                    "apis": [],
+                    "buttons": [],
+                    "subMenus": []
+                  },
+                  {
+                    "id": "2551586489818021971",
+                    "parentId": "2551586489818021969",
+                    "productCode": "shopAgents",
+                    "code": "optimization.approve",
+                    "name": "聊天知识审核",
+                    "displayName": "聊天知识审核",
+                    "ifEnable": true,
+                    "sortBy": 2,
+                    "ifRoute": true,
+                    "apis": [],
+                    "buttons": [],
+                    "subMenus": []
+                  },
+                  {
+                    "id": "2551586489818021970",
+                    "parentId": "2551586489818021969",
+                    "productCode": "shopAgents",
+                    "code": "optimization.fine-tuning",
+                    "name": "调优工坊",
+                    "displayName": "调优工坊",
+                    "ifEnable": true,
+                    "sortBy": 1,
+                    "ifRoute": true,
+                    "apis": [],
+                    "buttons": [],
+                    "subMenus": []
+                  }
+                ]
+              },
+              {
+                "id": "2551586489818021989",
+                "productCode": "shopAgents",
+                "code": "home",
+                "name": "数据罗盘",
+                "displayName": "数据罗盘",
+                "ifEnable": true,
+                "sortBy": 4,
+                "ifRoute": true,
+                "apis": [],
+                "buttons": [],
+                "subMenus": []
+              },
+              {
+                "id": "2655287316607209397",
+                "productCode": "shopAgents",
+                "code": "agent.dashboard",
+                "name": "数据罗盘-新",
+                "displayName": "数据罗盘",
+                "ifEnable": true,
+                "sortBy": 100,
+                "ifRoute": true,
+                "apis": [],
+                "buttons": [],
+                "subMenus": []
+              },
+              {
+                "id": "2687116743801311036",
+                "productCode": "shopAgents",
+                "code": "marketing-agent",
+                "name": "营销智能体",
+                "displayName": "营销智能体",
+                "ifEnable": true,
+                "sortBy": 100,
+                "ifRoute": true,
+                "apis": [],
+                "buttons": [],
+                "subMenus": [
+                  {
+                    "id": "2687116743801311037",
+                    "parentId": "2687116743801311036",
+                    "productCode": "shopAgents",
+                    "code": "marketing-agent.followup",
+                    "name": "智能跟单v2",
+                    "displayName": "智能跟单",
+                    "ifEnable": true,
+                    "sortBy": 100,
+                    "ifRoute": true,
+                    "apis": [],
+                    "buttons": [],
+                    "subMenus": [
+                      {
+                        "id": "2687116743801311038",
+                        "parentId": "2687116743801311037",
+                        "productCode": "shopAgents",
+                        "code": "marketing-agent.followup.config",
+                        "name": "跟单配置v2",
+                        "displayName": "跟单配置",
+                        "ifEnable": true,
+                        "sortBy": 100,
+                        "ifRoute": true,
+                        "apis": [],
+                        "buttons": [],
+                        "subMenus": []
+                      },
+                      {
+                        "id": "2714101413511382060",
+                        "parentId": "2687116743801311037",
+                        "productCode": "shopAgents",
+                        "code": "marketing-agent.followup.data",
+                        "name": "跟单数据v2",
+                        "displayName": "跟单数据",
+                        "ifEnable": true,
+                        "sortBy": 100,
+                        "ifRoute": true,
+                        "apis": [],
+                        "buttons": [],
+                        "subMenus": []
+                      },
+                      {
+                        "id": "2714101413511382061",
+                        "parentId": "2687116743801311037",
+                        "productCode": "shopAgents",
+                        "code": "marketing-agent.followup.common",
+                        "name": "通用配置",
+                        "displayName": "通用配置",
+                        "ifEnable": true,
+                        "sortBy": 100,
+                        "ifRoute": true,
+                        "apis": [],
+                        "buttons": [],
+                        "subMenus": []
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "2551586489818021939",
+                "productCode": "shopAgents",
+                "code": "agent-builder",
+                "name": "Agent Builder",
+                "displayName": "Agent Builder",
+                "ifEnable": true,
+                "sortBy": 1,
+                "ifRoute": true,
+                "apis": [],
+                "buttons": [],
+                "subMenus": [
+                  {
+                    "id": "2551586489818021958",
+                    "parentId": "2551586489818021939",
+                    "productCode": "shopAgents",
+                    "code": "reception-settings",
+                    "name": "接待设置",
+                    "displayName": "接待设置",
+                    "ifEnable": true,
+                    "sortBy": 6,
+                    "ifRoute": true,
+                    "apis": [],
+                    "buttons": [],
+                    "subMenus": [
+                      {
+                        "id": "2551586489818021959",
+                        "parentId": "2551586489818021958",
+                        "productCode": "shopAgents",
+                        "code": "session-cycle",
+                        "name": "会话周期",
+                        "displayName": "会话周期",
+                        "ifEnable": true,
+                        "sortBy": 1,
+                        "ifRoute": true,
+                        "apis": [],
+                        "buttons": [],
+                        "subMenus": []
+                      },
+                      {
+                        "id": "2551586489818021963",
+                        "parentId": "2551586489818021958",
+                        "productCode": "shopAgents",
+                        "code": "buyer-title",
+                        "name": "买家称呼",
+                        "displayName": "买家称呼",
+                        "ifEnable": true,
+                        "sortBy": 5,
+                        "ifRoute": true,
+                        "apis": [],
+                        "buttons": [],
+                        "subMenus": []
+                      },
+                      {
+                        "id": "2551586489818021962",
+                        "parentId": "2551586489818021958",
+                        "productCode": "shopAgents",
+                        "code": "manual-transfer",
+                        "name": "手动转交话术",
+                        "displayName": "手动转交话术",
+                        "ifEnable": true,
+                        "sortBy": 4,
+                        "ifRoute": true,
+                        "apis": [],
+                        "buttons": [],
+                        "subMenus": []
+                      },
+                      {
+                        "id": "2551586489818021961",
+                        "parentId": "2551586489818021958",
+                        "productCode": "shopAgents",
+                        "code": "sales-status",
+                        "name": "售前售后状态",
+                        "displayName": "售前售后状态",
+                        "ifEnable": true,
+                        "sortBy": 3,
+                        "ifRoute": true,
+                        "apis": [],
+                        "buttons": [],
+                        "subMenus": []
+                      },
+                      {
+                        "id": "2551586489818021960",
+                        "parentId": "2551586489818021958",
+                        "productCode": "shopAgents",
+                        "code": "focus-order",
+                        "name": "焦点订单",
+                        "displayName": "焦点订单",
+                        "ifEnable": true,
+                        "sortBy": 2,
+                        "ifRoute": true,
+                        "apis": [],
+                        "buttons": [],
+                        "subMenus": []
+                      },
+                      {
+                        "id": "2594631726305512847",
+                        "parentId": "2551586489818021958",
+                        "productCode": "shopAgents",
+                        "code": "assisted-reception",
+                        "name": "平台应用设置",
+                        "displayName": "平台应用设置",
+                        "ifEnable": true,
+                        "sortBy": 100,
+                        "ifRoute": true,
+                        "apis": [],
+                        "buttons": [],
+                        "subMenus": []
+                      },
+                      {
+                        "id": "2655287634434823010",
+                        "parentId": "2551586489818021958",
+                        "productCode": "shopAgents",
+                        "code": "reception-settings.focus-product",
+                        "name": "接待配置-焦点商品",
+                        "displayName": "焦点商品",
+                        "ifEnable": true,
+                        "sortBy": 100,
+                        "ifRoute": true,
+                        "apis": [],
+                        "buttons": [],
+                        "subMenus": []
+                      }
+                    ]
+                  },
+                  {
+                    "id": "2551586489818021954",
+                    "parentId": "2551586489818021939",
+                    "productCode": "shopAgents",
+                    "code": "fallback-strategy",
+                    "name": "兜底策略",
+                    "displayName": "兜底策略",
+                    "ifEnable": true,
+                    "sortBy": 5,
+                    "ifRoute": true,
+                    "apis": [],
+                    "buttons": [],
+                    "subMenus": [
+                      {
+                        "id": "2551586489818021957",
+                        "parentId": "2551586489818021954",
+                        "productCode": "shopAgents",
+                        "code": "fallback-script",
+                        "name": "兜底话术",
+                        "displayName": "兜底话术",
+                        "ifEnable": true,
+                        "sortBy": 3,
+                        "ifRoute": true,
+                        "apis": [],
+                        "buttons": [],
+                        "subMenus": []
+                      },
+                      {
+                        "id": "2551586489818021956",
+                        "parentId": "2551586489818021954",
+                        "productCode": "shopAgents",
+                        "code": "interception",
+                        "name": "话术拦截",
+                        "displayName": "话术拦截",
+                        "ifEnable": true,
+                        "sortBy": 2,
+                        "ifRoute": true,
+                        "apis": [],
+                        "buttons": [],
+                        "subMenus": []
+                      },
+                      {
+                        "id": "2551586489818021955",
+                        "parentId": "2551586489818021954",
+                        "productCode": "shopAgents",
+                        "code": "trigger",
+                        "name": "触发器",
+                        "displayName": "触发器",
+                        "ifEnable": true,
+                        "sortBy": 1,
+                        "ifRoute": true,
+                        "apis": [],
+                        "buttons": [],
+                        "subMenus": []
+                      }
+                    ]
+                  },
+                  {
+                    "id": "2551586489818021964",
+                    "parentId": "2551586489818021939",
+                    "productCode": "shopAgents",
+                    "code": "ai-collaboration",
+                    "name": "AI协作",
+                    "displayName": "AI协作",
+                    "ifEnable": true,
+                    "sortBy": 7,
+                    "ifRoute": true,
+                    "apis": [],
+                    "buttons": [],
+                    "subMenus": [
+                      {
+                        "id": "2551586489818021967",
+                        "parentId": "2551586489818021964",
+                        "productCode": "shopAgents",
+                        "code": "auto-send",
+                        "name": "自动发送场景",
+                        "displayName": "自动发送场景",
+                        "ifEnable": true,
+                        "sortBy": 3,
+                        "ifRoute": true,
+                        "apis": [],
+                        "buttons": [],
+                        "subMenus": []
+                      },
+                      {
+                        "id": "2551586489818021966",
+                        "parentId": "2551586489818021964",
+                        "productCode": "shopAgents",
+                        "code": "anti-interrupt",
+                        "name": "防止抢话",
+                        "displayName": "防止抢话",
+                        "ifEnable": true,
+                        "sortBy": 2,
+                        "ifRoute": true,
+                        "apis": [],
+                        "buttons": [],
+                        "subMenus": []
+                      },
+                      {
+                        "id": "2551586489818021965",
+                        "parentId": "2551586489818021964",
+                        "productCode": "shopAgents",
+                        "code": "countdown",
+                        "name": "亮灯读秒",
+                        "displayName": "亮灯读秒",
+                        "ifEnable": true,
+                        "sortBy": 1,
+                        "ifRoute": true,
+                        "apis": [],
+                        "buttons": [],
+                        "subMenus": []
+                      },
+                      {
+                        "id": "2551586489818021968",
+                        "parentId": "2551586489818021964",
+                        "productCode": "shopAgents",
+                        "code": "reply-mark",
+                        "name": "回复标识",
+                        "displayName": "回复标识",
+                        "ifEnable": true,
+                        "sortBy": 4,
+                        "ifRoute": true,
+                        "apis": [],
+                        "buttons": [],
+                        "subMenus": []
+                      }
+                    ]
+                  },
+                  {
+                    "id": "2551586489818021943",
+                    "parentId": "2551586489818021939",
+                    "productCode": "shopAgents",
+                    "code": "knowledge-center",
+                    "name": "知识中心",
+                    "displayName": "知识中心",
+                    "ifEnable": true,
+                    "sortBy": 2,
+                    "ifRoute": true,
+                    "apis": [],
+                    "buttons": [],
+                    "subMenus": [
+                      {
+                        "id": "2551586489818021947",
+                        "parentId": "2551586489818021943",
+                        "productCode": "shopAgents",
+                        "code": "shop-agents-chat.toolkit",
+                        "name": "技能",
+                        "displayName": "技能",
+                        "ifEnable": true,
+                        "sortBy": 4,
+                        "ifRoute": true,
+                        "apis": [],
+                        "buttons": [],
+                        "subMenus": []
+                      },
+                      {
+                        "id": "2551586489818021946",
+                        "parentId": "2551586489818021943",
+                        "productCode": "shopAgents",
+                        "code": "knowledge-base.subsidy",
+                        "name": "国补知识",
+                        "displayName": "国补知识",
+                        "ifEnable": true,
+                        "sortBy": 3,
+                        "ifRoute": true,
+                        "apis": [],
+                        "buttons": [],
+                        "subMenus": []
+                      },
+                      {
+                        "id": "2551586489818021945",
+                        "parentId": "2551586489818021943",
+                        "productCode": "shopAgents",
+                        "code": "knowledge-base.tables",
+                        "name": "表格知识",
+                        "displayName": "表格知识",
+                        "ifEnable": true,
+                        "sortBy": 2,
+                        "ifRoute": true,
+                        "apis": [],
+                        "buttons": [],
+                        "subMenus": []
+                      },
+                      {
+                        "id": "2551586489818021944",
+                        "parentId": "2551586489818021943",
+                        "productCode": "shopAgents",
+                        "code": "knowledge-base.index",
+                        "name": "知识库",
+                        "displayName": "知识库",
+                        "ifEnable": true,
+                        "sortBy": 1,
+                        "ifRoute": true,
+                        "apis": [],
+                        "buttons": [],
+                        "subMenus": []
+                      }
+                    ]
+                  },
+                  {
+                    "id": "2551586489818021940",
+                    "parentId": "2551586489818021939",
+                    "productCode": "shopAgents",
+                    "code": "opening",
+                    "name": "开场白",
+                    "displayName": "开场白",
+                    "ifEnable": true,
+                    "sortBy": 1,
+                    "ifRoute": true,
+                    "apis": [],
+                    "buttons": [],
+                    "subMenus": [
+                      {
+                        "id": "2551586489818021942",
+                        "parentId": "2551586489818021940",
+                        "productCode": "shopAgents",
+                        "code": "product-feature",
+                        "name": "商品卖点",
+                        "displayName": "商品卖点",
+                        "ifEnable": true,
+                        "sortBy": 2,
+                        "ifRoute": true,
+                        "apis": [],
+                        "buttons": [],
+                        "subMenus": []
+                      },
+                      {
+                        "id": "2551586489818021941",
+                        "parentId": "2551586489818021940",
+                        "productCode": "shopAgents",
+                        "code": "welcome",
+                        "name": "欢迎语",
+                        "displayName": "欢迎语",
+                        "ifEnable": true,
+                        "sortBy": 1,
+                        "ifRoute": true,
+                        "apis": [],
+                        "buttons": [],
+                        "subMenus": []
+                      }
+                    ]
+                  },
+                  {
+                    "id": "2551586489818021951",
+                    "parentId": "2551586489818021939",
+                    "productCode": "shopAgents",
+                    "code": "context-tools",
+                    "name": "上下文工具",
+                    "displayName": "上下文工具",
+                    "ifEnable": true,
+                    "sortBy": 4,
+                    "ifRoute": true,
+                    "apis": [],
+                    "buttons": [],
+                    "subMenus": [
+                      {
+                        "id": "2551586489818021953",
+                        "parentId": "2551586489818021951",
+                        "productCode": "shopAgents",
+                        "code": "scene-library",
+                        "name": "咨询意图库",
+                        "displayName": "咨询意图库",
+                        "ifEnable": true,
+                        "sortBy": 2,
+                        "ifRoute": true,
+                        "apis": [],
+                        "buttons": [],
+                        "subMenus": []
+                      },
+                      {
+                        "id": "2551586489818021952",
+                        "parentId": "2551586489818021951",
+                        "productCode": "shopAgents",
+                        "code": "shop-agents-chat.memory",
+                        "name": "记忆",
+                        "displayName": "记忆",
+                        "ifEnable": true,
+                        "sortBy": 1,
+                        "ifRoute": true,
+                        "apis": [],
+                        "buttons": [],
+                        "subMenus": []
+                      }
+                    ]
+                  },
+                  {
+                    "id": "2551586489818021948",
+                    "parentId": "2551586489818021939",
+                    "productCode": "shopAgents",
+                    "code": "strategy",
+                    "name": "策略",
+                    "displayName": "策略",
+                    "ifEnable": true,
+                    "sortBy": 3,
+                    "ifRoute": true,
+                    "apis": [],
+                    "buttons": [],
+                    "subMenus": [
+                      {
+                        "id": "2551586489818021950",
+                        "parentId": "2551586489818021948",
+                        "productCode": "shopAgents",
+                        "code": "custom-style",
+                        "name": "自定义风格",
+                        "displayName": "自定义风格",
+                        "ifEnable": true,
+                        "sortBy": 2,
+                        "ifRoute": true,
+                        "apis": [],
+                        "buttons": [],
+                        "subMenus": []
+                      },
+                      {
+                        "id": "2551586489818021949",
+                        "parentId": "2551586489818021948",
+                        "productCode": "shopAgents",
+                        "code": "shop-agents-chat.customized",
+                        "name": "自定义Agent",
+                        "displayName": "自定义Agent",
+                        "ifEnable": true,
+                        "sortBy": 1,
+                        "ifRoute": true,
+                        "apis": [],
+                        "buttons": [],
+                        "subMenus": []
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "packages": [
+              {
+                "packageId": "2594631726305512511",
+                "packageName": "ATM 套餐",
+                "startDay": "2026-09-03",
+                "endDay": "2099-12-31"
+              }
+            ],
+            "firstStartDay": "2026-09-03",
+            "lastEndDay": "2099-12-31"
+          },
+          "pdAgent": {}
+        },
+        "roleIds": [],
+        "roles": [],
+        "gcSqsTagIdList": []
+      },
+      "success": true
+    }
+  },
+  {
+    "url": "https://merchant.tanyuai.com/api/gc/personal/get-if-demo",
+    "json": {
+      "code": 1,
+      "msg": "操作成功!",
+      "data": false,
+      "success": true
+    }
+  },
+  {
+    "url": "https://merchant.tanyuai.com/api/gc/personal/getChatbotShopDetailPage?pageNum=1&pageSize=1&chatbotShopId=2107774500664774656",
+    "json": {
+      "code": 1,
+      "msg": "操作成功!",
+      "data": {
+        "pageIndex": 1,
+        "pageSize": 1,
+        "total": 1,
+        "results": [
+          {
+            "groupId": "2094743970688012288",
+            "thirdShopId": "2748947084576361329",
+            "chatbotShopId": "2107774500664774656",
+            "platform": 7,
+            "shopName": "DEDAKJ京东自营旗舰店（供应商编码:szddkj）",
+            "sellerId": "1000236020_szddkj",
+            "env": "tanyu",
+            "jdSupplierId": "szddkj",
+            "ifJdSelf": true,
+            "qaSystem": 4,
+            "qaEnable": false,
+            "salesTrackerEnable": false,
+            "seatsCount": 999,
+            "ifDemo": 0,
+            "createAt": "2026-10-07 18:06:16",
+            "packages": [
+              {
+                "packageId": "2485436450616528450",
+                "packageName": "智能体赠送",
+                "startDay": "2026-09-28",
+                "endDay": "2027-09-28"
+              }
+            ],
+            "thirdAppNames": [
+              "探域客服助手"
+            ],
+            "auths": [
+              {
+                "thirdAppKey": "75B8EAE5B9E3BE43A60A86C2A1E46BA4",
+                "thirdAppName": "探域客服助手",
+                "expireAt": "2027-10-07 17:45:50"
+              }
+            ],
+            "ifJdMoreSupplier": true,
+            "firstStartDay": "2026-09-28",
+            "lastEndDay": "2027-09-28",
+            "name": "DEDAKJ京东自营旗舰店（供应商编码:szddkj）",
+            "id": "2748947084576361329"
+          }
+        ],
+        "startRow": 0
+      },
+      "success": true
+    }
+  },
+  {
+    "url": "https://merchant.tanyuai.com/api/gc/chatbot/menus?chatbotShopId=2107774500664774656",
+    "json": {
+      "code": 1,
+      "msg": "操作成功!",
+      "data": [
+        {
+          "menuId": "533",
+          "menuName": "首页",
+          "name": "配置引导",
+          "sortBy": 99,
+          "component": "configGuide/index",
+          "path": "/configGuide",
+          "isRoute": 1,
+          "permissions": [
+            "add",
+            "edit",
+            "delete",
+            "view",
+            "inner",
+            "innerTest",
+            "markClick",
+            "cupTrans",
+            "similarAdmin"
+          ],
+          "children": []
+        },
+        {
+          "menuId": "526",
+          "menuName": "数据洞察",
+          "icon": "icon-jituankanban",
+          "sortBy": 98,
+          "isRoute": 0,
+          "permissions": [
+            "add",
+            "edit",
+            "delete",
+            "view",
+            "inner",
+            "innerTest",
+            "markClick",
+            "cupTrans",
+            "similarAdmin"
+          ],
+          "children": [
+            {
+              "menuId": "527",
+              "parentId": "526",
+              "menuName": "集团数据",
+              "name": "集团数据",
+              "sortBy": 100,
+              "component": "groupData/index",
+              "path": "/groupData/index",
+              "isRoute": 1,
+              "permissions": [
+                "add",
+                "edit",
+                "delete",
+                "view",
+                "inner",
+                "innerTest",
+                "markClick",
+                "cupTrans",
+                "similarAdmin"
+              ],
+              "children": []
+            },
+            {
+              "menuId": "528",
+              "parentId": "526",
+              "menuName": "集团绩效",
+              "name": "客服绩效（集团）",
+              "sortBy": 100,
+              "component": "groupData/serviceMerit/index",
+              "path": "/groupData/serviceMerit/index",
+              "isRoute": 1,
+              "permissions": [
+                "add",
+                "edit",
+                "delete",
+                "view",
+                "inner",
+                "innerTest",
+                "markClick",
+                "cupTrans",
+                "similarAdmin"
+              ],
+              "children": []
+            },
+            {
+              "menuId": "530",
+              "parentId": "526",
+              "menuName": "标签数据",
+              "name": "标签数据",
+              "sortBy": 100,
+              "component": "labelData/index",
+              "path": "/labelData/index",
+              "isRoute": 1,
+              "permissions": [
+                "add",
+                "edit",
+                "delete",
+                "view",
+                "inner",
+                "innerTest",
+                "markClick",
+                "cupTrans",
+                "similarAdmin"
+              ],
+              "children": []
+            },
+            {
+              "menuId": "498",
+              "parentId": "526",
+              "menuName": "店铺数据",
+              "icon": "",
+              "name": "首页",
+              "sortBy": 100,
+              "component": "home/index",
+              "path": "/home",
+              "isRoute": 1,
+              "permissions": [
+                "add",
+                "edit",
+                "delete",
+                "view",
+                "inner",
+                "innerTest",
+                "markClick",
+                "cupTrans",
+                "similarAdmin"
+              ],
+              "children": []
+            },
+            {
+              "menuId": "506",
+              "parentId": "526",
+              "menuName": "店铺绩效",
+              "icon": "",
+              "name": "新版客服绩效",
+              "sortBy": 100,
+              "component": "serviceMerit/index",
+              "path": "/serviceMerit",
+              "isRoute": 1,
+              "permissions": [
+                "add",
+                "edit",
+                "delete",
+                "view",
+                "inner",
+                "innerTest",
+                "markClick",
+                "cupTrans",
+                "similarAdmin"
+              ],
+              "children": []
+            }
+          ]
+        },
+        {
+          "menuId": "451",
+          "menuName": "商品配置",
+          "icon": "iconfont icon-zidingyi2",
+          "sortBy": 96,
+          "isRoute": 0,
+          "permissions": [
+            "add",
+            "edit",
+            "delete",
+            "view",
+            "inner",
+            "innerTest",
+            "markClick",
+            "cupTrans",
+            "similarAdmin"
+          ],
+          "children": [
+            {
+              "menuId": "1960766602145103898",
+              "parentId": "451",
+              "menuName": "商品列表",
+              "name": "商品列表-新",
+              "sortBy": 100,
+              "component": "GoodsSetting/GoodsList/index",
+              "path": "/turing-web/goodsList",
+              "isRoute": 1,
+              "permissions": [
+                "add",
+                "edit",
+                "delete",
+                "view",
+                "inner",
+                "innerTest",
+                "markClick",
+                "cupTrans",
+                "similarAdmin"
+              ],
+              "children": []
+            }
+          ]
+        },
+        {
+          "menuId": "496",
+          "menuName": "智能跟单",
+          "icon": "iconfont icon-zhinengyunying2",
+          "sortBy": 94,
+          "isRoute": 0,
+          "permissions": [
+            "add",
+            "edit",
+            "delete",
+            "view",
+            "inner",
+            "innerTest",
+            "markClick",
+            "cupTrans",
+            "similarAdmin"
+          ],
+          "children": [
+            {
+              "menuId": "269",
+              "parentId": "496",
+              "menuName": "跟单配置",
+              "icon": "",
+              "name": "智能催拍-新",
+              "sortBy": 100,
+              "component": "reminder/index",
+              "path": "/reminder/index",
+              "isRoute": 1,
+              "permissions": [
+                "add",
+                "edit",
+                "delete",
+                "view",
+                "inner",
+                "innerTest",
+                "markClick",
+                "cupTrans",
+                "similarAdmin"
+              ],
+              "children": []
+            },
+            {
+              "menuId": "244",
+              "parentId": "496",
+              "menuName": "跟单数据",
+              "icon": "",
+              "name": "淘宝数据大盘",
+              "sortBy": 100,
+              "component": "smartUrge/index",
+              "path": "/smartUrge",
+              "isRoute": 1,
+              "permissions": [
+                "add",
+                "edit",
+                "delete",
+                "view",
+                "inner",
+                "innerTest",
+                "markClick",
+                "cupTrans",
+                "similarAdmin"
+              ],
+              "children": []
+            }
+          ]
+        },
+        {
+          "menuId": "452",
+          "menuName": "导购魔盘",
+          "icon": "iconfont icon-zhinengdaogou1",
+          "sortBy": 93,
+          "isRoute": 0,
+          "permissions": [
+            "add",
+            "edit",
+            "delete",
+            "view",
+            "inner",
+            "innerTest",
+            "markClick",
+            "cupTrans",
+            "similarAdmin"
+          ],
+          "children": [
+            {
+              "menuId": "398",
+              "parentId": "452",
+              "menuName": "自定义导购",
+              "icon": "",
+              "name": "营销计划",
+              "sortBy": 100,
+              "component": "marketingPlan/index",
+              "path": "/marketingPlan/index",
+              "isRoute": 1,
+              "permissions": [
+                "add",
+                "edit",
+                "delete",
+                "view",
+                "inner",
+                "innerTest",
+                "markClick",
+                "cupTrans",
+                "similarAdmin"
+              ],
+              "children": []
+            },
+            {
+              "menuId": "482",
+              "parentId": "452",
+              "menuName": "导购数据",
+              "name": "导购魔盘报表",
+              "sortBy": 100,
+              "component": "millstoneReportForm/index",
+              "path": "/millstoneReportForm/index",
+              "isRoute": 1,
+              "permissions": [
+                "add",
+                "edit",
+                "delete",
+                "view",
+                "inner",
+                "innerTest",
+                "markClick",
+                "cupTrans",
+                "similarAdmin"
+              ],
+              "children": []
+            },
+            {
+              "menuId": "510",
+              "parentId": "452",
+              "menuName": "智能导购",
+              "name": "智能导购(210128)",
+              "sortBy": 100,
+              "component": "smartRecommendPlan/index",
+              "path": "/smartRecommendPlan",
+              "isRoute": 1,
+              "permissions": [
+                "add",
+                "edit",
+                "delete",
+                "view",
+                "inner",
+                "innerTest",
+                "markClick",
+                "cupTrans",
+                "similarAdmin"
+              ],
+              "children": []
+            }
+          ]
+        },
+        {
+          "menuId": "268",
+          "menuName": "智能CRM",
+          "icon": "iconfont icon-shenhe1",
+          "sortBy": 92,
+          "isRoute": 0,
+          "permissions": [
+            "add",
+            "edit",
+            "delete",
+            "view",
+            "inner",
+            "innerTest",
+            "markClick",
+            "cupTrans",
+            "similarAdmin"
+          ],
+          "children": [
+            {
+              "menuId": "330",
+              "parentId": "268",
+              "menuName": "客户维护",
+              "icon": "",
+              "name": "运营计划（新）",
+              "sortBy": 100,
+              "component": "userMarketing/planNew",
+              "path": "/userMarketing/planNew",
+              "isRoute": 1,
+              "permissions": [
+                "add",
+                "edit",
+                "delete",
+                "view",
+                "inner",
+                "innerTest",
+                "markClick",
+                "cupTrans",
+                "similarAdmin",
+                "businessView",
+                "businessOutput"
+              ],
+              "children": []
+            },
+            {
+              "menuId": "284",
+              "parentId": "268",
+              "menuName": "用户画像",
+              "icon": "",
+              "name": "用户画像-新",
+              "sortBy": 100,
+              "component": "userMarketing/usersPortrait",
+              "path": "/userMarketing/usersPortrait",
+              "isRoute": 1,
+              "permissions": [
+                "add",
+                "edit",
+                "delete",
+                "view",
+                "inner",
+                "innerTest",
+                "markClick",
+                "cupTrans",
+                "similarAdmin"
+              ],
+              "children": []
+            },
+            {
+              "menuId": "285",
+              "parentId": "268",
+              "menuName": "智能标签",
+              "icon": "",
+              "name": "标签管理",
+              "sortBy": 100,
+              "component": "userMarketing/tags",
+              "path": "/userMarketing/tags",
+              "isRoute": 1,
+              "permissions": [
+                "add",
+                "edit",
+                "delete",
+                "view",
+                "inner",
+                "innerTest",
+                "markClick",
+                "cupTrans",
+                "similarAdmin"
+              ],
+              "children": []
+            }
+          ]
+        },
+        {
+          "menuId": "332",
+          "menuName": "设置",
+          "icon": "iconfont icon-shezhi3",
+          "sortBy": 86,
+          "isRoute": 0,
+          "permissions": [
+            "add",
+            "edit",
+            "delete",
+            "view",
+            "inner",
+            "innerTest",
+            "markClick",
+            "cupTrans",
+            "similarAdmin"
+          ],
+          "children": [
+            {
+              "menuId": "2177221804432196774",
+              "parentId": "332",
+              "menuName": "复制工具",
+              "name": "复制工具",
+              "sortBy": 100,
+              "component": "CopyTool/index",
+              "path": "/turing-web/copy-tool",
+              "isRoute": 1,
+              "permissions": [],
+              "children": []
+            },
+            {
+              "menuId": "234",
+              "parentId": "332",
+              "menuName": "通用",
+              "icon": "",
+              "name": "通用-图灵",
+              "sortBy": 100,
+              "component": "CommonSetting/index",
+              "path": "/turing-web/commonSetting",
+              "isRoute": 1,
+              "permissions": [
+                "add",
+                "edit",
+                "delete",
+                "view",
+                "inner",
+                "innerTest",
+                "markClick",
+                "cupTrans",
+                "similarAdmin"
+              ],
+              "children": []
+            },
+            {
+              "menuId": "2039924945399808131",
+              "parentId": "332",
+              "menuName": "子账号管理",
+              "name": "图灵-子账号管理",
+              "sortBy": 95,
+              "component": "turingSubAccount/index",
+              "path": "/turingSubAccount/index",
+              "isRoute": 1,
+              "permissions": [],
+              "children": []
+            },
+            {
+              "menuId": "267",
+              "parentId": "332",
+              "menuName": "时效管理",
+              "icon": "",
+              "name": "时效管理",
+              "sortBy": 94,
+              "component": "timeManagement/index",
+              "path": "/operationManagement/timeManagement",
+              "isRoute": 1,
+              "permissions": [
+                "add",
+                "edit",
+                "delete",
+                "view",
+                "inner",
+                "innerTest",
+                "markClick",
+                "cupTrans",
+                "similarAdmin"
+              ],
+              "children": []
+            }
+          ]
+        },
+        {
+          "menuId": "230",
+          "menuName": "聊天日志审核",
+          "icon": "iconfont icon-liaotianrizhishenhe1",
+          "name": "聊天日志审核",
+          "sortBy": 85,
+          "component": "corpusReview/index",
+          "path": "/corpusReview/index",
+          "isRoute": 1,
+          "permissions": [
+            "add",
+            "edit",
+            "delete",
+            "view",
+            "inner",
+            "innerTest",
+            "markClick",
+            "cupTrans",
+            "similarAdmin"
+          ],
+          "children": []
+        },
+        {
+          "menuId": "236",
+          "menuName": "关于探域",
+          "icon": "iconfont icon-guanyuxiaowei1",
+          "name": "关于探域",
+          "sortBy": 83,
+          "component": "turingClientDownload/index",
+          "path": "/turingClientDownload",
+          "isRoute": 1,
+          "permissions": [
+            "add",
+            "edit",
+            "delete",
+            "view",
+            "inner",
+            "innerTest",
+            "markClick",
+            "cupTrans",
+            "similarAdmin"
+          ],
+          "children": []
+        }
+      ],
+      "success": true
+    }
+  },
+  {
+    "url": "https://merchant.tanyuai.com/api/gc/personal/shop/list?pageNum=1&pageSize=1&sellerId=1000236020_szddkj",
+    "json": {
+      "code": 1,
+      "msg": "操作成功!",
+      "data": {
+        "pageIndex": 1,
+        "pageSize": 1,
+        "total": 1,
+        "results": [
+          {
+            "id": "2748947084576361329",
+            "groupId": "2094743970688012288",
+            "platform": 7,
+            "sellerId": "1000236020_szddkj",
+            "shopName": "DEDAKJ京东自营旗舰店（供应商编码:szddkj）",
+            "chatbotShopId": "2107774500664774656",
+            "qaSystem": 4,
+            "ifJdSelf": true,
+            "jdSupplierId": "szddkj",
+            "auths": [
+              {
+                "thirdAppKey": "75B8EAE5B9E3BE43A60A86C2A1E46BA4",
+                "thirdAppName": "探域客服助手",
+                "expireAt": "2027-10-07"
+              }
+            ]
+          }
+        ],
+        "startRow": 0
+      },
+      "success": true
+    }
+  },
+  {
+    "url": "https://merchant.tanyuai.com/api/shop-config/paas/config/get",
+    "json": {
+      "code": 1,
+      "msg": "操作成功！",
+      "data": {
+        "agent.group.gotoaipaas": false
+      },
+      "success": true
+    }
+  },
+  {
+    "url": "https://merchant.tanyuai.com/api/gc/personal/getChatbotShopDetailPage?platform=0&pageNum=1&pageSize=1",
+    "json": {
+      "code": 1,
+      "msg": "操作成功!",
+      "data": {
+        "pageIndex": 1,
+        "pageSize": 1,
+        "total": 1,
+        "results": [
+          {
+            "groupId": "2094743970688012288",
+            "thirdShopId": "2748947711641649387",
+            "chatbotShopId": "2105609873860333568",
+            "platform": 0,
+            "shopName": "dedakj旗舰店",
+            "sellerId": "dedakj旗舰店",
+            "env": "tanyu",
+            "ifJdSelf": false,
+            "qaSystem": 4,
+            "qaEnable": false,
+            "salesTrackerEnable": false,
+            "seatsCount": 999,
+            "ifDemo": 0,
+            "createAt": "2026-10-01 18:44:48",
+            "packages": [
+              {
+                "packageId": "2485436450616528450",
+                "packageName": "智能体赠送",
+                "startDay": "2026-09-28",
+                "endDay": "2027-09-28"
+              }
+            ],
+            "thirdAppNames": [
+              "利润库存"
+            ],
+            "auths": [
+              {
+                "thirdAppKey": "12294699",
+                "thirdAppName": "利润库存",
+                "expireAt": "2027-09-30 00:00:00"
+              }
+            ],
+            "ifJdMoreSupplier": false,
+            "firstStartDay": "2026-09-28",
+            "lastEndDay": "2027-09-28",
+            "name": "dedakj旗舰店",
+            "id": "2748947711641649387"
+          }
+        ],
+        "startRow": 0
+      },
+      "success": true
+    }
+  },
+  {
+    "url": "https://inbound.tungee.com/service-tp-api/channel-setting/6442268384f31b693d6b7bf2/type?tp_smart_service_cookie=0hMP38GFoDh9NOY7zxBPFwc3eck0Ny%2B5jOdBOHZSHxM%3D&expire_ts=1791635911546",
+    "json": {
+      "stat": 1,
+      "_id": "6442268384f31b693d6b7bf2",
+      "company_id": "630c8929dca9416b2104dc84",
+      "type": 1
+    }
+  },
+  {
+    "url": "https://merchant.tanyuai.com/api/tm/shopCategoryPlatform/cascadedList",
+    "json": {
+      "code": 1,
+      "data": [
+        {
+          "children": [
+            {
+              "children": [
+                {
+                  "children": [
+                    {
+                      "children": [],
+                      "cid": "28275",
+                      "name": "保健制氧机",
+                      "parentCid": "12188",
+                      "platForm": 7,
+                      "sortOrder": 1
+                    },
+                    {
+                      "children": [],
+                      "cid": "28276",
+                      "name": "医用制氧机",
+                      "parentCid": "12188",
+                      "platForm": 7,
+                      "sortOrder": 2
+                    },
+                    {
+                      "children": [],
+                      "cid": "28277",
+                      "name": "便携氧气瓶/氧气袋",
+                      "parentCid": "12188",
+                      "platForm": 7,
+                      "sortOrder": 3
+                    },
+                    {
+                      "children": [],
+                      "cid": "28278",
+                      "name": "氧气罐/氧舱",
+                      "parentCid": "12188",
+                      "platForm": 7,
+                      "sortOrder": 4
+                    },
+                    {
+                      "children": [],
+                      "cid": "28279",
+                      "name": "制氧机耗材",
+                      "parentCid": "12188",
+                      "platForm": 7,
+                      "sortOrder": 5
+                    },
+                    {
+                      "children": [],
+                      "cid": "28280",
+                      "name": "弥散式制氧机",
+                      "parentCid": "12188",
+                      "platForm": 7,
+                      "sortOrder": 6
+                    }
+                  ],
+                  "cid": "12188",
+                  "name": "制氧/储氧设备",
+                  "parentCid": "9197",
+                  "platForm": 7,
+                  "sortOrder": 8
+                }
+              ],
+              "cid": "9197",
+              "name": "保健器械",
+              "parentCid": "9192",
+              "platForm": 7,
+              "sortOrder": 5
+            }
+          ],
+          "cid": "9192",
+          "name": "医疗保健",
+          "parentCid": "0",
+          "platForm": 7,
+          "sortOrder": 38
+        }
+      ],
+      "msg": "操作成功!",
+      "success": true
+    }
+  },
+  {
+    "url": "https://merchant.tanyuai.com/api/tm/shopCategoryPlatform/list",
+    "json": {
+      "code": 1,
+      "data": [
+        {
+          "cid": "12188",
+          "name": "制氧/储氧设备",
+          "parentCid": "9197",
+          "platForm": 7,
+          "sortOrder": 8
+        },
+        {
+          "cid": "28275",
+          "name": "保健制氧机",
+          "parentCid": "12188",
+          "platForm": 7,
+          "sortOrder": 1
+        },
+        {
+          "cid": "28276",
+          "name": "医用制氧机",
+          "parentCid": "12188",
+          "platForm": 7,
+          "sortOrder": 2
+        },
+        {
+          "cid": "28277",
+          "name": "便携氧气瓶/氧气袋",
+          "parentCid": "12188",
+          "platForm": 7,
+          "sortOrder": 3
+        },
+        {
+          "cid": "28278",
+          "name": "氧气罐/氧舱",
+          "parentCid": "12188",
+          "platForm": 7,
+          "sortOrder": 4
+        },
+        {
+          "cid": "28279",
+          "name": "制氧机耗材",
+          "parentCid": "12188",
+          "platForm": 7,
+          "sortOrder": 5
+        },
+        {
+          "cid": "28280",
+          "name": "弥散式制氧机",
+          "parentCid": "12188",
+          "platForm": 7,
+          "sortOrder": 6
+        },
+        {
+          "cid": "9192",
+          "name": "医疗保健",
+          "parentCid": "0",
+          "platForm": 7,
+          "sortOrder": 38
+        },
+        {
+          "cid": "9197",
+          "name": "保健器械",
+          "parentCid": "9192",
+          "platForm": 7,
+          "sortOrder": 5
+        }
+      ],
+      "msg": "操作成功!",
+      "success": true
+    }
+  },
+  {
+    "url": "https://merchant.tanyuai.com/api/gc/chatbot/listGroupAllThirdShop?pageNum=1&pageSize=200",
+    "json": {
+      "code": 1,
+      "msg": "操作成功!",
+      "data": {
+        "pageIndex": 200,
+        "pageSize": 1,
+        "total": 9,
+        "results": [
+          {
+            "groupId": "2094743970688012288",
+            "thirdShopId": "2095398963959042048",
+            "chatbotShopId": "2095399454105407488",
+            "platform": 1,
+            "shopName": "德达医疗旗舰店",
+            "ifJdSelf": false,
+            "qaEnable": false,
+            "salesTrackerEnable": false,
+            "seatsCount": 999,
+            "ifDemo": 0,
+            "packages": [
+              {
+                "packageId": "2485436450616528450",
+                "packageName": "智能体赠送",
+                "startDay": "2026-09-03",
+                "endDay": "2026-09-10"
+              },
+              {
+                "packageId": "2485436450616528450",
+                "packageName": "智能体赠送",
+                "startDay": "2026-09-28",
+                "endDay": "2027-09-28"
+              }
+            ],
+            "thirdAppNames": [],
+            "auths": [],
+            "firstStartDay": "2026-09-03",
+            "lastEndDay": "2027-09-28",
+            "name": "德达医疗旗舰店",
+            "id": "2095398963959042048"
+          },
+          {
+            "groupId": "2094743970688012288",
+            "thirdShopId": "2104457457798483968",
+            "chatbotShopId": "2104457503365402624",
+            "platform": 1,
+            "shopName": "DEDAKJ医疗器械官方旗舰店",
+            "ifJdSelf": false,
+            "qaEnable": false,
+            "salesTrackerEnable": false,
+            "seatsCount": 999,
+            "ifDemo": 0,
+            "packages": [
+              {
+                "packageId": "2485436450616528450",
+                "packageName": "智能体赠送",
+                "startDay": "2026-09-28",
+                "endDay": "2027-09-28"
+              }
+            ],
+            "thirdAppNames": [],
+            "auths": [],
+            "firstStartDay": "2026-09-28",
+            "lastEndDay": "2027-09-28",
+            "name": "DEDAKJ医疗器械官方旗舰店",
+            "id": "2104457457798483968"
+          },
+          {
+            "groupId": "2094743970688012288",
+            "thirdShopId": "2748943863350558955",
+            "chatbotShopId": "2105607285182042112",
+            "platform": 7,
+            "shopName": "德迩杰官方旗舰店",
+            "ifJdSelf": false,
+            "qaEnable": false,
+            "salesTrackerEnable": false,
+            "seatsCount": 999,
+            "ifDemo": 0,
+            "packages": [
+              {
+                "packageId": "2485436450616528450",
+                "packageName": "智能体赠送",
+                "startDay": "2026-09-28",
+                "endDay": "2027-09-28"
+              }
+            ],
+            "thirdAppNames": [],
+            "auths": [],
+            "firstStartDay": "2026-09-28",
+            "lastEndDay": "2027-09-28",
+            "name": "德迩杰官方旗舰店",
+            "id": "2748943863350558955"
+          },
+          {
+            "groupId": "2094743970688012288",
+            "thirdShopId": "2748944481825915146",
+            "chatbotShopId": "2105606999134703616",
+            "platform": 7,
+            "shopName": "DEDAKJ官方旗舰店",
+            "ifJdSelf": false,
+            "qaEnable": false,
+            "salesTrackerEnable": false,
+            "seatsCount": 999,
+            "ifDemo": 0,
+            "packages": [
+              {
+                "packageId": "2485436450616528450",
+                "packageName": "智能体赠送",
+                "startDay": "2026-09-28",
+                "endDay": "2027-09-28"
+              }
+            ],
+            "thirdAppNames": [],
+            "auths": [],
+            "firstStartDay": "2026-09-28",
+            "lastEndDay": "2027-09-28",
+            "name": "DEDAKJ官方旗舰店",
+            "id": "2748944481825915146"
+          },
+          {
+            "groupId": "2094743970688012288",
+            "thirdShopId": "2748945753136365819",
+            "chatbotShopId": "2105612602351554560",
+            "platform": 5,
+            "shopName": "德达医疗康养器械旗舰店",
+            "ifJdSelf": false,
+            "qaEnable": false,
+            "salesTrackerEnable": false,
+            "seatsCount": 999,
+            "ifDemo": 0,
+            "packages": [
+              {
+                "packageId": "2485436450616528450",
+                "packageName": "智能体赠送",
+                "startDay": "2026-09-28",
+                "endDay": "2027-09-28"
+              }
+            ],
+            "thirdAppNames": [],
+            "auths": [],
+            "firstStartDay": "2026-09-28",
+            "lastEndDay": "2027-09-28",
+            "name": "德达医疗康养器械旗舰店",
+            "id": "2748945753136365819"
+          },
+          {
+            "groupId": "2094743970688012288",
+            "thirdShopId": "2748946698029269223",
+            "chatbotShopId": "2105617546987180032",
+            "platform": 5,
+            "shopName": "DEDAKJ医疗器械旗舰店",
+            "ifJdSelf": false,
+            "qaEnable": false,
+            "salesTrackerEnable": false,
+            "seatsCount": 999,
+            "ifDemo": 0,
+            "packages": [
+              {
+                "packageId": "2485436450616528450",
+                "packageName": "智能体赠送",
+                "startDay": "2026-09-28",
+                "endDay": "2027-09-28"
+              }
+            ],
+            "thirdAppNames": [],
+            "auths": [],
+            "firstStartDay": "2026-09-28",
+            "lastEndDay": "2027-09-28",
+            "name": "DEDAKJ医疗器械旗舰店",
+            "id": "2748946698029269223"
+          },
+          {
+            "groupId": "2094743970688012288",
+            "thirdShopId": "2748947084576361329",
+            "chatbotShopId": "2107774500664774656",
+            "platform": 7,
+            "shopName": "DEDAKJ京东自营旗舰店（供应商编码:szddkj）",
+            "ifJdSelf": false,
+            "qaEnable": false,
+            "salesTrackerEnable": false,
+            "seatsCount": 999,
+            "ifDemo": 0,
+            "packages": [
+              {
+                "packageId": "2485436450616528450",
+                "packageName": "智能体赠送",
+                "startDay": "2026-09-28",
+                "endDay": "2027-09-28"
+              }
+            ],
+            "thirdAppNames": [],
+            "auths": [],
+            "firstStartDay": "2026-09-28",
+            "lastEndDay": "2027-09-28",
+            "name": "DEDAKJ京东自营旗舰店（供应商编码:szddkj）",
+            "id": "2748947084576361329"
+          },
+          {
+            "groupId": "2094743970688012288",
+            "thirdShopId": "2748947402403971286",
+            "chatbotShopId": "2105600437305479168",
+            "platform": 7,
+            "shopName": "德达官方旗舰店",
+            "ifJdSelf": false,
+            "qaEnable": false,
+            "salesTrackerEnable": false,
+            "seatsCount": 999,
+            "ifDemo": 0,
+            "packages": [
+              {
+                "packageId": "2485436450616528450",
+                "packageName": "智能体赠送",
+                "startDay": "2026-09-28",
+                "endDay": "2027-09-28"
+              }
+            ],
+            "thirdAppNames": [],
+            "auths": [],
+            "firstStartDay": "2026-09-28",
+            "lastEndDay": "2027-09-28",
+            "name": "德达官方旗舰店",
+            "id": "2748947402403971286"
+          },
+          {
+            "groupId": "2094743970688012288",
+            "thirdShopId": "2748947711641649387",
+            "chatbotShopId": "2105609873860333568",
+            "platform": 0,
+            "shopName": "dedakj旗舰店",
+            "ifJdSelf": false,
+            "qaEnable": false,
+            "salesTrackerEnable": false,
+            "seatsCount": 999,
+            "ifDemo": 0,
+            "packages": [
+              {
+                "packageId": "2485436450616528450",
+                "packageName": "智能体赠送",
+                "startDay": "2026-09-28",
+                "endDay": "2027-09-28"
+              }
+            ],
+            "thirdAppNames": [],
+            "auths": [],
+            "firstStartDay": "2026-09-28",
+            "lastEndDay": "2027-09-28",
+            "name": "dedakj旗舰店",
+            "id": "2748947711641649387"
+          }
+        ],
+        "startRow": 199
+      },
+      "success": true
+    }
+  },
+  {
+    "url": "https://merchant.tanyuai.com/api/gc/sellerAccount/querySellerAccountGroupList?thirdShopId=2748947084576361329",
+    "json": {
+      "code": 1,
+      "msg": "操作成功!",
+      "data": [],
+      "success": true
+    }
+  },
+  {
+    "url": "https://merchant.tanyuai.com/api/gc/sellerAccount/querySellerAccountList",
+    "json": {
+      "code": 1,
+      "msg": "操作成功!",
+      "data": {
+        "pageIndex": 1,
+        "pageSize": 20,
+        "total": 0,
+        "results": [],
+        "startRow": 0
+      },
+      "success": true
+    }
+  },
+  {
+    "url": "https://merchant.tanyuai.com/api/gc/chatbot/countSeats?thirdShopId=2748947084576361329",
+    "json": {
+      "code": 1,
+      "msg": "操作成功!",
+      "data": {
+        "usedSeatCount": 0,
+        "totalSeatCount": 999
+      },
+      "success": true
+    }
+  },
+  {
+    "url": "https://merchant.tanyuai.com/api/shop-config/org-config/get",
+    "json": {
+      "code": 1,
+      "msg": "操作成功！",
+      "data": {
+        "enable_qa_robot": false,
+        "enable_marketing_robot": false,
+        "qa_robot.global_clear_timer": false,
+        "qa_robot.serve_strategy": 2,
+        "qa_robot.ai_speech_prefix": "",
+        "qa_robot.ai_speech_suffix": "",
+        "qa_robot.exclamation_mark": false,
+        "qa_robot.reply_interval": 1,
+        "qa_robot.session_keeping_time": 180,
+        "qa_robot.auto_pattern_timer.clear_timer_when_reply": false,
+        "qa_robot.auto_pattern_timer.keep_timer_when_switch": false,
+        "speech.buyer_nick": "亲",
+        "buyer_portrait.pre_sale_judge_range": 15,
+        "buyer_portrait.pre_sale_judge_strategy": 1,
+        "buyer_portrait.focus_goods_get_strategy": [
+          1,
+          3,
+          6
+        ],
+        "buyer_portrait.focus_goods_get_over_time": 30,
+        "qa_robot.invalid_reply_switch": false,
+        "qa_robot.invalid_reply_judge_range": "3",
+        "qa_robot.ai_answer_hold_light": false,
+        "qa_robot.irrelevant_answer_deal_strategy": 2,
+        "qa_robot.transfer_ignore_suspend": true,
+        "qa_robot.puhui_question_industry": [],
+        "marketing_robot.dy_close_session": true,
+        "qa_robot.ai_ans_keep_light": true,
+        "qa_robot.guaranteed_reply_keep_timer": true,
+        "qa_robot.guaranteed_reply_light": true,
+        "qa_robot.welcome_message_light": true,
+        "qa_robot.transfer_message_keep_timer": true
+      },
+      "success": true
+    }
+  },
+  {
+    "url": "https://inbound.tungee.com/service-tp-api/channel-setting/6442268384f31b693d6b7bf2/style?tp_smart_service_cookie=0hMP38GFoDh9NOY7zxBPFwc3eck0Ny%2B5jOdBOHZSHxM%3D&expire_ts=1791635911546",
+    "json": {
+      "stat": 1,
+      "_id": "6442268384f31b693d6b7bf2",
+      "company_id": "630c8929dca9416b2104dc84",
+      "style_setting": {
+        "position": "1",
+        "margin_bottom": 20,
+        "margin_horizontal": 64,
+        "width": 380,
+        "height": 540,
+        "theme_color": "#0088ff",
+        "window_style": 1
+      }
+    }
+  },
+  {
+    "url": "https://inbound.tungee.com/service-tp-api/channel-setting/6442268384f31b693d6b7bf2/reception?tp_smart_service_cookie=0hMP38GFoDh9NOY7zxBPFwc3eck0Ny%2B5jOdBOHZSHxM%3D&expire_ts=1791635911546",
+    "json": {
+      "stat": 1,
+      "_id": "6442268384f31b693d6b7bf2",
+      "company_id": "630c8929dca9416b2104dc84",
+      "sub_group_trigger": 0,
+      "sub_groups": [
+        {
+          "_id": "6442268384f31b693d6b7bf1",
+          "is_online": 0,
+          "service_groups": [
+            {
+              "_id": "643f9a4684f31b693d6b7ab3",
+              "name": "客服机器人系统"
+            }
+          ]
+        }
+      ],
+      "reception_pattern": 1,
+      "time_receptions": [],
+      "entrance_trigger": 0,
+      "offline_msg_trigger": 0
+    }
+  },
+  {
+    "url": "https://merchant.tanyuai.com/api/shop-config/speech/order-status/get",
+    "json": {
+      "code": 1,
+      "msg": "操作成功！",
+      "data": [
+        {
+          "name": "未下单",
+          "value": 0
+        },
+        {
+          "name": "待付款",
+          "value": 100
+        },
+        {
+          "name": "待发货",
+          "value": 101
+        },
+        {
+          "name": "已发货",
+          "value": 103
+        },
+        {
+          "name": "交易成功",
+          "value": 104
+        },
+        {
+          "name": "交易关闭",
+          "value": 105
+        },
+        {
+          "name": "订单取消",
+          "value": 106
+        },
+        {
+          "name": "部分发货",
+          "value": 107
+        }
+      ],
+      "success": true
+    }
+  },
+  {
+    "url": "https://inbound.tungee.com/service-tp-api/heartbeat/black-list?tp_smart_service_cookie=0hMP38GFoDh9NOY7zxBPFwc3eck0Ny%2B5jOdBOHZSHxM%3D&expire_ts=1791635911546",
+    "json": {
+      "black_list": [
+        "company.tungee.com",
+        "common.tungee.com",
+        "engage.tungee.com",
+        "call.tungee.com",
+        "user.tungee.com",
+        "sales.tungee.com",
+        "vipsales.tungee.com",
+        "crm.tungee.com",
+        "inbound.tungee.com",
+        "marketing.tungee.com",
+        "call-center.tungee.com",
+        "paas.tungee.com",
+        "finance.tungee.com",
+        "market.tungee.com",
+        "worker.tungee.com",
+        "scrm.tungee.com",
+        "servicewechat.com",
+        "tungee-preview.tangees.com",
+        "tungee-m-preview.tangees.com",
+        "marketing.tungee.com",
+        "mall.tungee.com",
+        "app108616.eapps.dingtalkcloud.com",
+        "app108867.eapps.dingtalkcloud.com",
+        "app109188.eapps.dingtalkcloud.com",
+        "mall-api.tungee.com",
+        "app109692.eapps.dingtalkcloud.com",
+        "app109992.eapps.dingtalkcloud.com",
+        "finance.tungee.com",
+        "finance-crm.tungee.com",
+        "finance-sales.tungee.com",
+        "siyu.tungee.com",
+        "ipa.tungee.com",
+        "app110964.eapps.dingtalkcloud.com",
+        "app111440.eapps.dingtalkcloud.com",
+        "app111355.eapps.dingtalkcloud.com",
+        "app108779.eapps.dingtalkcloud.com",
+        "app109351.eapps.dingtalkcloud.com",
+        "cloud.tungee.com",
+        "app111631.eapps.dingtalkcloud.com",
+        "crm-portal.tungee.com",
+        "connection.tungee.com",
+        "app113662.eapps.dingtalkcloud.com",
+        "app113661.eapps.dingtalkcloud.com",
+        "ire.tungee.com",
+        "export.tungee.com",
+        "qcs.tungee.com",
+        "logistics.tungee.com",
+        "mft.tungee.com",
+        "bidding.tungee.com",
+        "universe.tungee.com"
+      ]
+    }
+  },
+  {
+    "url": "https://inbound.tungee.com/service-tp-api/channel-setting/6442268384f31b693d6b7bf2/subgroup/status?subgroup_ids=6442268384f31b693d6b7bf1&tp_smart_service_cookie=0hMP38GFoDh9NOY7zxBPFwc3eck0Ny%2B5jOdBOHZSHxM%3D&expire_ts=1791635911546",
+    "json": {
+      "stat": 1,
+      "_id": "6442268384f31b693d6b7bf2",
+      "sub_groups": [
+        {
+          "_id": "6442268384f31b693d6b7bf1",
+          "is_online": 0
+        }
+      ],
+      "offline_msg_trigger": 0
+    }
+  },
+  {
+    "url": "https://inbound.tungee.com/service-tp-api/trace",
+    "json": {
+      "stat": 1,
+      "tp_smart_service_cookie": "0hMP38GFoDh9NOY7zxBPFwc3eck0Ny+5jOdBOHZSHxM=",
+      "expire_ts": 1791635955299
+    }
+  },
+  {
+    "url": "https://inbound.tungee.com/service-tp-api/heartbeat",
+    "json": {
+      "stat": 1,
+      "is_open": 0
+    }
+  },
+  {
+    "url": "https://inbound.tungee.com/service-tp-api/heartbeat",
+    "json": {
+      "stat": 1,
+      "is_open": 0
+    }
+  }
+]

@@ -1,0 +1,93 @@
+[
+ {
+  "name": "Trace-PDD-DEDAKJ#64扫码售后",
+  "endpoint": "/api/im/agent-trace/trace",
+  "method": "POST",
+  "body": {
+   "cardId": "6ac88ef05dacf83cd5d37581",
+   "thirdShopId": "2104457457798483968"
+  }
+ },
+ {
+  "name": "Trace-PDD-DEDAKJ#142升级款24h",
+  "endpoint": "/api/im/agent-trace/trace",
+  "method": "POST",
+  "body": {
+   "cardId": "6ac9c20cc5ae852819efb070",
+   "thirdShopId": "2104457457798483968"
+  }
+ },
+ {
+  "name": "Trace-德迩杰#23维修件",
+  "endpoint": "/api/im/agent-trace/trace",
+  "method": "POST",
+  "body": {
+   "cardId": "6ac84d0d74c7ef3e5aad8e6c",
+   "thirdShopId": "2748943863350558955"
+  }
+ },
+ {
+  "name": "Trace-京东德达#168电话",
+  "endpoint": "/api/im/agent-trace/trace",
+  "method": "POST",
+  "body": {
+   "cardId": "6ac9b8b4436b5b2411c061db",
+   "thirdShopId": "2748947402403971286"
+  }
+ },
+ {
+  "name": "卡-选型劝退句",
+  "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6ac0b5bde1041c390582e5dd",
+  "method": "GET"
+ },
+ {
+  "name": "卡-选型引导",
+  "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6ac0b5bde1041c390582e5dc",
+  "method": "GET"
+ },
+ {
+  "name": "卡-维修不承诺换新",
+  "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6ac0baade4bec5475483156e",
+  "method": "GET"
+ },
+ {
+  "name": "卡-PDD德达礼品",
+  "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6ac32cafe4bec54754833fcd",
+  "method": "GET"
+ },
+ {
+  "name": "卡-PDD-DEDAKJ-24h标签",
+  "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6abb5e70e4bec54754823f50",
+  "method": "GET"
+ },
+ {
+  "name": "卡-如何联系人工处理售后",
+  "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6a9be883644e354d71a45563",
+  "method": "GET"
+ },
+ {
+  "name": "卡-太干购买湿化瓶",
+  "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6a9a6706644e354d71a40c65",
+  "method": "GET"
+ },
+ {
+  "name": "卡-京东仓发货",
+  "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6ac48923e1041c3905832ea8",
+  "method": "GET"
+ },
+ {
+  "name": "卡-24h根因卡",
+  "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6ac0b51de1041c390582e5a3",
+  "method": "GET"
+ },
+ {
+  "name": "卡-PDD-24h售后咨询",
+  "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6abb5e70e4bec54754823f51",
+  "method": "GET"
+ },
+ {
+  "name": "卡-制氧机安装卡",
+  "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6ac0b5b6e4bec54754831470",
+  "method": "GET"
+ }
+]

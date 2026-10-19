@@ -1,0 +1,137 @@
+[
+ {
+  "name": "PDD德达",
+  "endpoint": "/api/im/agent-trace/paginateV2",
+  "method": "POST",
+  "body": {
+   "thirdShopId": "2095398963959042048",
+   "pageIndex": 1,
+   "pageSize": 5000,
+   "beginTime": "2026-10-09 00:00:00",
+   "endTime": "2026-10-10 17:30:00",
+   "orderStatusList": [
+    0
+   ]
+  }
+ },
+ {
+  "name": "PDD-DEDAKJ",
+  "endpoint": "/api/im/agent-trace/paginateV2",
+  "method": "POST",
+  "body": {
+   "thirdShopId": "2104457457798483968",
+   "pageIndex": 1,
+   "pageSize": 5000,
+   "beginTime": "2026-10-09 00:00:00",
+   "endTime": "2026-10-10 17:30:00",
+   "orderStatusList": [
+    0
+   ]
+  }
+ },
+ {
+  "name": "德迩杰",
+  "endpoint": "/api/im/agent-trace/paginateV2",
+  "method": "POST",
+  "body": {
+   "thirdShopId": "2748943863350558955",
+   "pageIndex": 1,
+   "pageSize": 5000,
+   "beginTime": "2026-10-09 00:00:00",
+   "endTime": "2026-10-10 17:30:00",
+   "orderStatusList": [
+    0
+   ]
+  }
+ },
+ {
+  "name": "京东DEDAKJ",
+  "endpoint": "/api/im/agent-trace/paginateV2",
+  "method": "POST",
+  "body": {
+   "thirdShopId": "2748944481825915146",
+   "pageIndex": 1,
+   "pageSize": 5000,
+   "beginTime": "2026-10-09 00:00:00",
+   "endTime": "2026-10-10 17:30:00",
+   "orderStatusList": [
+    0
+   ]
+  }
+ },
+ {
+  "name": "京东德达",
+  "endpoint": "/api/im/agent-trace/paginateV2",
+  "method": "POST",
+  "body": {
+   "thirdShopId": "2748947402403971286",
+   "pageIndex": 1,
+   "pageSize": 5000,
+   "beginTime": "2026-10-09 00:00:00",
+   "endTime": "2026-10-10 17:30:00",
+   "orderStatusList": [
+    0
+   ]
+  }
+ },
+ {
+  "name": "德达抖",
+  "endpoint": "/api/im/agent-trace/paginateV2",
+  "method": "POST",
+  "body": {
+   "thirdShopId": "2748945753136365819",
+   "pageIndex": 1,
+   "pageSize": 5000,
+   "beginTime": "2026-10-09 00:00:00",
+   "endTime": "2026-10-10 17:30:00",
+   "orderStatusList": [
+    0
+   ]
+  }
+ },
+ {
+  "name": "DEDAKJ抖",
+  "endpoint": "/api/im/agent-trace/paginateV2",
+  "method": "POST",
+  "body": {
+   "thirdShopId": "2748946698029269223",
+   "pageIndex": 1,
+   "pageSize": 5000,
+   "beginTime": "2026-10-09 00:00:00",
+   "endTime": "2026-10-10 17:30:00",
+   "orderStatusList": [
+    0
+   ]
+  }
+ },
+ {
+  "name": "京东自营",
+  "endpoint": "/api/im/agent-trace/paginateV2",
+  "method": "POST",
+  "body": {
+   "thirdShopId": "2748947084576361329",
+   "pageIndex": 1,
+   "pageSize": 5000,
+   "beginTime": "2026-10-09 00:00:00",
+   "endTime": "2026-10-10 17:30:00",
+   "orderStatusList": [
+    0
+   ]
+  }
+ },
+ {
+  "name": "淘宝",
+  "endpoint": "/api/im/agent-trace/paginateV2",
+  "method": "POST",
+  "body": {
+   "thirdShopId": "2748947711641649387",
+   "pageIndex": 1,
+   "pageSize": 5000,
+   "beginTime": "2026-10-09 00:00:00",
+   "endTime": "2026-10-10 17:30:00",
+   "orderStatusList": [
+    0
+   ]
+  }
+ }
+]

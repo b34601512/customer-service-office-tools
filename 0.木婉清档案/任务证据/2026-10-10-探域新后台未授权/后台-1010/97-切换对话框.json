@@ -1,0 +1,20 @@
+{
+  "html": "<div data-v-7d5dd6ac=\"\" class=\"el-dialog__wrapper main-dialog\" style=\"z-index: 10001;\"><div role=\"dialog\" aria-modal=\"true\" aria-label=\"dialog\" class=\"el-dialog\" style=\"margin-top: 15vh; width: 740px;\"><div class=\"el-dialog__header\"><div data-v-7d5dd6ac=\"\" class=\"el-dialog__title clearfix\"><span data-v-7d5dd6ac=\"\">切换店铺</span><button data-v-7d5dd6ac=\"\" type=\"button\" class=\"el-button fr el-button--danger\"><!----><!----><span>退出账号</span></button></div><!----></div><div class=\"el-dialog__body\"><div data-v-7d5dd6ac=\"\"><div data-v-7d5dd6ac=\"\" class=\"el-form-item is-success yfield\"><label for=\"activeShopId\" class=\"yfield__label size-medium\" style=\"width: 80px; display: inline-block; text-align: right;\">店铺</label><div class=\"yfield__content size-medium\" style=\"margin-left: 80px;\"><div value=\"2105617546987180032\" placeholder=\"请选择店铺\" class=\"\" style=\"vertical-align: middle;\"><div class=\"shop-wrapper\"><!----><i class=\"el-icon-arrow-down\"></i><span class=\"shop-input\"><input placeholder=\"请输入店铺名称搜索\" style=\"width: 100%;\"></span><div class=\"shop-list el-select-dropdown el-popper\" style=\"top: 42px; display: none;\"><ul><li class=\"el-select-dropdown__item\"><img src=\"//web-cdn.tanyuai.com/tanyuai/pc-mainapp-web/a7d99062/img/jd.0126d361.svg\" class=\"select-platform-icon\"><span>DEDAKJ京东自营旗舰店（供应商编码:szddkj）</span></li><li class=\"el-select-dropdown__item\"><img src=\"//web-cdn.tanyuai.com/tanyuai/pc-mainapp-web/a7d99062/img/douyin.9e68d894.svg\" class=\"select-platform-icon\"><span>DEDAKJ医疗器械旗舰店</span></li><li class=\"el-select-dropdown__item\"><img src=\"//web-cdn.tanyuai.com/tanyuai/pc-mainapp-web/a7d99062/img/douyin.9e68d894.svg\" class=\"select-platform-icon\"><span>德达医疗康养器械旗舰店</span></li><li class=\"el-select-dropdown__item\"><img src=\"//web-cdn.tanyuai.com/tanyuai/pc-mainapp-web/a7d99062/img/taobao.e184c9e2.svg\" class=\"select-platform-icon\"><span>dedakj旗舰店</span></li><li class=\"el-select-dropdown__item\"><img src=\"//web-cdn.tanyuai.com/tanyuai/pc-mainapp-web/a7d99062/img/jd.0126d361.svg\" class=\"select-platform-icon\"><span>德迩杰官方旗舰店</span></li><li class=\"el-select-dropdown__item\"><img src=\"//web-cdn.tanyuai.com/tanyuai/pc-mainapp-web/a7d99062/img/jd.0126d361.svg\" class=\"select-platform-icon\"><span>DEDAKJ官方旗舰店</span></li><li class=\"el-select-dropdown__item\"><img src=\"//web-cdn.tanyuai.com/tanyuai/pc-mainapp-web/a7d99062/img/jd.0126d361.svg\" class=\"select-platform-icon\"><span>德达官方旗舰店</span></li><li class=\"el-select-dropdown__item\"><img src=\"//web-cdn.tanyuai.com/tanyuai/pc-mainapp-web/a7d99062/img/pdd.01d43487.svg\" class=\"select-platform-icon\"><span>DEDAKJ医疗器械官方旗舰店</span></li><li class=\"el-select-dropdown__item\"><img src=\"//web-cdn.tanyuai.com/tanyuai/pc-mainapp-web/a7d99062/img/pdd.01d43487.svg\" class=\"select-platform-icon\"><span>德达医疗旗舰店</span></li><!----><li class=\"el-select-dropdown__item no-data\">已经到底了！</li></ul></div><div x-arrow=\"\" class=\"arrow\" style=\"top: 36px; display: none;\"></div></div></div></div></div></div></div><div class=\"el-dialog__footer\"><div data-v-7d5dd6ac=\"\"><button data-v-7d5dd6ac=\"\" type=\"button\" class=\"el-button el-button--default\"><!----><!----><span>取 消</span></button><button data-v-7d5dd6ac=\"\" type=\"button\" class=\"el-button el-button--primary\"><!----><!----><span>切换店铺</span></button></div></div></div></div>",
+  "links": [
+    {
+      "t": "退出账号",
+      "cls": "el-button fr el-button--danger",
+      "href": ""
+    },
+    {
+      "t": "取 消",
+      "cls": "el-button el-button--default",
+      "href": ""
+    },
+    {
+      "t": "切换店铺",
+      "cls": "el-button el-button--primary",
+      "href": ""
+    }
+  ]
+}

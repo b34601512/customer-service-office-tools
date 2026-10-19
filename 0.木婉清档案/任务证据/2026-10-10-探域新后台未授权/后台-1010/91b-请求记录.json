@@ -1,0 +1,177 @@
+[
+  {
+    "method": "GET",
+    "url": "https://merchant.tanyuai.com/turingSubAccount/index",
+    "post": null
+  },
+  {
+    "method": "GET",
+    "url": "https://merchant.tanyuai.com/subapp/turing-web/remoteEntry.json?t=1791635273523",
+    "post": null
+  },
+  {
+    "method": "GET",
+    "url": "https://merchant.tanyuai.com/api/gc/personal/get-if-demo",
+    "post": null
+  },
+  {
+    "method": "GET",
+    "url": "https://merchant.tanyuai.com/api/gc/personal/detailV2",
+    "post": null
+  },
+  {
+    "method": "GET",
+    "url": "https://merchant.tanyuai.com/api/gc/personal/getChatbotShopDetailPage?pageNum=1&pageSize=1&chatbotShopId=2105617546987180032",
+    "post": null
+  },
+  {
+    "method": "GET",
+    "url": "https://merchant.tanyuai.com/api/gc/chatbot/menus?chatbotShopId=2105617546987180032",
+    "post": null
+  },
+  {
+    "method": "POST",
+    "url": "https://merchant.tanyuai.com/api/shop-config/paas/config/get",
+    "post": "{\"orgId\":\"2094743970688012288\",\"metaIds\":[\"agent.group.gotoaipaas\"],\"shopId\":\"2105617546987180032\"}"
+  },
+  {
+    "method": "GET",
+    "url": "https://merchant.tanyuai.com/api/gc/personal/getChatbotShopDetailPage?platform=0&pageNum=1&pageSize=1",
+    "post": null
+  },
+  {
+    "method": "GET",
+    "url": "https://merchant.tanyuai.com/api/gc/personal/shop/list?pageNum=1&pageSize=1&sellerId=29502951",
+    "post": null
+  },
+  {
+    "method": "GET",
+    "url": "https://web-cdn.tanyuai.com/tanyuai/merchant-web/03cc3f34/css/pages-turingSubAccount-index-vue.c977d15a.css",
+    "post": null
+  },
+  {
+    "method": "GET",
+    "url": "https://web-cdn.tanyuai.com/tanyuai/merchant-web/03cc3f34/js/pages-turingSubAccount-index-vue.783e3b81.js",
+    "post": null
+  },
+  {
+    "method": "GET",
+    "url": "https://merchant.tanyuai.com/api/gc/chatbot/listGroupAllThirdShop?pageNum=1&pageSize=200",
+    "post": null
+  },
+  {
+    "method": "GET",
+    "url": "https://merchant.tanyuai.com/api/tm/shopCategoryPlatform/list",
+    "post": null
+  },
+  {
+    "method": "GET",
+    "url": "https://merchant.tanyuai.com/api/tm/shopCategoryPlatform/cascadedList",
+    "post": null
+  },
+  {
+    "method": "GET",
+    "url": "https://web-cdn.tanyuai.com/tanyuai/merchant-web/03cc3f34/css/pages-turingSubAccount-components-loginStatusModal-vue.eaa23199.css",
+    "post": null
+  },
+  {
+    "method": "GET",
+    "url": "https://web-cdn.tanyuai.com/tanyuai/merchant-web/03cc3f34/js/pages-turingSubAccount-components-loginStatusModal-vue.eabbe060.js",
+    "post": null
+  },
+  {
+    "method": "GET",
+    "url": "https://web-cdn.tanyuai.com/tanyuai/merchant-web/03cc3f34/css/pages-turingSubAccount-components-groupEditModal-vue.0adbcfd6.css",
+    "post": null
+  },
+  {
+    "method": "GET",
+    "url": "https://web-cdn.tanyuai.com/tanyuai/merchant-web/03cc3f34/js/pages-turingSubAccount-components-groupEditModal-vue.1ee58452.js",
+    "post": null
+  },
+  {
+    "method": "GET",
+    "url": "https://web-cdn.tanyuai.com/tanyuai/merchant-web/03cc3f34/css/pages-turingSubAccount-components-groupManageModal-vue.3c0b2582.css",
+    "post": null
+  },
+  {
+    "method": "GET",
+    "url": "https://web-cdn.tanyuai.com/tanyuai/merchant-web/03cc3f34/js/pages-turingSubAccount-components-groupManageModal-vue.656650e7.js",
+    "post": null
+  },
+  {
+    "method": "GET",
+    "url": "https://web-cdn.tanyuai.com/tanyuai/merchant-web/03cc3f34/css/pages-turingSubAccount-components-subAccountFormModal-vue.8f7c7809.css",
+    "post": null
+  },
+  {
+    "method": "GET",
+    "url": "https://web-cdn.tanyuai.com/tanyuai/merchant-web/03cc3f34/js/pages-turingSubAccount-components-subAccountFormModal-vue.eee70dca.js",
+    "post": null
+  },
+  {
+    "method": "GET",
+    "url": "https://web-cdn.tanyuai.com/tanyuai/merchant-web/03cc3f34/css/pages-turingSubAccount-components-subSupplierAccountFormModal-vue.a222e172.css",
+    "post": null
+  },
+  {
+    "method": "GET",
+    "url": "https://web-cdn.tanyuai.com/tanyuai/merchant-web/03cc3f34/js/pages-turingSubAccount-components-subSupplierAccountFormModal-vue.3b8865d1.js",
+    "post": null
+  },
+  {
+    "method": "GET",
+    "url": "https://web-cdn.tanyuai.com/tanyuai/merchant-web/03cc3f34/css/pages-turingSubAccount-components-transferModal-vue.89a974ea.css",
+    "post": null
+  },
+  {
+    "method": "GET",
+    "url": "https://web-cdn.tanyuai.com/tanyuai/merchant-web/03cc3f34/js/pages-turingSubAccount-components-transferModal-vue.baf95509.js",
+    "post": null
+  },
+  {
+    "method": "GET",
+    "url": "https://merchant.tanyuai.com/api/shop-config/org-config/get",
+    "post": null
+  },
+  {
+    "method": "POST",
+    "url": "https://merchant.tanyuai.com/api/gc/sellerAccount/querySellerAccountList",
+    "post": "{\"pageSize\":20,\"pageIndex\":1,\"nick\":\"\",\"thirdShopId\":\"2748946698029269223\",\"chatbotShopId\":\"2105617546987180032\"}"
+  },
+  {
+    "method": "GET",
+    "url": "https://merchant.tanyuai.com/api/gc/sellerAccount/querySellerAccountGroupList?thirdShopId=2748946698029269223",
+    "post": null
+  },
+  {
+    "method": "GET",
+    "url": "https://merchant.tanyuai.com/api/gc/chatbot/countSeats?thirdShopId=2748946698029269223",
+    "post": null
+  },
+  {
+    "method": "GET",
+    "url": "https://merchant.tanyuai.com/api/shop-config/speech/order-status/get",
+    "post": null
+  },
+  {
+    "method": "GET",
+    "url": "https://web-cdn.tanyuai.com/tanyuai/turing/aceb9fbf/index.html?t=1791635273605",
+    "post": null
+  },
+  {
+    "method": "GET",
+    "url": "https://web-cdn.tanyuai.com/tanyuai/turing/aceb9fbf/runtime.1a7d1bbaa8696ab4a42e.js",
+    "post": null
+  },
+  {
+    "method": "GET",
+    "url": "https://web-cdn.tanyuai.com/tanyuai/turing/aceb9fbf/vendors.a4c7e8d6c1ed6a84e3dd.js",
+    "post": null
+  },
+  {
+    "method": "GET",
+    "url": "https://web-cdn.tanyuai.com/tanyuai/turing/aceb9fbf/path.046063d7136d3047d667.js",
+    "post": null
+  }
+]

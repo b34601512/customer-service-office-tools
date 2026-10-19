@@ -1,0 +1,4108 @@
+[
+ {
+  "name": "德迩杰#29",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": 0,
+  "logIsCredible": 1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6ac1aedb8d902f20ed5723bb",
+    "chunkId": "6ac0baade4bec5475483156e",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:维修范围？（要求换新也可以用这个话术） A:维修更换了哪些部件，应以实际检测和维修记录为准，不能预先承诺全部换新。请"
+   },
+   {
+    "docId": "6ac1ad929c0cc61b38ec6aea",
+    "chunkId": "6ac0baade4bec5475483156d",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:给我保修卡，保修合同，质保合同？ A:您好亲亲～我们是品牌官方直销，线上售后是通过【订单号】来保修的，不需要单独的保"
+   },
+   {
+    "docId": "6ac1ad94ea5b2c73dbfbe044",
+    "chunkId": "6ac0b508e1041c390582e59a",
+    "type": "SHOP",
+    "label": null,
+    "content": "若检查后仍不出气或浓度偏低：请提供完整型号、屏幕显示或报警代码、故障出现经过，可补充机器外观、接口、湿化瓶和吸氧管连接的"
+   },
+   {
+    "docId": "6ac1b83aea5b2c73dbfbeb79",
+    "chunkId": "6ac0b5a8e1041c390582e5d7",
+    "type": "SHOP",
+    "label": null,
+    "content": "如有烫伤风险、焦糊味、冒烟或持续报警，请在安全前提下停用断电并联系我们处理售后；依赖持续供氧者请使用医生预先安排的备用方"
+   },
+   {
+    "docId": "6ac1be678d902f20ed573500",
+    "chunkId": "6ac0b5cbe1041c390582e5e2",
+    "type": "SHOP",
+    "label": null,
+    "content": "不确定操作方向或读数方式时，请提供完整型号和流量计照片，我们帮您核对；正在按医嘱吸氧的人，请按医生规定的流量设置，不要自"
+   },
+   {
+    "docId": "6ac1c099ea5b2c73dbfbf5cf",
+    "chunkId": "6ac0babee1041c390582e6f1",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:（售前专用）为什么没有上门服务、网点、寄回厂家、全国联保、返厂 A:本店不提供上门维修。您可提供型号、订单号及故障现"
+   },
+   {
+    "docId": "6ac1c099ea5b2c73dbfbf5d0",
+    "chunkId": "6ac0babee1041c390582e6f2",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:（售前专用）上门服务、网点、寄回厂家、全国联保、返厂 A:本店不提供上门维修。您可提供型号、订单号及故障现象，由售后"
+   },
+   {
+    "docId": "6ac1d8b7c9f2a900b99aac61",
+    "chunkId": "6ac0b516e4bec54754831453",
+    "type": "SHOP",
+    "label": null,
+    "content": "如雾化量小、不出雾、断断续续，或对雾化浓度有疑问，请提供完整型号、雾化配件连接照片和操作视频，我们核实后协助处理；药液使"
+   }
+  ],
+  "content": "亲亲，理解您着急使用的心情～这边帮您确认到，寄回6号签收的机器已经备注加急处理了哦\n维修更换了哪些部件，需以实际检测和维修记录为准\n麻烦您提供一下订单号或维修单号，我这边帮您核对已做项目、检测结果和相应进度哈～"
+ },
+ {
+  "name": "德迩杰#31",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": 0,
+  "logIsCredible": 1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6ac1aedc9c0cc61b38ec6c2c",
+    "chunkId": "6ac0b500e4bec5475483144a",
+    "type": "SHOP",
+    "label": null,
+    "content": "请保持进出风口畅通，按该型号说明书检查用户可操作的外部连接；不要拆机、不要取下过滤器运行、不要反复把档位调到最大试机。若"
+   },
+   {
+    "docId": "6ac1b40f8d902f20ed572941",
+    "chunkId": "6ac0b50fe4bec5475483144d",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：过滤棉/过滤器需要安装吗？能拿掉不用吗？ A：需要。过滤器、过滤盒、过滤棉用于拦截进入机器的灰尘，属于需要定期维护的"
+   },
+   {
+    "docId": "6ac1b5668d902f20ed572ab2",
+    "chunkId": "6ac0a08e74ca1f0fc8123239",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【新款DEDAKJ制氧机】 - 流量：支持1-9L大氧流量； - 噪音：34分贝轻音制氧； - 浓度：氧浓度达96%高氧"
+   },
+   {
+    "docId": "6ac1b67cc9f2a900b99a858b",
+    "chunkId": "6ac0b508e1041c390582e59b",
+    "type": "SHOP",
+    "label": null,
+    "content": "请不要拆机、不要取下过滤器运行、不要反复把档位调到最大试机；怀疑浓度问题时需按该型号要求使用适用的测氧仪检测。依赖持续供"
+   },
+   {
+    "docId": "6ac1b765ddc9db45db5a9bd2",
+    "chunkId": "6ac0b5cbe1041c390582e5e1",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：每次开机都要重新调流量吗？ A：部分机型开机后回到初始档位，部分医用机型有记忆功能会保留上次设置；以该型号说明书为准"
+   },
+   {
+    "docId": "6ac1b7ebc9f2a900b99a8719",
+    "chunkId": "6ac0b5b6e4bec54754831471",
+    "type": "SHOP",
+    "label": null,
+    "content": "首次使用请按说明书的开机步骤操作，并核对型号与配件清单；如配件缺失或连接不上，请拍照联系我们，不要自行拆机。"
+   },
+   {
+    "docId": "6ac1c639c9f2a900b99a984d",
+    "chunkId": "6ac0b50fe4bec5475483144f",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：过滤器在哪里？想购买或更换怎么办？ A：不同型号的过滤器位置和规格不同（如1.5cm、3.5cm等），请先提供机器完"
+   },
+   {
+    "docId": "6ac314feddc9db45db5b92ed",
+    "chunkId": "6ac0a08e74ca1f0fc812323e",
+    "type": "DETAIL",
+    "label": null,
+    "content": "## 1SW款 该制氧机高氧浓度可达96%，支持365天连续制氧。 具备制氧、雾化、灭菌功能。 产品设有雾化口、出氧口及"
+   },
+   {
+    "docId": "6ac314feddc9db45db5b92ee",
+    "chunkId": "6ac0a08e74ca1f0fc8123260",
+    "type": "DETAIL",
+    "label": null,
+    "content": "## 商品功能特点 负离子功能可清新空气，带来更舒适的补氧体验。 具备智能定时功能，支持480分钟定时，实时显示氧气浓度"
+   },
+   {
+    "docId": "6ac4c828c9f2a900b99cd385",
+    "chunkId": "6ac0b5a8e1041c390582e5d6",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：机器用一两个小时后发热、散热口发烫，正常吗？ A：运行中的散热部位发热属于正常现象，但不能仅凭手摸或一个通用温度值判"
+   },
+   {
+    "docId": "6ac5a3ebddc9db45db5d47ec",
+    "chunkId": "6ac0a08e74ca1f0fc8123244",
+    "type": "DETAIL",
+    "label": null,
+    "content": "## 老人专用制氧机 本制氧机配备高清大屏，支持一键制氧，操作简单，老人也能轻松使用。 氧浓度可达96%，流速为1 L/"
+   },
+   {
+    "docId": "6ac610278d902f20ed5a5a35",
+    "chunkId": "6ac0a08e74ca1f0fc8123256",
+    "type": "DETAIL",
+    "label": null,
+    "content": "## 商品功能与检测信息 - **UV灭菌功能**：吸氧更卫生，将吸氧配件放入灭菌仓，利用紫外线破坏细菌DNA结构从而杀"
+   },
+   {
+    "docId": "6ac8478a9c0cc61b38f14fef",
+    "chunkId": "6ac11615e4bec54754831da6",
+    "type": "DETAIL",
+    "label": null,
+    "content": "# DEDAKJ制氧机各规格差异表 | 规格名称 | 氧流量调节范围 | 核心功能 | 专属附加配置 | 质保服务 | "
+   }
+  ],
+  "content": "亲亲，关于负离子和除菌开关的具体使用建议，您可以参考商品详情页的规格说明或实拍图哦～如有其他疑问随时联系我们"
+ },
+ {
+  "name": "德迩杰#46",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": 0,
+  "logIsCredible": 1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6ac1c6a6ddc9db45db5aad77",
+    "chunkId": "6ac0b500e4bec54754831449",
+    "type": "SHOP",
+    "label": null,
+    "content": "常见的一种是断电报警：屏幕显示红点并伴随长鸣或“嘟嘟”提示音，通常是机器断电或关机顺序不正确。可先检查：①电源线是否插紧"
+   },
+   {
+    "docId": "6ac1b83bddc9db45db5a9caf",
+    "chunkId": "6ac0b500e4bec54754831448",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：屏幕出现感叹号、报警提示音或故障代码（如E1、E3等），怎么办？ A：制氧机的报警提示用于提醒异常；不同型号的代码含"
+   },
+   {
+    "docId": "6ac1b40fddc9db45db5a9828",
+    "chunkId": "6ac0b508e1041c390582e599",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：机器运行、屏幕显示都正常，但不出气/吸氧管没气/氧浓度显示偏低（如55%），怎么排查？ A：先做用户可操作的外部检查"
+   },
+   {
+    "docId": "6ac1b67cc9f2a900b99a858b",
+    "chunkId": "6ac0b508e1041c390582e59b",
+    "type": "SHOP",
+    "label": null,
+    "content": "请不要拆机、不要取下过滤器运行、不要反复把档位调到最大试机；怀疑浓度问题时需按该型号要求使用适用的测氧仪检测。依赖持续供"
+   },
+   {
+    "docId": "6ac1b727ddc9db45db5a9b84",
+    "chunkId": "6ac0a08e74ca1f0fc812325a",
+    "type": "DETAIL",
+    "label": null,
+    "content": "制氧机设有雾化口和出氧口，支持一键开启操作，配备带有“DEDAKJ”标识的遥控器。"
+   },
+   {
+    "docId": "6ac1b83bddc9db45db5a9cb0",
+    "chunkId": "6ac0b5a1e4bec5475483146c",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：制氧机关机后内部还有声音、风扇还在转，正常吗？ A：关机后风扇继续转动几分钟，是制氧机的正常设计：用于排出机器内部残"
+   },
+   {
+    "docId": "6ac1b83bea5b2c73dbfbeb7a",
+    "chunkId": "6ac10802e1041c390582edd2",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【特别敬告】 - 氧浓度根据气温气压环节等因素下会有所变化，数值不固定，在范围内都是正常情况。 - 制氧机设备适用于氧气"
+   },
+   {
+    "docId": "6ac87ad39c0cc61b38f192d6",
+    "chunkId": "6ac312a174ca1f0fc815beef",
+    "type": "DETAIL",
+    "label": null,
+    "content": "## 商品功能与参数 本制氧机采用高清大屏设计，支持一键制氧，老人可轻松操作。 具备紫外杀菌、负离子、风扇、睡眠模式等功"
+   }
+  ],
+  "content": "您说的“自动跳闸”，想帮您确认一下具体情况，麻烦提供：①机器完整型号；②屏幕显示内容或报警代码（可拍照）；③报警出现的经过（开机就报、使用中出现、还是断电后出现）\n另外可以先排查：电源线是否插紧、插座是否接触良好；是否停电；关机顺序应为先关机器开关、再关电源开关，重新通电后按正确顺序开机\n如需立即停止报警声，可关闭机器背后的电源保险开关（以该型号说明书为准）"
+ },
+ {
+  "name": "德迩杰#64",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": 0,
+  "logIsCredible": 1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6ac1b566c9f2a900b99a8492",
+    "chunkId": "6ac0b5bde1041c390582e5dd",
+    "type": "SHOP",
+    "label": null,
+    "content": "是否需要吸氧、选几升、每天吸多久应由医生评估和制定，不能仅凭疾病名称、年龄或单次血氧读数推荐；如当前用氧效果不佳或出现不"
+   },
+   {
+    "docId": "6ac1b566c9f2a900b99a8493",
+    "chunkId": "6ac0b51de1041c390582e5a4",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：老人每天吸氧多长时间？一天吸几次？ A：每次吸多久、每天吸几次，应按医生为个人制定的用氧方案执行，不能统一建议“早中"
+   },
+   {
+    "docId": "6ac1b40f8d902f20ed572943",
+    "chunkId": "6ac0b5b6e4bec54754831470",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：制氧机怎么安装？买回家还需要自己组装吗？ A：制氧机收到后是组装好的，无需自己安装：装上湿化瓶（按说明书加水不超过水"
+   },
+   {
+    "docId": "6ac1b765ddc9db45db5a9bd3",
+    "chunkId": "6ac0b5bde1041c390582e5dc",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：不知道该买什么型号，怎么选？ A：请先说明：①居家使用还是外出携带；②医生要求的供氧方式、流量和使用时长（有医嘱或血"
+   },
+   {
+    "docId": "6ac1be678d902f20ed573500",
+    "chunkId": "6ac0b5cbe1041c390582e5e2",
+    "type": "SHOP",
+    "label": null,
+    "content": "不确定操作方向或读数方式时，请提供完整型号和流量计照片，我们帮您核对；正在按医嘱吸氧的人，请按医生规定的流量设置，不要自"
+   },
+   {
+    "docId": "6ac314fb9c0cc61b38ed71f5",
+    "chunkId": "6ac0a08e74ca1f0fc812324a",
+    "type": "DETAIL",
+    "label": null,
+    "content": "效果用数据说话 该制氧机连续使用累计时长数据分别为：92560分钟、83978分钟、96508分钟 同时显示氧气浓度为9"
+   },
+   {
+    "docId": "6ac314fdddc9db45db5b92eb",
+    "chunkId": "6ac312a174ca1f0fc815bf0c",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【功能与性能介绍】 - 制氧：制氧快速，制氧量大，高效稳定制氧，运行平稳。 - 雾化：雾化功能强大。 - 屏幕与操作：高"
+   },
+   {
+    "docId": "6ac339eeea5b2c73dbfd0e32",
+    "chunkId": "6ac0a08e74ca1f0fc8123240",
+    "type": "DETAIL",
+    "label": null,
+    "content": "## 大流量制氧机 氧流量可调节范围为1~9升/分钟（L/min），满足多种吸氧需求。 氧流量1L/min时，氧浓度为9"
+   },
+   {
+    "docId": "6ac4c20cc9f2a900b99cccc3",
+    "chunkId": "6ac312a174ca1f0fc815bf12",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【旗舰款、顶配款、双倍款】 - 具备UV紫外线灭菌功能，可对吸氧配件进行消毒，确保老人呼吸卫生安全（老人抵抗力弱，呼吸卫"
+   },
+   {
+    "docId": "6ac8d5749c0cc61b38f20713",
+    "chunkId": "6ac807ff74ca1f0fc8243f8a",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【品牌与核心性能参数】 - 德国品牌，制氧机具备9L大氧流量，氧浓度至高96%。"
+   }
+  ],
+  "content": "老人吸氧的流量档位需要按医生为其个人制定的用氧方案来设置，不能仅凭年龄或疾病名称统一推荐\"调几升\"\n如果没有明确的用氧建议，建议先由医生评估是否需要吸氧以及合适的流量和时长\n正在按医嘱吸氧的话，请按医生规定的流量设置，不要自行加减"
+ },
+ {
+  "name": "德迩杰#77",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": 0,
+  "logIsCredible": 1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6ac326488d902f20ed583742",
+    "chunkId": "6ac30a2be4bec54754833ab9",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【DE-1S/1SW款】 - 氧流量：1L-9L可调；氧浓度：96%（1L/min时）； - 噪音：DEDAKJ测值（正"
+   },
+   {
+    "docId": "6ac1aeddea5b2c73dbfbe18e",
+    "chunkId": "6ac0baabe1041c390582e6e8",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:便携制氧机质保多久？ A:亲亲～咱们售后服务政策如下： ✅ 7天：无理由退货。 ✅ 30天内：不合适支持换款、质量问"
+   },
+   {
+    "docId": "6ac1b40f8d902f20ed572942",
+    "chunkId": "6ac0b5c4e4bec54754831475",
+    "type": "SHOP",
+    "label": null,
+    "content": "不建议把正在使用的鼻吸管插入水中来判断机器是否正常：冒泡不能证明氧浓度达标，还可能污染管路。请提供型号、设置和异常表现（"
+   },
+   {
+    "docId": "6ac1b40f8d902f20ed572943",
+    "chunkId": "6ac0b5b6e4bec54754831470",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：制氧机怎么安装？买回家还需要自己组装吗？ A：制氧机收到后是组装好的，无需自己安装：装上湿化瓶（按说明书加水不超过水"
+   },
+   {
+    "docId": "6ac1b566c9f2a900b99a8492",
+    "chunkId": "6ac0b5bde1041c390582e5dd",
+    "type": "SHOP",
+    "label": null,
+    "content": "是否需要吸氧、选几升、每天吸多久应由医生评估和制定，不能仅凭疾病名称、年龄或单次血氧读数推荐；如当前用氧效果不佳或出现不"
+   },
+   {
+    "docId": "6ac1b567c9f2a900b99a8494",
+    "chunkId": "6ac0b5cbe1041c390582e5e0",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：流量/档位怎么调？为什么档位越高、浓度越低？ A：请按该型号流量调节旋钮的标记和说明书缓慢调整到医生规定的流量，读数"
+   },
+   {
+    "docId": "6ac1b67ac9f2a900b99a8589",
+    "chunkId": "6ac0baaae1041c390582e6e7",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:制氧机售后服务政策（质保） A:亲亲～咱们售后服务政策如下： ✅ 7天：无理由退货。 ✅ 30天内：不合适支持换款、"
+   },
+   {
+    "docId": "6ac1b67cc9f2a900b99a858b",
+    "chunkId": "6ac0b508e1041c390582e59b",
+    "type": "SHOP",
+    "label": null,
+    "content": "请不要拆机、不要取下过滤器运行、不要反复把档位调到最大试机；怀疑浓度问题时需按该型号要求使用适用的测氧仪检测。依赖持续供"
+   },
+   {
+    "docId": "6ac314fb9c0cc61b38ed71f5",
+    "chunkId": "6ac0a08e74ca1f0fc812324a",
+    "type": "DETAIL",
+    "label": null,
+    "content": "效果用数据说话 该制氧机连续使用累计时长数据分别为：92560分钟、83978分钟、96508分钟 同时显示氧气浓度为9"
+   },
+   {
+    "docId": "6ac318a8ea5b2c73dbfceca0",
+    "chunkId": "6ac0a08e74ca1f0fc8123274",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【产品基础信息】 - 该产品为德国品牌，属于家用制氧机。"
+   },
+   {
+    "docId": "6ac33f3fea5b2c73dbfd13ff",
+    "chunkId": "6ac312a174ca1f0fc815bef7",
+    "type": "DETAIL",
+    "label": null,
+    "content": "## 商品特点 10万+销量见证，高端制氧机品质看得见。 本制氧机采用进口PVC材质，高效稳定制氧。 外观设计高颜值，高"
+   },
+   {
+    "docId": "6ac33f41ddc9db45db5bbd8b",
+    "chunkId": "6ac312a174ca1f0fc815bef5",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【核心参数】 - 9L大氧流量，双倍高制氧。  【功能介绍】 - 具备制氧、雾化、灭菌、负离子、湿化、过滤、定时功能（1"
+   },
+   {
+    "docId": "6ac4c6da9c0cc61b38eebf5c",
+    "chunkId": "6ac38590e1041c3905831e1d",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:下单送什么赠品？ A:下单送吸氧大礼包/12重豪礼（含蓝色氧气袋等配件，总价值129元或168元、不同型号礼包不同）"
+   },
+   {
+    "docId": "6ac62104c9f2a900b99dd417",
+    "chunkId": "6ac0a08e74ca1f0fc812328b",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【性能特性】 - 具有9L大氧流量，双倍高制氧的特性。"
+   },
+   {
+    "docId": "6ac8478a9c0cc61b38f14fef",
+    "chunkId": "6ac11615e4bec54754831da6",
+    "type": "DETAIL",
+    "label": null,
+    "content": "# DEDAKJ制氧机各规格差异表 | 规格名称 | 氧流量调节范围 | 核心功能 | 专属附加配置 | 质保服务 | "
+   }
+  ],
+  "content": "目前知识里明确标注净重的是DE-1S/1SW款，为6.7kg\n您咨询的【双倍制高氧款】的具体重量，我这边暂未查到准确数据，建议您提供型号或咨询我们进一步核实，避免给您错误信息~"
+ },
+ {
+  "name": "德迩杰#78",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": 0,
+  "logIsCredible": 1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6ac4c6da9c0cc61b38eebf5c",
+    "chunkId": "6ac38590e1041c3905831e1d",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:下单送什么赠品？ A:下单送吸氧大礼包/12重豪礼（含蓝色氧气袋等配件，总价值129元或168元、不同型号礼包不同）"
+   },
+   {
+    "docId": "6ac1aedb8d902f20ed5723bb",
+    "chunkId": "6ac0baade4bec5475483156e",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:维修范围？（要求换新也可以用这个话术） A:维修更换了哪些部件，应以实际检测和维修记录为准，不能预先承诺全部换新。请"
+   },
+   {
+    "docId": "6ac1aeddea5b2c73dbfbe18f",
+    "chunkId": "6ac0baace1041c390582e6ed",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:支持多久换款？ A:您好～家用制氧机如果收到后觉得不合适，是支持**30天内换款**的哦～✅   只要机器保持完好，"
+   },
+   {
+    "docId": "6ac1b40f8d902f20ed572940",
+    "chunkId": "6ac0b51de1041c390582e5a5",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：可以24小时连续使用吗？ A：连续运行时长应以具体型号说明书和机身警示为准，不能统一承诺24小时不停机；若机身标签写"
+   },
+   {
+    "docId": "6ac1b5669c0cc61b38ec7317",
+    "chunkId": "6ac0a08e74ca1f0fc812327d",
+    "type": "DETAIL",
+    "label": null,
+    "content": "## 消费提示 本品为保健型制氧机，非医疗类用品，不可任何疾病治疗，仅可用于家庭保健；若需要疾病辅助治疗，请选择医用型制"
+   },
+   {
+    "docId": "6ac1b727ddc9db45db5a9b85",
+    "chunkId": "6ac0a08e74ca1f0fc8123258",
+    "type": "DETAIL",
+    "label": null,
+    "content": "本制氧机配备SOS呼叫系统，当用户需要帮助时，家人能很快知道。 配备智能无线遥控器，支持SOS一键触发，可仿人声呼救。"
+   },
+   {
+    "docId": "6ac1b765ddc9db45db5a9bd3",
+    "chunkId": "6ac0b5bde1041c390582e5dc",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：不知道该买什么型号，怎么选？ A：请先说明：①居家使用还是外出携带；②医生要求的供氧方式、流量和使用时长（有医嘱或血"
+   },
+   {
+    "docId": "6ac1d8cbc9f2a900b99aac78",
+    "chunkId": "6ac0a08e74ca1f0fc812327f",
+    "type": "DETAIL",
+    "label": null,
+    "content": "适用人群： 成人"
+   },
+   {
+    "docId": "6ac1d8cbc9f2a900b99aac79",
+    "chunkId": "6ac0a08e74ca1f0fc812326e",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【通用说明】 - 额定电压：均为220V；负离子：均为≥800万个/cm³； - 产品尺寸：均为350*191*315m"
+   },
+   {
+    "docId": "6ac318a8ea5b2c73dbfceca0",
+    "chunkId": "6ac0a08e74ca1f0fc8123274",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【产品基础信息】 - 该产品为德国品牌，属于家用制氧机。"
+   },
+   {
+    "docId": "6ac8da518d902f20ed5cb8e5",
+    "chunkId": "6ac8b28ee4bec547548418a5",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：C1支持雾化吗？C1能不能雾化？ A：C1不支持雾化，C1L才可以。"
+   }
+  ],
+  "content": "这款制氧机适用人群为成人，家里的成人可以使用\n随单配件包含过滤器*1、过滤棉*2、保险丝*1（数量有限、送完即止）；部分活动下单再送吸氧管*2（款式随机）\n您咨询的【双倍制高氧款】是否额外配更换头，知识里暂未查到准确说明，建议您提供型号，我们进一步为您核实"
+ },
+ {
+  "name": "德迩杰#82",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": 0,
+  "logIsCredible": 1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6ac1b566c9f2a900b99a8492",
+    "chunkId": "6ac0b5bde1041c390582e5dd",
+    "type": "SHOP",
+    "label": null,
+    "content": "是否需要吸氧、选几升、每天吸多久应由医生评估和制定，不能仅凭疾病名称、年龄或单次血氧读数推荐；如当前用氧效果不佳或出现不"
+   },
+   {
+    "docId": "6ac1b765ddc9db45db5a9bd3",
+    "chunkId": "6ac0b5bde1041c390582e5dc",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：不知道该买什么型号，怎么选？ A：请先说明：①居家使用还是外出携带；②医生要求的供氧方式、流量和使用时长（有医嘱或血"
+   },
+   {
+    "docId": "6ac1b40f8d902f20ed572943",
+    "chunkId": "6ac0b5b6e4bec54754831470",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：制氧机怎么安装？买回家还需要自己组装吗？ A：制氧机收到后是组装好的，无需自己安装：装上湿化瓶（按说明书加水不超过水"
+   },
+   {
+    "docId": "6ac1b67cc9f2a900b99a858b",
+    "chunkId": "6ac0b508e1041c390582e59b",
+    "type": "SHOP",
+    "label": null,
+    "content": "请不要拆机、不要取下过滤器运行、不要反复把档位调到最大试机；怀疑浓度问题时需按该型号要求使用适用的测氧仪检测。依赖持续供"
+   },
+   {
+    "docId": "6ac314fb9c0cc61b38ed71f5",
+    "chunkId": "6ac0a08e74ca1f0fc812324a",
+    "type": "DETAIL",
+    "label": null,
+    "content": "效果用数据说话 该制氧机连续使用累计时长数据分别为：92560分钟、83978分钟、96508分钟 同时显示氧气浓度为9"
+   },
+   {
+    "docId": "6ac339eeea5b2c73dbfd0e32",
+    "chunkId": "6ac0a08e74ca1f0fc8123240",
+    "type": "DETAIL",
+    "label": null,
+    "content": "## 大流量制氧机 氧流量可调节范围为1~9升/分钟（L/min），满足多种吸氧需求。 氧流量1L/min时，氧浓度为9"
+   },
+   {
+    "docId": "6ac78fc6ea5b2c73db0078d9",
+    "chunkId": "6ac0a08e74ca1f0fc8123268",
+    "type": "DETAIL",
+    "label": null,
+    "content": "品牌：DEDAKJ 流量参数：1 L/min（显示屏显示）"
+   },
+   {
+    "docId": "6ac8dae5ddc9db45db6028f0",
+    "chunkId": "6ac312a174ca1f0fc815bee1",
+    "type": "DETAIL",
+    "label": null,
+    "content": "## 商品信息 本制氧机具备9L大流量，可实现双倍制高氧。 采用进口材料，提供5年质保服务。 配备身体血氧监测仪。 售后"
+   }
+  ],
+  "content": "是否需要吸氧、选几升、每天吸多久，需要由医生根据您的具体身体状况评估和制定，不能仅凭使用时长来推荐哦\n建议您遵医嘱使用，如有医嘱或血氧数据也可以提供给我们，帮您核对具体机型是否满足~"
+ },
+ {
+  "name": "德迩杰#83",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": 0,
+  "logIsCredible": 1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6ac1b40f8d902f20ed572943",
+    "chunkId": "6ac0b5b6e4bec54754831470",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：制氧机怎么安装？买回家还需要自己组装吗？ A：制氧机收到后是组装好的，无需自己安装：装上湿化瓶（按说明书加水不超过水"
+   },
+   {
+    "docId": "6ac1b5668d902f20ed572ab2",
+    "chunkId": "6ac0a08e74ca1f0fc8123239",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【新款DEDAKJ制氧机】 - 流量：支持1-9L大氧流量； - 噪音：34分贝轻音制氧； - 浓度：氧浓度达96%高氧"
+   },
+   {
+    "docId": "6ac1b566c9f2a900b99a8491",
+    "chunkId": "6ac0b5c4e4bec54754831474",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：湿化瓶冒泡，但吸氧管感觉没气，是漏气吗？ A：湿化瓶冒泡只反映气流经过水，不能证明出口氧浓度或整机性能正常。请先检查"
+   },
+   {
+    "docId": "6ac1b67c9c0cc61b38ec743e",
+    "chunkId": "6ac0baace1041c390582e6ee",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:保修范围？ A:亲亲，咱们家的制氧机是有正规质保服务的呢～📦   但以下情况是不属于质保范围内的哦：  ① 非正常用"
+   },
+   {
+    "docId": "6ac1b67cea5b2c73dbfbe9a6",
+    "chunkId": "6ac0a08e74ca1f0fc8123272",
+    "type": "DETAIL",
+    "label": null,
+    "content": "## 标配品 本制氧机标配包含以下配件： - 产品使用说明书 - 电源线 - 遥控器 - 雾化套装 - 无菌吸氧管 制氧"
+   },
+   {
+    "docId": "6ac1b765ddc9db45db5a9bd3",
+    "chunkId": "6ac0b5bde1041c390582e5dc",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：不知道该买什么型号，怎么选？ A：请先说明：①居家使用还是外出携带；②医生要求的供氧方式、流量和使用时长（有医嘱或血"
+   },
+   {
+    "docId": "6ac1b7ebc9f2a900b99a8719",
+    "chunkId": "6ac0b5b6e4bec54754831471",
+    "type": "SHOP",
+    "label": null,
+    "content": "首次使用请按说明书的开机步骤操作，并核对型号与配件清单；如配件缺失或连接不上，请拍照联系我们，不要自行拆机。"
+   },
+   {
+    "docId": "6ac1d8b7c9f2a900b99aac62",
+    "chunkId": "6ac0b516e4bec54754831451",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：雾化口出来的是氧气还是空气？做雾化对吸氧浓度有影响吗？ A：不能把雾化口直接当作吸氧口。压缩空气式雾化通常由空气驱动"
+   },
+   {
+    "docId": "6ac314fdddc9db45db5b92eb",
+    "chunkId": "6ac312a174ca1f0fc815bf0c",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【功能与性能介绍】 - 制氧：制氧快速，制氧量大，高效稳定制氧，运行平稳。 - 雾化：雾化功能强大。 - 屏幕与操作：高"
+   },
+   {
+    "docId": "6ac318afc9f2a900b99b85a8",
+    "chunkId": "6ac312a174ca1f0fc815bf08",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【原装配件清单】 - 原装配件：吸氧管x1、雾化套装x1、遥控器x1、过滤器x1、保险丝x2"
+   },
+   {
+    "docId": "6ac4c6da9c0cc61b38eebf5c",
+    "chunkId": "6ac38590e1041c3905831e1d",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:下单送什么赠品？ A:下单送吸氧大礼包/12重豪礼（含蓝色氧气袋等配件，总价值129元或168元、不同型号礼包不同）"
+   },
+   {
+    "docId": "6ac5a7188d902f20ed59db71",
+    "chunkId": "6ac38590e1041c3905831e21",
+    "type": "SHOP",
+    "label": null,
+    "content": "说明：赠品与活动以商品详情页/下单页为准；不同型号赠品不同，下单前请先与客服确认；赠品、配件仅限三包服务，不予折现；厂家"
+   }
+  ],
+  "content": "您可以查看商品详情页规格说明，或咨询京东官方客服协助处理配件事宜。"
+ },
+ {
+  "name": "德迩杰#87",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": 0,
+  "logIsCredible": 1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6ac1b566c9f2a900b99a8492",
+    "chunkId": "6ac0b5bde1041c390582e5dd",
+    "type": "SHOP",
+    "label": null,
+    "content": "是否需要吸氧、选几升、每天吸多久应由医生评估和制定，不能仅凭疾病名称、年龄或单次血氧读数推荐；如当前用氧效果不佳或出现不"
+   },
+   {
+    "docId": "6ac1b765ddc9db45db5a9bd3",
+    "chunkId": "6ac0b5bde1041c390582e5dc",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：不知道该买什么型号，怎么选？ A：请先说明：①居家使用还是外出携带；②医生要求的供氧方式、流量和使用时长（有医嘱或血"
+   },
+   {
+    "docId": "6ac1b40f8d902f20ed572943",
+    "chunkId": "6ac0b5b6e4bec54754831470",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：制氧机怎么安装？买回家还需要自己组装吗？ A：制氧机收到后是组装好的，无需自己安装：装上湿化瓶（按说明书加水不超过水"
+   },
+   {
+    "docId": "6ac1b67cc9f2a900b99a858b",
+    "chunkId": "6ac0b508e1041c390582e59b",
+    "type": "SHOP",
+    "label": null,
+    "content": "请不要拆机、不要取下过滤器运行、不要反复把档位调到最大试机；怀疑浓度问题时需按该型号要求使用适用的测氧仪检测。依赖持续供"
+   },
+   {
+    "docId": "6ac78fc6ea5b2c73db0078d9",
+    "chunkId": "6ac0a08e74ca1f0fc8123268",
+    "type": "DETAIL",
+    "label": null,
+    "content": "品牌：DEDAKJ 流量参数：1 L/min（显示屏显示）"
+   },
+   {
+    "docId": "6ac8478a9c0cc61b38f14fef",
+    "chunkId": "6ac11615e4bec54754831da6",
+    "type": "DETAIL",
+    "label": null,
+    "content": "# DEDAKJ制氧机各规格差异表 | 规格名称 | 氧流量调节范围 | 核心功能 | 专属附加配置 | 质保服务 | "
+   },
+   {
+    "docId": "6ac87ad39c0cc61b38f192d6",
+    "chunkId": "6ac312a174ca1f0fc815beef",
+    "type": "DETAIL",
+    "label": null,
+    "content": "## 商品功能与参数 本制氧机采用高清大屏设计，支持一键制氧，老人可轻松操作。 具备紫外杀菌、负离子、风扇、睡眠模式等功"
+   },
+   {
+    "docId": "6ac8dae5ddc9db45db6028f0",
+    "chunkId": "6ac312a174ca1f0fc815bee1",
+    "type": "DETAIL",
+    "label": null,
+    "content": "## 商品信息 本制氧机具备9L大流量，可实现双倍制高氧。 采用进口材料，提供5年质保服务。 配备身体血氧监测仪。 售后"
+   }
+  ],
+  "content": "是否需要吸氧、选几升、每天吸多久，需要由医生根据您的具体身体状况评估和制定，不能仅凭日常保健需求来推荐哦~\n您可以提供医生要求的供氧方式、流量和使用时长，或血氧数据，我们帮您按具体机型的额定流量—浓度逐项核对是否满足"
+ },
+ {
+  "name": "德迩杰#104",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": 0,
+  "logIsCredible": 1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6ac1b765ddc9db45db5a9bd3",
+    "chunkId": "6ac0b5bde1041c390582e5dc",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：不知道该买什么型号，怎么选？ A：请先说明：①居家使用还是外出携带；②医生要求的供氧方式、流量和使用时长（有医嘱或血"
+   },
+   {
+    "docId": "6ac1b765ddc9db45db5a9bd4",
+    "chunkId": "6ac0b5a1e4bec5475483146d",
+    "type": "SHOP",
+    "label": null,
+    "content": "如果关机后长时间不停、伴随报警或异响，请提供完整型号和短视频，我们核实后再判断是否需要检测/售后。请保持机器通风、进出风"
+   },
+   {
+    "docId": "6ac1c639c9f2a900b99a984d",
+    "chunkId": "6ac0b50fe4bec5475483144f",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：过滤器在哪里？想购买或更换怎么办？ A：不同型号的过滤器位置和规格不同（如1.5cm、3.5cm等），请先提供机器完"
+   },
+   {
+    "docId": "6ac1d8b7c9f2a900b99aac61",
+    "chunkId": "6ac0b516e4bec54754831453",
+    "type": "SHOP",
+    "label": null,
+    "content": "如雾化量小、不出雾、断断续续，或对雾化浓度有疑问，请提供完整型号、雾化配件连接照片和操作视频，我们核实后协助处理；药液使"
+   }
+  ],
+  "content": "您方便提供一下具体想选的完整型号吗？这边好按机型帮您逐项核对流量、浓度是否满足您的使用需求\n或者您也可以说明是居家使用还是外出携带、医生建议的供氧流量和使用时长，我帮您看看是否合适"
+ },
+ {
+  "name": "德迩杰#120",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": 0,
+  "logIsCredible": -1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6ac1ad94ea5b2c73dbfbe043",
+    "chunkId": "6ac0baabe1041c390582e6e9",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:家用&医用质保多久？ A:亲亲～咱们售后服务政策如下： ✅ 7天：无理由退货。 ✅ 30天内：不合适支持换款、质量问"
+   },
+   {
+    "docId": "6ac1b40f8d902f20ed572943",
+    "chunkId": "6ac0b5b6e4bec54754831470",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：制氧机怎么安装？买回家还需要自己组装吗？ A：制氧机收到后是组装好的，无需自己安装：装上湿化瓶（按说明书加水不超过水"
+   },
+   {
+    "docId": "6ac1b5668d902f20ed572ab1",
+    "chunkId": "6ac0a08e74ca1f0fc8123242",
+    "type": "DETAIL",
+    "label": null,
+    "content": "## 适用场景 本制氧机适用于老人缺氧、术后补氧、孕妇缺氧、高原缺氧、双人吸氧的场景。"
+   },
+   {
+    "docId": "6ac1b67ac9f2a900b99a8589",
+    "chunkId": "6ac0baaae1041c390582e6e7",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:制氧机售后服务政策（质保） A:亲亲～咱们售后服务政策如下： ✅ 7天：无理由退货。 ✅ 30天内：不合适支持换款、"
+   },
+   {
+    "docId": "6ac1b67cc9f2a900b99a858b",
+    "chunkId": "6ac0b508e1041c390582e59b",
+    "type": "SHOP",
+    "label": null,
+    "content": "请不要拆机、不要取下过滤器运行、不要反复把档位调到最大试机；怀疑浓度问题时需按该型号要求使用适用的测氧仪检测。依赖持续供"
+   },
+   {
+    "docId": "6ac1b83bea5b2c73dbfbeb7a",
+    "chunkId": "6ac10802e1041c390582edd2",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【特别敬告】 - 氧浓度根据气温气压环节等因素下会有所变化，数值不固定，在范围内都是正常情况。 - 制氧机设备适用于氧气"
+   },
+   {
+    "docId": "6ac314fdddc9db45db5b92eb",
+    "chunkId": "6ac312a174ca1f0fc815bf0c",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【功能与性能介绍】 - 制氧：制氧快速，制氧量大，高效稳定制氧，运行平稳。 - 雾化：雾化功能强大。 - 屏幕与操作：高"
+   }
+  ],
+  "content": "这款制氧机适用于老人缺氧、术后补氧等场景，在养老院给老人日常补氧使用是合适的\n使用时装上湿化瓶、接上吸氧管、接通电源即可，操作简单\n另外提醒您：设备用于氧气补充，不作为生命支持，急需用氧者或重症病人建议配置备用供氧装置，并在医生指导下使用"
+ },
+ {
+  "name": "德迩杰#133",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": 0,
+  "logIsCredible": 1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6ac1aedb8d902f20ed5723bb",
+    "chunkId": "6ac0baade4bec5475483156e",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:维修范围？（要求换新也可以用这个话术） A:维修更换了哪些部件，应以实际检测和维修记录为准，不能预先承诺全部换新。请"
+   },
+   {
+    "docId": "6ac1b6529c0cc61b38ec7406",
+    "chunkId": "6ac107c0e1041c390582ed81",
+    "type": "SHOP",
+    "label": null,
+    "content": "亲亲～咱们售后服务政策如下： ✅ 7天：无理由退货。 ✅ 30天内：不合适支持换款、质量问题包退。 ✅ 1年：整机享质保"
+   },
+   {
+    "docId": "6ac1c099ea5b2c73dbfbf5cf",
+    "chunkId": "6ac0babee1041c390582e6f1",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:（售前专用）为什么没有上门服务、网点、寄回厂家、全国联保、返厂 A:本店不提供上门维修。您可提供型号、订单号及故障现"
+   },
+   {
+    "docId": "6ac1c099ea5b2c73dbfbf5d0",
+    "chunkId": "6ac0babee1041c390582e6f2",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:（售前专用）上门服务、网点、寄回厂家、全国联保、返厂 A:本店不提供上门维修。您可提供型号、订单号及故障现象，由售后"
+   },
+   {
+    "docId": "6ac334b3ea5b2c73dbfd0933",
+    "chunkId": "6ac0babee1041c390582e6f0",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:全国联保 A:现有售后资料记录中国大陆地区可申请返厂保修。请提供具体型号、订单及所在地，由我们核对对应保修范围和维修"
+   }
+  ],
+  "content": "您好，维修更换了哪些部件，应以实际检测和维修记录为准，无法预先承诺全部换新\n请您提供订单号或维修单号，由我们核对已做项目、检测结果和相应保修安排~"
+ },
+ {
+  "name": "德迩杰#134",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": 0,
+  "logIsCredible": 1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6ac1ad929c0cc61b38ec6aea",
+    "chunkId": "6ac0baade4bec5475483156d",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:给我保修卡，保修合同，质保合同？ A:您好亲亲～我们是品牌官方直销，线上售后是通过【订单号】来保修的，不需要单独的保"
+   },
+   {
+    "docId": "6ac1aedb8d902f20ed5723bb",
+    "chunkId": "6ac0baade4bec5475483156e",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:维修范围？（要求换新也可以用这个话术） A:维修更换了哪些部件，应以实际检测和维修记录为准，不能预先承诺全部换新。请"
+   },
+   {
+    "docId": "6ac1c099ea5b2c73dbfbf5cf",
+    "chunkId": "6ac0babee1041c390582e6f1",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:（售前专用）为什么没有上门服务、网点、寄回厂家、全国联保、返厂 A:本店不提供上门维修。您可提供型号、订单号及故障现"
+   },
+   {
+    "docId": "6ac334b3ea5b2c73dbfd0933",
+    "chunkId": "6ac0babee1041c390582e6f0",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:全国联保 A:现有售后资料记录中国大陆地区可申请返厂保修。请提供具体型号、订单及所在地，由我们核对对应保修范围和维修"
+   },
+   {
+    "docId": "6ac4c775c9f2a900b99cd2c8",
+    "chunkId": "6ac38590e1041c3905831e20",
+    "type": "SHOP",
+    "label": null,
+    "content": "物流与售后：送货上门（具体看地区），上午买下午到（至快）/京东当日达；支持7天保价、3期免息、7天免费试用并送运费险、免"
+   },
+   {
+    "docId": "6ac4c90d9c0cc61b38eec161",
+    "chunkId": "6ac48923e1041c3905832ea8",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：京东仓发货多久能到？ A：亲亲～咱们这款是【京东仓库就近发货】的哦～一般是【次日达】，快的话当天都有可能收到📦 方便"
+   }
+  ],
+  "content": "您好，维修更换了哪些部件，应以实际检测和维修记录为准，不能预先承诺全部换新\n为帮您核对已做项目、检测结果和相应保修安排，请您提供订单号以及送修时的具体故障现象，我们这边帮您跟进核实~"
+ },
+ {
+  "name": "德迩杰#135",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": 0,
+  "logIsCredible": 1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6ac1aedb8d902f20ed5723bb",
+    "chunkId": "6ac0baade4bec5475483156e",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:维修范围？（要求换新也可以用这个话术） A:维修更换了哪些部件，应以实际检测和维修记录为准，不能预先承诺全部换新。请"
+   },
+   {
+    "docId": "6ac1c099ea5b2c73dbfbf5cf",
+    "chunkId": "6ac0babee1041c390582e6f1",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:（售前专用）为什么没有上门服务、网点、寄回厂家、全国联保、返厂 A:本店不提供上门维修。您可提供型号、订单号及故障现"
+   },
+   {
+    "docId": "6ac334b3ea5b2c73dbfd0933",
+    "chunkId": "6ac0babee1041c390582e6f0",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:全国联保 A:现有售后资料记录中国大陆地区可申请返厂保修。请提供具体型号、订单及所在地，由我们核对对应保修范围和维修"
+   },
+   {
+    "docId": "6ac4c775c9f2a900b99cd2c8",
+    "chunkId": "6ac38590e1041c3905831e20",
+    "type": "SHOP",
+    "label": null,
+    "content": "物流与售后：送货上门（具体看地区），上午买下午到（至快）/京东当日达；支持7天保价、3期免息、7天免费试用并送运费险、免"
+   },
+   {
+    "docId": "6ac4c90d9c0cc61b38eec161",
+    "chunkId": "6ac48923e1041c3905832ea8",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：京东仓发货多久能到？ A：亲亲～咱们这款是【京东仓库就近发货】的哦～一般是【次日达】，快的话当天都有可能收到📦 方便"
+   }
+  ],
+  "content": "您好，收到\n为了帮您查询具体的维修进度和检测结果，麻烦您提供一下对应的订单号以及寄出的快递单号，我们这边为您核实跟进~"
+ },
+ {
+  "name": "德迩杰#136",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": 0,
+  "logIsCredible": 1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6ac1aedb8d902f20ed5723bb",
+    "chunkId": "6ac0baade4bec5475483156e",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:维修范围？（要求换新也可以用这个话术） A:维修更换了哪些部件，应以实际检测和维修记录为准，不能预先承诺全部换新。请"
+   },
+   {
+    "docId": "6ac1b40f8d902f20ed572942",
+    "chunkId": "6ac0b5c4e4bec54754831475",
+    "type": "SHOP",
+    "label": null,
+    "content": "不建议把正在使用的鼻吸管插入水中来判断机器是否正常：冒泡不能证明氧浓度达标，还可能污染管路。请提供型号、设置和异常表现（"
+   },
+   {
+    "docId": "6ac1b67c9c0cc61b38ec743e",
+    "chunkId": "6ac0baace1041c390582e6ee",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:保修范围？ A:亲亲，咱们家的制氧机是有正规质保服务的呢～📦   但以下情况是不属于质保范围内的哦：  ① 非正常用"
+   },
+   {
+    "docId": "6ac1c099ea5b2c73dbfbf5cf",
+    "chunkId": "6ac0babee1041c390582e6f1",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:（售前专用）为什么没有上门服务、网点、寄回厂家、全国联保、返厂 A:本店不提供上门维修。您可提供型号、订单号及故障现"
+   },
+   {
+    "docId": "6ac33d78c9f2a900b99bac5f",
+    "chunkId": "6ac0baade4bec54754831570",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:如何分辨是人为损坏，还是机器质量问题？ A:故障原因和责任需要结合实际检测记录核实，不能仅凭聊天、过滤器外观或维修次"
+   },
+   {
+    "docId": "6ac4c775c9f2a900b99cd2c8",
+    "chunkId": "6ac38590e1041c3905831e20",
+    "type": "SHOP",
+    "label": null,
+    "content": "物流与售后：送货上门（具体看地区），上午买下午到（至快）/京东当日达；支持7天保价、3期免息、7天免费试用并送运费险、免"
+   }
+  ],
+  "content": "您好，故障原因和维修更换了哪些部件，都需要结合实际检测和维修记录核实，无法仅凭聊天先判断哪里坏了\n请您提供订单号或维修单号，以及送修时的具体故障现象，我们帮您核对检测结果和处理方案"
+ },
+ {
+  "name": "德迩杰#177",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": 0,
+  "logIsCredible": 1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6ac1b40f8d902f20ed572940",
+    "chunkId": "6ac0b51de1041c390582e5a5",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：可以24小时连续使用吗？ A：连续运行时长应以具体型号说明书和机身警示为准，不能统一承诺24小时不停机；若机身标签写"
+   },
+   {
+    "docId": "6ac1c6a4ea5b2c73dbfbfd29",
+    "chunkId": "6ac0b51de1041c390582e5a6",
+    "type": "SHOP",
+    "label": null,
+    "content": "机器使用中出现异常或需要长时间连续使用时，请先联系我们核实，不要带故障长时间运行。"
+   },
+   {
+    "docId": "6ac1b765ddc9db45db5a9bd2",
+    "chunkId": "6ac0b5cbe1041c390582e5e1",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：每次开机都要重新调流量吗？ A：部分机型开机后回到初始档位，部分医用机型有记忆功能会保留上次设置；以该型号说明书为准"
+   },
+   {
+    "docId": "6ac1b7ebc9f2a900b99a8719",
+    "chunkId": "6ac0b5b6e4bec54754831471",
+    "type": "SHOP",
+    "label": null,
+    "content": "首次使用请按说明书的开机步骤操作，并核对型号与配件清单；如配件缺失或连接不上，请拍照联系我们，不要自行拆机。"
+   },
+   {
+    "docId": "6ac1c61fc9f2a900b99a982f",
+    "chunkId": "6ac10802e1041c390582edd4",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【特殊注意事项】 - 氧气机禁止倒置或横卧。 - 氧气机使用时，避免吸氧管折弯，否则水箱会溢水。 - 氧气是助燃气体，使"
+   },
+   {
+    "docId": "6ac4c827ddc9db45db5cdd80",
+    "chunkId": "6ac0b5afe1041c390582e5d9",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：机器声音大、有震动或“噗呲”声，正常吗？ A：请说明声音出现的时机（开机就有、使用中突然变大）、是否有报警，并提供完"
+   },
+   {
+    "docId": "6ac4c828c9f2a900b99cd385",
+    "chunkId": "6ac0b5a8e1041c390582e5d6",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：机器用一两个小时后发热、散热口发烫，正常吗？ A：运行中的散热部位发热属于正常现象，但不能仅凭手摸或一个通用温度值判"
+   }
+  ],
+  "content": "连续运行时长请以该型号说明书和机身警示为准，若机身标签写明不建议24小时运行，请遵照执行\n机器使用中如有异常或需要长时间连续使用，请先联系我们核实，不要带故障长时间运行"
+ },
+ {
+  "name": "德迩杰#187",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": 0,
+  "logIsCredible": -1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6ac1b40f8d902f20ed572942",
+    "chunkId": "6ac0b5c4e4bec54754831475",
+    "type": "SHOP",
+    "label": null,
+    "content": "不建议把正在使用的鼻吸管插入水中来判断机器是否正常：冒泡不能证明氧浓度达标，还可能污染管路。请提供型号、设置和异常表现（"
+   },
+   {
+    "docId": "6ac1b40f8d902f20ed572943",
+    "chunkId": "6ac0b5b6e4bec54754831470",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：制氧机怎么安装？买回家还需要自己组装吗？ A：制氧机收到后是组装好的，无需自己安装：装上湿化瓶（按说明书加水不超过水"
+   },
+   {
+    "docId": "6ac1b566c9f2a900b99a8491",
+    "chunkId": "6ac0b5c4e4bec54754831474",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：湿化瓶冒泡，但吸氧管感觉没气，是漏气吗？ A：湿化瓶冒泡只反映气流经过水，不能证明出口氧浓度或整机性能正常。请先检查"
+   },
+   {
+    "docId": "6ac1b566c9f2a900b99a8492",
+    "chunkId": "6ac0b5bde1041c390582e5dd",
+    "type": "SHOP",
+    "label": null,
+    "content": "是否需要吸氧、选几升、每天吸多久应由医生评估和制定，不能仅凭疾病名称、年龄或单次血氧读数推荐；如当前用氧效果不佳或出现不"
+   },
+   {
+    "docId": "6ac1b567c9f2a900b99a8494",
+    "chunkId": "6ac0b5cbe1041c390582e5e0",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：流量/档位怎么调？为什么档位越高、浓度越低？ A：请按该型号流量调节旋钮的标记和说明书缓慢调整到医生规定的流量，读数"
+   },
+   {
+    "docId": "6ac1c0b4c9f2a900b99a91b3",
+    "chunkId": "6ac0a08e74ca1f0fc812324e",
+    "type": "DETAIL",
+    "label": null,
+    "content": "## 核心部件（压缩机） 纯铜无油压缩机，动力强劲，可实现365天稳定供氧。 该压缩机具有电动机转子，拥有发明专利（专利"
+   },
+   {
+    "docId": "6ac1d8b7c9f2a900b99aac60",
+    "chunkId": "6ac1b8cee1041c390582f2b7",
+    "type": "SHOP",
+    "label": null,
+    "content": "亲，一般3岁以下或不能清楚表达感受的儿童，建议前往医院，由医生评估并在院内进行吸氧或雾化；3岁以上且能清楚表达的儿童，请"
+   },
+   {
+    "docId": "6ac1d8b7c9f2a900b99aac62",
+    "chunkId": "6ac0b516e4bec54754831451",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：雾化口出来的是氧气还是空气？做雾化对吸氧浓度有影响吗？ A：不能把雾化口直接当作吸氧口。压缩空气式雾化通常由空气驱动"
+   },
+   {
+    "docId": "6ac1d8b7ddc9db45db5ac0ed",
+    "chunkId": "6ac0a08e74ca1f0fc812326a",
+    "type": "DETAIL",
+    "label": null,
+    "content": "该制氧机设有雾化口，具备雾化功能。"
+   },
+   {
+    "docId": "6ac314fdddc9db45db5b92e8",
+    "chunkId": "6ac312a174ca1f0fc815bf03",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【产品参数与功能】 - 9L大氧流量、96%高氧浓度，1台顶7台，可实现制氧+雾化+灭菌+负离子+湿化+过滤+定时功能。"
+   },
+   {
+    "docId": "6ac314fdddc9db45db5b92eb",
+    "chunkId": "6ac312a174ca1f0fc815bf0c",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【功能与性能介绍】 - 制氧：制氧快速，制氧量大，高效稳定制氧，运行平稳。 - 雾化：雾化功能强大。 - 屏幕与操作：高"
+   },
+   {
+    "docId": "6ac3150c9c0cc61b38ed7209",
+    "chunkId": "6ac0b516e4bec54754831452",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：吸氧和雾化可以同时使用吗？ A：能否同时开启须按具体型号说明书确认；正在按医嘱持续吸氧的人，不要为做雾化自行中断供氧"
+   },
+   {
+    "docId": "6ac318a8ea5b2c73dbfceca0",
+    "chunkId": "6ac0a08e74ca1f0fc8123274",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【产品基础信息】 - 该产品为德国品牌，属于家用制氧机。"
+   },
+   {
+    "docId": "6ac339ee9c0cc61b38ed9923",
+    "chunkId": "6ac0a08e74ca1f0fc8123246",
+    "type": "DETAIL",
+    "label": null,
+    "content": "进口材料，品质稳定，365天不间断高浓度吸氧"
+   },
+   {
+    "docId": "6ac5a3ee8d902f20ed59d7d9",
+    "chunkId": "6ac0a08e74ca1f0fc8123248",
+    "type": "DETAIL",
+    "label": null,
+    "content": "法国CECA进口分子筛，氧气浓度高达96%。 产品具有浓度高、氧气纯、制氧快的特点。 图片展示了进口报关单，证明产品进口"
+   },
+   {
+    "docId": "6ac5ab2cc9f2a900b99d466f",
+    "chunkId": "6ac312a174ca1f0fc815bf1b",
+    "type": "DETAIL",
+    "label": null,
+    "content": "## 制氧雾化一体机 本设备为制氧雾化一体机，具备一机两用的功能，可分别用于制氧模式（老人吸氧）和雾化模式（女士雾化），"
+   },
+   {
+    "docId": "6ac8478a9c0cc61b38f14fef",
+    "chunkId": "6ac11615e4bec54754831da6",
+    "type": "DETAIL",
+    "label": null,
+    "content": "# DEDAKJ制氧机各规格差异表 | 规格名称 | 氧流量调节范围 | 核心功能 | 专属附加配置 | 质保服务 | "
+   },
+   {
+    "docId": "6ac87772ddc9db45db5fa865",
+    "chunkId": "6ac807ff74ca1f0fc8243f8b",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【功能集成说明】 - 功能集成：制氧+雾化+灭菌，同时具备负离子、湿化、过滤、定时功能，1台顶7台使用。"
+   },
+   {
+    "docId": "6ac8da518d902f20ed5cb8e5",
+    "chunkId": "6ac8b28ee4bec547548418a5",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：C1支持雾化吗？C1能不能雾化？ A：C1不支持雾化，C1L才可以。"
+   }
+  ],
+  "content": "这款机器是制氧雾化一体机，具备一机两用功能，可分别用于制氧模式（吸氧）和雾化模式\n机器设有雾化口，自带雾化功能\n需要提醒您的是，吸氧和雾化能否同时开启，需按具体型号说明书确认；如果是正在按医嘱持续吸氧的人，不要为做雾化自行中断供氧，请先向医生确认安排再操作"
+ },
+ {
+  "name": "德迩杰#188",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": 0,
+  "logIsCredible": 1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6ac1b40f8d902f20ed572943",
+    "chunkId": "6ac0b5b6e4bec54754831470",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：制氧机怎么安装？买回家还需要自己组装吗？ A：制氧机收到后是组装好的，无需自己安装：装上湿化瓶（按说明书加水不超过水"
+   },
+   {
+    "docId": "6ac1b5668d902f20ed572ab1",
+    "chunkId": "6ac0a08e74ca1f0fc8123242",
+    "type": "DETAIL",
+    "label": null,
+    "content": "## 适用场景 本制氧机适用于老人缺氧、术后补氧、孕妇缺氧、高原缺氧、双人吸氧的场景。"
+   },
+   {
+    "docId": "6ac1b5669c0cc61b38ec7317",
+    "chunkId": "6ac0a08e74ca1f0fc812327d",
+    "type": "DETAIL",
+    "label": null,
+    "content": "## 消费提示 本品为保健型制氧机，非医疗类用品，不可任何疾病治疗，仅可用于家庭保健；若需要疾病辅助治疗，请选择医用型制"
+   },
+   {
+    "docId": "6ac1b566c9f2a900b99a8492",
+    "chunkId": "6ac0b5bde1041c390582e5dd",
+    "type": "SHOP",
+    "label": null,
+    "content": "是否需要吸氧、选几升、每天吸多久应由医生评估和制定，不能仅凭疾病名称、年龄或单次血氧读数推荐；如当前用氧效果不佳或出现不"
+   },
+   {
+    "docId": "6ac1b67cc9f2a900b99a858b",
+    "chunkId": "6ac0b508e1041c390582e59b",
+    "type": "SHOP",
+    "label": null,
+    "content": "请不要拆机、不要取下过滤器运行、不要反复把档位调到最大试机；怀疑浓度问题时需按该型号要求使用适用的测氧仪检测。依赖持续供"
+   },
+   {
+    "docId": "6ac1b6c6c9f2a900b99a85df",
+    "chunkId": "6ac0a08e74ca1f0fc8123266",
+    "type": "DETAIL",
+    "label": null,
+    "content": "## 制氧机使用步骤 1. 插上电源，按下机器开关【1】 2. 往湿化水箱加水，水位不能超过最高水位线 3. 将吸氧管的"
+   },
+   {
+    "docId": "6ac1b765ddc9db45db5a9bd3",
+    "chunkId": "6ac0b5bde1041c390582e5dc",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：不知道该买什么型号，怎么选？ A：请先说明：①居家使用还是外出携带；②医生要求的供氧方式、流量和使用时长（有医嘱或血"
+   },
+   {
+    "docId": "6ac1b83bddc9db45db5a9cb0",
+    "chunkId": "6ac0b5a1e4bec5475483146c",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：制氧机关机后内部还有声音、风扇还在转，正常吗？ A：关机后风扇继续转动几分钟，是制氧机的正常设计：用于排出机器内部残"
+   },
+   {
+    "docId": "6ac1b83bea5b2c73dbfbeb7a",
+    "chunkId": "6ac10802e1041c390582edd2",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【特别敬告】 - 氧浓度根据气温气压环节等因素下会有所变化，数值不固定，在范围内都是正常情况。 - 制氧机设备适用于氧气"
+   },
+   {
+    "docId": "6ac1d8b7c9f2a900b99aac62",
+    "chunkId": "6ac0b516e4bec54754831451",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：雾化口出来的是氧气还是空气？做雾化对吸氧浓度有影响吗？ A：不能把雾化口直接当作吸氧口。压缩空气式雾化通常由空气驱动"
+   },
+   {
+    "docId": "6ac314fdddc9db45db5b92e8",
+    "chunkId": "6ac312a174ca1f0fc815bf03",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【产品参数与功能】 - 9L大氧流量、96%高氧浓度，1台顶7台，可实现制氧+雾化+灭菌+负离子+湿化+过滤+定时功能。"
+   },
+   {
+    "docId": "6ac314fdddc9db45db5b92eb",
+    "chunkId": "6ac312a174ca1f0fc815bf0c",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【功能与性能介绍】 - 制氧：制氧快速，制氧量大，高效稳定制氧，运行平稳。 - 雾化：雾化功能强大。 - 屏幕与操作：高"
+   },
+   {
+    "docId": "6ac3150c9c0cc61b38ed7209",
+    "chunkId": "6ac0b516e4bec54754831452",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：吸氧和雾化可以同时使用吗？ A：能否同时开启须按具体型号说明书确认；正在按医嘱持续吸氧的人，不要为做雾化自行中断供氧"
+   },
+   {
+    "docId": "6ac318a8ea5b2c73dbfceca0",
+    "chunkId": "6ac0a08e74ca1f0fc8123274",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【产品基础信息】 - 该产品为德国品牌，属于家用制氧机。"
+   },
+   {
+    "docId": "6ac8478a9c0cc61b38f14fef",
+    "chunkId": "6ac11615e4bec54754831da6",
+    "type": "DETAIL",
+    "label": null,
+    "content": "# DEDAKJ制氧机各规格差异表 | 规格名称 | 氧流量调节范围 | 核心功能 | 专属附加配置 | 质保服务 | "
+   },
+   {
+    "docId": "6ac87772ddc9db45db5fa865",
+    "chunkId": "6ac807ff74ca1f0fc8243f8b",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【功能集成说明】 - 功能集成：制氧+雾化+灭菌，同时具备负离子、湿化、过滤、定时功能，1台顶7台使用。"
+   }
+  ],
+  "content": "这款机器支持制氧和雾化功能\n关于是否可连接呼吸机使用，建议您查看商品详情页的规格参数或咨询专业医生确认，以确保安全适用"
+ },
+ {
+  "name": "德迩杰#189",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": 0,
+  "logIsCredible": -1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6ac1b83bea5b2c73dbfbeb7a",
+    "chunkId": "6ac10802e1041c390582edd2",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【特别敬告】 - 氧浓度根据气温气压环节等因素下会有所变化，数值不固定，在范围内都是正常情况。 - 制氧机设备适用于氧气"
+   },
+   {
+    "docId": "6ac1b40f8d902f20ed572943",
+    "chunkId": "6ac0b5b6e4bec54754831470",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：制氧机怎么安装？买回家还需要自己组装吗？ A：制氧机收到后是组装好的，无需自己安装：装上湿化瓶（按说明书加水不超过水"
+   },
+   {
+    "docId": "6ac1b566c9f2a900b99a8492",
+    "chunkId": "6ac0b5bde1041c390582e5dd",
+    "type": "SHOP",
+    "label": null,
+    "content": "是否需要吸氧、选几升、每天吸多久应由医生评估和制定，不能仅凭疾病名称、年龄或单次血氧读数推荐；如当前用氧效果不佳或出现不"
+   },
+   {
+    "docId": "6ac1b566c9f2a900b99a8493",
+    "chunkId": "6ac0b51de1041c390582e5a4",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：老人每天吸氧多长时间？一天吸几次？ A：每次吸多久、每天吸几次，应按医生为个人制定的用氧方案执行，不能统一建议“早中"
+   },
+   {
+    "docId": "6ac1b83aea5b2c73dbfbeb79",
+    "chunkId": "6ac0b5a8e1041c390582e5d7",
+    "type": "SHOP",
+    "label": null,
+    "content": "如有烫伤风险、焦糊味、冒烟或持续报警，请在安全前提下停用断电并联系我们处理售后；依赖持续供氧者请使用医生预先安排的备用方"
+   },
+   {
+    "docId": "6ac1d8b7c9f2a900b99aac62",
+    "chunkId": "6ac0b516e4bec54754831451",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：雾化口出来的是氧气还是空气？做雾化对吸氧浓度有影响吗？ A：不能把雾化口直接当作吸氧口。压缩空气式雾化通常由空气驱动"
+   },
+   {
+    "docId": "6ac1d8b7ddc9db45db5ac0ed",
+    "chunkId": "6ac0a08e74ca1f0fc812326a",
+    "type": "DETAIL",
+    "label": null,
+    "content": "该制氧机设有雾化口，具备雾化功能。"
+   },
+   {
+    "docId": "6ac3150c9c0cc61b38ed7209",
+    "chunkId": "6ac0b516e4bec54754831452",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：吸氧和雾化可以同时使用吗？ A：能否同时开启须按具体型号说明书确认；正在按医嘱持续吸氧的人，不要为做雾化自行中断供氧"
+   },
+   {
+    "docId": "6ac87772ddc9db45db5fa865",
+    "chunkId": "6ac807ff74ca1f0fc8243f8b",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【功能集成说明】 - 功能集成：制氧+雾化+灭菌，同时具备负离子、湿化、过滤、定时功能，1台顶7台使用。"
+   }
+  ],
+  "content": "这款是制氧雾化一体机，主要用于制氧吸氧和雾化，不能当呼吸机使用\n制氧机设备适用于氧气补充，不作为生命支持和生命延续\n如果有呼吸机使用需求，建议您咨询医生确认合适的设备"
+ },
+ {
+  "name": "京东德达#49",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": 0,
+  "logIsCredible": 1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6ac1a4fec9f2a900b99a753d",
+    "chunkId": "6ac0b51de1041c390582e5a5",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：可以24小时连续使用吗？ A：连续运行时长应以具体型号说明书和机身警示为准，不能统一承诺24小时不停机；若机身标签写"
+   },
+   {
+    "docId": "6ac1a4b8c9f2a900b99a7511",
+    "chunkId": "6ac0baaae1041c390582e6e7",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:制氧机售后服务政策（质保） A:亲亲～咱们售后服务政策如下： ✅ 7天：无理由退货。 ✅ 30天内：不合适支持换款、"
+   },
+   {
+    "docId": "6ac1a4b8c9f2a900b99a7512",
+    "chunkId": "6ac0baabe1041c390582e6ea",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:质保多久？ A:亲亲～咱们售后服务政策如下： ✅ 7天：无理由退货。 ✅ 30天内：不合适支持换款、质量问题包退。 "
+   },
+   {
+    "docId": "6ac1b869c9f2a900b99a8792",
+    "chunkId": "6ac0baabe1041c390582e6e9",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:家用&医用质保多久？ A:亲亲～咱们售后服务政策如下： ✅ 7天：无理由退货。 ✅ 30天内：不合适支持换款、质量问"
+   },
+   {
+    "docId": "6ac20a268d902f20ed57873e",
+    "chunkId": "6ac0baace4bec5475483156b",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:我以为整机都是5年 A:亲亲，理解您的想法哈～其实是【压缩机】享5年质保，整机是1年哦🛠️ "
+   },
+   {
+    "docId": "6ac333c9ea5b2c73dbfd0860",
+    "chunkId": "6ac0baabe1041c390582e6eb",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:整机质保和压缩机质保什么区别？ A:亲亲，我们的机器【整机享1年质保】，包括显示屏、电路板、外壳等常规部件， 其中【"
+   }
+  ],
+  "content": "您说的“765”指的是哪方面呢？如果是想了解机器单次能连续使用多久，这款支持365天连续供氧，但具体连续运行时长请以您收到的说明书和机身警示为准\n您方便说下具体想了解的是运行时长还是使用寿命吗？"
+ },
+ {
+  "name": "京东德达#81",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": 0,
+  "logIsCredible": 1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6ac1ac14ddc9db45db5a9010",
+    "chunkId": "6ac0b5bde1041c390582e5dd",
+    "type": "SHOP",
+    "label": null,
+    "content": "是否需要吸氧、选几升、每天吸多久应由医生评估和制定，不能仅凭疾病名称、年龄或单次血氧读数推荐；如当前用氧效果不佳或出现不"
+   },
+   {
+    "docId": "6ac1a4b8c9f2a900b99a750d",
+    "chunkId": "6ac0b5b6e4bec54754831470",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：制氧机怎么安装？买回家还需要自己组装吗？ A：制氧机收到后是组装好的，无需自己安装：装上湿化瓶（按说明书加水不超过水"
+   },
+   {
+    "docId": "6ac1a4b8c9f2a900b99a750e",
+    "chunkId": "6ac0b508e1041c390582e59b",
+    "type": "SHOP",
+    "label": null,
+    "content": "请不要拆机、不要取下过滤器运行、不要反复把档位调到最大试机；怀疑浓度问题时需按该型号要求使用适用的测氧仪检测。依赖持续供"
+   },
+   {
+    "docId": "6ac1a4ebddc9db45db5a8967",
+    "chunkId": "6ac0b516e4bec54754831451",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：雾化口出来的是氧气还是空气？做雾化对吸氧浓度有影响吗？ A：不能把雾化口直接当作吸氧口。压缩空气式雾化通常由空气驱动"
+   },
+   {
+    "docId": "6ac1a4ebddc9db45db5a8968",
+    "chunkId": "6ac0b516e4bec54754831452",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：吸氧和雾化可以同时使用吗？ A：能否同时开启须按具体型号说明书确认；正在按医嘱持续吸氧的人，不要为做雾化自行中断供氧"
+   },
+   {
+    "docId": "6ac1a4fec9f2a900b99a753d",
+    "chunkId": "6ac0b51de1041c390582e5a5",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：可以24小时连续使用吗？ A：连续运行时长应以具体型号说明书和机身警示为准，不能统一承诺24小时不停机；若机身标签写"
+   },
+   {
+    "docId": "6ac1ac129c0cc61b38ec695a",
+    "chunkId": "6ac0b5c4e4bec54754831475",
+    "type": "SHOP",
+    "label": null,
+    "content": "不建议把正在使用的鼻吸管插入水中来判断机器是否正常：冒泡不能证明氧浓度达标，还可能污染管路。请提供型号、设置和异常表现（"
+   },
+   {
+    "docId": "6ac1bfe6ea5b2c73dbfbf4e9",
+    "chunkId": "6ac10804e4bec54754831c69",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【商品使用说明】 1. 氧浓度根据气温、气压等因素会有所变化，数值不固定，在范围内均属正常情况。 2. 制氧机适用于氧气"
+   },
+   {
+    "docId": "6ac1bfe78d902f20ed5736c5",
+    "chunkId": "6ac0a04f608eac2b9c9224aa",
+    "type": "DETAIL",
+    "label": null,
+    "content": "## 家用制氧机 本制氧机采用大屏触控面板设计，具有“看的清 好操作”的特点，适合老人使用。 触控面板可显示流量（1 L"
+   },
+   {
+    "docId": "6ac1c7b18d902f20ed573fae",
+    "chunkId": "6ac0a04f608eac2b9c9224a2",
+    "type": "DETAIL",
+    "label": null,
+    "content": "## 功能效果 本制氧机使用后可使血氧浓度恢复正常，正常血氧浓度范围为94%-100%。 吸氧前血氧浓度低于94%为不正"
+   },
+   {
+    "docId": "6ac1c7b1ea5b2c73dbfbfe5a",
+    "chunkId": "6ac0b51de1041c390582e5a4",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：老人每天吸氧多长时间？一天吸几次？ A：每次吸多久、每天吸几次，应按医生为个人制定的用氧方案执行，不能统一建议“早中"
+   },
+   {
+    "docId": "6ac1c7cfc9f2a900b99a9a2a",
+    "chunkId": "6ac0a04f608eac2b9c9224b4",
+    "type": "DETAIL",
+    "label": null,
+    "content": "## 车载便携款 该制氧机可用于出行车载场景，随时吸氧，重量为4.8KG，使用时无约束（便携）。 使用车载时需搭配车载逆"
+   },
+   {
+    "docId": "6ac1c7fcddc9db45db5aaeea",
+    "chunkId": "6ac0a04f608eac2b9c92248a",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【微压富氧睡眠舱款】 - 用于睡眠时富氧的微压富氧舱体设备。"
+   },
+   {
+    "docId": "6ac1e674ddc9db45db5acf7e",
+    "chunkId": "6ac0a04f608eac2b9c9224ae",
+    "type": "DETAIL",
+    "label": null,
+    "content": "## 贴心设计 舒适体验 睡眠模式：让睡眠更惬意。 定时功能：让吸氧时间更有规划，控制面板显示480，且带有L/min、"
+   },
+   {
+    "docId": "6ac20bd2c9f2a900b99ae57d",
+    "chunkId": "6ac1b8cee1041c390582f2b7",
+    "type": "SHOP",
+    "label": null,
+    "content": "亲，一般3岁以下或不能清楚表达感受的儿童，建议前往医院，由医生评估并在院内进行吸氧或雾化；3岁以上且能清楚表达的儿童，请"
+   },
+   {
+    "docId": "6ac20c6d9c0cc61b38ecd4fd",
+    "chunkId": "6ac0a04f608eac2b9c9224cd",
+    "type": "DETAIL",
+    "label": null,
+    "content": "## 商品消费提示 本品为保健型制氧机，非医疗类用品，不可用于任何疾病治疗，仅可用于家庭保健；若需要疾病辅助治疗，请选择"
+   },
+   {
+    "docId": "6ac318ab8d902f20ed582912",
+    "chunkId": "6ac0a04f608eac2b9c922491",
+    "type": "DETAIL",
+    "label": null,
+    "content": "## 操作特点 老人轻松操作，一键启动，5步搞定。"
+   },
+   {
+    "docId": "6ac4d0b0ddc9db45db5ce580",
+    "chunkId": "6ac0a04f608eac2b9c9224d3",
+    "type": "DETAIL",
+    "label": null,
+    "content": "适用人群： 成人"
+   }
+  ],
+  "content": "是否需要吸氧、选择几升以及每天吸多久，应由医生根据老人具体情况评估制定，不能仅凭疾病名称或年龄来推荐\n本品为保健型制氧机，非医疗类用品，不可用于任何疾病治疗，仅可用于家庭保健；若需要疾病辅助治疗，建议选择医用型制氧机\n建议先咨询医生评估后再决定"
+ },
+ {
+  "name": "京东德达#87",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": 0,
+  "logIsCredible": 1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6ac1a4fec9f2a900b99a753d",
+    "chunkId": "6ac0b51de1041c390582e5a5",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：可以24小时连续使用吗？ A：连续运行时长应以具体型号说明书和机身警示为准，不能统一承诺24小时不停机；若机身标签写"
+   },
+   {
+    "docId": "6ac1b607ddc9db45db5a9a43",
+    "chunkId": "6ac0b51de1041c390582e5a6",
+    "type": "SHOP",
+    "label": null,
+    "content": "机器使用中出现异常或需要长时间连续使用时，请先联系我们核实，不要带故障长时间运行。"
+   },
+   {
+    "docId": "6ac1ac14ddc9db45db5a9010",
+    "chunkId": "6ac0b5bde1041c390582e5dd",
+    "type": "SHOP",
+    "label": null,
+    "content": "是否需要吸氧、选几升、每天吸多久应由医生评估和制定，不能仅凭疾病名称、年龄或单次血氧读数推荐；如当前用氧效果不佳或出现不"
+   },
+   {
+    "docId": "6ac1af798d902f20ed57246b",
+    "chunkId": "6ac0b5b6e4bec54754831471",
+    "type": "SHOP",
+    "label": null,
+    "content": "首次使用请按说明书的开机步骤操作，并核对型号与配件清单；如配件缺失或连接不上，请拍照联系我们，不要自行拆机。"
+   },
+   {
+    "docId": "6ac1bfe6ea5b2c73dbfbf4ea",
+    "chunkId": "6ac10804e4bec54754831c6b",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【商品使用规范】 1. 氧气机禁止倒置或横卧。 2. 使用时避免吸氧管折弯，否则水箱会溢水。 3. 氧气是助燃气体，使用"
+   },
+   {
+    "docId": "6ac1c7fcea5b2c73dbfbfeb6",
+    "chunkId": "6ac0b5cbe1041c390582e5e1",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：每次开机都要重新调流量吗？ A：部分机型开机后回到初始档位，部分医用机型有记忆功能会保留上次设置；以该型号说明书为准"
+   },
+   {
+    "docId": "6ac1d2adddc9db45db5abac4",
+    "chunkId": "6ac0a04f608eac2b9c9224be",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【产品顶面（控制面板）】 - 控制面板为黑色设计，集成以下显示及功能：   - 氧流量显示（单位：L/min）；   -"
+   }
+  ],
+  "content": "能否24小时连续开机，需要以您这台机器的说明书和机身警示为准，不能统一承诺24小时不停机\n若机身标签写明不建议24小时运行，请遵照执行\n机器使用中出现异常或需要长时间连续使用时，建议先联系我们核实，不要带故障长时间运行；如果是需要持续用氧的情况，建议提前与医生安排适合连续供氧及备用的方案"
+ },
+ {
+  "name": "京东德达#114",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": 0,
+  "logIsCredible": 1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6ac1ac14ddc9db45db5a9010",
+    "chunkId": "6ac0b5bde1041c390582e5dd",
+    "type": "SHOP",
+    "label": null,
+    "content": "是否需要吸氧、选几升、每天吸多久应由医生评估和制定，不能仅凭疾病名称、年龄或单次血氧读数推荐；如当前用氧效果不佳或出现不"
+   },
+   {
+    "docId": "6ac1a4ebddc9db45db5a8968",
+    "chunkId": "6ac0b516e4bec54754831452",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：吸氧和雾化可以同时使用吗？ A：能否同时开启须按具体型号说明书确认；正在按医嘱持续吸氧的人，不要为做雾化自行中断供氧"
+   },
+   {
+    "docId": "6ac1a4fec9f2a900b99a753e",
+    "chunkId": "6ac0b5a8e1041c390582e5d7",
+    "type": "SHOP",
+    "label": null,
+    "content": "如有烫伤风险、焦糊味、冒烟或持续报警，请在安全前提下停用断电并联系我们处理售后；依赖持续供氧者请使用医生预先安排的备用方"
+   },
+   {
+    "docId": "6ac1a821ea5b2c73dbfbdaa4",
+    "chunkId": "6ac0b500e4bec5475483144a",
+    "type": "SHOP",
+    "label": null,
+    "content": "请保持进出风口畅通，按该型号说明书检查用户可操作的外部连接；不要拆机、不要取下过滤器运行、不要反复把档位调到最大试机。若"
+   },
+   {
+    "docId": "6ac1b906ddc9db45db5a9d89",
+    "chunkId": "6ac0a04f608eac2b9c92247d",
+    "type": "DETAIL",
+    "label": null,
+    "content": "## 商品相关信息  - 好评数据：超十万人购买，99%好评，100000+用户选择 - 核心功能特点：操作简单、氧浓度"
+   },
+   {
+    "docId": "6ac1d3298d902f20ed574c17",
+    "chunkId": "6ac0a04f608eac2b9c9224db",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【功能特性】 - 自动湿化免加水，插电即用无耗材"
+   }
+  ],
+  "content": "本品为保健型制氧机，非医疗类用品，不可用于任何疾病治疗，仅可用于家庭保健；它不具备呼吸机的作用\n若需要疾病辅助治疗，请选择医用型制氧机\n是否需要吸氧、选几升、每天吸多久应由医生评估和制定，不能仅凭疾病名称、年龄或单次血氧读数推荐；如出现严重气促、胸痛、意识异常等情况请立即拨打120，不要等待换机或调档测试"
+ },
+ {
+  "name": "京东德达#156",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": 0,
+  "logIsCredible": 1,
+  "agentName": null,
+  "snapShots": [],
+  "content": "在的呢，请问有什么可以帮到您的呢？😊"
+ },
+ {
+  "name": "京东德达#161",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": 0,
+  "logIsCredible": 1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6ac1a4b8c9f2a900b99a750d",
+    "chunkId": "6ac0b5b6e4bec54754831470",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：制氧机怎么安装？买回家还需要自己组装吗？ A：制氧机收到后是组装好的，无需自己安装：装上湿化瓶（按说明书加水不超过水"
+   },
+   {
+    "docId": "6ac1ac129c0cc61b38ec695a",
+    "chunkId": "6ac0b5c4e4bec54754831475",
+    "type": "SHOP",
+    "label": null,
+    "content": "不建议把正在使用的鼻吸管插入水中来判断机器是否正常：冒泡不能证明氧浓度达标，还可能污染管路。请提供型号、设置和异常表现（"
+   },
+   {
+    "docId": "6ac1b623c9f2a900b99a853d",
+    "chunkId": "6ac0b508e1041c390582e599",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：机器运行、屏幕显示都正常，但不出气/吸氧管没气/氧浓度显示偏低（如55%），怎么排查？ A：先做用户可操作的外部检查"
+   },
+   {
+    "docId": "6ac1b6259c0cc61b38ec73d0",
+    "chunkId": "6ac0b500e4bec54754831448",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：屏幕出现感叹号、报警提示音或故障代码（如E1、E3等），怎么办？ A：制氧机的报警提示用于提醒异常；不同型号的代码含"
+   }
+  ],
+  "content": "亲亲，不建议把正在使用的鼻吸管插入水中或用点燃火苗来判断机器是否正常哦：火星不燃不能证明氧浓度达标，还可能污染管路\n请您提供机器的完整型号、当前档位设置以及异常表现（照片或短视频），若怀疑浓度问题，需按该型号要求使用适用的测氧仪检测；仍有疑问请联系我们核实检测安排~"
+ },
+ {
+  "name": "京东德达#162",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": 0,
+  "logIsCredible": 1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6ac1a4b8c9f2a900b99a750d",
+    "chunkId": "6ac0b5b6e4bec54754831470",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：制氧机怎么安装？买回家还需要自己组装吗？ A：制氧机收到后是组装好的，无需自己安装：装上湿化瓶（按说明书加水不超过水"
+   },
+   {
+    "docId": "6ac1ac129c0cc61b38ec695a",
+    "chunkId": "6ac0b5c4e4bec54754831475",
+    "type": "SHOP",
+    "label": null,
+    "content": "不建议把正在使用的鼻吸管插入水中来判断机器是否正常：冒泡不能证明氧浓度达标，还可能污染管路。请提供型号、设置和异常表现（"
+   },
+   {
+    "docId": "6ac1b623c9f2a900b99a853d",
+    "chunkId": "6ac0b508e1041c390582e599",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：机器运行、屏幕显示都正常，但不出气/吸氧管没气/氧浓度显示偏低（如55%），怎么排查？ A：先做用户可操作的外部检查"
+   },
+   {
+    "docId": "6ac1b6259c0cc61b38ec73d0",
+    "chunkId": "6ac0b500e4bec54754831448",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：屏幕出现感叹号、报警提示音或故障代码（如E1、E3等），怎么办？ A：制氧机的报警提示用于提醒异常；不同型号的代码含"
+   }
+  ],
+  "content": "亲亲，除了您已经发的图片和视频，麻烦再补充以下信息，方便我们帮您进一步排查：①机器的完整型号；②当前档位设置；③屏幕显示内容或报警代码（可拍照）；④报警出现的经过（开机就报、使用中出现，还是断电后出现）；⑤异常表现的照片或短视频\n另外也可以再检查一下：进出风口是否被遮挡\n如果怀疑氧浓度问题，需要按该型号要求使用适用的测氧仪检测，仍有疑问请联系我们核实检测安排"
+ },
+ {
+  "name": "京东德达#163",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": 0,
+  "logIsCredible": 1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6ac1a4ebddc9db45db5a8969",
+    "chunkId": "6ac0b5cbe1041c390582e5e2",
+    "type": "SHOP",
+    "label": null,
+    "content": "不确定操作方向或读数方式时，请提供完整型号和流量计照片，我们帮您核对；正在按医嘱吸氧的人，请按医生规定的流量设置，不要自"
+   },
+   {
+    "docId": "6ac1af798d902f20ed57246b",
+    "chunkId": "6ac0b5b6e4bec54754831471",
+    "type": "SHOP",
+    "label": null,
+    "content": "首次使用请按说明书的开机步骤操作，并核对型号与配件清单；如配件缺失或连接不上，请拍照联系我们，不要自行拆机。"
+   },
+   {
+    "docId": "6ac1af7bc9f2a900b99a7eb4",
+    "chunkId": "6ac0b5a1e4bec5475483146d",
+    "type": "SHOP",
+    "label": null,
+    "content": "如果关机后长时间不停、伴随报警或异响，请提供完整型号和短视频，我们核实后再判断是否需要检测/售后。请保持机器通风、进出风"
+   },
+   {
+    "docId": "6ac1b607ddc9db45db5a9a43",
+    "chunkId": "6ac0b51de1041c390582e5a6",
+    "type": "SHOP",
+    "label": null,
+    "content": "机器使用中出现异常或需要长时间连续使用时，请先联系我们核实，不要带故障长时间运行。"
+   },
+   {
+    "docId": "6ac1b623c9f2a900b99a853d",
+    "chunkId": "6ac0b508e1041c390582e599",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：机器运行、屏幕显示都正常，但不出气/吸氧管没气/氧浓度显示偏低（如55%），怎么排查？ A：先做用户可操作的外部检查"
+   },
+   {
+    "docId": "6ac1c5a3ea5b2c73dbfbfbf3",
+    "chunkId": "6ac0b5afe1041c390582e5da",
+    "type": "SHOP",
+    "label": null,
+    "content": "请把机器放在平稳、通风的平面，保持进出风口畅通，不要用泡沫或布覆盖消音；若是新出现的异常噪音、持续震动或伴随报警，请提供"
+   },
+   {
+    "docId": "6ac1fb978d902f20ed5776d8",
+    "chunkId": "6ac0b500e4bec54754831449",
+    "type": "SHOP",
+    "label": null,
+    "content": "常见的一种是断电报警：屏幕显示红点并伴随长鸣或“嘟嘟”提示音，通常是机器断电或关机顺序不正确。可先检查：①电源线是否插紧"
+   }
+  ],
+  "content": "亲亲，正在按医嘱吸氧的人请按医生规定的流量设置，不要自行加减\n为避免带故障长时间运行，请您提供机器的完整型号和异常短视频，我们核实后再判断是否需要检测/售后\n同时请保持机器放在平稳、通风的平面，进出风口畅通，不要用布或泡沫覆盖机器"
+ },
+ {
+  "name": "京东德达#164",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": 0,
+  "logIsCredible": 1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6ac1a4b8c9f2a900b99a750e",
+    "chunkId": "6ac0b508e1041c390582e59b",
+    "type": "SHOP",
+    "label": null,
+    "content": "请不要拆机、不要取下过滤器运行、不要反复把档位调到最大试机；怀疑浓度问题时需按该型号要求使用适用的测氧仪检测。依赖持续供"
+   },
+   {
+    "docId": "6ac1ac129c0cc61b38ec695a",
+    "chunkId": "6ac0b5c4e4bec54754831475",
+    "type": "SHOP",
+    "label": null,
+    "content": "不建议把正在使用的鼻吸管插入水中来判断机器是否正常：冒泡不能证明氧浓度达标，还可能污染管路。请提供型号、设置和异常表现（"
+   },
+   {
+    "docId": "6ac1af798d902f20ed57246b",
+    "chunkId": "6ac0b5b6e4bec54754831471",
+    "type": "SHOP",
+    "label": null,
+    "content": "首次使用请按说明书的开机步骤操作，并核对型号与配件清单；如配件缺失或连接不上，请拍照联系我们，不要自行拆机。"
+   },
+   {
+    "docId": "6ac1af798d902f20ed57246c",
+    "chunkId": "6ac0b5bde1041c390582e5dc",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：不知道该买什么型号，怎么选？ A：请先说明：①居家使用还是外出携带；②医生要求的供氧方式、流量和使用时长（有医嘱或血"
+   },
+   {
+    "docId": "6ac1af7bc9f2a900b99a7eb4",
+    "chunkId": "6ac0b5a1e4bec5475483146d",
+    "type": "SHOP",
+    "label": null,
+    "content": "如果关机后长时间不停、伴随报警或异响，请提供完整型号和短视频，我们核实后再判断是否需要检测/售后。请保持机器通风、进出风"
+   },
+   {
+    "docId": "6ac1b607ddc9db45db5a9a43",
+    "chunkId": "6ac0b51de1041c390582e5a6",
+    "type": "SHOP",
+    "label": null,
+    "content": "机器使用中出现异常或需要长时间连续使用时，请先联系我们核实，不要带故障长时间运行。"
+   },
+   {
+    "docId": "6ac1b623c9f2a900b99a853d",
+    "chunkId": "6ac0b508e1041c390582e599",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：机器运行、屏幕显示都正常，但不出气/吸氧管没气/氧浓度显示偏低（如55%），怎么排查？ A：先做用户可操作的外部检查"
+   },
+   {
+    "docId": "6ac1c309ea5b2c73dbfbf897",
+    "chunkId": "6ac0b508e1041c390582e59a",
+    "type": "SHOP",
+    "label": null,
+    "content": "若检查后仍不出气或浓度偏低：请提供完整型号、屏幕显示或报警代码、故障出现经过，可补充机器外观、接口、湿化瓶和吸氧管连接的"
+   },
+   {
+    "docId": "6ac1c7b1ea5b2c73dbfbfe5a",
+    "chunkId": "6ac0b51de1041c390582e5a4",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：老人每天吸氧多长时间？一天吸几次？ A：每次吸多久、每天吸几次，应按医生为个人制定的用氧方案执行，不能统一建议“早中"
+   },
+   {
+    "docId": "6ac1fb978d902f20ed5776d8",
+    "chunkId": "6ac0b500e4bec54754831449",
+    "type": "SHOP",
+    "label": null,
+    "content": "常见的一种是断电报警：屏幕显示红点并伴随长鸣或“嘟嘟”提示音，通常是机器断电或关机顺序不正确。可先检查：①电源线是否插紧"
+   }
+  ],
+  "content": "亲亲，麻烦您再拍一下机器的完整型号标签、当前档位设置、屏幕显示内容或报警代码，以及报警出现的具体经过，方便我们进一步核实处理~"
+ },
+ {
+  "name": "京东德达#180",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": 0,
+  "logIsCredible": 1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6ac1b6deddc9db45db5a9b21",
+    "chunkId": "6ac0b50fe4bec5475483144e",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：多久更换一次？能不能清洗？ A：检查和更换周期应按具体型号说明书及使用环境执行（不同型号、不同环境差异较大，没有统一"
+   },
+   {
+    "docId": "6ac1c5789c0cc61b38ec85f2",
+    "chunkId": "6ac0baade4bec5475483156e",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:维修范围？（要求换新也可以用这个话术） A:维修更换了哪些部件，应以实际检测和维修记录为准，不能预先承诺全部换新。请"
+   },
+   {
+    "docId": "6ac20c0eddc9db45db5af9eb",
+    "chunkId": "6ac0babee1041c390582e6f1",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:（售前专用）为什么没有上门服务、网点、寄回厂家、全国联保、返厂 A:本店不提供上门维修。您可提供型号、订单号及故障现"
+   },
+   {
+    "docId": "6ac4b1b6ea5b2c73dbfe1c4e",
+    "chunkId": "6ac38598e4bec54754834d35",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:下单送什么赠品？ A:下单即送吸氧管、过滤器+过滤棉；雾化款加送雾化套装；吸氧面罩每天前100名下单用户赠；部分型号"
+   }
+  ],
+  "content": ""
+ },
+ {
+  "name": "京东德达#185",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": 0,
+  "logIsCredible": 1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6ac1ac14ddc9db45db5a900f",
+    "chunkId": "6ac0b5a1e4bec5475483146c",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：制氧机关机后内部还有声音、风扇还在转，正常吗？ A：关机后风扇继续转动几分钟，是制氧机的正常设计：用于排出机器内部残"
+   },
+   {
+    "docId": "6ac1af7bc9f2a900b99a7eb4",
+    "chunkId": "6ac0b5a1e4bec5475483146d",
+    "type": "SHOP",
+    "label": null,
+    "content": "如果关机后长时间不停、伴随报警或异响，请提供完整型号和短视频，我们核实后再判断是否需要检测/售后。请保持机器通风、进出风"
+   },
+   {
+    "docId": "6ac1b607ddc9db45db5a9a42",
+    "chunkId": "6ac0b5a8e1041c390582e5d6",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：机器用一两个小时后发热、散热口发烫，正常吗？ A：运行中的散热部位发热属于正常现象，但不能仅凭手摸或一个通用温度值判"
+   },
+   {
+    "docId": "6ac1b611ddc9db45db5a9a49",
+    "chunkId": "6ac0b5afe1041c390582e5d9",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：机器声音大、有震动或“噗呲”声，正常吗？ A：请说明声音出现的时机（开机就有、使用中突然变大）、是否有报警，并提供完"
+   },
+   {
+    "docId": "6ac1c309ea5b2c73dbfbf897",
+    "chunkId": "6ac0b508e1041c390582e59a",
+    "type": "SHOP",
+    "label": null,
+    "content": "若检查后仍不出气或浓度偏低：请提供完整型号、屏幕显示或报警代码、故障出现经过，可补充机器外观、接口、湿化瓶和吸氧管连接的"
+   }
+  ],
+  "content": "机器运行中散热部位发热属于正常现象，请您保持机器通风、不要覆盖机器即可\n连续运行时长以该型号说明书为准，不能仅凭手摸或用通用温度值判断是否正常\n如果伴随报警或异响，可以提供完整型号和短视频，我们核实后再判断是否需要检测/售后"
+ },
+ {
+  "name": "京东德达#194",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": 0,
+  "logIsCredible": 1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6ac1a4ebddc9db45db5a8966",
+    "chunkId": "6ac0b516e4bec54754831453",
+    "type": "SHOP",
+    "label": null,
+    "content": "如雾化量小、不出雾、断断续续，或对雾化浓度有疑问，请提供完整型号、雾化配件连接照片和操作视频，我们核实后协助处理；药液使"
+   },
+   {
+    "docId": "6ac1a4ebddc9db45db5a8967",
+    "chunkId": "6ac0b516e4bec54754831451",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：雾化口出来的是氧气还是空气？做雾化对吸氧浓度有影响吗？ A：不能把雾化口直接当作吸氧口。压缩空气式雾化通常由空气驱动"
+   },
+   {
+    "docId": "6ac1a4ebddc9db45db5a8968",
+    "chunkId": "6ac0b516e4bec54754831452",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：吸氧和雾化可以同时使用吗？ A：能否同时开启须按具体型号说明书确认；正在按医嘱持续吸氧的人，不要为做雾化自行中断供氧"
+   },
+   {
+    "docId": "6ac1c7fcddc9db45db5aaeeb",
+    "chunkId": "6ac0a04f608eac2b9c9224bb",
+    "type": "DETAIL",
+    "label": null,
+    "content": "## 配件齐全 插电即用 ### 基础配件 - 产品主机 - 吸氧管 - 电源线 - 说明书  ### 雾化款附加配件 "
+   },
+   {
+    "docId": "6ac1d234ddc9db45db5aba46",
+    "chunkId": "6ac0a066608eac2b9c922580",
+    "type": "DETAIL",
+    "label": null,
+    "content": "| 规格名称 | 选购热点 | 制氧流量 | 氧浓度 | 核心配置 | 价格优惠 | 备案型号 | | ---- | -"
+   },
+   {
+    "docId": "6ac1d234ddc9db45db5aba48",
+    "chunkId": "6ac0a04f608eac2b9c9224b7",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【DH22-C1L雾化款】 - 氧气流量：1L-9L可调 - 氧气浓度：96%（1L/min氧气浓度） - 运行噪音：≈"
+   },
+   {
+    "docId": "6ac1fe019c0cc61b38ecc429",
+    "chunkId": "6ac0a04f608eac2b9c9224c0",
+    "type": "DETAIL",
+    "label": null,
+    "content": "产品背面设计有贴心手提，便于携带。   底部设有电源插孔，用于供电。   配备电源开关，可控制设备启停。   设有雾化口"
+   },
+   {
+    "docId": "6ac1ff559c0cc61b38ecc59e",
+    "chunkId": "6ac0a04f608eac2b9c9224a8",
+    "type": "DETAIL",
+    "label": null,
+    "content": "## 制氧雾化一体机 具备微米级雾化功能，搭载高性能压缩机，雾化颗粒更细腻，吸收更快。 支持氧疗与雾化两种使用场景，其中"
+   },
+   {
+    "docId": "6ac20bd2c9f2a900b99ae57d",
+    "chunkId": "6ac1b8cee1041c390582f2b7",
+    "type": "SHOP",
+    "label": null,
+    "content": "亲，一般3岁以下或不能清楚表达感受的儿童，建议前往医院，由医生评估并在院内进行吸氧或雾化；3岁以上且能清楚表达的儿童，请"
+   }
+  ],
+  "content": "您这款制氧+雾化一体机，雾化时的驱动气源和切换方式需以该型号说明书及实物标识为准，不能把雾化口直接当作吸氧口\n方便告知我您机身雾化口处的标识吗？我帮您核实确认"
+ },
+ {
+  "name": "PDD德达#11",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": 0,
+  "logIsCredible": 1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6ac5b76dddc9db45db5d5f8d",
+    "chunkId": "6ac4cc56e4bec54754836ddf",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:1A卖点 A:亲亲～这款德达1A制氧机是我们店里的经典爆款之一哈～🔥 ✅ 1档氧浓度高达96%，呼吸更安心 ✅ 可多"
+   },
+   {
+    "docId": "6a9a6fd450610c30c701d3d3",
+    "chunkId": "6a9a66e4644e354d71a40bf1",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:可以把制氧机的氧气释放到房间里提高氧气浓度吗？ A:亲亲～制氧机的氧气【不建议直接释放在房间里使用】哦～   因为空"
+   },
+   {
+    "docId": "6a9ac7f91616e629c0dd80fc",
+    "chunkId": "6a9a67e5644e354d71a40f37",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:买的时候送几个过滤器？ A:亲，随机器本身带有1套，备用配件包里还额外赠送1套备用的，一共是2套哦，方便您后续应急更"
+   },
+   {
+    "docId": "6a9bc34c24e82449e1b33d14",
+    "chunkId": "6a9bbffd4a45121da4d81377",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:太干，出气太大，太冲鼻子了【使用吸氧面罩】 A:气流冲鼻或干燥不适时，请先确认机器型号、当前档位和所用接口。不要自行"
+   },
+   {
+    "docId": "6a9bcf4150610c30c702e1fb",
+    "chunkId": "6a9a66bb644e354d71a40b70",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:Q5A卖点 A:Q5A是新升级款，搭载了全新涡轮风扇，散热效率更高，更适合长时间用氧，噪音也比Q5L更低一点，使用体"
+   },
+   {
+    "docId": "6aa013af494adc77ef8826a2",
+    "chunkId": "6a9bc0054a45121da4d813d4",
+    "type": "CHAT",
+    "label": null,
+    "content": "Q:这款制氧机能一次吸氧1小时吗？ A:单次能否吸1小时应按照医生为您制定的用氧方案，不能以血氧达到95%就自行停氧，也"
+   },
+   {
+    "docId": "6abc887a8d902f20ed533220",
+    "chunkId": "6ab9fd074b138719508c5276",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【赠品信息】 - 血氧脉搏仪：指定规格，收货后晒图送，款式随机 - 吸氧管：下单即送 - 雾化套装：雾化版送雾化配件 -"
+   },
+   {
+    "docId": "6abe30a4ddc9db45db583634",
+    "chunkId": "6abe2b80e4bec5475482e0d3",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:配件怎么买？ A:亲，可以扫下机器上客服进行售后处理哦。"
+   },
+   {
+    "docId": "6abe5315ea5b2c73dbf9a60d",
+    "chunkId": "6abb5e88e4bec54754823fa1",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:雾化口出来的是空气还是氧气？ A:不能把雾化口直接当作吸氧口。压缩空气式雾化通常用空气驱动，但具体设备的驱动气源和操"
+   },
+   {
+    "docId": "6abf40abddc9db45db58ebdf",
+    "chunkId": "6abee915e4bec5475482e65d",
+    "type": "CHAT",
+    "label": null,
+    "content": "Q:制氧机面罩的具体适配要求是什么？   A:在我们家买制氧机，晒单可免费领取一个吸氧面罩，面罩没有单卖；若单买面罩，德"
+   },
+   {
+    "docId": "6ac04ab5c9f2a900b9997d47",
+    "chunkId": "6ac03ba5e4bec54754830655",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【店铺政策与服务保障】 - 官方直营，顺丰包邮，送货上门，送终身吸氧管 - 7天无理由退，不收取任何配件费用 - 保价3"
+   },
+   {
+    "docId": "6ac052ed9c0cc61b38eb74d9",
+    "chunkId": "6abee915e4bec5475482e65f",
+    "type": "CHAT",
+    "label": null,
+    "content": "Q:购买C1L款制氧机时，2米和5米长的吸氧管是否都会随货发送？   A:随机器发的是2米的吸氧管，没有5米的。"
+   },
+   {
+    "docId": "6ac05c0ac9f2a900b9998c24",
+    "chunkId": "6ac04af5608eac2b9c916e3f",
+    "type": "DETAIL",
+    "label": null,
+    "content": "## 院线升级款（无需雾化推荐）和院线雾化款（需要雾化推荐） - **氧气浓度（1L/min）**：96% - **氧气"
+   },
+   {
+    "docId": "6ac066db9c0cc61b38eb8930",
+    "chunkId": "6abfa7c1e4bec54754830244",
+    "type": "DETAIL",
+    "label": null,
+    "content": "## C1L 院线雾化款 氧流量：9L   高氧浓度：96%   采用非进口分子筛   具备自动湿化、智能定时、无线遥控"
+   },
+   {
+    "docId": "6ac1d77bea5b2c73dbfc1026",
+    "chunkId": "6abe50c2608eac2b9c8e7f95",
+    "type": "DETAIL",
+    "label": null,
+    "content": "## C1标准款 - 高氧浓度：90%高氧浓度 - 核心部件：国产分子筛 - 功能特性：自动湿化、智能定时 - 噪音控制"
+   },
+   {
+    "docId": "6ac1ddd0ddc9db45db5ac67d",
+    "chunkId": "6ac1c95ee1041c390582f60b",
+    "type": "SHOP",
+    "label": null,
+    "content": "首次使用请按说明书的开机步骤操作，并核对型号与配件清单；如配件缺失或连接不上，请拍照联系我们，不要自行拆机。"
+   },
+   {
+    "docId": "6ac30f2addc9db45db5b8cbe",
+    "chunkId": "6ac30aa1608eac2b9c95967d",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【功能、结构与售后】 - 8大优势：制氧、雾化、大屏、语音、遥控、定时、免加水、过滤 - 机器设有出氧口 - 全年底价，"
+   }
+  ],
+  "content": "亲亲～咱们机器标配配件里没有吸氧面罩哦，不过下单赠品活动中，前100名下单可以赠送吸氧面罩1个哈～您咨询时可以联系客服登记，具体以核对订单为准哦～"
+ },
+ {
+  "name": "PDD德达#12",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": 0,
+  "logIsCredible": 1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6ac5b76dddc9db45db5d5f8d",
+    "chunkId": "6ac4cc56e4bec54754836ddf",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:1A卖点 A:亲亲～这款德达1A制氧机是我们店里的经典爆款之一哈～🔥 ✅ 1档氧浓度高达96%，呼吸更安心 ✅ 可多"
+   },
+   {
+    "docId": "6ac45434c9f2a900b99c537e",
+    "chunkId": "6ac32cafe4bec54754833fcd",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:有什么礼品？ A:本店赠品活动仅适用于德达医疗本店旗舰店订单，不适用于其他平台或其他店铺。详情页未限定型号时，本店各"
+   },
+   {
+    "docId": "6a9bc34c24e82449e1b33d14",
+    "chunkId": "6a9bbffd4a45121da4d81377",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:太干，出气太大，太冲鼻子了【使用吸氧面罩】 A:气流冲鼻或干燥不适时，请先确认机器型号、当前档位和所用接口。不要自行"
+   },
+   {
+    "docId": "6a9be62950610c30c702fec0",
+    "chunkId": "6a9bc0034a45121da4d813b4",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:日常保健→1升+雾化 A:需要先由医生确定是否需要吸氧、供氧方式、流量和每日时长。请提供医生明确的用氧要求及准备购买"
+   },
+   {
+    "docId": "6a9e49ed494adc77ef8630f4",
+    "chunkId": "6a9bc0054a45121da4d813c6",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:2.款式选择（已知血氧饱和度） A:需要先由医生确定是否需要吸氧、供氧方式、流量和每日时长。请提供医生明确的用氧要求"
+   },
+   {
+    "docId": "6aa013af494adc77ef8826a2",
+    "chunkId": "6a9bc0054a45121da4d813d4",
+    "type": "CHAT",
+    "label": null,
+    "content": "Q:这款制氧机能一次吸氧1小时吗？ A:单次能否吸1小时应按照医生为您制定的用氧方案，不能以血氧达到95%就自行停氧，也"
+   },
+   {
+    "docId": "6abc887a8d902f20ed533220",
+    "chunkId": "6ab9fd074b138719508c5276",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【赠品信息】 - 血氧脉搏仪：指定规格，收货后晒图送，款式随机 - 吸氧管：下单即送 - 雾化套装：雾化版送雾化配件 -"
+   },
+   {
+    "docId": "6abf40abddc9db45db58ebdf",
+    "chunkId": "6abee915e4bec5475482e65d",
+    "type": "CHAT",
+    "label": null,
+    "content": "Q:制氧机面罩的具体适配要求是什么？   A:在我们家买制氧机，晒单可免费领取一个吸氧面罩，面罩没有单卖；若单买面罩，德"
+   },
+   {
+    "docId": "6ac04ab5c9f2a900b9997d47",
+    "chunkId": "6ac03ba5e4bec54754830655",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【店铺政策与服务保障】 - 官方直营，顺丰包邮，送货上门，送终身吸氧管 - 7天无理由退，不收取任何配件费用 - 保价3"
+   },
+   {
+    "docId": "6ac052ed9c0cc61b38eb74d9",
+    "chunkId": "6abee915e4bec5475482e65f",
+    "type": "CHAT",
+    "label": null,
+    "content": "Q:购买C1L款制氧机时，2米和5米长的吸氧管是否都会随货发送？   A:随机器发的是2米的吸氧管，没有5米的。"
+   },
+   {
+    "docId": "6ac05c0ac9f2a900b9998c24",
+    "chunkId": "6ac04af5608eac2b9c916e3f",
+    "type": "DETAIL",
+    "label": null,
+    "content": "## 院线升级款（无需雾化推荐）和院线雾化款（需要雾化推荐） - **氧气浓度（1L/min）**：96% - **氧气"
+   },
+   {
+    "docId": "6ac05c0b9c0cc61b38eb7d57",
+    "chunkId": "6abfbcd4e1041c390582d50b",
+    "type": "DETAIL",
+    "label": null,
+    "content": "## C1院线静音款 氧流量：9L   具备96%高氧浓度、国产分子筛、自动湿化、智能定时功能   运行噪音：36分贝静"
+   },
+   {
+    "docId": "6ac33672ddc9db45db5bb4ee",
+    "chunkId": "6ac32caee4bec54754833fcc",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:2.礼品问题 A:本店赠品活动仅适用于德达医疗本店旗舰店订单，不适用于其他平台或其他店铺。详情页未限定型号时，本店各"
+   },
+   {
+    "docId": "6ac45434c9f2a900b99c537f",
+    "chunkId": "6ac32cb0e4bec54754833fd2",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:想要氧气袋（C1裸机商品除外） A:本店赠品活动仅适用于德达医疗本店旗舰店订单，不适用于其他平台或其他店铺。详情页未"
+   },
+   {
+    "docId": "6ac71a74ddc9db45db5e80e8",
+    "chunkId": "6ac705c2608eac2b9ca06f62",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【赠品信息】 - 送氧气袋（含配件图示）"
+   }
+  ],
+  "content": "亲亲～吸氧面罩是前100名下单赠送的哦，可以给您按前100名赠送吸氧面罩，麻烦您提供订单号，由我们登记安排，实际以核对订单为准哈～"
+ },
+ {
+  "name": "PDD德达#13",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": 0,
+  "logIsCredible": 1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6ac45434c9f2a900b99c537e",
+    "chunkId": "6ac32cafe4bec54754833fcd",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:有什么礼品？ A:本店赠品活动仅适用于德达医疗本店旗舰店订单，不适用于其他平台或其他店铺。详情页未限定型号时，本店各"
+   },
+   {
+    "docId": "6ac5c5d58d902f20ed5a0133",
+    "chunkId": "6ac32cafe4bec54754833fd0",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:晒单赠品是否已登记？ A:本店赠品活动仅适用于德达医疗本店旗舰店订单，不适用于其他平台或其他店铺。详情页未限定型号时"
+   },
+   {
+    "docId": "6a9a70433006624addb89d4b",
+    "chunkId": "6a9a66d14a45121da4d7d9b1",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:3.通用跟进话术 A:看您已经咨询我们很长时间了，也没有下单，您是有哪方面顾虑呢"
+   },
+   {
+    "docId": "6a9b85001616e629c0ddcdf1",
+    "chunkId": "6a9a66ab644e354d71a40b25",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:客户特殊需求 A:亲亲～您下单后记得跟我说一声哈，我这边好及时帮您备注好需求哦～💕"
+   },
+   {
+    "docId": "6a9bed713006624addb9ca03",
+    "chunkId": "6a9be8854a45121da4d820d0",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:价格变化 A:价格、优惠券、补贴、保价和差价申请请以当前订单结算信息及我们核实为准。请提供商品链接或对应订单并联系我"
+   },
+   {
+    "docId": "6a9f90f38e08e73b03ff8b14",
+    "chunkId": "6a9be8924a45121da4d820ee",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:支持多久无理由退货？ A:本店支持7天无理由退货，医疗款拆封不作为直接拒绝退货的理由。请妥善保留机器、配件和包装，并"
+   },
+   {
+    "docId": "6abc887a8d902f20ed533220",
+    "chunkId": "6ab9fd074b138719508c5276",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【赠品信息】 - 血氧脉搏仪：指定规格，收货后晒图送，款式随机 - 吸氧管：下单即送 - 雾化套装：雾化版送雾化配件 -"
+   },
+   {
+    "docId": "6ac05c0b9c0cc61b38eb7d57",
+    "chunkId": "6abfbcd4e1041c390582d50b",
+    "type": "DETAIL",
+    "label": null,
+    "content": "## C1院线静音款 氧流量：9L   具备96%高氧浓度、国产分子筛、自动湿化、智能定时功能   运行噪音：36分贝静"
+   },
+   {
+    "docId": "6ac33672ddc9db45db5bb4ee",
+    "chunkId": "6ac32caee4bec54754833fcc",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:2.礼品问题 A:本店赠品活动仅适用于德达医疗本店旗舰店订单，不适用于其他平台或其他店铺。详情页未限定型号时，本店各"
+   },
+   {
+    "docId": "6ac5b76dddc9db45db5d5f8d",
+    "chunkId": "6ac4cc56e4bec54754836ddf",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:1A卖点 A:亲亲～这款德达1A制氧机是我们店里的经典爆款之一哈～🔥 ✅ 1档氧浓度高达96%，呼吸更安心 ✅ 可多"
+   },
+   {
+    "docId": "6ac71a74ddc9db45db5e80e8",
+    "chunkId": "6ac705c2608eac2b9ca06f62",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【赠品信息】 - 送氧气袋（含配件图示）"
+   },
+   {
+    "docId": "6ac72a749c0cc61b38f079e4",
+    "chunkId": "6ac705c2608eac2b9ca06f60",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【销售方式】 - 官方直营"
+   }
+  ],
+  "content": "亲亲～可以给您按前100名赠送吸氧面罩哦，麻烦提供一下订单号，由我们登记安排，实际以核对订单为准哈～"
+ },
+ {
+  "name": "PDD德达#23",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": 0,
+  "logIsCredible": 1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6ac45434c9f2a900b99c537e",
+    "chunkId": "6ac32cafe4bec54754833fcd",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:有什么礼品？ A:本店赠品活动仅适用于德达医疗本店旗舰店订单，不适用于其他平台或其他店铺。详情页未限定型号时，本店各"
+   },
+   {
+    "docId": "6ac33672ddc9db45db5bb4ee",
+    "chunkId": "6ac32caee4bec54754833fcc",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:2.礼品问题 A:本店赠品活动仅适用于德达医疗本店旗舰店订单，不适用于其他平台或其他店铺。详情页未限定型号时，本店各"
+   },
+   {
+    "docId": "6a9f90a4494adc77ef874a84",
+    "chunkId": "6a9be8844a45121da4d820cd",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:等双11活动话术【价格问题】 A:价格、优惠券、补贴、保价和差价申请请以当前订单结算信息及我们核实为准。请提供商品链"
+   },
+   {
+    "docId": "6aa11117494adc77ef8910e1",
+    "chunkId": "6a9be881644e354d71a4555f",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:1LW卖点 A:亲亲～这款德达1LW是升级款哦，功能更全更实用～✨ ✅ 1档96%高纯氧输出，是否满足用氧需求须按医"
+   },
+   {
+    "docId": "6ac067dcc9f2a900b99998f8",
+    "chunkId": "6abfb68ae1041c390582d494",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【售后与购买信息】 - 售后保障：压缩机5年质保（整机1年质保），顺丰速发   - 销售方式：官方直营   - 赠品：赠"
+   },
+   {
+    "docId": "6ac1da4f8d902f20ed57537e",
+    "chunkId": "6abfc74de4bec5475483041a",
+    "type": "DETAIL",
+    "label": null,
+    "content": "# 德达家用制氧机各规格差异表 | 规格名称 | 氧流量 | 核心部件 | 氧浓度 | 噪音水平 | 制氧稳定性 | 过"
+   },
+   {
+    "docId": "6ac45434c9f2a900b99c537f",
+    "chunkId": "6ac32cb0e4bec54754833fd2",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:想要氧气袋（C1裸机商品除外） A:本店赠品活动仅适用于德达医疗本店旗舰店订单，不适用于其他平台或其他店铺。详情页未"
+   },
+   {
+    "docId": "6ac47800ddc9db45db5c8763",
+    "chunkId": "6abfcb21e4bec54754830489",
+    "type": "DETAIL",
+    "label": null,
+    "content": "## C1标准款 本制氧机氧流量可调，氧流量规格为9L。 采用非进口分子筛，氧浓度可达96%（仅1L/min工况），具备"
+   },
+   {
+    "docId": "6ac5b76dddc9db45db5d5f8d",
+    "chunkId": "6ac4cc56e4bec54754836ddf",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:1A卖点 A:亲亲～这款德达1A制氧机是我们店里的经典爆款之一哈～🔥 ✅ 1档氧浓度高达96%，呼吸更安心 ✅ 可多"
+   },
+   {
+    "docId": "6ac86133c9f2a900b99f8959",
+    "chunkId": "6ac769b378e9ba16e7063f44",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【普通款】 - 42L大容量氧气袋（晒图+10文字以上，找客服登记礼品(可替换)）"
+   }
+  ],
+  "content": "亲亲，本店赠品活动仅适用于德达医疗本店旗舰店订单哦～\n下单赠品：\n- 标配吸氧管1根\n- 过滤器＋过滤棉1份\n- 雾化版本（C1L）赠雾化套装1套（C1不带雾化，不赠雾化套装）\n- 吸氧面罩：前100名下单赠1个，可联系客服登记，具体以订单核对为准\n\n收货晒单赠品：收货后真实晒单，文字10字以上，联系客服登记，以下四选一不叠加：42L氧气袋1个、血氧仪1个、鼻吸管1份、过滤器＋过滤棉1份\n\n付邮领取：每3个月可领取终身吸氧管4根，邮费13元由您承担\n\n亲亲，请问您看中的是哪款型号呢？方便的话提供下订单号，由我们帮您核对对应的赠品安排～"
+ },
+ {
+  "name": "PDD德达#39",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": 0,
+  "logIsCredible": 1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6a9a56d024e82449e1b221b0",
+    "chunkId": "6a9a2c4142edc828b5f35fbe",
+    "type": "CHAT",
+    "label": null,
+    "content": "Q:买家询问该制氧机是吸气时出氧还是持续出氧，以及插电的是否都是持续出氧   A:这款制氧机是插电持续出氧的。"
+   },
+   {
+    "docId": "6a9ab4d83006624addb8eadc",
+    "chunkId": "6a9a66ed644e354d71a40c0e",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:你们说的“医用同款”是不是医院里用的那种机器？ A:亲亲～这里的“医用同款”并不是指医院里正在使用的那台机器哦，而是"
+   },
+   {
+    "docId": "6a9bc20c50610c30c702d102",
+    "chunkId": "6a9bc0034a45121da4d813b3",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:家庭多人轮流日常保健吸氧→2升 A:需要先由医生确定是否需要吸氧、供氧方式、流量和每日时长。请提供医生明确的用氧要求"
+   },
+   {
+    "docId": "6a9bdb09871ded63ee1b3582",
+    "chunkId": "6a9bc0054a45121da4d813d1",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:为什么要买医用3升5升 A:需要先由医生确定是否需要吸氧、供氧方式、流量和每日时长。请提供医生明确的用氧要求及准备购"
+   },
+   {
+    "docId": "6a9be1873006624addb9bc68",
+    "chunkId": "6a9bbff54a45121da4d81310",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:便携制氧机吸氧建议 A:请按医生为您制定的用氧处方设置流量和时长，不要按通用血氧区间自行加减档，也不要以“越高越好”"
+   },
+   {
+    "docId": "6a9bfad81616e629c0de59ef",
+    "chunkId": "6a9bbff5644e354d71a4482f",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:【吸氧时长】如何控制？ A:每次吸多久、每天吸几次应按医生为您制定的用氧方案执行，不能统一建议早中晚各30分钟。没有"
+   },
+   {
+    "docId": "6a9bff7524e82449e1b3847c",
+    "chunkId": "6a9bbfff644e354d71a44884",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:这种制氧机能使用多长时间？ A:机器一次可连续运行多久，应按具体型号说明书和机身警示确认，不能统一承诺24小时。长期"
+   },
+   {
+    "docId": "6a9c07ff3006624addb9e5d9",
+    "chunkId": "6a9be8a6644e354d71a455b1",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:制氧机是否存在每多少天停机休息多久时间会对机器使用寿命更好的说法？ A:连续运行时长应以具体型号说明书和机身警示为准"
+   },
+   {
+    "docId": "6a9e7ed2494adc77ef867242",
+    "chunkId": "6a9e6dc58e658a41f6c6544a",
+    "type": "DETAIL",
+    "label": null,
+    "content": "保健用品产品名称： 德达静音型制氧机【9升氧+可达96%（仅1L/min工况）高氧浓度+非进口分子筛+语音播报+定时功能"
+   },
+   {
+    "docId": "6aa013af494adc77ef8826a2",
+    "chunkId": "6a9bc0054a45121da4d813d4",
+    "type": "CHAT",
+    "label": null,
+    "content": "Q:这款制氧机能一次吸氧1小时吗？ A:单次能否吸1小时应按照医生为您制定的用氧方案，不能以血氧达到95%就自行停氧，也"
+   },
+   {
+    "docId": "6aa11cd8494adc77ef8926e2",
+    "chunkId": "6a9a32665680f7693636d46a",
+    "type": "DETAIL",
+    "label": null,
+    "content": "## 商品核心部件与功能 本制氧机采用纯铜无油双缸压缩机，具备72小时不间断高浓度吸氧功能。  ## 压缩机优势 压缩机"
+   },
+   {
+    "docId": "6abf0859c9f2a900b998906c",
+    "chunkId": "6abe1a9ee1041c390582a9f3",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:Q10L核实 A:您好，为了更好地了解和解决您的问题，我们需要您提供一段视频。请在视频中包含以下内容： 1.请展示机"
+   },
+   {
+    "docId": "6ac04ae69c0cc61b38eb6f19",
+    "chunkId": "6abf23d0e1041c390582c01c",
+    "type": "CHAT",
+    "label": null,
+    "content": "Q:该制氧机是否可以在不插电的情况下使用？   A:不可以的，该制氧机必须插电使用。"
+   },
+   {
+    "docId": "6ac0607e8d902f20ed563902",
+    "chunkId": "6abfcb46e4bec54754830521",
+    "type": "DETAIL",
+    "label": null,
+    "content": "## 核心规格与适用人群 本制氧机具备9L大氧流量，适用更多补氧人群。  适用场景包括： - 日常胸闷气短气喘等 - 睡"
+   }
+  ],
+  "content": "亲亲～机器一次可连续运行多久，需要按具体型号说明书和机身警示来确认，不能统一承诺24小时哦\n麻烦您提供一下具体型号，我们帮您核对～"
+ },
+ {
+  "name": "PDD德达#48",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": 0,
+  "logIsCredible": 1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6ac45434c9f2a900b99c537e",
+    "chunkId": "6ac32cafe4bec54754833fcd",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:有什么礼品？ A:本店赠品活动仅适用于德达医疗本店旗舰店订单，不适用于其他平台或其他店铺。详情页未限定型号时，本店各"
+   },
+   {
+    "docId": "6ac33672ddc9db45db5bb4ee",
+    "chunkId": "6ac32caee4bec54754833fcc",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:2.礼品问题 A:本店赠品活动仅适用于德达医疗本店旗舰店订单，不适用于其他平台或其他店铺。详情页未限定型号时，本店各"
+   },
+   {
+    "docId": "6a9bec3e3006624addb9c8c0",
+    "chunkId": "6a9be887644e354d71a4556d",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:议价→价值观→简洁版3（家用） A:价格、优惠券、补贴、保价和差价申请请以当前订单结算信息及我们核实为准。请提供商品"
+   },
+   {
+    "docId": "6ac05c0b9c0cc61b38eb7d57",
+    "chunkId": "6abfbcd4e1041c390582d50b",
+    "type": "DETAIL",
+    "label": null,
+    "content": "## C1院线静音款 氧流量：9L   具备96%高氧浓度、国产分子筛、自动湿化、智能定时功能   运行噪音：36分贝静"
+   },
+   {
+    "docId": "6ac45434c9f2a900b99c537f",
+    "chunkId": "6ac32cb0e4bec54754833fd2",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:想要氧气袋（C1裸机商品除外） A:本店赠品活动仅适用于德达医疗本店旗舰店订单，不适用于其他平台或其他店铺。详情页未"
+   },
+   {
+    "docId": "6ac5b76dddc9db45db5d5f8d",
+    "chunkId": "6ac4cc56e4bec54754836ddf",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:1A卖点 A:亲亲～这款德达1A制氧机是我们店里的经典爆款之一哈～🔥 ✅ 1档氧浓度高达96%，呼吸更安心 ✅ 可多"
+   },
+   {
+    "docId": "6ac71a74ddc9db45db5e80e8",
+    "chunkId": "6ac705c2608eac2b9ca06f62",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【赠品信息】 - 送氧气袋（含配件图示）"
+   },
+   {
+    "docId": "6ac8682cea5b2c73db00f927",
+    "chunkId": "6ac85e49608eac2b9ca5153a",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【赠品信息】 - 下单即送：吸氧管 - 雾化版送雾化配件（雾化套装） - 下单即送：过滤器+过滤棉 - 终身吸氧管*4，"
+   }
+  ],
+  "content": "亲亲～咱们德达医疗本店旗舰店的赠品活动如下：\n\n下单赠品：\n- 标配吸氧管1根；\n- 过滤器＋过滤棉1份；\n- 雾化版本（C1L）赠雾化套装1套，C1不带雾化，不赠雾化套装；\n- 吸氧面罩：前100名下单赠1个，您可以联系客服登记，未核对订单前无法确认登记或寄出哦～\n\n收货晒单赠品：\n收货后真实晒单，文字10字以上，联系客服登记，以下四选一，不叠加：42L氧气袋1个、血氧仪1个、鼻吸管1份、过滤器＋过滤棉1份\n付邮领取：\n每3个月可领取终身吸氧管4根，邮费13元由买家承担，需提供本店订单，由客服核对领取记录\n亲亲，具体可选赠品麻烦您提供一下型号或订单，我们帮您核对对应活动安排哦～"
+ },
+ {
+  "name": "PDD德达#89",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": -1,
+  "logIsCredible": 1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6ac05c5ec9f2a900b9998c8b",
+    "chunkId": "6abe2706e1041c390582b151",
+    "type": "SHOP",
+    "label": null,
+    "content": "【运费承担原则】 本店运费责任按业务事实和购买时间判断，不因客户尚未提供订单号就拒绝解释政策： 1. 买家原因（无理由退"
+   },
+   {
+    "docId": "6a9be9363006624addb9c55a",
+    "chunkId": "6a9be883644e354d71a45563",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:如何联系人工处理售后问题？ A:这个问题需要我们核实处理。请在当前平台会话联系我们，并说明订单及具体诉求；是否受理请"
+   },
+   {
+    "docId": "6a9bea0b50610c30c7030331",
+    "chunkId": "6a9be882644e354d71a45561",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:2.聊的差不多了议价 A:价格、优惠券、补贴、保价和差价申请请以当前订单结算信息及我们核实为准。请提供商品链接或对应"
+   },
+   {
+    "docId": "6a9beb53871ded63ee1b48dd",
+    "chunkId": "6a9be896644e354d71a4558d",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:什么是三包政策？ A:“三包”通常指包修、包换、包退，具体适用条件应结合商品和订单核实，不能将所有产品统一套用一个法"
+   },
+   {
+    "docId": "6a9f90f38e08e73b03ff8b14",
+    "chunkId": "6a9be8924a45121da4d820ee",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:支持多久无理由退货？ A:本店支持7天无理由退货，医疗款拆封不作为直接拒绝退货的理由。请妥善保留机器、配件和包装，并"
+   },
+   {
+    "docId": "6aa0f8e0494adc77ef88e5de",
+    "chunkId": "6a9a670e644e354d71a40c80",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:支持多久换款？ A:您好～家用制氧机如果收到后觉得不合适，是支持**30天内换款**的哦～✅   只要机器保持完好，"
+   }
+  ],
+  "content": "亲亲，理解您着急处理制氧机售后问题\n关于售后，这个问题需要我们核实处理，请在当前平台会话联系我们，并说明订单及具体诉求，是否受理请以实际确认结果为准\n运费责任按业务事实和购买时间判断：如果是商品本身有问题，购买1年内由本店承担寄回及寄回后的来回运费；购买超过1年，寄回及寄回后的来回运费均由买家承担,本店承担的运费范围限中国大陆；海外及港澳台地区超出部分由买家承担"
+ },
+ {
+  "name": "PDD德达#106",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": 0,
+  "logIsCredible": 1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6a9a87bb24e82449e1b25d95",
+    "chunkId": "6a9a6702644e354d71a40c4c",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:A1制氧机要加水吗？ A:您好亲亲～A1系列制氧机是【免加水设计】的哦！   加水主要是为了湿润空气，但这款机器自带"
+   },
+   {
+    "docId": "6a9b88233006624addb95166",
+    "chunkId": "6a9a6706644e354d71a40c65",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:太干【购买湿化瓶】 A:明白亲亲的担心～ C1系列制氧机自带自动湿化功能，能满足大部分干燥环境，省去了频繁加水的麻烦"
+   },
+   {
+    "docId": "6a9bc21a3006624addb9956a",
+    "chunkId": "6a9bc002644e354d71a448a0",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:Q1跟C1 / A1区别？ A:亲亲～Q1跟C1/A1这几款的区别如下哈：  1. Q1是增强款，配有**独立湿化水"
+   },
+   {
+    "docId": "6a9bec0650610c30c703058c",
+    "chunkId": "6a9be8a14a45121da4d82110",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:冬天吸氧冷怎么办？ A:吸入气流偏凉时，请先核对设备允许的环境温度和当前使用条件，不要自行给氧路加热、加热湿化水或随"
+   },
+   {
+    "docId": "6a9bf86a3006624addb9d539",
+    "chunkId": "6a9bbff84a45121da4d81337",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:档位1出气还大 A:气流冲鼻或干燥不适时，请先确认机器型号、当前档位和所用接口。不要自行降低医嘱流量或随意改装湿化装"
+   },
+   {
+    "docId": "6a9c085c1616e629c0de688d",
+    "chunkId": "6a9c04334a45121da4d827d0",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:C1L卖点 A:您好～C1L制氧机小巧便携，适合日常居家保健吸氧使用哦～   大家反馈最多的就是它【操作简单、使用方"
+   }
+  ],
+  "content": "亲亲，C1系列制氧机是自带自动湿化功能的哦，能满足大部分干燥环境，省去了频繁加水的麻烦～\n\n因为每个人和使用环境不同，如果亲觉得还不够湿润，才建议可以考虑购买高端机型的原装外置湿化瓶作为补充，并不是说C1本身没有湿化功能哈，亲可以放心使用～"
+ },
+ {
+  "name": "PDD德达#110",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": -1,
+  "logIsCredible": 1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6a9a6e3d3006624addb89a98",
+    "chunkId": "6a9a6701644e354d71a40c47",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:C1制氧机需要加水吗？ A:您好亲亲～C1系列制氧机是【免加水设计】的哦！   加水主要是为了湿润空气，但这款机器自"
+   },
+   {
+    "docId": "6a9a774224e82449e1b24987",
+    "chunkId": "6a9a6711644e354d71a40c8c",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:1.一点用都没有，没效果，没有氧气出来。 A:您好，抱歉给您带来不便，方便确认一下，是机器没有出气，还是您感觉出气效"
+   },
+   {
+    "docId": "6a9a87bb1616e629c0dd3801",
+    "chunkId": "6a9a670b4a45121da4d7da61",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:3升5升制氧机喷水？ A:亲亲，您反馈的喷水问题我帮您看一下，通常是因为管子接反啦～  透明的吸氧管要接在湿化瓶下方"
+   },
+   {
+    "docId": "6a9a87bb24e82449e1b25d95",
+    "chunkId": "6a9a6702644e354d71a40c4c",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:A1制氧机要加水吗？ A:您好亲亲～A1系列制氧机是【免加水设计】的哦！   加水主要是为了湿润空气，但这款机器自带"
+   },
+   {
+    "docId": "6a9aa7151616e629c0dd5a5a",
+    "chunkId": "6a9a67ac644e354d71a40e68",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:弥散式制氧机可以加湿吗？ A:亲亲～弥散式制氧机能不能加湿，要看弥散制氧机终端有没有配水箱哦～ 我们目前的 N1 和"
+   },
+   {
+    "docId": "6a9ab8ec24e82449e1b2943e",
+    "chunkId": "6a9a677c4a45121da4d7dbe6",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:制氧机工作环境是怎么样的？温度，湿度，大气压力 A:为了保障制氧机的正常使用和售后权益，请务必在以下规定的工作环境中"
+   },
+   {
+    "docId": "6a9b88233006624addb95166",
+    "chunkId": "6a9a6706644e354d71a40c65",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:太干【购买湿化瓶】 A:明白亲亲的担心～ C1系列制氧机自带自动湿化功能，能满足大部分干燥环境，省去了频繁加水的麻烦"
+   },
+   {
+    "docId": "6a9bc21a3006624addb9956a",
+    "chunkId": "6a9bc002644e354d71a448a0",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:Q1跟C1 / A1区别？ A:亲亲～Q1跟C1/A1这几款的区别如下哈：  1. Q1是增强款，配有**独立湿化水"
+   },
+   {
+    "docId": "6a9ccfe81616e629c0dec12b",
+    "chunkId": "6a9be88b4a45121da4d820de",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:带湿化瓶的制氧机不出气 A:请先提供完整型号、显示或报警代码及故障出现经过，可补充机器外观、接口和使用环境照片。保持"
+   }
+  ],
+  "content": "亲亲非常理解您的心情，让您失望了真的抱歉\n制氧机的湿化效果确实会受环境湿度、使用时长等客观因素影响，导致个体感受有差异，并非机器故障或虚假宣传\n我们非常重视您的体验，如果您觉得目前的使用情况无法接受，支持您申请七天无理由退货，您可以联系在线客服为您办理退款，确保您的权益不受损失"
+ },
+ {
+  "name": "PDD德达#119",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": -2,
+  "logIsCredible": 1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6a9bc1b7871ded63ee1b15ec",
+    "chunkId": "6a9a66e7644e354d71a40bfe",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:评论区有差评。 A:亲亲，理解您看到差评后的担忧～每台机器我们都会严格质检，评论中确实也有主观和客观的内容，这都是正"
+   },
+   {
+    "docId": "6a9bc34c24e82449e1b33d14",
+    "chunkId": "6a9bbffd4a45121da4d81377",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:太干，出气太大，太冲鼻子了【使用吸氧面罩】 A:气流冲鼻或干燥不适时，请先确认机器型号、当前档位和所用接口。不要自行"
+   },
+   {
+    "docId": "6a9bea0b50610c30c7030332",
+    "chunkId": "6a9be881644e354d71a45560",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:名额有限 A:价格、优惠券、补贴、保价和差价申请请以当前订单结算信息及我们核实为准。请提供商品链接或对应订单并联系我"
+   },
+   {
+    "docId": "6a9bea0b50610c30c7030333",
+    "chunkId": "6a9be8864a45121da4d820d2",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:万能反守为攻话术：让对方缓和情绪+拉回销售节奏 A:价格、优惠券、补贴、保价和差价申请请以当前订单结算信息及我们核实"
+   },
+   {
+    "docId": "6a9beb533006624addb9c7d1",
+    "chunkId": "6a9be8824a45121da4d820c9",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:1.一上来就议价 A:价格、优惠券、补贴、保价和差价申请请以当前订单结算信息及我们核实为准。请提供商品链接或对应订单"
+   },
+   {
+    "docId": "6a9beb533006624addb9c7d2",
+    "chunkId": "6a9be8874a45121da4d820d4",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:如果我不适合，退货包运费吗？ A:是否赠送、补发、补偿或提供其他挽留方案，需要我们核对订单与原承诺后确认。请提供相关"
+   },
+   {
+    "docId": "6a9bec0650610c30c703058c",
+    "chunkId": "6a9be8a14a45121da4d82110",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:冬天吸氧冷怎么办？ A:吸入气流偏凉时，请先核对设备允许的环境温度和当前使用条件，不要自行给氧路加热、加热湿化水或随"
+   },
+   {
+    "docId": "6a9bf86a3006624addb9d539",
+    "chunkId": "6a9bbff84a45121da4d81337",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:档位1出气还大 A:气流冲鼻或干燥不适时，请先确认机器型号、当前档位和所用接口。不要自行降低医嘱流量或随意改装湿化装"
+   },
+   {
+    "docId": "6aa0c41e8e08e73b0300c6f2",
+    "chunkId": "6a9a66d5644e354d71a40bbe",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:2.通用跟进话术 A:看您之前也咨询过我们，您目前还有什么需要了解的嘛"
+   },
+   {
+    "docId": "6aa0d996d57f576ccfae2c93",
+    "chunkId": "6a9a66d3644e354d71a40bb4",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:催付话术 A:亲～这款很好的，放心支付。"
+   },
+   {
+    "docId": "6ac1c0d69c0cc61b38ec805a",
+    "chunkId": "6abe1a9ce1041c390582a9eb",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:太干，不方便加水（在车上使用） A:气流冲鼻或干燥不适时，请先确认机器型号、当前档位和所用接口。不要自行降低医嘱流量"
+   }
+  ],
+  "content": "亲亲，非常理解您和家人的困扰，也理解您的心情\n气流冲鼻或干燥不适时，请先确认机器型号、当前档位和所用接口，不要自行降低医嘱流量或随意改装湿化装置；是否改用面罩需核对机型兼容性并咨询医生，脉冲设备尤其不能任意换接口\n若鼻腔不适持续，建议向医生确认合适的接口和湿化安排,亲可以告诉我们您的机器型号，我们帮您核对一下"
+ },
+ {
+  "name": "PDD德达#120",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": -2,
+  "logIsCredible": 1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6a9a9a1d24e82449e1b271e1",
+    "chunkId": "6a9a67634a45121da4d7db89",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:操作简单吗？ A:亲亲放心哈～我们制氧机【是专为老人简化设计的】，操作非常简单，一键开启就能出氧，不需要任何设置，老"
+   },
+   {
+    "docId": "6a9aa3511616e629c0dd5608",
+    "chunkId": "6a9a67754a45121da4d7dbd3",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:Y105模式键 A:Y105模式键是用于开启高原自动档位用的。  按“M”键后开启高原自动档位，档位会自动根据海拔调"
+   },
+   {
+    "docId": "6a9ab4c5871ded63ee1a6b91",
+    "chunkId": "6a9a66e5644e354d71a40bf8",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:制氧机可以自动制氧吗？ A:亲亲～可以的哦～机器插上电，点击「制氧开关」就能「自动制氧」啦～ 制氧无需耗材或其他操作"
+   },
+   {
+    "docId": "6a9be9363006624addb9c55a",
+    "chunkId": "6a9be883644e354d71a45563",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:如何联系人工处理售后问题？ A:这个问题需要我们核实处理。请在当前平台会话联系我们，并说明订单及具体诉求；是否受理请"
+   },
+   {
+    "docId": "6a9bea0b50610c30c7030333",
+    "chunkId": "6a9be8864a45121da4d820d2",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:万能反守为攻话术：让对方缓和情绪+拉回销售节奏 A:价格、优惠券、补贴、保价和差价申请请以当前订单结算信息及我们核实"
+   }
+  ],
+  "content": "亲亲，已为您安排专属客服跟进处理，请稍候。"
+ },
+ {
+  "name": "PDD德达#121",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": -2,
+  "logIsCredible": 1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6a9bc34c24e82449e1b33d14",
+    "chunkId": "6a9bbffd4a45121da4d81377",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:太干，出气太大，太冲鼻子了【使用吸氧面罩】 A:气流冲鼻或干燥不适时，请先确认机器型号、当前档位和所用接口。不要自行"
+   },
+   {
+    "docId": "6a9be92c871ded63ee1b46b9",
+    "chunkId": "6a9bc0034a45121da4d813bc",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:什么情况下需要买制氧机呢？ A:需要先由医生确定是否需要吸氧、供氧方式、流量和每日时长。请提供医生明确的用氧要求及准"
+   },
+   {
+    "docId": "6a9beb53871ded63ee1b48dd",
+    "chunkId": "6a9be896644e354d71a4558d",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:什么是三包政策？ A:“三包”通常指包修、包换、包退，具体适用条件应结合商品和订单核实，不能将所有产品统一套用一个法"
+   },
+   {
+    "docId": "6a9bec0650610c30c703058c",
+    "chunkId": "6a9be8a14a45121da4d82110",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:冬天吸氧冷怎么办？ A:吸入气流偏凉时，请先核对设备允许的环境温度和当前使用条件，不要自行给氧路加热、加热湿化水或随"
+   },
+   {
+    "docId": "6a9c266a24e82449e1b3b2a2",
+    "chunkId": "6a9bbff5644e354d71a4482e",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:10升机吸氧建议 A:请按医生为您制定的用氧处方设置流量和时长，不要按通用血氧区间自行加减档，也不要以“越高越好”或"
+   },
+   {
+    "docId": "6aa00a99494adc77ef88160f",
+    "chunkId": "6a9a67154a45121da4d7da87",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:制氧机售后服务政策（质保） A:亲亲～咱们售后服务政策如下： ✅ 7天：无理由退货。 ✅ 30天内：不合适支持换款、"
+   },
+   {
+    "docId": "6ac04ab5c9f2a900b9997d49",
+    "chunkId": "6abfbce6e4bec547548303c8",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:质保多久？ A:亲亲～咱们售后服务政策如下： ✅ 7天：无理由退货。 ✅ 30天内：不合适支持换款、质量问题包退。 "
+   },
+   {
+    "docId": "6ac0dd87ddc9db45db5a3081",
+    "chunkId": "6ac0baabe1041c390582e6e9",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:家用&医用质保多久？ A:亲亲～咱们售后服务政策如下： ✅ 7天：无理由退货。 ✅ 30天内：不合适支持换款、质量问"
+   }
+  ],
+  "content": "亲亲，非常理解您和家人的困扰~鼻腔不适持续的话，建议先向医生确认合适的接口和湿化安排\n亲可以告诉我们您的机器型号、当前档位和所用接口，我们帮您核对一下兼容性；请您不要自行降低医嘱流量或随意改装湿化装置，脉冲设备尤其不能任意换接口哦~"
+ },
+ {
+  "name": "PDD德达#132",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": -2,
+  "logIsCredible": 1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6a9b88233006624addb95166",
+    "chunkId": "6a9a6706644e354d71a40c65",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:太干【购买湿化瓶】 A:明白亲亲的担心～ C1系列制氧机自带自动湿化功能，能满足大部分干燥环境，省去了频繁加水的麻烦"
+   },
+   {
+    "docId": "6a9bc21a3006624addb9956a",
+    "chunkId": "6a9bc002644e354d71a448a0",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:Q1跟C1 / A1区别？ A:亲亲～Q1跟C1/A1这几款的区别如下哈：  1. Q1是增强款，配有**独立湿化水"
+   },
+   {
+    "docId": "6a9bc34c24e82449e1b33d14",
+    "chunkId": "6a9bbffd4a45121da4d81377",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:太干，出气太大，太冲鼻子了【使用吸氧面罩】 A:气流冲鼻或干燥不适时，请先确认机器型号、当前档位和所用接口。不要自行"
+   },
+   {
+    "docId": "6a9c10c224e82449e1b397ec",
+    "chunkId": "6a9be8ac644e354d71a455bd",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:MY-5C设置如何操作？ A:请提供机器铭牌上的完整型号，以及想操作的功能或遇到的问题，再由我们匹配该版本说明书或教"
+   },
+   {
+    "docId": "6a9ea028fd3740207bc7d89f",
+    "chunkId": "6a9a6805644e354d71a40fd0",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:1.湿化瓶排查 A:亲亲，辛苦您按照如图所示检查一下湿化瓶这2个地方，一般90%的客户都是通过这个方法解决该问题的："
+   },
+   {
+    "docId": "6aa0c41e8e08e73b0300c6f1",
+    "chunkId": "6a9be8ab644e354d71a455bb",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:提醒看话术 A:如果前面的说明未解决您的问题，请指出仍不清楚的地方或描述当前情况，方便我们针对性核实，不需要重复提供"
+   }
+  ],
+  "content": "亲亲，刚才帮您提交了申请，具体结果需要等审核反馈，有消息我会第一时间通知您。"
+ },
+ {
+  "name": "PDD-DEDAKJ#100",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": 0,
+  "logIsCredible": 1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6abb85f7ea5b2c73dbf73354",
+    "chunkId": "6abb3b00e4bec5475482324f",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:欢迎语 A:亲亲～⭐欢迎光临⭐🎉   我们专注于高品质制氧机，为您的健康呼吸保驾护航～   有任何问题随时戳我咨询哈"
+   },
+   {
+    "docId": "6abb85f7ea5b2c73dbf73355",
+    "chunkId": "6abb3b00e4bec5475482324d",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:2.通用跟进话术 A:看您之前也咨询过我们，您目前还有什么需要了解的嘛"
+   },
+   {
+    "docId": "6abb9abaddc9db45db560b42",
+    "chunkId": "6abb71abe4bec54754824a46",
+    "type": "SHOP",
+    "label": null,
+    "content": "三包：配件、赠品仅限三包服务——自签收日起 7 天内有质量问题包修包退包换；15 天内可维修或换货处理；【赠品、配件不予"
+   },
+   {
+    "docId": "6abb9ad9ea5b2c73dbf74d93",
+    "chunkId": "6abb71abe4bec54754824a44",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:现在有什么活动？ A:活动主题「喜迎国庆佳节 下单送豪礼」，活动时间 9月24号—10月7号；期间晒图活动赠送血氧仪"
+   },
+   {
+    "docId": "6abb9ad9ea5b2c73dbf74d94",
+    "chunkId": "6abb71abe4bec54754824a43",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:下单送什么赠品？ A:官方直营，多重豪礼下单就送：①价值99元氧气袋(42L)*1——【每天下单前50名】可送，需联"
+   },
+   {
+    "docId": "6abe23028d902f20ed54b205",
+    "chunkId": "6abb4404908ac50ae9029982",
+    "type": "DETAIL",
+    "label": null,
+    "content": "## 商品销售及促销信息 - 下单前请先咨询专业客服，以避免误拍、买错。 - 收藏商品送终身吸氧管*4，福利随时结束，先"
+   },
+   {
+    "docId": "6abf2b5aea5b2c73dbfa1c93",
+    "chunkId": "6abb3b03e4bec5475482325d",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:制氧机是什么时候上市的？上市时间 A:亲，制氧机不像手机需要频繁追求性能升级，它的核心功能长期较为稳定，更看重出氧稳"
+   },
+   {
+    "docId": "6ac07d5cea5b2c73dbfb175a",
+    "chunkId": "6abb71abe4bec54754824a47",
+    "type": "SHOP",
+    "label": null,
+    "content": "说明：厂家可能在无提前通知的情况下更改包装、产地、附件与赠品；本店保证原厂正品、与市场主流新品一致，图片仅供参考，以实物"
+   },
+   {
+    "docId": "6ac1c0668d902f20ed57373e",
+    "chunkId": "6ac03ba6e4bec54754830661",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【1SW静音雾化款-赠品说明】 - 送吸氧大礼包（包含保险丝、遥控器、吸氧管、电源线、雾化杯、雾化面罩、雾化导管），雾化"
+   },
+   {
+    "docId": "6ac1cdd3c9f2a900b99aa0fe",
+    "chunkId": "6abb3ad0729b323bc44413ff",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:是原装进口吗？ A:亲，从您对是否进口的关注，我感觉您一定非常注重品质和保障，这和我们的品牌理念是一致的。  我们是"
+   },
+   {
+    "docId": "6ac8cffbc9f2a900b9a015dd",
+    "chunkId": "6ac8b81ae1041c390583e499",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【通用信息】 - 国际CE认证，品质保证，适用老人、孕妇、亚健康人群。采用进口材料，提供5年质保。送红色礼盒及蓝色物品（"
+   }
+  ],
+  "content": "官方直营，多重豪礼下单就送：①价值99元氧气袋(42L)*1——【每天下单前50名】可送，需联系客服确认备注；②吸氧大礼包——随单送，不同型号配件礼包有区别（含遥控器、鼻吸管/吸氧管、过滤套装、电源线、雾化面罩、雾化连接管、雾化杯、口含器）；③价值199元血氧仪——【收货后晒图送】，款式随机；④价值59元无菌吸氧面罩——【收货后晒图送】\n亲亲，具体型号对应的赠品会有区别，您可以告诉我看中的是哪款哦～"
+ },
+ {
+  "name": "PDD-DEDAKJ#104",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": 0,
+  "logIsCredible": 1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6abb9abaddc9db45db560b42",
+    "chunkId": "6abb71abe4bec54754824a46",
+    "type": "SHOP",
+    "label": null,
+    "content": "三包：配件、赠品仅限三包服务——自签收日起 7 天内有质量问题包修包退包换；15 天内可维修或换货处理；【赠品、配件不予"
+   },
+   {
+    "docId": "6abb9ad9ea5b2c73dbf74d93",
+    "chunkId": "6abb71abe4bec54754824a44",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:现在有什么活动？ A:活动主题「喜迎国庆佳节 下单送豪礼」，活动时间 9月24号—10月7号；期间晒图活动赠送血氧仪"
+   },
+   {
+    "docId": "6abb9ad9ea5b2c73dbf74d94",
+    "chunkId": "6abb71abe4bec54754824a43",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:下单送什么赠品？ A:官方直营，多重豪礼下单就送：①价值99元氧气袋(42L)*1——【每天下单前50名】可送，需联"
+   },
+   {
+    "docId": "6abe23028d902f20ed54b205",
+    "chunkId": "6abb4404908ac50ae9029982",
+    "type": "DETAIL",
+    "label": null,
+    "content": "## 商品销售及促销信息 - 下单前请先咨询专业客服，以避免误拍、买错。 - 收藏商品送终身吸氧管*4，福利随时结束，先"
+   },
+   {
+    "docId": "6ac07d5cea5b2c73dbfb175a",
+    "chunkId": "6abb71abe4bec54754824a47",
+    "type": "SHOP",
+    "label": null,
+    "content": "说明：厂家可能在无提前通知的情况下更改包装、产地、附件与赠品；本店保证原厂正品、与市场主流新品一致，图片仅供参考，以实物"
+   },
+   {
+    "docId": "6ac1c0668d902f20ed57373e",
+    "chunkId": "6ac03ba6e4bec54754830661",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【1SW静音雾化款-赠品说明】 - 送吸氧大礼包（包含保险丝、遥控器、吸氧管、电源线、雾化杯、雾化面罩、雾化导管），雾化"
+   },
+   {
+    "docId": "6ac5c3f6ddc9db45db5d6eda",
+    "chunkId": "6ac496789bb5d85e7b96ab89",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【赠品福利】 - 价值99元氧气袋(42L)*1，每天下单前50名可送，需联系客服确认备注； - 价值199元血氧仪，收"
+   },
+   {
+    "docId": "6ac8cffbc9f2a900b9a015dd",
+    "chunkId": "6ac8b81ae1041c390583e499",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【通用信息】 - 国际CE认证，品质保证，适用老人、孕妇、亚健康人群。采用进口材料，提供5年质保。送红色礼盒及蓝色物品（"
+   }
+  ],
+  "content": "亲~官方直营，多重豪礼下单就送：①价值99元氧气袋(42L)*1——【每天下单前50名】可送，需联系客服确认备注；②吸氧大礼包——随单送，不同型号配件礼包有区别（含遥控器、鼻吸管/吸氧管、过滤套装、电源线、雾化面罩、雾化连接管、雾化杯、口含器）；③价值199元血氧仪——【收货后晒图送】，款式随机；④价值59元无菌吸氧面罩——【收货后晒图送】\n您看中的是哪款型号呢，确认好型号帮您核对对应赠品哦~"
+ },
+ {
+  "name": "PDD-DEDAKJ#190",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": 0,
+  "logIsCredible": 1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6abb9d39ddc9db45db560e90",
+    "chunkId": "6abb5e89e4bec54754823fa5",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:一次能吸多长时间？ A:每次吸多久、每天吸几次应按医生为您制定的用氧方案执行，不能统一建议早中晚各30分钟。没有明确"
+   },
+   {
+    "docId": "6abe2705c9f2a900b9980f0d",
+    "chunkId": "6abb5e70e4bec54754823f50",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:不建议24小时使用标签 A:连续运行时长应以具体型号说明书和机身警示为准，不能统一承诺24小时不停机。若标签写明不建"
+   },
+   {
+    "docId": "6abe273addc9db45db582a2f",
+    "chunkId": "6abb5e84729b323bc444223b",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:【吸氧时长】如何控制？ A:每次吸多久、每天吸几次应按医生为您制定的用氧方案执行，不能统一建议早中晚各30分钟。没有"
+   },
+   {
+    "docId": "6abe273addc9db45db582a31",
+    "chunkId": "6abb5e7ee4bec54754823f74",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:这种制氧机能使用多长时间？ A:机器一次可连续运行多久，应按具体型号说明书和机身警示确认，不能统一承诺24小时。长期"
+   },
+   {
+    "docId": "6ac1e46fddc9db45db5acd68",
+    "chunkId": "6abb3ac1729b323bc44413df",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:MY-5C电池能用多久？充电要多久？ A:这款便携制氧机的电池续航，参考如下：  1档约3小时 2档约2小时 3档约"
+   },
+   {
+    "docId": "6ac7a4118d902f20ed5bc855",
+    "chunkId": "6abb3c4b729b323bc44414a8",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:Y105电池续航多久？ A:亲，Y105便携制氧机续航表现，可以参考如图所示，档位越低，续航越长。备用电池数量越多，"
+   }
+  ],
+  "content": "亲，机器一次可连续运行多久，需要按具体型号的说明书和机身警示来确认哦～559元这款麻烦您提供一下具体型号，帮您核对～"
+ },
+ {
+  "name": "PDD-DEDAKJ#191",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": 0,
+  "logIsCredible": 1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6abb9d39ddc9db45db560e90",
+    "chunkId": "6abb5e89e4bec54754823fa5",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:一次能吸多长时间？ A:每次吸多久、每天吸几次应按医生为您制定的用氧方案执行，不能统一建议早中晚各30分钟。没有明确"
+   },
+   {
+    "docId": "6abe2705c9f2a900b9980f0d",
+    "chunkId": "6abb5e70e4bec54754823f50",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:不建议24小时使用标签 A:连续运行时长应以具体型号说明书和机身警示为准，不能统一承诺24小时不停机。若标签写明不建"
+   },
+   {
+    "docId": "6abe273addc9db45db582a2f",
+    "chunkId": "6abb5e84729b323bc444223b",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:【吸氧时长】如何控制？ A:每次吸多久、每天吸几次应按医生为您制定的用氧方案执行，不能统一建议早中晚各30分钟。没有"
+   },
+   {
+    "docId": "6abe273addc9db45db582a31",
+    "chunkId": "6abb5e7ee4bec54754823f74",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:这种制氧机能使用多长时间？ A:机器一次可连续运行多久，应按具体型号说明书和机身警示确认，不能统一承诺24小时。长期"
+   }
+  ],
+  "content": "亲，机器一次可连续运行多久，需要按具体型号的说明书和机身警示来确认哦～AI标准款也建议您以说明书标注的运行时长为准，不能统一承诺24小时不停机\n如果标签写明不建议24小时运行，请不要忽略；您也可以提供型号与标签照片，我们帮您向厂家核对～"
+ },
+ {
+  "name": "PDD-DEDAKJ#222",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": 0,
+  "logIsCredible": 1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6abe2705c9f2a900b9980f0d",
+    "chunkId": "6abb5e70e4bec54754823f50",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:不建议24小时使用标签 A:连续运行时长应以具体型号说明书和机身警示为准，不能统一承诺24小时不停机。若标签写明不建"
+   },
+   {
+    "docId": "6abe27069c0cc61b38e9ff3b",
+    "chunkId": "6abb3afde4bec54754823242",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:你们制氧机压缩机是几缸的？ A:亲，我们制氧机是双缸压缩机的哟（含便携制氧机）～跟单缸比起来，它运行更稳定、噪音更低"
+   },
+   {
+    "docId": "6abe27069c0cc61b38e9ff3c",
+    "chunkId": "6abb5e70e4bec54754823f51",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:可以24小时使用吗？（售后咨询） A:连续运行时长应以具体型号说明书和机身警示为准，不能统一承诺24小时不停机。若标"
+   },
+   {
+    "docId": "6abe273addc9db45db582a30",
+    "chunkId": "6abb5e63e4bec54754823f2d",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:制氧机是否存在每多少天停机休息多久时间会对机器使用寿命更好的说法？ A:连续运行时长应以具体型号说明书和机身警示为准"
+   },
+   {
+    "docId": "6abe3bc58d902f20ed54d044",
+    "chunkId": "6abe1a9ee1041c390582a9f3",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:Q10L核实 A:您好，为了更好地了解和解决您的问题，我们需要您提供一段视频。请在视频中包含以下内容： 1.请展示机"
+   },
+   {
+    "docId": "6abe3c5dea5b2c73dbf9894d",
+    "chunkId": "6abb3a8fe4bec5475482317b",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:停机、发热大、异味 A:运行中的散热部位可能发热，但不能仅凭手摸或一个通用温度值保证正常。请保持通风、不覆盖机器；如"
+   }
+  ],
+  "content": "亲亲，连续运行时长要以具体型号的说明书和机身警示为准哦，不能统一承诺不间停机的呢\n亲方便拍一下机器背后的型号标签照片发我吗？我帮您向厂家核对一下具体型号的运行说明～"
+ },
+ {
+  "name": "淘宝#44",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": 0,
+  "logIsCredible": 1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6ac0c4559c0cc61b38ebef72",
+    "chunkId": "6ac0baade4bec5475483156d",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:给我保修卡，保修合同，质保合同？ A:您好亲亲～我们是品牌官方直销，线上售后是通过【订单号】来保修的，不需要单独的保"
+   },
+   {
+    "docId": "6ac0e83c8d902f20ed56ce9c",
+    "chunkId": "6ac0b508e1041c390582e59a",
+    "type": "SHOP",
+    "label": null,
+    "content": "若检查后仍不出气或浓度偏低：请提供完整型号、屏幕显示或报警代码、故障出现经过，可补充机器外观、接口、湿化瓶和吸氧管连接的"
+   },
+   {
+    "docId": "6ac0f160ea5b2c73dbfb9688",
+    "chunkId": "6ac0baabe1041c390582e6e9",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:家用&医用质保多久？ A:亲亲～咱们售后服务政策如下： ✅ 7天：无理由退货。 ✅ 30天内：不合适支持换款、质量问"
+   },
+   {
+    "docId": "6ac1c61dc9f2a900b99a982c",
+    "chunkId": "6ac0baade4bec5475483156f",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:终生服务是什么意思？ A:终生服务写的是可以长期提供售后服务，但不一定是免费的，是否收费需要看质保有效期。终生服务不"
+   }
+  ],
+  "content": "亲亲～线上售后是凭【订单号】来保修的，系统里有订单号才能查到记录哦\n这边确实没有收到您发送的订单号和商品型号呢，麻烦亲再发一次，这边马上帮您核实售后处理情况～"
+ },
+ {
+  "name": "淘宝#64",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": 0,
+  "logIsCredible": 1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6ac4b62eea5b2c73dbfe2185",
+    "chunkId": "6ac48906e4bec54754835d8f",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：发什么快递、什么时候发出？ A：亲亲～为了让您尽快用上机器，我们制氧机默认发顺丰快递哦～🚚（个别地区可能会临时更改更"
+   },
+   {
+    "docId": "6ac0c16f8d902f20ed56a3e0",
+    "chunkId": "6ac0b500e4bec5475483144a",
+    "type": "SHOP",
+    "label": null,
+    "content": "请保持进出风口畅通，按该型号说明书检查用户可操作的外部连接；不要拆机、不要取下过滤器运行、不要反复把档位调到最大试机。若"
+   },
+   {
+    "docId": "6ac0e83cea5b2c73dbfb8c1f",
+    "chunkId": "6ac0a23d42a160171beee6cb",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【发货政策】 - 全国7仓发货，快至次日达（部分地区） - 商品已加入顺丰/京东快递 - 拍下商品后自动匹配合适仓库发货"
+   },
+   {
+    "docId": "6ac0e83cea5b2c73dbfb8c20",
+    "chunkId": "6ac0a23c42a160171beee65c",
+    "type": "DETAIL",
+    "label": null,
+    "content": "## 物流配送与服务政策 - 物流方式：顺丰京东速发，快至次日达（部分地区） - 发货仓库：全国7仓发货，覆盖北京、沈阳"
+   },
+   {
+    "docId": "6ac1b1f6c9f2a900b99a8126",
+    "chunkId": "6ac0babee1041c390582e6f1",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:（售前专用）为什么没有上门服务、网点、寄回厂家、全国联保、返厂 A:本店不提供上门维修。您可提供型号、订单号及故障现"
+   },
+   {
+    "docId": "6ac1c416ea5b2c73dbfbf9e5",
+    "chunkId": "6ac11603e4bec54754831d03",
+    "type": "DETAIL",
+    "label": null,
+    "content": "## 9L大流量款 本制氧机新升级，具备9L大流量（可调）特性，静音效果达33.5分贝，高氧浓度为96%。 首创紫外杀菌"
+   },
+   {
+    "docId": "6ac43c72ddc9db45db5c4ead",
+    "chunkId": "6ac38522e4bec54754834d1f",
+    "type": "SHOP",
+    "label": null,
+    "content": "物流与售后：顺丰发货，全国7仓发货、快至次日达；支持7天试用、运费险、3期免息，30天保价；核心部件（压缩机）5年质保，"
+   }
+  ],
+  "content": "亲亲～如果您有急用，建议尽早下单哈～正常情况下，当天16:30前下单可当天发货；下单后记得提醒我，如需加急可先提供订单号，由我们核实登记后按实际安排处理哦～"
+ },
+ {
+  "name": "淘宝#102",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": 0,
+  "logIsCredible": 1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6ac0bfd8c9f2a900b999fa90",
+    "chunkId": "6ac0baace1041c390582e6ee",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:保修范围？ A:亲亲，咱们家的制氧机是有正规质保服务的呢～📦   但以下情况是不属于质保范围内的哦：  ① 非正常用"
+   },
+   {
+    "docId": "6ac0c239ea5b2c73dbfb62d6",
+    "chunkId": "6ac0b5a1e4bec5475483146d",
+    "type": "SHOP",
+    "label": null,
+    "content": "如果关机后长时间不停、伴随报警或异响，请提供完整型号和短视频，我们核实后再判断是否需要检测/售后。请保持机器通风、进出风"
+   },
+   {
+    "docId": "6ac0c4559c0cc61b38ebef72",
+    "chunkId": "6ac0baade4bec5475483156d",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:给我保修卡，保修合同，质保合同？ A:您好亲亲～我们是品牌官方直销，线上售后是通过【订单号】来保修的，不需要单独的保"
+   },
+   {
+    "docId": "6ac0d50c9c0cc61b38ec0233",
+    "chunkId": "6ac0b51de1041c390582e5a4",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：老人每天吸氧多长时间？一天吸几次？ A：每次吸多久、每天吸几次，应按医生为个人制定的用氧方案执行，不能统一建议“早中"
+   },
+   {
+    "docId": "6ac0f032c9f2a900b99a31b8",
+    "chunkId": "6ac0b5b6e4bec54754831470",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：制氧机怎么安装？买回家还需要自己组装吗？ A：制氧机收到后是组装好的，无需自己安装：装上湿化瓶（按说明书加水不超过水"
+   },
+   {
+    "docId": "6ac0f032c9f2a900b99a31b9",
+    "chunkId": "6ac0b5c4e4bec54754831475",
+    "type": "SHOP",
+    "label": null,
+    "content": "不建议把正在使用的鼻吸管插入水中来判断机器是否正常：冒泡不能证明氧浓度达标，还可能污染管路。请提供型号、设置和异常表现（"
+   },
+   {
+    "docId": "6ac0f160ea5b2c73dbfb9687",
+    "chunkId": "6ac0baabe1041c390582e6eb",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:整机质保和压缩机质保什么区别？ A:亲亲，我们的机器【整机享1年质保】，包括显示屏、电路板、外壳等常规部件， 其中【"
+   },
+   {
+    "docId": "6ac1b1f6c9f2a900b99a8126",
+    "chunkId": "6ac0babee1041c390582e6f1",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:（售前专用）为什么没有上门服务、网点、寄回厂家、全国联保、返厂 A:本店不提供上门维修。您可提供型号、订单号及故障现"
+   },
+   {
+    "docId": "6ac1b1f6c9f2a900b99a8128",
+    "chunkId": "6ac0babee1041c390582e6f2",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:（售前专用）上门服务、网点、寄回厂家、全国联保、返厂 A:本店不提供上门维修。您可提供型号、订单号及故障现象，由售后"
+   },
+   {
+    "docId": "6ac1c0ca8d902f20ed5737ba",
+    "chunkId": "6ac0baace4bec5475483156b",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:我以为整机都是5年 A:亲亲，理解您的想法哈～其实是【压缩机】享5年质保，整机是1年哦🛠️ "
+   },
+   {
+    "docId": "6ac39adac9f2a900b99c1087",
+    "chunkId": "6ac38522e4bec54754834d1c",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:下单送什么赠品？ A:下单送吸氧大礼包：42L氧气袋（价值99元）*1、吸氧管*2、过滤棉；雾化款另送雾化套装*1（"
+   }
+  ],
+  "content": "亲亲，麻烦您提供一下寄回的快递单号哦，我这边帮您登记跟进一下进度～"
+ },
+ {
+  "name": "淘宝#104",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": 0,
+  "logIsCredible": 1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6ac0c239ea5b2c73dbfb62d7",
+    "chunkId": "6ac0b5bde1041c390582e5dc",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：不知道该买什么型号，怎么选？ A：请先说明：①居家使用还是外出携带；②医生要求的供氧方式、流量和使用时长（有医嘱或血"
+   },
+   {
+    "docId": "6ac1c08cea5b2c73dbfbf5c6",
+    "chunkId": "6ac0babee1041c390582e6f0",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:全国联保 A:现有售后资料记录中国大陆地区可申请返厂保修。请提供具体型号、订单及所在地，由我们核对对应保修范围和维修"
+   },
+   {
+    "docId": "6ac39adac9f2a900b99c1087",
+    "chunkId": "6ac38522e4bec54754834d1c",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:下单送什么赠品？ A:下单送吸氧大礼包：42L氧气袋（价值99元）*1、吸氧管*2、过滤棉；雾化款另送雾化套装*1（"
+   },
+   {
+    "docId": "6ac43c72ddc9db45db5c4ead",
+    "chunkId": "6ac38522e4bec54754834d1f",
+    "type": "SHOP",
+    "label": null,
+    "content": "物流与售后：顺丰发货，全国7仓发货、快至次日达；支持7天试用、运费险、3期免息，30天保价；核心部件（压缩机）5年质保，"
+   },
+   {
+    "docId": "6ac43d6fea5b2c73dbfda6a9",
+    "chunkId": "6ac38522e4bec54754834d1e",
+    "type": "SHOP",
+    "label": null,
+    "content": "说明：部分型号可享一次购买终身领取耗材包——每3个月免费领取一次，仅需自理运费；赠品数量有限、送完即止，具体以商品详情页"
+   }
+  ],
+  "content": "亲亲是的哦，拍下3件会给您发出4件呢"
+ },
+ {
+  "name": "淘宝#105",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": 0,
+  "logIsCredible": 1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6ac43c72ddc9db45db5c4ead",
+    "chunkId": "6ac38522e4bec54754834d1f",
+    "type": "SHOP",
+    "label": null,
+    "content": "物流与售后：顺丰发货，全国7仓发货、快至次日达；支持7天试用、运费险、3期免息，30天保价；核心部件（压缩机）5年质保，"
+   },
+   {
+    "docId": "6ac43f889c0cc61b38ee3297",
+    "chunkId": "6ac38522e4bec54754834d20",
+    "type": "SHOP",
+    "label": null,
+    "content": "说明：赠品与活动以商品详情页/下单页为准；不同型号赠品不同，下单前请先与客服确认；赠品、配件仅限三包服务，不予折现；厂家"
+   }
+  ],
+  "content": "亲亲，买三免一就是拍下时数量添加3件、只需支付2件的钱哦，具体赠品与活动以下单页显示为准呢\n感谢亲的支持～"
+ },
+ {
+  "name": "淘宝#125",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": 0,
+  "logIsCredible": -1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6ac0c239ea5b2c73dbfb62d5",
+    "chunkId": "6ac0b516e4bec54754831453",
+    "type": "SHOP",
+    "label": null,
+    "content": "如雾化量小、不出雾、断断续续，或对雾化浓度有疑问，请提供完整型号、雾化配件连接照片和操作视频，我们核实后协助处理；药液使"
+   },
+   {
+    "docId": "6ac0c239ea5b2c73dbfb62d6",
+    "chunkId": "6ac0b5a1e4bec5475483146d",
+    "type": "SHOP",
+    "label": null,
+    "content": "如果关机后长时间不停、伴随报警或异响，请提供完整型号和短视频，我们核实后再判断是否需要检测/售后。请保持机器通风、进出风"
+   },
+   {
+    "docId": "6ac0e83cea5b2c73dbfb8c20",
+    "chunkId": "6ac0a23c42a160171beee65c",
+    "type": "DETAIL",
+    "label": null,
+    "content": "## 物流配送与服务政策 - 物流方式：顺丰京东速发，快至次日达（部分地区） - 发货仓库：全国7仓发货，覆盖北京、沈阳"
+   },
+   {
+    "docId": "6ac1ab329c0cc61b38ec688a",
+    "chunkId": "6ac0b5a8e1041c390582e5d7",
+    "type": "SHOP",
+    "label": null,
+    "content": "如有烫伤风险、焦糊味、冒烟或持续报警，请在安全前提下停用断电并联系我们处理售后；依赖持续供氧者请使用医生预先安排的备用方"
+   },
+   {
+    "docId": "6ac1b1f6c9f2a900b99a8126",
+    "chunkId": "6ac0babee1041c390582e6f1",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:（售前专用）为什么没有上门服务、网点、寄回厂家、全国联保、返厂 A:本店不提供上门维修。您可提供型号、订单号及故障现"
+   },
+   {
+    "docId": "6ac1b1f6c9f2a900b99a8127",
+    "chunkId": "6ac107c0e1041c390582ed81",
+    "type": "SHOP",
+    "label": null,
+    "content": "亲亲～咱们售后服务政策如下： ✅ 7天：无理由退货。 ✅ 30天内：不合适支持换款、质量问题包退。 ✅ 1年：整机享质保"
+   },
+   {
+    "docId": "6ac1b1f6c9f2a900b99a8128",
+    "chunkId": "6ac0babee1041c390582e6f2",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:（售前专用）上门服务、网点、寄回厂家、全国联保、返厂 A:本店不提供上门维修。您可提供型号、订单号及故障现象，由售后"
+   },
+   {
+    "docId": "6ac21677c9f2a900b99af1ad",
+    "chunkId": "6ac11601e4bec54754831cf0",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【服务政策】 - 物流：全国多仓 - 售后保障：7天试用、运费险、3期免息、5年质保（压缩机）"
+   }
+  ],
+  "content": "亲亲，拨打我们的全国服务热线 400-830-2119 就可以啦～您无需自己拍视频，售后会在电话中远程协助您排查；若确实需要，也会由我们核实后告知后续处理方式\n您方便的话可以先提供一下完整型号和订单号，我们帮您核实～"
+ },
+ {
+  "name": "淘宝#139",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": 0,
+  "logIsCredible": 1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6ac0bfd8c9f2a900b999fa90",
+    "chunkId": "6ac0baace1041c390582e6ee",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:保修范围？ A:亲亲，咱们家的制氧机是有正规质保服务的呢～📦   但以下情况是不属于质保范围内的哦：  ① 非正常用"
+   },
+   {
+    "docId": "6ac0c16f8d902f20ed56a3df",
+    "chunkId": "6ac0b508e1041c390582e59b",
+    "type": "SHOP",
+    "label": null,
+    "content": "请不要拆机、不要取下过滤器运行、不要反复把档位调到最大试机；怀疑浓度问题时需按该型号要求使用适用的测氧仪检测。依赖持续供"
+   },
+   {
+    "docId": "6ac0d50c9c0cc61b38ec0231",
+    "chunkId": "6ac0b5bde1041c390582e5dd",
+    "type": "SHOP",
+    "label": null,
+    "content": "是否需要吸氧、选几升、每天吸多久应由医生评估和制定，不能仅凭疾病名称、年龄或单次血氧读数推荐；如当前用氧效果不佳或出现不"
+   },
+   {
+    "docId": "6ac0d50c9c0cc61b38ec0232",
+    "chunkId": "6ac0b508e1041c390582e599",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：机器运行、屏幕显示都正常，但不出气/吸氧管没气/氧浓度显示偏低（如55%），怎么排查？ A：先做用户可操作的外部检查"
+   },
+   {
+    "docId": "6ac0d50c9c0cc61b38ec0234",
+    "chunkId": "6ac0b5c4e4bec54754831474",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：湿化瓶冒泡，但吸氧管感觉没气，是漏气吗？ A：湿化瓶冒泡只反映气流经过水，不能证明出口氧浓度或整机性能正常。请先检查"
+   },
+   {
+    "docId": "6ac0d57cea5b2c73dbfb7824",
+    "chunkId": "6ac0baade4bec54754831570",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:如何分辨是人为损坏，还是机器质量问题？ A:故障原因和责任需要结合实际检测记录核实，不能仅凭聊天、过滤器外观或维修次"
+   },
+   {
+    "docId": "6ac0d57dddc9db45db5a2829",
+    "chunkId": "6ac0b500e4bec54754831449",
+    "type": "SHOP",
+    "label": null,
+    "content": "常见的一种是断电报警：屏幕显示红点并伴随长鸣或“嘟嘟”提示音，通常是机器断电或关机顺序不正确。可先检查：①电源线是否插紧"
+   },
+   {
+    "docId": "6ac0d5a48d902f20ed56bb12",
+    "chunkId": "6ac0b500e4bec54754831448",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：屏幕出现感叹号、报警提示音或故障代码（如E1、E3等），怎么办？ A：制氧机的报警提示用于提醒异常；不同型号的代码含"
+   },
+   {
+    "docId": "6ac0e83c8d902f20ed56ce9c",
+    "chunkId": "6ac0b508e1041c390582e59a",
+    "type": "SHOP",
+    "label": null,
+    "content": "若检查后仍不出气或浓度偏低：请提供完整型号、屏幕显示或报警代码、故障出现经过，可补充机器外观、接口、湿化瓶和吸氧管连接的"
+   },
+   {
+    "docId": "6ac0e860ddc9db45db5a3bc9",
+    "chunkId": "6ac0a23d42a160171beee6b7",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【特别敬告】 - 氧浓度根据气温气压等因素会有所变化，数值不固定，在范围内都是正常情况。 - 制氧机适用于氧气补充，不作"
+   },
+   {
+    "docId": "6ac0eaeaea5b2c73dbfb8f00",
+    "chunkId": "6ac0b51de1041c390582e5a6",
+    "type": "SHOP",
+    "label": null,
+    "content": "机器使用中出现异常或需要长时间连续使用时，请先联系我们核实，不要带故障长时间运行。"
+   },
+   {
+    "docId": "6ac0f032c9f2a900b99a31b9",
+    "chunkId": "6ac0b5c4e4bec54754831475",
+    "type": "SHOP",
+    "label": null,
+    "content": "不建议把正在使用的鼻吸管插入水中来判断机器是否正常：冒泡不能证明氧浓度达标，还可能污染管路。请提供型号、设置和异常表现（"
+   },
+   {
+    "docId": "6ac1b3349c0cc61b38ec70ce",
+    "chunkId": "6ac0a23d42a160171beee6a9",
+    "type": "DETAIL",
+    "label": null,
+    "content": "## 功能特点 本制氧机配备定制湿化器，能让输出的氧气更加温润。 支持双人同时吸氧。 具备雾化功能，实现一机多用。 具备"
+   },
+   {
+    "docId": "6ac1b9c6ddc9db45db5a9e69",
+    "chunkId": "6ac0a23c42a160171beee65a",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【便携制氧机（KH22-Y105）】 - 本款为便携制氧机，等效5升，售价¥1999，具备车载户外功能，推荐用于徒步/自"
+   },
+   {
+    "docId": "6ac1ba498d902f20ed57306e",
+    "chunkId": "6ac0a23d42a160171beee6bb",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【流量与氧浓度优势】 本制氧机具备9L大流量，高氧浓度，其流量范围为1-9L，优于其他品牌制氧机（其他品牌制氧机流量范围"
+   },
+   {
+    "docId": "6ac1ba499c0cc61b38ec7889",
+    "chunkId": "6ac0b5cbe1041c390582e5e0",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：流量/档位怎么调？为什么档位越高、浓度越低？ A：请按该型号流量调节旋钮的标记和说明书缓慢调整到医生规定的流量，读数"
+   },
+   {
+    "docId": "6ac1c416ea5b2c73dbfbf9e5",
+    "chunkId": "6ac11603e4bec54754831d03",
+    "type": "DETAIL",
+    "label": null,
+    "content": "## 9L大流量款 本制氧机新升级，具备9L大流量（可调）特性，静音效果达33.5分贝，高氧浓度为96%。 首创紫外杀菌"
+   },
+   {
+    "docId": "6ac1ccafea5b2c73dbfc0438",
+    "chunkId": "6ac0a23d42a160171beee68f",
+    "type": "DETAIL",
+    "label": null,
+    "content": "## 核心功能与技术信息 - 采用PSA循环制氧系统 - 支持一键制氧操作 - 无需添加任何制氧剂 - 拥有发明专利（专"
+   },
+   {
+    "docId": "6ac1de8dddc9db45db5ac748",
+    "chunkId": "6ac11600e4bec54754831cea",
+    "type": "DETAIL",
+    "label": null,
+    "content": "## 顶配款 本制氧机为德国品牌，属于全新升级款，具备双重抑菌特性。 流量：9L大流量（可调） 显示：高清大屏 播报：语"
+   },
+   {
+    "docId": "6ac215829c0cc61b38ece000",
+    "chunkId": "6ac0a23d42a160171beee683",
+    "type": "DETAIL",
+    "label": null,
+    "content": "## 高氧浓度96%制氧机 该制氧机具备高氧浓度96%的特性，可实现365天连续制氧。 产品支持制氧、雾化、灭菌功能，设"
+   },
+   {
+    "docId": "6ac223d38d902f20ed57a49e",
+    "chunkId": "6ac0a23c42a160171beee659",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【重症缺氧推荐10升医用款（DY22-Q10L）】 - 本款为重症缺氧推荐10升医用制氧机，售价¥4999。"
+   }
+  ],
+  "content": "亲亲，压力不够通常和湿化瓶安装、吸氧管接口松动或滤芯堵塞有关\n建议先检查这些外部连接，若仍无法解决，可致电4008302119由专业人员进一步排查哦"
+ },
+ {
+  "name": "DEDAKJ抖#12",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": 0,
+  "logIsCredible": 1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6ac20382ea5b2c73dbfc4116",
+    "chunkId": "6ac0b51de1041c390582e5a5",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：可以24小时连续使用吗？ A：连续运行时长应以具体型号说明书和机身警示为准，不能统一承诺24小时不停机；若机身标签写"
+   },
+   {
+    "docId": "6ac1c92f9c0cc61b38ec8a1b",
+    "chunkId": "6ac0b51de1041c390582e5a6",
+    "type": "SHOP",
+    "label": null,
+    "content": "机器使用中出现异常或需要长时间连续使用时，请先联系我们核实，不要带故障长时间运行。"
+   },
+   {
+    "docId": "6ac307809c0cc61b38ed6279",
+    "chunkId": "6ac0babee1041c390582e6f1",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:（售前专用）为什么没有上门服务、网点、寄回厂家、全国联保、返厂 A:本店不提供上门维修。您可提供型号、订单号及故障现"
+   },
+   {
+    "docId": "6ac307809c0cc61b38ed627a",
+    "chunkId": "6ac0babee1041c390582e6f2",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:（售前专用）上门服务、网点、寄回厂家、全国联保、返厂 A:本店不提供上门维修。您可提供型号、订单号及故障现象，由售后"
+   },
+   {
+    "docId": "6ac61b0addc9db45db5dd587",
+    "chunkId": "6ac0a0036ea0c47c1a0ed4e2",
+    "type": "DETAIL",
+    "label": null,
+    "content": "进口材料，品质稳定。 该制氧机可实现365天不间断高浓度吸氧。"
+   },
+   {
+    "docId": "6ac8d3e89c0cc61b38f20512",
+    "chunkId": "6ac0a0036ea0c47c1a0ed4ea",
+    "type": "DETAIL",
+    "label": null,
+    "content": "## 商品核心部件信息 - 压缩机类型：纯铜无油压缩机 - 功能特性：动力强劲，365天稳定供氧 - 技术特点：具有电动"
+   },
+   {
+    "docId": "6ac8d3e9c9f2a900b9a01b58",
+    "chunkId": "6ac45d36e1041c3905832812",
+    "type": "DETAIL",
+    "label": null,
+    "content": "【DE-2SW参数】 - 产品型号：DE-2SW - 氧流量：2L-9L可调 - 氧浓度：90% (2L/min时) -"
+   }
+  ],
+  "content": "亲亲，这款制氧机能否全天开启，需要以具体型号说明书和机身警示为准哦，我们也不能统一承诺可以24小时不停机\n如果机身标签写明不建议24小时运行，请遵照执行；如需长时间连续使用，建议先联系我们核实呢~"
+ },
+ {
+  "name": "DEDAKJ抖#31",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": 0,
+  "logIsCredible": 1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6ac20382ea5b2c73dbfc4116",
+    "chunkId": "6ac0b51de1041c390582e5a5",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：可以24小时连续使用吗？ A：连续运行时长应以具体型号说明书和机身警示为准，不能统一承诺24小时不停机；若机身标签写"
+   },
+   {
+    "docId": "6ac1b7edddc9db45db5a9c48",
+    "chunkId": "6ac0b5cbe1041c390582e5e1",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：每次开机都要重新调流量吗？ A：部分机型开机后回到初始档位，部分医用机型有记忆功能会保留上次设置；以该型号说明书为准"
+   },
+   {
+    "docId": "6ac1b877ddc9db45db5a9cef",
+    "chunkId": "6ac0b5b6e4bec54754831471",
+    "type": "SHOP",
+    "label": null,
+    "content": "首次使用请按说明书的开机步骤操作，并核对型号与配件清单；如配件缺失或连接不上，请拍照联系我们，不要自行拆机。"
+   },
+   {
+    "docId": "6ac20382ddc9db45db5af004",
+    "chunkId": "6ac0b5a1e4bec5475483146c",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：制氧机关机后内部还有声音、风扇还在转，正常吗？ A：关机后风扇继续转动几分钟，是制氧机的正常设计：用于排出机器内部残"
+   },
+   {
+    "docId": "6ac617778d902f20ed5a6358",
+    "chunkId": "6ac0b50fe4bec5475483144d",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：过滤棉/过滤器需要安装吗？能拿掉不用吗？ A：需要。过滤器、过滤盒、过滤棉用于拦截进入机器的灰尘，属于需要定期维护的"
+   }
+  ],
+  "content": "亲亲，制氧机能否一直开机，需要以您机器的具体型号说明书和机身警示为准哦～不同型号要求不一样，不能统一承诺24小时不停机\n方便的话麻烦您提供一下机器完整型号和机身标签照片，我们帮您向厂家核对～如果需要长时间持续用氧，建议提前咨询医生，安排好适合的连续供氧和备用方案哦～"
+ },
+ {
+  "name": "DEDAKJ抖#42",
+  "orderState": "售前(未下单)",
+  "noSendReasonName": null,
+  "riskRating": 0,
+  "logIsCredible": 1,
+  "agentName": null,
+  "snapShots": [
+   {
+    "docId": "6ac1b7ed9c0cc61b38ec75e8",
+    "chunkId": "6ac0a0036ea0c47c1a0ed50c",
+    "type": "DETAIL",
+    "label": null,
+    "content": "消费提示 本品为保健型制氧机，非医疗类用品，不可任何疾病治疗，仅可用于家庭保健：若需要疾病辅助治疗，请选择医用型制氧机"
+   },
+   {
+    "docId": "6ac1b7edddc9db45db5a9c47",
+    "chunkId": "6ac0baabe1041c390582e6e9",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q:家用&医用质保多久？ A:亲亲～咱们售后服务政策如下： ✅ 7天：无理由退货。 ✅ 30天内：不合适支持换款、质量问"
+   },
+   {
+    "docId": "6ac20382ea5b2c73dbfc4116",
+    "chunkId": "6ac0b51de1041c390582e5a5",
+    "type": "SHOP",
+    "label": null,
+    "content": "Q：可以24小时连续使用吗？ A：连续运行时长应以具体型号说明书和机身警示为准，不能统一承诺24小时不停机；若机身标签写"
+   },
+   {
+    "docId": "6ac5b12a9c0cc61b38ef3b61",
+    "chunkId": "6ac0a0036ea0c47c1a0ed512",
+    "type": "DETAIL",
+    "label": null,
+    "content": "器械类别： 非器械"
+   },
+   {
+    "docId": "6ac5b12a9c0cc61b38ef3b62",
+    "chunkId": "6ac0a0036ea0c47c1a0ed514",
+    "type": "DETAIL",
+    "label": null,
+    "content": "安全使用说明： 本产品非医疗器械产品，不可用于医疗场景。"
+   }
+  ],
+  "content": "亲，这款是保健型制氧机，非医疗器械产品，不可用于医疗场景，也不能用于任何疾病治疗，仅可用于家庭保健哦\n如果需要疾病辅助治疗，建议选择医用型制氧机"
+ }
+]

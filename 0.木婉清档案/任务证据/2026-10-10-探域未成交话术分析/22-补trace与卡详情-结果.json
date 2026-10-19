@@ -1,0 +1,747 @@
+[
+  {
+    "name": "Trace-PDD-DEDAKJ#64扫码售后",
+    "endpoint": "/api/im/agent-trace/trace",
+    "method": "POST",
+    "httpStatus": 200,
+    "businessCode": 1,
+    "message": "操作成功!",
+    "data": {
+      "id": "6ac88ef05dacf83cd5d37581",
+      "outerId": "6ac88ef05dacf83cd5d37581",
+      "status": 2,
+      "buyerAccount": "8385541896335",
+      "shopName": null,
+      "platform": 1,
+      "sellerAccount": "cs_131091278:180482296",
+      "productInfo": {
+        "spuId": "454668748593",
+        "skuId": "",
+        "shopCode": "Q5L-1",
+        "goodsCode": "",
+        "spuTitle": "德国DEDAKJ医用级5L升制氧机老人家用氧气呼吸机吸氧机96%氧浓度",
+        "img": "https://img.pddpic.com/mms-goods-image/2026-09-09/fa37695a-4f90-4424-bb5e-d47adf2b154f.jpeg",
+        "detailUrl": "https://mobile.yangkeduo.com/goods.html?goods_id=454668748593"
+      },
+      "orderState": "售前(未下单)",
+      "orderStatusDesc": "未下单",
+      "orderId": "",
+      "type": "CONSULT_REPLY",
+      "ifSend": false,
+      "sendType": null,
+      "question": "我这机子上的这个。雾化的那个头掉了，你那能不能配上？",
+      "questionMsgId": 2742137379549738000,
+      "topicName": "买家询问德国DEDAKJ制氧机雾化头掉落能否配货",
+      "consultIntentId": "",
+      "replyIntentId": "",
+      "replyIntentName": "",
+      "consultIntentName": "",
+      "logIsCredible": 1,
+      "topicCategory": 2,
+      "riskRating": 0,
+      "content": "亲，可以扫下机器上的二维码进行售后处理哦～",
+      "noSendReason": "违禁词拦截",
+      "prohibitedWordHitDetail": {
+        "ruleId": null,
+        "blockedWords": [
+          "二维码"
+        ],
+        "replacementWords": []
+      },
+      "ifDeepThinking": false,
+      "traceList": [
+        {
+          "text": [
+            "Q:配件怎么买？\nA:亲，可以扫下机器上客服进行售后处理哦。"
+          ],
+          "docId": "6abe2d2f8d902f20ed54bf24",
+          "type": "SHOP",
+          "label": null,
+          "sourceId": "6abe2b80e4bec5475482e0d2"
+        }
+      ],
+      "snapShots": [
+        {
+          "docId": "6abe2d2f8d902f20ed54bf24",
+          "chunkId": "6abe2b80e4bec5475482e0d3",
+          "type": "SHOP",
+          "label": null,
+          "content": "Q:配件怎么买？\nA:亲，可以扫下机器上客服进行售后处理哦。",
+          "sourceId": "6abe2b80e4bec5475482e0d2",
+          "sourceBizId": "6abe2b80e4bec5475482e0d2",
+          "ifQuote": true
+        },
+        {
+          "docId": "6abb9ad9ea5b2c73dbf74d94",
+          "chunkId": "6abb71abe4bec54754824a43",
+          "type": "SHOP",
+          "label": null,
+          "content": "Q:下单送什么赠品？ A:官方直营，多重豪礼下单就送：①价值99元氧气袋(42L)*1——【每天下单前50名】可送，需联系客服确认备注；②吸氧大礼包——随单送，不同型号配件礼包有区别（含遥控器、鼻吸管/吸氧管、过滤套装、电源线、雾化面罩、雾化连接管、雾化杯、口含器）；③价值199元血氧仪——【收货后晒图送】，款式随机；④价值59元无菌吸氧面罩——【收货后晒图送】。",
+          "sourceId": "6abb71abe4bec54754824a42",
+          "sourceBizId": "6abb71abe4bec54754824a42",
+          "ifQuote": false
+        },
+        {
+          "docId": "6abe2d2f8d902f20ed54bf25",
+          "chunkId": "6abb3af3729b323bc4441449",
+          "type": "SHOP",
+          "label": null,
+          "content": "Q:94买了制氧机还需要买别的吗？\nA:亲亲～「收到就可以使用」啦～\n机器是「配件齐全」的，带吸氧管，插电就能制氧，无需另外购买哈～",
+          "sourceId": "6a9a3c3e4a45121da4d7c648",
+          "sourceBizId": "6a9a3c3e4a45121da4d7c648",
+          "ifQuote": false
+        },
+        {
+          "docId": "6ac1dad2ea5b2c73dbfc13e9",
+          "chunkId": "6ac1c95ee1041c390582f60b",
+          "type": "SHOP",
+          "label": null,
+          "content": "首次使用请按说明书的开机步骤操作，并核对型号与配件清单；如配件缺失或连接不上，请拍照联系我们，不要自行拆机。",
+          "sourceId": "6ac0b5b6e4bec5475483146f",
+          "sourceBizId": "6ac0b5b6e4bec5475483146f",
+          "ifQuote": false
+        },
+        {
+          "docId": "6ac88ef1ddc9db45db5fc563",
+          "chunkId": "6abb79979ef5082d017c8e14",
+          "type": "DETAIL",
+          "label": null,
+          "content": "【附件说明】\n- 产品技术要求",
+          "sourceId": "6abb79979ef5082d017c8e0f",
+          "sourceBizId": "6abb79979ef5082d017c8e0f",
+          "ifQuote": false
+        },
+        {
+          "docId": "6ac88ef1ddc9db45db5fc564",
+          "chunkId": "6abb79979ef5082d017c8e06",
+          "type": "DETAIL",
+          "label": null,
+          "content": "【结构及组成、适用范围、附件说明】\n- 结构及组成：由主机、流量计、湿化瓶、氧浓度状态指示器、雾化组件（选配外购有证附件）和遥控器组成。\n- 适用范围：适用于医疗机构、家庭制取富氧空气（93%氧），供缺氧者进行氧疗以缓解各种因缺氧导致的不适。\n- 附件：产品技术要求。",
+          "sourceId": "6abb79979ef5082d017c8e03",
+          "sourceBizId": "6abb79979ef5082d017c8e03",
+          "ifQuote": false
+        },
+        {
+          "docId": "6ac88ef1ddc9db45db5fc565",
+          "chunkId": "6abb79979ef5082d017c8dfb",
+          "type": "DETAIL",
+          "label": null,
+          "content": "## 产品配件清单\n- 产品主机\n- 水箱\n- 吸氧管\n- 遥控器\n- 电源线\n- 雾化面罩\n- 雾化连接管\n- 雾化杯\n- 口含器\n- 说明书",
+          "sourceId": "6abb79979ef5082d017c8dfa",
+          "sourceBizId": "6abb79979ef5082d017c8dfa",
+          "ifQuote": false
+        }
+      ],
+      "agentId": "default",
+      "agentName": null,
+      "botName": "SHOP_AGENT_G5",
+      "reviewStatus": 1,
+      "ifLabel": 0,
+      "ifWithdraw": null,
+      "labels": null,
+      "digest": null,
+      "wfTraceId": null
+    }
+  },
+  {
+    "name": "Trace-PDD-DEDAKJ#142升级款24h",
+    "endpoint": "/api/im/agent-trace/trace",
+    "method": "POST",
+    "httpStatus": 200,
+    "businessCode": 1,
+    "message": "操作成功!",
+    "data": {
+      "id": "6ac9c20cc5ae852819efb070",
+      "outerId": "6ac9c20cc5ae852819efb070",
+      "status": 1,
+      "buyerAccount": "4821692780",
+      "shopName": null,
+      "platform": 1,
+      "sellerAccount": "cs_131091278:180482296",
+      "productInfo": {
+        "spuId": "454609107724",
+        "skuId": "",
+        "shopCode": "",
+        "goodsCode": "",
+        "spuTitle": "德国DEDAKJ制氧机家用老年人吸氧机家庭氧气呼吸机小型静音氧气机",
+        "img": "https://img.pddpic.com/mms-goods-image/2026-10-10/2eb5d11d-08f8-4bad-8e2e-090f6d2cdc47.jpeg",
+        "detailUrl": "https://mobile.yangkeduo.com/goods.html?goods_id=454609107724"
+      },
+      "orderState": "售前(未下单)",
+      "orderStatusDesc": "未下单",
+      "orderId": "",
+      "type": "CONSULT_REPLY",
+      "ifSend": false,
+      "sendType": null,
+      "question": "普通的升级款都有哪些功能呢",
+      "questionMsgId": 2742139192025324500,
+      "topicName": "买家询问普通升级款制氧机有哪些功能",
+      "consultIntentId": "",
+      "replyIntentId": "",
+      "replyIntentName": "",
+      "consultIntentName": "",
+      "logIsCredible": -1,
+      "topicCategory": 2,
+      "riskRating": 0,
+      "content": "亲亲，1S静音升级款的功能有以下这些哦：\n\n- 氧气浓度：96%(1L/min)\n- 氧气流量：9L\n- 分子筛：进口分子筛\n- 雾化功能：无\n- 紫外杀菌：无\n- 负离子：有\n- 语音播报：有\n- 遥控功能：有\n- 运行声音：36分贝\n- 过滤性能：10级过滤\n- 运行时间：24小时运行\n- 制氧剂：无需添加\n- 质保时间：压缩机5年（整机1年）\n\n如果您需要雾化功能，可以选1SW款，可以吸氧和雾化哦~",
+      "noSendReason": "回复来自非可信知识",
+      "prohibitedWordHitDetail": null,
+      "ifDeepThinking": false,
+      "traceList": null,
+      "snapShots": [
+        {
+          "docId": "6abe4dc6ddc9db45db5858c3",
+          "chunkId": "6abb3aa3729b323bc44413af",
+          "type": "SHOP",
+          "label": null,
+          "content": "Q:2SW卖点\nA:您好～DE-2SW制氧机双人使用须先核对该版本是否支持及两人的医嘱要求，流量范围2-9升可调（浓度约30%-96%），其中2升≈96%为高浓度制氧～  \n功能也很全面，支持雾化、紫外杀菌、负离子净化，搭配语音播报、遥控器和SOS一键求救功能～  \n操作简单，老人也能轻松使用，全家人都能安心用，非常实用的一款哦～😊",
+          "sourceId": "6a9a3c384a45121da4d7c558",
+          "sourceBizId": "6a9a3c384a45121da4d7c558",
+          "ifQuote": false
+        },
+        {
+          "docId": "6abf2b5a8d902f20ed556412",
+          "chunkId": "6abf15f1e4bec5475482eb55",
+          "type": "SHOP",
+          "label": null,
+          "content": "Q:德迩杰高端在哪里？\nA:亲亲～德迩杰（DEDAKJ）的高端主要体现在几个方面哦：\n\n✅ 支持**氧浓度实时显示**，更直观  \n✅ 采用**电磁阀结构**，相比普通机械阀更静音、更精准  \n✅ **降噪效果更好**，运行更安静  \n✅ 外壳材质更优质，整体更有质感💎✨\n\n适合对使用体验、静音和细节有更高要求的用户哈～😊\n",
+          "sourceId": "6a9a3c574a45121da4d7cab0",
+          "sourceBizId": "6a9a3c574a45121da4d7cab0",
+          "ifQuote": false
+        },
+        {
+          "docId": "6abf49078d902f20ed5586f5",
+          "chunkId": "6abb3ab5729b323bc44413d4",
+          "type": "SHOP",
+          "label": null,
+          "content": "Q:那这有什么用？\nA:因为很多保健用户只需要更大气流、但对氧浓度要求不高，所以机器就是按这种方式来设计的哈。",
+          "sourceId": "6a9a3c494a45121da4d7c844",
+          "sourceBizId": "6a9a3c494a45121da4d7c844",
+          "ifQuote": false
+        },
+        {
+          "docId": "6ac07d908d902f20ed565a54",
+          "chunkId": "6abb3c5ae4bec547548232cc",
+          "type": "SHOP",
+          "label": null,
+          "content": "Q:Q1W大1升什么意思？\nA:亲亲～我们这款是「增强版大1升」，比市面上普通大1升输出更强更稳，支持调节流量到9升，性能更好、适用人群更广哦～",
+          "sourceId": "6a9a3c39644e354d71a3f73e",
+          "sourceBizId": "6a9a3c39644e354d71a3f73e",
+          "ifQuote": false
+        },
+        {
+          "docId": "6ac0d58b8d902f20ed56bafa",
+          "chunkId": "6abb4404908ac50ae90299c2",
+          "type": "DETAIL",
+          "label": null,
+          "content": "## 功能与设计特点\n- 具备负离子功能，可清新空气\n- 支持智能定时功能\n- 配备杀菌灯功能\n- 设有水位窗设计\n- 显示屏显示参数：1 L/min（流量）、96 %O₂（氧浓度）、000 分钟（定时时间）",
+          "sourceId": "6abb4404908ac50ae90299c1",
+          "sourceBizId": "6abb4404908ac50ae90299c1",
+          "ifQuote": false
+        },
+        {
+          "docId": "6ac0d8339c0cc61b38ec057f",
+          "chunkId": "6abf979be1041c390582d236",
+          "type": "DETAIL",
+          "label": null,
+          "content": "【1S静音升级款】\n- 氧气浓度：96%(1L/min)\n- 氧气流量：9L\n- 分子筛：进口分子筛\n- 雾化功能：无\n- 紫外杀菌：无\n- 负离子：有\n- 语音播报：有\n- 遥控功能：有\n- 运行声音：36分贝\n- 过滤性能：10级过滤\n- 运行时间：24小时运行\n- 制氧剂：无需添加\n- 质保时间：压缩机5年（整机1年）",
+          "sourceId": "6abb4404908ac50ae9029983",
+          "sourceBizId": "6abb4404908ac50ae9029983",
+          "ifQuote": false
+        },
+        {
+          "docId": "6ac1a41dc9f2a900b99a7493",
+          "chunkId": "6abb3b01e4bec54754823253",
+          "type": "SHOP",
+          "label": null,
+          "content": "Q:1SW 和1SW Pro有什么区别?2SW和2SW Pro\nA:亲，pro是抑菌升级，带有双重抑菌系统，其他功能是一样的。",
+          "sourceId": "6a9a3c394a45121da4d7c58a",
+          "sourceBizId": "6a9a3c394a45121da4d7c58a",
+          "ifQuote": false
+        },
+        {
+          "docId": "6ac86274c9f2a900b99f8b08",
+          "chunkId": "6ac83f4be4bec5475483eb0a",
+          "type": "DETAIL",
+          "label": null,
+          "content": "## 商品特性与服务\n- 氧流量：9L大氧流量\n- 氧浓度：96%高氧浓度\n- 功能：1台顶4台，具备制氧、雾化、灭菌、负离子功能\n- 制氧特性：36分贝静音制氧\n- 售后保障：不满意包退货\n- 物流：顺丰24小时速发\n- 认证与适用：国际CE认证，品质保证，适用老人、孕妇、亚健康人群\n- 材质与质保：进口材料，5年质保",
+          "sourceId": "6ac496789bb5d85e7b96ab8c",
+          "sourceBizId": "6ac496789bb5d85e7b96ab8c",
+          "ifQuote": false
+        },
+        {
+          "docId": "6ac8cffbc9f2a900b9a015de",
+          "chunkId": "6ac8b819e1041c390583e48e",
+          "type": "DETAIL",
+          "label": null,
+          "content": "德国品牌\n9L大氧流量，96%高氧浓度\n具备制氧、雾化、灭菌、负离子功能（1台顶4台）\n36分贝静音制氧\n不满意包退货\n顺丰24小时速发\n国际CE认证，品质保证，适用老人、孕妇、亚健康人群\n进口材料，5年质保\n官方自营",
+          "sourceId": "6ac8a6159bb5d85e7ba422aa",
+          "sourceBizId": "6ac8a6159bb5d85e7ba422aa",
+          "ifQuote": false
+        },
+        {
+          "docId": "6ac8da299c0cc61b38f20dd0",
+          "chunkId": "6ac8b81ae1041c390583e492",
+          "type": "DETAIL",
+          "label": null,
+          "content": "【功能介绍】\n- 具备制氧、雾化、灭菌、负离子功能（1台顶4台）。",
+          "sourceId": "6ac8a6159bb5d85e7ba4229f",
+          "sourceBizId": "6ac8a6159bb5d85e7ba4229f",
+          "ifQuote": false
+        },
+        {
+          "docId": "6ac90016ea5b2c73db01c14f",
+          "chunkId": "6ac8b81ae1041c390583e490",
+          "type": "DETAIL",
+          "label": null,
+          "content": "## 德国DEDAKJ制氧机\n本制氧机具备9L大氧流量、96%高氧浓度的性能。\n1台顶4台，集成制氧+雾化+灭菌+负离子功能。\n运行噪音为36分贝，实现静音设计。\n全年底价，买贵补差，支持顺丰24小时速发。\n官方直营，采用进口材料，提供五年质保。\n通过国际CE认证，品质保证，适用于老人、孕妇及亚健康人群。",
+          "sourceId": "6ac8a6159bb5d85e7ba422a6",
+          "sourceBizId": "6ac8a6159bb5d85e7ba422a6",
+          "ifQuote": false
+        }
+      ],
+      "agentId": "default",
+      "agentName": null,
+      "botName": "SHOP_AGENT_G5",
+      "reviewStatus": 1,
+      "ifLabel": 0,
+      "ifWithdraw": null,
+      "labels": null,
+      "digest": "- 买家咨询德国DEDAKJ家用制氧机，先后询问使用方法、制氧量、两款机型区别与雾化功能作用，客服依次解答相关问题。",
+      "wfTraceId": null
+    }
+  },
+  {
+    "name": "Trace-德迩杰#23维修件",
+    "endpoint": "/api/im/agent-trace/trace",
+    "method": "POST",
+    "httpStatus": 200,
+    "businessCode": 1,
+    "message": "操作成功!",
+    "data": {
+      "id": "6ac84d0d74c7ef3e5aad8e6c",
+      "outerId": "6ac84d0d74c7ef3e5aad8e6c",
+      "status": 2,
+      "buyerAccount": "jd_6a7802519c369",
+      "shopName": null,
+      "platform": 7,
+      "sellerAccount": "715027:dedakj器械店--德德",
+      "productInfo": {
+        "spuId": "145****5365",
+        "skuId": "70208233091",
+        "shopCode": "1SW01",
+        "goodsCode": null,
+        "spuTitle": "DEDAKJ德国家用制氧机老人专用吸氧机呼吸雾化一体氧气机十大牌子便携式",
+        "img": "http://img11.360buyimg.com/imgzone/jfs/t1/528372/10/12938/189582/6ac6e327F286c7230/0083320320a33797.jpg",
+        "detailUrl": "https://item.jd.com/70208233091.html"
+      },
+      "orderState": "售前(未下单)",
+      "orderStatusDesc": "未下单",
+      "orderId": "",
+      "type": "CONSULT_REPLY",
+      "ifSend": false,
+      "sendType": null,
+      "question": "什么时候寄给我",
+      "questionMsgId": 2742148812751842300,
+      "topicName": "买家询问【DEDAKJ德国家用制氧机】什么时候寄出",
+      "consultIntentId": "",
+      "replyIntentId": "",
+      "replyIntentName": "",
+      "consultIntentName": "",
+      "logIsCredible": -1,
+      "topicCategory": 12,
+      "riskRating": 0,
+      "content": "亲亲～咱们这款是【京东仓库就近发货】的哦～一般是【次日达】，快的话上午买下午就能到📦 方便的话发我一下您的收货地址（省、市、区/县、街/镇），我这边帮您查一下预计的送达时效哈～",
+      "noSendReason": "违禁词拦截",
+      "prohibitedWordHitDetail": {
+        "ruleId": null,
+        "blockedWords": [
+          "次日达"
+        ],
+        "replacementWords": []
+      },
+      "ifDeepThinking": false,
+      "traceList": [
+        {
+          "text": [
+            "Q：京东仓发货多久能到？\nA：亲亲～咱们这款是【京东仓库就近发货】的哦～一般是【次日达】，快的话当天都有可能收到📦 方便的话发我一下您的收货地址（省、市、区/县、街/镇），我这边帮您查一下预计的送达时效哈～😊\n到货时间参考：快的话上午买下午到，一般非偏远地区次日达；您也可以点进商品页、选好收货地址后，页面上方会自动显示预计送达时间，具体以下单页/商品页显示的预计送达时间为准哈～😊"
+          ],
+          "docId": "6ac4c90d9c0cc61b38eec161",
+          "type": "SHOP",
+          "label": null,
+          "sourceId": "6ac48923e1041c3905832ea7"
+        },
+        {
+          "text": [
+            "【物流配送政策】\n- 上午买 下午用，京东10大仓库 就近发货"
+          ],
+          "docId": "6ac1b82bddc9db45db5a9c96",
+          "type": "DETAIL",
+          "label": null,
+          "sourceId": "6ac0a08e74ca1f0fc812322b"
+        }
+      ],
+      "snapShots": [
+        {
+          "docId": "6ac4c90d9c0cc61b38eec161",
+          "chunkId": "6ac48923e1041c3905832ea8",
+          "type": "SHOP",
+          "label": null,
+          "content": "Q：京东仓发货多久能到？\nA：亲亲～咱们这款是【京东仓库就近发货】的哦～一般是【次日达】，快的话当天都有可能收到📦 方便的话发我一下您的收货地址（省、市、区/县、街/镇），我这边帮您查一下预计的送达时效哈～😊\n到货时间参考：快的话上午买下午到，一般非偏远地区次日达；您也可以点进商品页、选好收货地址后，页面上方会自动显示预计送达时间，具体以下单页/商品页显示的预计送达时间为准哈～😊",
+          "sourceId": "6ac48923e1041c3905832ea7",
+          "sourceBizId": "6ac48923e1041c3905832ea7",
+          "ifQuote": true
+        },
+        {
+          "docId": "6ac1b82bddc9db45db5a9c96",
+          "chunkId": "6ac11618e4bec54754831dc5",
+          "type": "DETAIL",
+          "label": null,
+          "content": "【物流配送政策】\n- 上午买 下午用，京东10大仓库 就近发货",
+          "sourceId": "6ac0a08e74ca1f0fc812322b",
+          "sourceBizId": "6ac0a08e74ca1f0fc812322b",
+          "ifQuote": true
+        },
+        {
+          "docId": "6ac1aedc9c0cc61b38ec6c2c",
+          "chunkId": "6ac0b500e4bec5475483144a",
+          "type": "SHOP",
+          "label": null,
+          "content": "请保持进出风口畅通，按该型号说明书检查用户可操作的外部连接；不要拆机、不要取下过滤器运行、不要反复把档位调到最大试机。若报警持续，或伴随焦糊味、冒烟、异常发热，请在安全前提下停用断电并联系我们核实售后。依赖持续供氧者请按医生预先制定的备用供氧方案处理，不要等待排查而中断必需用氧。",
+          "sourceId": "6ac0b500e4bec54754831447",
+          "sourceBizId": "6ac0b500e4bec54754831447",
+          "ifQuote": false
+        },
+        {
+          "docId": "6ac1b82bddc9db45db5a9c97",
+          "chunkId": "6ac11618e4bec54754831dc4",
+          "type": "DETAIL",
+          "label": null,
+          "content": "【商品口碑评分】\n- 用户评价：5.0高，超过99.99%同行\n- 物流时效：5.0高，超过99.99%同行\n- 售后服务：4.8高，超过99.99%同行",
+          "sourceId": "6ac0a08e74ca1f0fc812322b",
+          "sourceBizId": "6ac0a08e74ca1f0fc812322b",
+          "ifQuote": false
+        },
+        {
+          "docId": "6ac3215a9c0cc61b38ed7fee",
+          "chunkId": "6ac312a174ca1f0fc815bf04",
+          "type": "DETAIL",
+          "label": null,
+          "content": "【促销与售后信息】\n- 限时促销：上午买下午到（至快），全年底价，错过等1年；限时加送血氧仪（活动时间：9.30日-10.7日）；赠送总价值129元的赠品；补贴到手价：969元；超级补贴至高45%；加赠5年超长质保（压缩机）。",
+          "sourceId": "6ac312a174ca1f0fc815bf02",
+          "sourceBizId": "6ac312a174ca1f0fc815bf02",
+          "ifQuote": false
+        },
+        {
+          "docId": "6ac3218aea5b2c73dbfcf5cd",
+          "chunkId": "6ac312a174ca1f0fc815bf0e",
+          "type": "DETAIL",
+          "label": null,
+          "content": "【物流服务说明】\n- 发货速度快，快递给力。",
+          "sourceId": "6ac312a174ca1f0fc815bf0a",
+          "sourceBizId": "6ac312a174ca1f0fc815bf0a",
+          "ifQuote": false
+        },
+        {
+          "docId": "6ac4c775c9f2a900b99cd2c8",
+          "chunkId": "6ac38590e1041c3905831e20",
+          "type": "SHOP",
+          "label": null,
+          "content": "物流与售后：送货上门（具体看地区），上午买下午到（至快）/京东当日达；支持7天保价、3期免息、7天免费试用并送运费险、免费上门退换（具体看地区）；365天只换不修（同一问题2次修不好）、核心部件（压缩机）5年质保。",
+          "sourceId": "6ac38590e1041c3905831e1c",
+          "sourceBizId": "6ac38590e1041c3905831e1c",
+          "ifQuote": false
+        }
+      ],
+      "agentId": "default",
+      "agentName": null,
+      "botName": "SHOP_AGENT_G5",
+      "reviewStatus": 1,
+      "ifLabel": 0,
+      "ifWithdraw": null,
+      "labels": null,
+      "digest": null,
+      "wfTraceId": null
+    }
+  },
+  {
+    "name": "Trace-京东德达#168电话",
+    "endpoint": "/api/im/agent-trace/trace",
+    "method": "POST",
+    "httpStatus": 200,
+    "businessCode": 1,
+    "message": "操作成功!",
+    "data": {
+      "id": "6ac9b8b4436b5b2411c061db",
+      "outerId": "6ac9b8b4436b5b2411c061db",
+      "status": 1,
+      "buyerAccount": "jd_73bb3d07820a5",
+      "shopName": null,
+      "platform": 7,
+      "sellerAccount": "63530:德达官方旗舰店-德德",
+      "productInfo": {
+        "spuId": "",
+        "skuId": "",
+        "shopCode": null,
+        "goodsCode": null,
+        "spuTitle": null,
+        "img": null,
+        "detailUrl": null
+      },
+      "orderState": "售前(未下单)",
+      "orderStatusDesc": "未下单",
+      "orderId": "",
+      "type": "CONSULT_REPLY",
+      "ifSend": true,
+      "sendType": 1,
+      "question": "电话：13983019176",
+      "questionMsgId": 2742142232861972000,
+      "topicName": "买家表示制氧机寄回维修的联系电话为13983019176",
+      "consultIntentId": "",
+      "replyIntentId": "",
+      "replyIntentName": "",
+      "consultIntentName": "",
+      "logIsCredible": 1,
+      "topicCategory": 13,
+      "riskRating": 0,
+      "content": "亲亲，收到您的联系电话13983019176啦～为确保机器能准确寄回您手上，麻烦再提供一下【收件信息：姓名、电话、地址】，我这边登记好后，会立刻把我们的售后地址发给您哦～",
+      "noSendReason": null,
+      "prohibitedWordHitDetail": null,
+      "ifDeepThinking": false,
+      "traceList": null,
+      "snapShots": [
+        {
+          "docId": "6ac1af798d902f20ed57246b",
+          "chunkId": "6ac0b5b6e4bec54754831471",
+          "type": "SHOP",
+          "label": null,
+          "content": "首次使用请按说明书的开机步骤操作，并核对型号与配件清单；如配件缺失或连接不上，请拍照联系我们，不要自行拆机。",
+          "sourceId": "6ac0b5b6e4bec5475483146f",
+          "sourceBizId": "6ac0b5b6e4bec5475483146f",
+          "ifQuote": false
+        },
+        {
+          "docId": "6ac1c5789c0cc61b38ec85f2",
+          "chunkId": "6ac0baade4bec5475483156e",
+          "type": "SHOP",
+          "label": null,
+          "content": "Q:维修范围？（要求换新也可以用这个话术）\nA:维修更换了哪些部件，应以实际检测和维修记录为准，不能预先承诺全部换新。请提供订单或维修单号，由我们核对已做项目、检测结果和相应保修安排。",
+          "sourceId": "6a9a3c40644e354d71a3f88a",
+          "sourceBizId": "6a9a3c40644e354d71a3f88a",
+          "ifQuote": false
+        },
+        {
+          "docId": "6ac20c0eddc9db45db5af9eb",
+          "chunkId": "6ac0babee1041c390582e6f1",
+          "type": "SHOP",
+          "label": null,
+          "content": "Q:（售前专用）为什么没有上门服务、网点、寄回厂家、全国联保、返厂\nA:本店不提供上门维修。您可提供型号、订单号及故障现象，由售后远程协助排查；需要维修时寄回厂家。寄送地址、维修方案和具体费用由我们核实，不代约当地上门师傅。",
+          "sourceId": "6a9a3c3d644e354d71a3f807",
+          "sourceBizId": "6a9a3c3d644e354d71a3f807",
+          "ifQuote": false
+        },
+        {
+          "docId": "6ac20c0eddc9db45db5af9ec",
+          "chunkId": "6ac0babee1041c390582e6f2",
+          "type": "SHOP",
+          "label": null,
+          "content": "Q:（售前专用）上门服务、网点、寄回厂家、全国联保、返厂\nA:本店不提供上门维修。您可提供型号、订单号及故障现象，由售后远程协助排查；需要维修时寄回厂家。寄送地址、维修方案和具体费用由我们核实，不代约当地上门师傅。",
+          "sourceId": "6a9a3c3d644e354d71a3f806",
+          "sourceBizId": "6a9a3c3d644e354d71a3f806",
+          "ifQuote": false
+        }
+      ],
+      "agentId": "default",
+      "agentName": null,
+      "botName": "SHOP_AGENT_G5",
+      "reviewStatus": 1,
+      "ifLabel": 0,
+      "ifWithdraw": 1,
+      "labels": null,
+      "digest": "- 买家咨询制氧机故障处理，客服先指导排查、确认设备相关信息并提醒勿带故障运行，后告知需寄回维修，索要订单号、收件信息，买家补充情况并发送排查图片。",
+      "wfTraceId": null
+    }
+  },
+  {
+    "name": "卡-选型劝退句",
+    "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6ac0b5bde1041c390582e5dd",
+    "method": "GET",
+    "httpStatus": 200,
+    "businessCode": 0,
+    "message": "知识卡片不存在",
+    "data": null
+  },
+  {
+    "name": "卡-选型引导",
+    "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6ac0b5bde1041c390582e5dc",
+    "method": "GET",
+    "httpStatus": 200,
+    "businessCode": 0,
+    "message": "知识卡片不存在",
+    "data": null
+  },
+  {
+    "name": "卡-维修不承诺换新",
+    "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6ac0baade4bec5475483156e",
+    "method": "GET",
+    "httpStatus": 200,
+    "businessCode": 0,
+    "message": "知识卡片不存在",
+    "data": null
+  },
+  {
+    "name": "卡-PDD德达礼品",
+    "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6ac32cafe4bec54754833fcd",
+    "method": "GET",
+    "httpStatus": 200,
+    "businessCode": 0,
+    "message": "知识卡片不存在",
+    "data": null
+  },
+  {
+    "name": "卡-PDD-DEDAKJ-24h标签",
+    "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6abb5e70e4bec54754823f50",
+    "method": "GET",
+    "httpStatus": 200,
+    "businessCode": 0,
+    "message": "知识卡片不存在",
+    "data": null
+  },
+  {
+    "name": "卡-如何联系人工处理售后",
+    "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6a9be883644e354d71a45563",
+    "method": "GET",
+    "httpStatus": 200,
+    "businessCode": 0,
+    "message": "知识卡片不存在",
+    "data": null
+  },
+  {
+    "name": "卡-太干购买湿化瓶",
+    "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6a9a6706644e354d71a40c65",
+    "method": "GET",
+    "httpStatus": 200,
+    "businessCode": 0,
+    "message": "知识卡片不存在",
+    "data": null
+  },
+  {
+    "name": "卡-京东仓发货",
+    "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6ac48923e1041c3905832ea8",
+    "method": "GET",
+    "httpStatus": 200,
+    "businessCode": 0,
+    "message": "知识卡片不存在",
+    "data": null
+  },
+  {
+    "name": "卡-24h根因卡",
+    "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6ac0b51de1041c390582e5a3",
+    "method": "GET",
+    "httpStatus": 200,
+    "businessCode": 1,
+    "message": "操作成功!",
+    "data": {
+      "id": "6ac0b51de1041c390582e5a3",
+      "title": "使用建议/制氧机每天吸氧多久？可以24小时连续吸吗？",
+      "content": [
+        {
+          "id": "6aca02dbe4a34d7c7e27c953",
+          "content": "Q：老人每天吸氧多长时间？一天吸几次？\nA：每次吸多久、每天吸几次，应按医生为个人制定的用氧方案执行，不能统一建议“早中晚各多少分钟”，也不要凭感觉或“越高越好”自行加减。没有明确用氧建议时，请先由医生评估是否需要吸氧。",
+          "knowledgeDigest": "ca530424461cac2f33c8a2e681b19131",
+          "chunkLength": null,
+          "chunkLearnStatus": "FINISH",
+          "index": 1
+        },
+        {
+          "id": "6aca02dbe4a34d7c7e27c954",
+          "content": "Q：可以24小时连续使用吗？\nA：亲亲～这款是支持24小时连续使用的哦✅365天持续供氧。\n\n只要注意放在通风良好的地方，底部不要垫泡沫或布料，避免影响散热就可以啦～\n\n制氧本身是免耗材设计，只需要定期更换过滤器，插电后一键就能开启制氧，使用非常方便哈～😊",
+          "knowledgeDigest": "d2148866cc8b0deb9392f065808167b3",
+          "chunkLength": null,
+          "chunkLearnStatus": "FINISH",
+          "index": 2
+        }
+      ],
+      "labels": [],
+      "labelInfos": null,
+      "ifBelievable": true,
+      "ifLearning": false,
+      "ifOpen": true,
+      "version": "V2",
+      "type": "SHOP",
+      "includeCondition": {
+        "spu": [],
+        "shop": [
+          {
+            "thirdShopId": "2748947402403971286",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748944481825915146",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748943863350558955",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748947711641649387",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748945753136365819",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748946698029269223",
+            "cids": []
+          }
+        ],
+        "rules": [],
+        "productGroupId": [],
+        "sellerGroup": [],
+        "platform": []
+      },
+      "excludeCondition": {
+        "spu": [],
+        "shop": [],
+        "rules": [],
+        "productGroupId": [],
+        "sellerGroup": [],
+        "platform": []
+      },
+      "timeliness": null,
+      "cycleTimeliness": null,
+      "orderStatus": [
+        "PRE_SALE",
+        "SALE",
+        "AFTER_SALE"
+      ],
+      "lastUpdatedAt": "2026-10-10 17:18:19",
+      "createdAt": "2026-10-03 15:56:13",
+      "source": null,
+      "productCondition": null,
+      "ifOpenSync": null,
+      "ifHasUrl": false,
+      "urlInfos": []
+    }
+  },
+  {
+    "name": "卡-PDD-24h售后咨询",
+    "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6abb5e70e4bec54754823f51",
+    "method": "GET",
+    "httpStatus": 200,
+    "businessCode": 0,
+    "message": "知识卡片不存在",
+    "data": null
+  },
+  {
+    "name": "卡-制氧机安装卡",
+    "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6ac0b5b6e4bec54754831470",
+    "method": "GET",
+    "httpStatus": 200,
+    "businessCode": 0,
+    "message": "知识卡片不存在",
+    "data": null
+  }
+]

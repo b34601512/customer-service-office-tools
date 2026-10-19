@@ -1,0 +1,62 @@
+[
+  {
+    "method": "GET",
+    "status": 200,
+    "url": "https://agent.tanyuai.com/api/gc/agent-personal/detail"
+  },
+  {
+    "method": "GET",
+    "status": 200,
+    "url": "https://agent.tanyuai.com/api/gc/agent-personal/brief?searchValid=true"
+  },
+  {
+    "method": "GET",
+    "status": 200,
+    "url": "https://agent.tanyuai.com/api/im/client/agent/download"
+  },
+  {
+    "method": "POST",
+    "status": 200,
+    "url": "https://agent.tanyuai.com/api/shop-config/agent/config/get"
+  },
+  {
+    "method": "GET",
+    "status": 200,
+    "url": "https://agent.tanyuai.com/api/gc/subscription-order/points/usage-status"
+  },
+  {
+    "method": "GET",
+    "status": 200,
+    "url": "https://agent.tanyuai.com/api/gc/subscription-order/cur-subscription"
+  },
+  {
+    "method": "GET",
+    "status": 200,
+    "url": "https://agent.tanyuai.com/api/gc/agent-personal/detail"
+  },
+  {
+    "method": "POST",
+    "status": 200,
+    "url": "https://agent.tanyuai.com/api/shop-config/agent/config/get"
+  },
+  {
+    "method": "GET",
+    "status": 200,
+    "url": "https://agent.tanyuai.com/api/gc/subscription-order/points/usage-status"
+  },
+  {
+    "method": "GET",
+    "status": 200,
+    "url": "https://agent.tanyuai.com/api/im/client/agent/download"
+  },
+  {
+    "method": "GET",
+    "status": 200,
+    "url": "https://agent.tanyuai.com/api/gc/subscription-order/cur-subscription"
+  },
+  {
+    "method": "GET",
+    "status": 200,
+    "url": "https://agent.tanyuai.com/api/gc/agent-personal/brief?searchValid=true"
+  }
+]

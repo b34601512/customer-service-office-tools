@@ -1,0 +1,702 @@
+[
+  {
+    "name": "卡-维修范围",
+    "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6a9a3c40644e354d71a3f88a",
+    "method": "GET",
+    "httpStatus": 200,
+    "businessCode": 1,
+    "message": "操作成功!",
+    "data": {
+      "id": "6a9a3c40644e354d71a3f88a",
+      "title": "质保/售后政策解释/维修范围？（要求换新也可以用这个话术）",
+      "content": [
+        {
+          "id": "6ac0baade4bec5475483156e",
+          "content": "Q:维修范围？（要求换新也可以用这个话术）\nA:维修更换了哪些部件，应以实际检测和维修记录为准，不能预先承诺全部换新。请提供订单或维修单号，由我们核对已做项目、检测结果和相应保修安排。",
+          "knowledgeDigest": "78f06ea570c47cbc90927da221743624",
+          "chunkLength": null,
+          "chunkLearnStatus": "FINISH",
+          "index": 1
+        }
+      ],
+      "labels": [],
+      "labelInfos": null,
+      "ifBelievable": true,
+      "ifLearning": false,
+      "ifOpen": true,
+      "version": "V2",
+      "type": "SHOP",
+      "includeCondition": {
+        "spu": [],
+        "shop": [
+          {
+            "thirdShopId": "2095398963959042048",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2104457457798483968",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748947402403971286",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748944481825915146",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748943863350558955",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748947711641649387",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748945753136365819",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748946698029269223",
+            "cids": []
+          }
+        ],
+        "rules": [],
+        "productGroupId": [],
+        "sellerGroup": [],
+        "platform": []
+      },
+      "excludeCondition": {
+        "spu": [],
+        "shop": [],
+        "rules": [],
+        "productGroupId": [],
+        "sellerGroup": [],
+        "platform": []
+      },
+      "timeliness": null,
+      "cycleTimeliness": null,
+      "orderStatus": [
+        "PRE_SALE",
+        "AFTER_SALE"
+      ],
+      "lastUpdatedAt": "2026-10-03 16:19:57",
+      "createdAt": "2026-09-04 11:34:24",
+      "source": null,
+      "productCondition": null,
+      "ifOpenSync": null,
+      "ifHasUrl": false,
+      "urlInfos": []
+    }
+  },
+  {
+    "name": "卡-礼品",
+    "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6a9a3c4f644e354d71a3fb27",
+    "method": "GET",
+    "httpStatus": 200,
+    "businessCode": 1,
+    "message": "操作成功!",
+    "data": {
+      "id": "6a9a3c4f644e354d71a3fb27",
+      "title": "礼品/售前礼品问题/有什么礼品？",
+      "content": [
+        {
+          "id": "6ac32cafe4bec54754833fcd",
+          "content": "Q:有什么礼品？\nA:本店赠品活动仅适用于德达医疗本店旗舰店订单，不适用于其他平台或其他店铺。详情页未限定型号时，本店各型号均可参与额外赠品活动，C1也可参与；标配配件与活动赠品分开核对。氧气袋、血氧仪等具体可选赠品请提供型号或订单，由我们核对对应活动安排；不代表所有赠品都自动随主机发出。\n吸氧面罩保留前100名下单赠送规则；客户主动咨询赠送面罩时，各型号均可联系客服登记，按前100名赠送。C1也可参与本店统一赠品活动。可回复：“亲亲，可以给您特殊备注下，按前100名赠送吸氧面罩，麻烦提供订单号，由我们登记安排。”实际备注和发货状态需查询确认，未完成登记前不说已经备注或已经寄出。\n吸氧管付邮领取活动：本店各型号订单，每3个月可领取一次，每次4根，邮费13元由客户承担。请提供本店订单号，由我们核对领取记录并安排；不代表已经登记或寄出。\n【德达医疗本店旗舰店赠品活动】\n仅适用于德达医疗本店旗舰店订单，不适用于其他平台或其他店铺。详情页未限定型号时，本店各型号均按以下规则执行，C1也可参与。\n\n下单赠品：\n- 标配吸氧管1根。\n- 过滤器＋过滤棉1份。\n- 雾化版本指C1L，赠雾化套装1套；C1不带雾化，不赠雾化套装。\n- 吸氧面罩：前100名下单赠1个；客户咨询时可联系客服登记，未核对订单前不说已经登记或寄出。该活动没有限定型号。\n\n收货晒单赠品：\n收货后真实晒单，文字10字以上，联系客服登记；以下四选一，不叠加：42L氧气袋1个、血氧仪1个、鼻吸管1份、过滤器＋过滤棉1份。\n\n付邮领取：\n每3个月可领取终身吸氧管4根，邮费13元由买家承担；需提供本店订单，由客服核对领取记录。\n\n标配配件、下单赠品、晒单赠品和付邮领取活动分别核对，不把不同活动合并承诺。",
+          "knowledgeDigest": "493d0dbb7bdff5888b2f00709e02f657",
+          "chunkLength": null,
+          "chunkLearnStatus": "FINISH",
+          "index": 1
+        }
+      ],
+      "labels": [],
+      "labelInfos": null,
+      "ifBelievable": true,
+      "ifLearning": false,
+      "ifOpen": true,
+      "version": "V2",
+      "type": "SHOP",
+      "includeCondition": {
+        "spu": [],
+        "shop": [
+          {
+            "thirdShopId": "2095398963959042048",
+            "cids": []
+          }
+        ],
+        "rules": [],
+        "productGroupId": [],
+        "sellerGroup": [],
+        "platform": []
+      },
+      "excludeCondition": {
+        "spu": [],
+        "shop": [],
+        "rules": [],
+        "productGroupId": [],
+        "sellerGroup": [],
+        "platform": []
+      },
+      "timeliness": null,
+      "cycleTimeliness": null,
+      "orderStatus": [
+        "PRE_SALE"
+      ],
+      "lastUpdatedAt": "2026-10-05 12:50:55",
+      "createdAt": "2026-09-04 11:34:39",
+      "source": null,
+      "productCondition": null,
+      "ifOpenSync": null,
+      "ifHasUrl": false,
+      "urlInfos": []
+    }
+  },
+  {
+    "name": "卡-PDD-24h标签",
+    "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6a9a3c3d644e354d71a3f7f6",
+    "method": "GET",
+    "httpStatus": 200,
+    "businessCode": 1,
+    "message": "操作成功!",
+    "data": {
+      "id": "6a9a3c3d644e354d71a3f7f6",
+      "title": "售前/品质/不建议24小时使用标签",
+      "content": [
+        {
+          "id": "6abb5e70e4bec54754823f50",
+          "content": "Q:不建议24小时使用标签\nA:连续运行时长应以具体型号说明书和机身警示为准，不能统一承诺24小时不停机。若标签写明不建议24小时运行，请不要忽略；可提供型号与标签照片，由我们向厂家核对。依赖持续用氧者应提前与医生安排适合连续供氧及备用的方案。",
+          "knowledgeDigest": "bdc439c907bc72698d22726f31e98f81",
+          "chunkLength": null,
+          "chunkLearnStatus": "FINISH",
+          "index": 1
+        }
+      ],
+      "labels": [],
+      "labelInfos": null,
+      "ifBelievable": true,
+      "ifLearning": false,
+      "ifOpen": true,
+      "version": "V2",
+      "type": "SHOP",
+      "includeCondition": {
+        "spu": [],
+        "shop": [
+          {
+            "thirdShopId": "2095398963959042048",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2104457457798483968",
+            "cids": []
+          }
+        ],
+        "rules": [],
+        "productGroupId": [],
+        "sellerGroup": [],
+        "platform": []
+      },
+      "excludeCondition": {
+        "spu": [],
+        "shop": [],
+        "rules": [],
+        "productGroupId": [],
+        "sellerGroup": [],
+        "platform": []
+      },
+      "timeliness": null,
+      "cycleTimeliness": null,
+      "orderStatus": [
+        "PRE_SALE"
+      ],
+      "lastUpdatedAt": "2026-09-29 14:45:04",
+      "createdAt": "2026-09-04 11:34:21",
+      "source": null,
+      "productCondition": null,
+      "ifOpenSync": null,
+      "ifHasUrl": false,
+      "urlInfos": []
+    }
+  },
+  {
+    "name": "卡-PDD-24h售后咨询",
+    "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6a9a3c3d644e354d71a3f7f2",
+    "method": "GET",
+    "httpStatus": 200,
+    "businessCode": 1,
+    "message": "操作成功!",
+    "data": {
+      "id": "6a9a3c3d644e354d71a3f7f2",
+      "title": "售前/品质/可以24小时使用吗？（售后咨询）",
+      "content": [
+        {
+          "id": "6abb5e70e4bec54754823f51",
+          "content": "Q:可以24小时使用吗？（售后咨询）\nA:连续运行时长应以具体型号说明书和机身警示为准，不能统一承诺24小时不停机。若标签写明不建议24小时运行，请不要忽略；可提供型号与标签照片，由我们向厂家核对。依赖持续用氧者应提前与医生安排适合连续供氧及备用的方案。",
+          "knowledgeDigest": "25845e9d133521647a18e4aa6005f86d",
+          "chunkLength": null,
+          "chunkLearnStatus": "FINISH",
+          "index": 1
+        }
+      ],
+      "labels": [],
+      "labelInfos": null,
+      "ifBelievable": true,
+      "ifLearning": false,
+      "ifOpen": true,
+      "version": "V2",
+      "type": "SHOP",
+      "includeCondition": {
+        "spu": [],
+        "shop": [
+          {
+            "thirdShopId": "2095398963959042048",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2104457457798483968",
+            "cids": []
+          }
+        ],
+        "rules": [],
+        "productGroupId": [],
+        "sellerGroup": [],
+        "platform": []
+      },
+      "excludeCondition": {
+        "spu": [],
+        "shop": [],
+        "rules": [],
+        "productGroupId": [],
+        "sellerGroup": [],
+        "platform": []
+      },
+      "timeliness": null,
+      "cycleTimeliness": null,
+      "orderStatus": [
+        "PRE_SALE"
+      ],
+      "lastUpdatedAt": "2026-09-29 14:45:04",
+      "createdAt": "2026-09-04 11:34:21",
+      "source": null,
+      "productCondition": null,
+      "ifOpenSync": null,
+      "ifHasUrl": false,
+      "urlInfos": []
+    }
+  },
+  {
+    "name": "卡-配件怎么买",
+    "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6abe2b80e4bec5475482e0d2",
+    "method": "GET",
+    "httpStatus": 200,
+    "businessCode": 1,
+    "message": "操作成功!",
+    "data": {
+      "id": "6abe2b80e4bec5475482e0d2",
+      "title": "配件/购买/配件怎么买？",
+      "content": [
+        {
+          "id": "6abe2b80e4bec5475482e0d3",
+          "content": "Q:配件怎么买？\nA:亲，可以扫下机器上客服进行售后处理哦。",
+          "knowledgeDigest": "64d8a85678d8b4c7d8a4bfb3f8d0b0a1",
+          "chunkLength": null,
+          "chunkLearnStatus": "FINISH",
+          "index": 1
+        }
+      ],
+      "labels": [],
+      "labelInfos": null,
+      "ifBelievable": true,
+      "ifLearning": false,
+      "ifOpen": true,
+      "version": "V2",
+      "type": "SHOP",
+      "includeCondition": {
+        "spu": [],
+        "shop": [
+          {
+            "thirdShopId": "2095398963959042048",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2104457457798483968",
+            "cids": []
+          }
+        ],
+        "rules": [],
+        "productGroupId": [],
+        "sellerGroup": [],
+        "platform": []
+      },
+      "excludeCondition": {
+        "spu": [],
+        "shop": [],
+        "rules": [],
+        "productGroupId": [],
+        "sellerGroup": [],
+        "platform": []
+      },
+      "timeliness": null,
+      "cycleTimeliness": null,
+      "orderStatus": [
+        "PRE_SALE",
+        "AFTER_SALE"
+      ],
+      "lastUpdatedAt": "2026-10-01 17:44:32",
+      "createdAt": "2026-10-01 17:44:32",
+      "source": null,
+      "productCondition": null,
+      "ifOpenSync": null,
+      "ifHasUrl": false,
+      "urlInfos": []
+    }
+  },
+  {
+    "name": "卡-太干购买湿化瓶",
+    "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6a9a3c3f644e354d71a3f854",
+    "method": "GET",
+    "httpStatus": 200,
+    "businessCode": 1,
+    "message": "操作成功!",
+    "data": {
+      "id": "6a9a3c3f644e354d71a3f854",
+      "title": "售后/C1/太干【购买湿化瓶】",
+      "content": [
+        {
+          "id": "6abe1a9ce1041c390582a9ec",
+          "content": "Q:太干【购买湿化瓶】\nA:明白亲亲的担心～\nC1系列制氧机自带自动湿化功能，能满足大部分干燥环境，省去了频繁加水的麻烦～\n\n不过每个人和使用环境不同，如果您觉得还不够湿润，可以考虑购买高端机型的原装外置湿化瓶，安装也很方便，您可以参考图示操作哈😊\n",
+          "knowledgeDigest": "d2e1f581ad7e592f59ec6bcdde531fca",
+          "chunkLength": null,
+          "chunkLearnStatus": "FINISH",
+          "index": 1
+        }
+      ],
+      "labels": [],
+      "labelInfos": null,
+      "ifBelievable": true,
+      "ifLearning": false,
+      "ifOpen": true,
+      "version": "V2",
+      "type": "SHOP",
+      "includeCondition": {
+        "spu": [],
+        "shop": [
+          {
+            "thirdShopId": "2095398963959042048",
+            "cids": []
+          }
+        ],
+        "rules": [],
+        "productGroupId": [],
+        "sellerGroup": [],
+        "platform": []
+      },
+      "excludeCondition": {
+        "spu": [],
+        "shop": [],
+        "rules": [],
+        "productGroupId": [],
+        "sellerGroup": [],
+        "platform": []
+      },
+      "timeliness": null,
+      "cycleTimeliness": null,
+      "orderStatus": [
+        "PRE_SALE",
+        "AFTER_SALE"
+      ],
+      "lastUpdatedAt": "2026-10-01 16:32:28",
+      "createdAt": "2026-09-04 11:34:23",
+      "source": null,
+      "productCondition": null,
+      "ifOpenSync": null,
+      "ifHasUrl": false,
+      "urlInfos": []
+    }
+  },
+  {
+    "name": "卡-如何联系人工处理售后",
+    "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6a9a3c3a644e354d71a3f782",
+    "method": "GET",
+    "httpStatus": 200,
+    "businessCode": 1,
+    "message": "操作成功!",
+    "data": {
+      "id": "6a9a3c3a644e354d71a3f782",
+      "title": "前流/交接/如何联系人工处理售后问题？",
+      "content": [
+        {
+          "id": "6abb3a99729b323bc444139a",
+          "content": "Q:如何联系人工处理售后问题？\nA:这个问题需要我们核实处理。请在当前平台会话联系我们，并说明订单及具体诉求；是否受理请以实际确认结果为准。",
+          "knowledgeDigest": "2482a69394d0d8bb60b1a5acbff6ee9b",
+          "chunkLength": null,
+          "chunkLearnStatus": "FINISH",
+          "index": 1
+        }
+      ],
+      "labels": [],
+      "labelInfos": null,
+      "ifBelievable": true,
+      "ifLearning": false,
+      "ifOpen": true,
+      "version": "V2",
+      "type": "SHOP",
+      "includeCondition": {
+        "spu": [],
+        "shop": [
+          {
+            "thirdShopId": "2095398963959042048",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2104457457798483968",
+            "cids": []
+          }
+        ],
+        "rules": [],
+        "productGroupId": [],
+        "sellerGroup": [],
+        "platform": []
+      },
+      "excludeCondition": {
+        "spu": [],
+        "shop": [],
+        "rules": [],
+        "productGroupId": [],
+        "sellerGroup": [],
+        "platform": []
+      },
+      "timeliness": null,
+      "cycleTimeliness": null,
+      "orderStatus": [
+        "PRE_SALE",
+        "SALE",
+        "AFTER_SALE"
+      ],
+      "lastUpdatedAt": "2026-09-29 12:12:09",
+      "createdAt": "2026-09-04 11:34:18",
+      "source": null,
+      "productCondition": null,
+      "ifOpenSync": null,
+      "ifHasUrl": false,
+      "urlInfos": []
+    }
+  },
+  {
+    "name": "卡-京东仓发货",
+    "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6ac0d595e1041c390582eafa",
+    "method": "GET",
+    "httpStatus": 200,
+    "businessCode": 1,
+    "message": "操作成功!",
+    "data": {
+      "id": "6ac0d595e1041c390582eafa",
+      "title": "发货/物流时效，京东仓发货多久能到？",
+      "content": [
+        {
+          "id": "6ac4d9f6e4bec547548370c7",
+          "content": "Q：京东仓发货多久能到？\nA：亲亲～咱们这款是【京东仓库就近发货】的哦～一般是【次日达】（具体以实际物流为准），快的话当天都有可能收到📦 方便的话发我一下您的收货地址（省、市、区/县、街/镇），我这边帮您查一下预计的送达时效哈～😊\n到货时间参考：快的话上午买下午到，一般非偏远地区次日达；您也可以点进商品页、选好收货地址后，页面上方会自动显示预计送达时间，具体以下单页/商品页显示的预计送达时间为准哈～😊",
+          "knowledgeDigest": "46c59a210c11365ceb97d054469f3457",
+          "chunkLength": null,
+          "chunkLearnStatus": "FINISH",
+          "index": 1
+        }
+      ],
+      "labels": [],
+      "labelInfos": null,
+      "ifBelievable": true,
+      "ifLearning": false,
+      "ifOpen": true,
+      "version": "V2",
+      "type": "SHOP",
+      "includeCondition": {
+        "spu": [],
+        "shop": [
+          {
+            "thirdShopId": "2748947402403971286",
+            "cids": []
+          }
+        ],
+        "rules": [],
+        "productGroupId": [],
+        "sellerGroup": [],
+        "platform": []
+      },
+      "excludeCondition": {
+        "spu": [],
+        "shop": [],
+        "rules": [],
+        "productGroupId": [],
+        "sellerGroup": [],
+        "platform": []
+      },
+      "timeliness": null,
+      "cycleTimeliness": null,
+      "orderStatus": [
+        "PRE_SALE",
+        "SALE"
+      ],
+      "lastUpdatedAt": "2026-10-06 19:22:30",
+      "createdAt": "2026-10-03 18:14:45",
+      "source": null,
+      "productCondition": null,
+      "ifOpenSync": null,
+      "ifHasUrl": false,
+      "urlInfos": []
+    }
+  },
+  {
+    "name": "卡-选型卡",
+    "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6ac0b5bde1041c390582e5db",
+    "method": "GET",
+    "httpStatus": 200,
+    "businessCode": 1,
+    "message": "操作成功!",
+    "data": {
+      "id": "6ac0b5bde1041c390582e5db",
+      "title": "选款/不知道怎么选型号？制氧机怎么选？",
+      "content": [
+        {
+          "id": "6ac0b5bde1041c390582e5dc",
+          "content": "Q：不知道该买什么型号，怎么选？\nA：请先说明：①居家使用还是外出携带；②医生要求的供氧方式、流量和使用时长（有医嘱或血氧数据可一并提供）；③正在考虑的型号。我们会按具体机型的额定流量—浓度逐项核对是否满足，不只按疾病名称或一张对比图推荐。",
+          "knowledgeDigest": "9e5dac3f0ce43c0e3e9b5d90a93f556f",
+          "chunkLength": null,
+          "chunkLearnStatus": "FINISH",
+          "index": 1
+        },
+        {
+          "id": "6ac0b5bde1041c390582e5dd",
+          "content": "是否需要吸氧、选几升、每天吸多久应由医生评估和制定，不能仅凭疾病名称、年龄或单次血氧读数推荐；如当前用氧效果不佳或出现不适，请及时联系医生；严重气促、胸痛、意识异常等情况请立即拨打120，不要等待换机或调档测试。",
+          "knowledgeDigest": "f6f5894743c7cc44aca60fe1134b7a3e",
+          "chunkLength": null,
+          "chunkLearnStatus": "FINISH",
+          "index": 2
+        }
+      ],
+      "labels": [],
+      "labelInfos": null,
+      "ifBelievable": true,
+      "ifLearning": false,
+      "ifOpen": true,
+      "version": "V2",
+      "type": "SHOP",
+      "includeCondition": {
+        "spu": [],
+        "shop": [
+          {
+            "thirdShopId": "2748947402403971286",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748944481825915146",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748943863350558955",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748947711641649387",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748945753136365819",
+            "cids": []
+          },
+          {
+            "thirdShopId": "2748946698029269223",
+            "cids": []
+          }
+        ],
+        "rules": [],
+        "productGroupId": [],
+        "sellerGroup": [],
+        "platform": []
+      },
+      "excludeCondition": {
+        "spu": [],
+        "shop": [],
+        "rules": [],
+        "productGroupId": [],
+        "sellerGroup": [],
+        "platform": []
+      },
+      "timeliness": null,
+      "cycleTimeliness": null,
+      "orderStatus": [
+        "PRE_SALE",
+        "SALE",
+        "AFTER_SALE"
+      ],
+      "lastUpdatedAt": "2026-10-03 15:58:53",
+      "createdAt": "2026-10-03 15:58:53",
+      "source": null,
+      "productCondition": null,
+      "ifOpenSync": null,
+      "ifHasUrl": false,
+      "urlInfos": []
+    }
+  },
+  {
+    "name": "卡-太干赠送湿化瓶",
+    "endpoint": "/api/kbe/v1/knowledge-card/detail?id=6a9a3c3f4a45121da4d7c677",
+    "method": "GET",
+    "httpStatus": 200,
+    "businessCode": 1,
+    "message": "操作成功!",
+    "data": {
+      "id": "6a9a3c3f4a45121da4d7c677",
+      "title": "售后/C1/太干【赠送湿化瓶】",
+      "content": [
+        {
+          "id": "6ac32cade4bec54754833fc6",
+          "content": "Q:太干【赠送湿化瓶】\nA:以下赠品活动仅适用于本店德达医疗旗舰店购买的订单，不适用于其他平台或其他店铺。C1型号不参与额外赠品活动。若使用时感觉干燥，请说明型号及使用情况，由售后核对适配配件和处理方式，不自行加装湿化组件；质量问题按售后流程处理，不以放弃退货为前提。",
+          "knowledgeDigest": "30e83f72118dc341e5875f3b60cf170b",
+          "chunkLength": null,
+          "chunkLearnStatus": "FINISH",
+          "index": 1
+        }
+      ],
+      "labels": [],
+      "labelInfos": null,
+      "ifBelievable": true,
+      "ifLearning": false,
+      "ifOpen": true,
+      "version": "V2",
+      "type": "SHOP",
+      "includeCondition": {
+        "spu": [],
+        "shop": [
+          {
+            "thirdShopId": "2095398963959042048",
+            "cids": []
+          }
+        ],
+        "rules": [],
+        "productGroupId": [],
+        "sellerGroup": [],
+        "platform": []
+      },
+      "excludeCondition": {
+        "spu": [],
+        "shop": [],
+        "rules": [],
+        "productGroupId": [],
+        "sellerGroup": [],
+        "platform": []
+      },
+      "timeliness": null,
+      "cycleTimeliness": null,
+      "orderStatus": [
+        "AFTER_SALE"
+      ],
+      "lastUpdatedAt": "2026-10-05 12:50:53",
+      "createdAt": "2026-09-04 11:34:23",
+      "source": null,
+      "productCondition": null,
+      "ifOpenSync": null,
+      "ifHasUrl": false,
+      "urlInfos": []
+    }
+  }
+]
