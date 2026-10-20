@@ -1,13 +1,8 @@
-﻿# 开窗.ps1 -- 叫醒器专用：把本家 PI 监听窗拉起来（元老版；UTF-8 带 BOM）。
-# 用法（叫醒器自动调）：powershell -NoProfile -ExecutionPolicy Bypass -File 开窗.ps1
-$ErrorActionPreference = 'Stop'
-$root = $PSScriptRoot
-$boot = 'D:\桌面\木婉清\27.企业微信机器人\boot-prompt.md'
-$pi = 'C:\Users\b3460\AppData\Local\PiCodingAgentInstaller\bin\pi.cmd'
-if (-not (Test-Path $boot)) { throw "boot-prompt.md not found: $boot" }
-if (-not (Test-Path $pi)) { throw "pi launcher not found: $pi" }
-# 单实例守卫：认窗＝node 进程命令行含本家路径＋boot-prompt（排除 心跳/叫醒器 辅助进程）
-$running = Get-CimInstance Win32_Process | Where-Object { $_.Name -eq 'node.exe' -and $_.CommandLine -and $_.CommandLine.Contains($root) -and $_.CommandLine -match 'boot-prompt' -and $_.CommandLine -notmatch '心跳|叫醒器' }
-if ($running) { Write-Output 'SKIP: window already running'; exit 0 }
-$p = Start-Process -FilePath $pi -ArgumentList @("@$boot","--provider","codebuddy-direct","--model","deepseek-v4.1-flash") -WorkingDirectory $root -PassThru
-Write-Output ("PI_WINDOW_PID=" + $p.Id)
+﻿# 开窗.ps1 -- 薄壳：真正逻辑在共享母版（全公司唯一一份，改母版＝全公司生效）。
+# 老板 2026-10-20 令：「既然是相同的东西就应该用一个模版，否则每次都要所有人都修改」。
+# 本文件只做一件事：把「我这台机器上这套工具的目录」传给母版。
+# 别再往这里加逻辑——要改开窗行为，改 D:\硅基公司\共享\企微工具\开窗母版.ps1
+$母版 = 'D:\硅基公司\共享\企微工具\开窗母版.ps1'
+if (-not (Test-Path $母版)) { throw "开窗母版不存在（共享区被移动？）：$母版" }
+& $母版 -套件 $PSScriptRoot
+exit $LASTEXITCODE
