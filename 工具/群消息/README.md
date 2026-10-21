@@ -31,3 +31,27 @@ node 发群消息.js --text "内容" --mention-user <userid> --send             
 
 日常收发消息**不走这个 webhook**，走 `工具/企微/`：`读收件箱.mjs`（收）/ `直连.mjs --to N|--到人`（发）。
 webhook 只用于「必须在群里真 @ 到人」这一种场景。
+
+## 群里要真 @ 人时（2026-10-21 老板当场要求）
+
+老板 2026-10-21 17:02 在金牌组里点出：「你回答问题怎么不@对应的人啊。」
+
+原因：`工具/企微` 走的 aibot 接口（`message.send`）**没有 mention 字段**，只能把名字写在正文里，@ 不出来。要真 @ 必须用本目录的**群机器人 webhook**（`mentioned_list` 收 userid）。
+
+分工（定死）：
+- **需要点人**（派活、让某人确认、催某人）→ 群机器人 webhook，`mentioned_list:[<userid>]`
+- **不需要点人**的通报 → 仍走 `工具/企微/直连.mjs --to <群编号>`（aibot），免得每条都从「金牌组提醒机器人」发出、看着乱
+
+最小用法（实战验证 2026-10-21，errcode 0）：
+
+```bash
+cd "D:/桌面/木婉清/工具/群消息"
+node -e "
+const fs=require('fs');
+const j=JSON.parse(fs.readFileSync('群机器人.local.json','utf8'));
+const body=JSON.stringify({msgtype:'text',text:{content:'@陈某某 …正文…',mentioned_list:['woFqtuEQAAAavuSNo5VTWAf2TXPRLOWQ']}});
+fetch(j.webhookUrl,{method:'POST',headers:{'content-type':'application/json'},body}).then(r=>r.text()).then(console.log);
+"
+```
+
+群 id 对照（金牌组 `wrFqtuEQAA328pVY-8VtQdfmDtzEE-OQ`）只用于 aibot 那条路；webhook 本身已绑群，不用传群 id。
