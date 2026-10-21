@@ -54,3 +54,36 @@ test('命令行参数：--markdown 传的是内容对象，不是整包请求体
   assert.ok(!('msg_type' in markdown), 'msg_type 不能塞进 --markdown');
   assert.strictEqual(args[args.indexOf('--chat-id') + 1], 'woXXXX');
 });
+
+// ── 2026-10-21 新增：--to 单聊解析（王语嫣报：单聊 chatid 为空 → 老板 09:10 那句没人答）──
+const { 解析单聊 } = require('../scripts/发企微消息.cjs');
+
+test('--to 解析：按人名命中唯一单聊会话', () => {
+  const 会话 = [
+    { chat_id: 'wr0001', chat_name: '«金牌组»', chat_type: 'group' },
+    { chat_id: 'wo0002', chat_name: '黎路遥（副经理）', chat_type: 'single' },
+  ];
+  assert.deepStrictEqual(解析单聊(会话, '黎路遥'), { chat_id: 'wo0002', chat_name: '黎路遥（副经理）' });
+});
+
+test('--to 解析：绝不猜群（群名里有人名也不算单聊）', () => {
+  const 会话 = [{ chat_id: 'wr0001', chat_name: '黎路遥对接群', chat_type: 'group' }];
+  assert.throws(() => 解析单聊(会话, '黎路遥'), /找不到单聊会话/);
+});
+
+test('--to 解析：0 条 / 多条 都报错停下（不挑一个差不多的）', () => {
+  assert.throws(() => 解析单聊([], '黎路遥'), /找不到单聊会话/);
+  const 重名 = [
+    { chat_id: 'wo1', chat_name: '邓某某（售后客服）(香香)', chat_type: 'single' },
+    { chat_id: 'wo2', chat_name: '邓某某（售前客服）', chat_type: 'single' },
+  ];
+  assert.throws(() => 解析单聊(重名, '邓某某'), /命中 2 条/);
+  // 写全名就能过
+  assert.strictEqual(解析单聊(重名, '邓某某（售前客服）').chat_id, 'wo2');
+});
+
+test('参数解析：--to 与 --chat-id 同传要在 main 里拦（这里只验解析出两者）', () => {
+  const 参 = 取参数(['--to', '黎路遥', '--text', 'hi']);
+  assert.strictEqual(参.to, '黎路遥');
+  assert.strictEqual(参.chatId, '');
+});

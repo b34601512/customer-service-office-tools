@@ -5,7 +5,12 @@
 // 用法：
 //   node scripts/发企微消息.cjs --chat-id "<本次 sessions list 里的 id>" --file 正文.md
 //   node scripts/发企微消息.cjs --chat-id "<id>" --text "一句话"
+//   node scripts/发企微消息.cjs --to 黎路遥 --text "一句话"   ← 单聊按名字回（自动查 sessions list 取 chat_id）
 //   （加 --dry-run 只打印 payload 不发送；**群 chat_id（wr 开头）默认拒发**，要发群得加 --允许发群并先问人）
+//
+// 为什么有 --to（2026-10-21，王语嫣报的实案）：单聊来信里 chatid 是空的，只有 fromUserId；
+//   以前只能人工去 sessions list 里翻 id，翻不到就不回 → 老板 09:10 问的话到 10:00 还没人答。
+//   现在按「人名 → 单聊会话」解析，解析不出/重名就明确报错（**不许猜，猜错就是把消息发给别人**）。
 
 const fs = require('fs');
 const path = require('path');
@@ -16,11 +21,12 @@ const 项目根 = path.resolve(__dirname, '..');
 const 默认CLI脚本 = path.join(process.env.APPDATA || '', 'npm', 'node_modules', '@wecom', 'cli', 'bin', 'wecom.js');
 
 function 取参数(argv) {
-  const out = { chatId: '', file: '', text: '', dryRun: false, 允许发群: false, cli: 默认CLI脚本 };
+  const out = { chatId: '', to: '', file: '', text: '', dryRun: false, 允许发群: false, cli: 默认CLI脚本 };
   for (let i = 0; i < argv.length; i += 1) {
     const key = String(argv[i] || '').replace(/^--/, '');
     const next = argv[i + 1];
     if (key === 'chat-id') { out.chatId = String(next || '').trim(); i += 1; } else
+    if (key === 'to' || key === 'to-name') { out.to = String(next || '').trim(); i += 1; } else
     if (key === 'file') { out.file = String(next || '').trim(); i += 1; } else
     if (key === 'text') { out.text = String(next || ''); i += 1; } else
     if (key === 'cli') { out.cli = String(next || 'wecom-cli').trim(); i += 1; } else
@@ -54,6 +60,52 @@ function 构造CLI参数(载荷, cli脚本 = 默认CLI脚本) {
   return [cli脚本, 'message', 'aibot', 'send', '--chat-id', 载荷.chat_id, '--msg-type', 'markdown', '--markdown', JSON.stringify(载荷.markdown)];
 }
 
+// ── 单聊解析（--to）：纯函数，便于反向断言 ──────────────────────────
+// 规矩：只认 chat_type==='single'；0 条或多条都报错，绝不「挑一个差不多的」。
+function 解析单聊(会话列表, 名字) {
+  const 名 = String(名字 || '').trim();
+  if (!名) throw new Error('--to 后面要写人名（例：--to 黎路遥）');
+  const 单聊 = (Array.isArray(会话列表) ? 会话列表 : []).filter((s) => s && s.chat_type === 'single' && s.chat_id);
+  const 命中 = 单聊.filter((s) => {
+    const n = String(s.chat_name || '');
+    return n === 名 || n.startsWith(名) || n.includes(名);
+  });
+  if (命中.length === 1) return { chat_id: 命中[0].chat_id, chat_name: 命中[0].chat_name };
+  const 有的 = 单聊.map((s) => s.chat_name).join('、') || '（一条单聊会话都没有）';
+  if (命中.length === 0) throw new Error(`找不到单聊会话「${名}」。现有单聊：${有的}`);
+  throw new Error(`「${名}」命中 ${命中.length} 条单聊（${命中.map((s) => s.chat_name).join('、')}）——写全名再发，别猜`);
+}
+
+function 取会话列表(cli脚本 = 默认CLI脚本) {
+  const 是脚本 = /.js$/i.test(cli脚本);
+  const 命令 = 是脚本 ? process.execPath : cli脚本;
+  const 前缀 = 是脚本 ? [cli脚本] : [];
+  const 结果 = spawnSync(命令, [...前缀, 'message', 'aibot', 'sessions', 'list'], { encoding: 'utf8' });
+  const 输出 = `${结果.stdout || ''}${结果.stderr || ''}`;
+  let 数据 = null;
+  try { 数据 = JSON.parse(输出); } catch { /* 下面再剥壳 */ }
+  if (!数据) {
+    const 起 = 输出.indexOf('{');
+    const 止 = 输出.lastIndexOf('}');
+    if (起 < 0 || 止 <= 起) throw new Error('sessions list 没有返回 JSON（CLI 未登录/权限过期？）');
+    try { 数据 = JSON.parse(输出.slice(起, 止 + 1)); } catch { throw new Error('sessions list 返回的不是合法 JSON'); }
+  }
+  if (!Array.isArray(数据.sessions)) throw new Error('sessions list 里没有 sessions 数组');
+  return 数据.sessions;
+}
+
+// 名字映射落盘：读新消息.cjs 用它把 fromUserId 显示成人名（可选，坏了不影响发信）
+function 记名字映射(会话列表) {
+  try {
+    const 文件 = path.join(项目根, '.state', '企微会话映射.json');
+    let 旧 = {};
+    try { 旧 = JSON.parse(fs.readFileSync(文件, 'utf8')) || {}; } catch { /* 没有就算了 */ }
+    for (const s of 会话列表) if (s && s.chat_id && s.chat_name) 旧[s.chat_id] = s.chat_name;
+    fs.mkdirSync(path.dirname(文件), { recursive: true });
+    fs.writeFileSync(文件, JSON.stringify(旧, null, 1), 'utf8');
+  } catch { /* 映射只是锦上添花 */ }
+}
+
 function 读正文(参数) {
   if (参数.text) return 参数.text;
   if (参数.file) {
@@ -65,6 +117,14 @@ function 读正文(参数) {
 
 function main() {
   const 参数 = 取参数(process.argv.slice(2));
+  if (参数.to && 参数.chatId) throw new Error('--to 和 --chat-id 只能给一个（--to 是「按人名查单聊」，别两个都传）');
+  if (参数.to) {
+    const 会话 = 取会话列表(参数.cli);
+    记名字映射(会话);
+    const 命中 = 解析单聊(会话, 参数.to);
+    参数.chatId = 命中.chat_id;
+    console.log(`[发企微] --to ${参数.to} → ${命中.chat_name}（单聊）`);
+  }
   const 载荷 = 构造载荷({ chatId: 参数.chatId, content: 读正文(参数), 允许发群: 参数.允许发群 });
   // --markdown 收的是「markdown 内容对象」本身（不是整包请求体）：整包会给 --json 用。
   const json = JSON.stringify(载荷.markdown);
@@ -123,4 +183,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = { 构造载荷, 构造CLI参数, 取参数 };
+module.exports = { 构造载荷, 构造CLI参数, 取参数, 解析单聊 };

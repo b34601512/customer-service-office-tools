@@ -40,11 +40,24 @@ if (最近 > 0) {
 }
 
 if (待打印.length === 0) { console.log('新消息 0 条'); process.exit(0); }
+
+// 单聊来信没有 chatid（只有 fromUserId）→ 用映射表把 id 翻成人名，好直接 --to 回信。
+// 映射由 发企微消息.cjs 每次拉 sessions list 时刷新；没有也能跑（退化成显示 id 前缀）。
+const 映射文件 = path.join(根, '.state', '企微会话映射.json');
+let 映射 = {};
+try { 映射 = JSON.parse(fs.readFileSync(映射文件, 'utf8')) || {}; } catch { /* 没映射就算了 */ }
+
 console.log(`新消息 ${待打印.length} 条：`);
 for (const j of 待打印) {
-  const 谁 = j.chattype === 'group' ? `【群 ${String(j.chatid || '').slice(0, 10)}】` : '【单聊】';
-  const 我 = String(j.fromUserId || '').startsWith('wo**********************') ? '（黎路遥）' : '';
-  console.log(`[${j.at}] ${谁}${我}${j.note ? '(' + j.note + ')' : ''} ${j.kind}: ${String(j.text || '').slice(0, 300)}`);
+  let 谁;
+  if (j.chattype === 'group') {
+    谁 = `【群 ${String(j.chatid || '').slice(0, 10)}】`;
+  } else {
+    const 名 = 映射[j.fromUserId]
+      || (String(j.fromUserId || '').startsWith('wo**********************') ? '黎路遥（副经理）' : '');
+    谁 = 名 ? `【单聊 ${名}】` : `【单聊 ${String(j.fromUserId || '').slice(0, 12) || '?'}】`;
+  }
+  console.log(`[${j.at}] ${谁}${j.note ? '(' + j.note + ')' : ''} ${j.kind}: ${String(j.text || '').slice(0, 300)}`);
 }
 if (!不回写 && 最近 === 0) {
   const 最后 = 待打印[待打印.length - 1];
