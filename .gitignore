@@ -184,3 +184,11 @@ tools/git-secret-store.json.bak
 
 # 金山 AirScript 客户端配置（含令牌与 webhook，本机保留不入库）
 **/project-config/kdocs-airscript.json
+
+# 企微套件整包不入库：它是共享母版（王语嫣维护）的同步拷贝 + 本地运行态
+#   （收件箱/媒体/令牌/日志含同事私信与守护 token，5.6M 含 node_modules）
+# 真源：D:/硅基公司/共享/企微工具/ ——要备份/改代码去那儿，别改这份拷贝后提交
+工具/企微/
+*.token
+*.pid
+*.port
