@@ -42,7 +42,8 @@ function isPddMetricContentReady(pageType, pageText) {
     return /客服服务数据/.test(normalizedText) && /3分钟人工回复率\s*[\d.]+\s*%/.test(normalizedText);
   }
   if (pageType === "afterSales") {
-    return /整体情况/.test(normalizedText) && /纠纷退款数\s*[\d.]+/.test(normalizedText);
+    // 2026-10-23 拼多多改版：区块标题「整体情况」→「售后考核指标」（老文案保留兼容，见 issue #667）
+    return /售后考核指标|整体情况/.test(normalizedText) && /纠纷退款数\s*[\d.]+/.test(normalizedText);
   }
   if (pageType === "overall") {
     return /店铺综合体验星级/.test(normalizedText) &&

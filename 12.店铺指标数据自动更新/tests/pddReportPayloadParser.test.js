@@ -65,3 +65,34 @@ test("拼多多三类店铺页面生成整体指标，并补充响应时长秒�
     pageText: "售后数据 TOP退款商品 纠纷退款数 纠纷退款率 暂无数据"
   }).records.length, 0);
 });
+
+test("拼多多售后区块改名「售后考核指标」仍能解析，老文案「整体情况」也保留兼容（issue #667）", () => {
+  const sourceUrl = "https://mms.pinduoduo.com/sycm/goods_quality/detail";
+  const newTitleText = "售后数据 消费者体验指标 售后考核指标（统计时间：2026-10-22）纠纷退款数 4 -- 纠纷退款率 0.45 % 品质退款率 3.04 % 近30日高退款商品 商品A 退款率 9.9 %";
+  const newRecords = buildPddPageMetricRecords({ store, pageType: "afterSales", sourceUrl, pageText: newTitleText }).records;
+  assert.equal(newRecords.find((record) => record.metricName === "拼多多-纠纷退款数").metricValue, 4);
+  assert.ok(Math.abs(newRecords.find((record) => record.metricName === "拼多多-纠纷退款率").metricValue - 0.0045) < 1e-12);
+  assert.equal(newRecords.find((record) => record.metricName === "拼多多-品质退款率").metricValue, 0.0304);
+
+  const legacyText = newTitleText.replace("售后考核指标", "整体情况").replace("近30日高退款商品", "TOP退款商品");
+  const legacyRecords = buildPddPageMetricRecords({ store, pageType: "afterSales", sourceUrl, pageText: legacyText }).records;
+  assert.equal(legacyRecords.find((record) => record.metricName === "拼多多-纠纷退款数").metricValue, 4);
+  assert.ok(Math.abs(legacyRecords.find((record) => record.metricName === "拼多多-纠纷退款率").metricValue - 0.0045) < 1e-12);
+
+  // 结束标记不能漏：换了新表名，区块不能把「近30日高退款商品」表格拖进来
+  assert.equal(newRecords.find((record) => record.metricName === "拼多多-品质退款率").metricValue, 0.0304);
+});
+
+test("售后页的「统计时间」在区块标题之外时，日期取整页而不是回退成今天（issue #667 附带）", () => {
+  const sourceUrl = "https://mms.pinduoduo.com/sycm/goods_quality/detail";
+  const pageText = [
+    "售后数据 消费者体验指标",
+    "统计时间：2026-10-22",
+    "售后考核指标 刷新 10-22 纠纷退款数 4 纠纷退款率 0.45 % 品质退款率 3.04 %",
+    "近30日高退款商品 商品A 退款率 9.9 %"
+  ].join("\n");
+  const records = buildPddPageMetricRecords({ store, pageType: "afterSales", sourceUrl, pageText }).records;
+  const row = records.find((record) => record.metricName === "拼多多-纠纷退款数");
+  assert.equal(row.metricValue, 4);
+  assert.equal(row.dataDate, "2026-10-22");
+});

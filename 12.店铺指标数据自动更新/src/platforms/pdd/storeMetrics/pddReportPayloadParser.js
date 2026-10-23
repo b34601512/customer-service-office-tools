@@ -135,8 +135,10 @@ function extractPddMetricSectionText(pageType, pageText) {
     if (sectionStartIndex < 0) sectionStartIndex = text.lastIndexOf("客服数据");
   }
   if (pageType === "afterSales") {
-    sectionStartIndex = text.lastIndexOf("整体情况");
-    sectionEndMarkers = ["TOP退款商品", "如何提升售后服务质量"];
+    // 2026-10-23 拼多多改版：区块标题「整体情况」→「售后考核指标」；末尾表格「TOP退款商品」→「近30日高退款商品」。
+    // 两边都认（新标题优先，谁的位置靠后算谁），防回潮也防旧页报错（issue #667）。
+    sectionStartIndex = Math.max(text.lastIndexOf("售后考核指标"), text.lastIndexOf("整体情况"));
+    sectionEndMarkers = ["近30日高退款商品", "TOP退款商品", "如何提升售后服务质量"];
   }
   if (pageType === "overall") {
     sectionStartIndex = findPddOverallSectionStart(text);
@@ -154,6 +156,8 @@ function resolvePddDataDate(pageText, fallbackDate = new Date()) {
   if (statisticDate) return statisticDate;
   const anyDate = normalizeLooseDateText(text);
   if (anyDate) return anyDate;
+  // fallbackDate 显式传 null = 只要「文里真的写了日期」的结果，没有就返回空串（供多段文本逐级兜底用）。
+  if (fallbackDate === null) return "";
   return formatDate(fallbackDate);
 }
 
@@ -279,7 +283,7 @@ function resolvePddStatisticsRange(dataDate, windowDays) {
   };
 }
 
-function buildPddMetricRecord(store, pageType, definition, pageText, sourceUrl, collectedAt, fallbackDate, metricNames) {
+function buildPddMetricRecord(store, pageType, definition, pageText, sourceUrl, collectedAt, fallbackDate, metricNames, pageLevelDataDate) {
   const lines = String(pageText || "").split(/\r?\n/).map(normalizePddText).filter(Boolean);
   const fallbackLines = normalizePddText(pageText).split(/\s+/).filter(Boolean);
   const parsedValue = parsePddSpecialMetricValue(pageText, definition) ||
@@ -298,7 +302,9 @@ function buildPddMetricRecord(store, pageType, definition, pageText, sourceUrl, 
       definition.sourceMetricNames
     );
   if (!parsedValue) return null;
-  const dataDate = resolvePddDataDate(pageText, fallbackDate);
+  // 2026-10-23：拼多多售后页把「统计时间」放在区块标题之外，只用区块正文会拿不到日期而回退成今天；
+  // 这里先用区块正文找，找不到再用整页正文（issue #667 附带修正）。
+  const dataDate = resolvePddDataDate(pageText, null) || pageLevelDataDate || resolvePddDataDate(pageText, fallbackDate);
   const statisticsRange = resolvePddStatisticsRange(dataDate, definition.windowDays);
   return createStoreMetricRecord({
     platform: "拼多多",
@@ -322,6 +328,7 @@ function buildPddPageMetricRecords({ store, pageType, pageText, sourceUrl, colle
   const definitions = PDD_PAGE_METRIC_DEFINITIONS[pageType] || [];
   const metricPageText = extractPddMetricSectionText(pageType, pageText);
   if (!metricPageText) return { records: [], skipped: definitions.map((d) => d.metricName) };
+  const pageLevelDataDate = resolvePddDataDate(pageText, null);
   const metricNames = Array.from(new Set(definitions.flatMap(getPddDefinitionMetricNames)));
   const skipped = [];
   const records = definitions.flatMap((definition) => {
@@ -333,7 +340,8 @@ function buildPddPageMetricRecords({ store, pageType, pageText, sourceUrl, colle
       sourceUrl,
       collectedAt,
       fallbackDate,
-      metricNames
+      metricNames,
+      pageLevelDataDate
     );
     if (!record) { skipped.push(definition.metricName); return []; }
     return [record];
