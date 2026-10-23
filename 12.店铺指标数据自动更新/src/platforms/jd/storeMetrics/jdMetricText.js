@@ -6,6 +6,11 @@ function normalizeWhitespace(value) {
   return String(value || "").replace(/\s+/g, " ").trim();
 }
 
+// 2026-10-23（霍青桐实测）：京东页面值为「--」时，旧的兜底读法会顺着标签往后抓第一个百分比，
+// 结果把隔壁指标的数抄过来（京东1店「工单24小时完结率 --」被写成平台介入率的 0.18%）。
+// 口径：标签后面紧跟着空值标记 → 这个指标就是无数据，返回 null，别往后找数。
+const JD_EMPTY_VALUE_SOURCE = "^\\s*(?:--|—|–|-)";
+
 async function readJdMetricPageText(page) {
   const textParts = [];
   for (const frame of page.frames()) {
@@ -94,8 +99,9 @@ function extractMetricFromText(pageText, metricLabel, unitPattern) {
 }
 
 async function readMetricFromNearbyElement(page, metricLabel, unitPattern) {
-  return page.evaluate(({ label, unitSource }) => {
+  return page.evaluate(({ label, unitSource, emptySource }) => {
     const unitExpression = new RegExp(`([0-9][0-9,]*(?:\\.[0-9]+)?)\\s*(?:${unitSource})`, "i");
+    const emptyExpression = new RegExp(emptySource);
     const allElements = Array.from(document.querySelectorAll("body *"));
     const labelElements = allElements.filter((element) =>
       String(element.textContent || "").replace(/\s+/g, " ").trim() === label &&
@@ -118,11 +124,12 @@ async function readMetricFromNearbyElement(page, metricLabel, unitPattern) {
     for (const candidateText of candidateTexts) {
       const labelOffset = candidateText.indexOf(label);
       const trailingText = candidateText.slice(labelOffset + label.length);
+      if (emptyExpression.test(trailingText)) return null;
       const match = trailingText.match(unitExpression);
       if (match) return Number(match[1].replace(/,/g, ""));
     }
     return null;
-  }, { label: metricLabel, unitSource: unitPattern });
+  }, { label: metricLabel, unitSource: unitPattern, emptySource: JD_EMPTY_VALUE_SOURCE });
 }
 
 // 读取单个指标数值；页面没有该指标或数值为「—」等情况时返回 null，由收集器决定跳过该项，
@@ -136,6 +143,7 @@ async function readMetricValue(page, pageText, metricLabel, unitPattern) {
 
 module.exports = {
   normalizeWhitespace,
+  JD_EMPTY_VALUE_SOURCE,
   readJdMetricPageText,
   waitForJdMetricPageText,
   waitForVisibleJdMetricCardText,
