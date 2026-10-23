@@ -65,7 +65,12 @@ async function 跑脚本(参数数组, 选项 = {}) {
   } finally {
     clearTimeout(定时器);
   }
-  if (!响应.ok) throw new Error(`金山接口返回 HTTP ${响应.status}（检查同步地址与脚本令牌是否有效）`);
+  if (!响应.ok) {
+    // 2026-10-23 阿朱定位：HTTP 403 有两个完全不同的原因（文件不存在 vs 令牌/权限），
+    // 只报状态码会把 body 吃掉、逼人去猜；这里把 body 前 300 字带上。
+    const 摘要 = String(文本 || "").replace(/\s+/g, " ").slice(0, 300);
+    throw new Error(`金山接口返回 HTTP ${响应.status}（检查同步地址与脚本令牌是否有效）${摘要 ? `：${摘要}` : ""}`);
+  }
   let 载荷 = null;
   try {
     载荷 = JSON.parse(文本);
