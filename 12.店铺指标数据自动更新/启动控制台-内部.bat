@@ -1,6 +1,6 @@
 @echo off
 setlocal EnableExtensions DisableDelayedExpansion
-rem Start one independent maximized CLI window; store collection defaults to hybrid Chrome mode.
+rem Runs the CLI inside the caller window (Windows Terminal shell); store collection defaults to hybrid Chrome mode.
 chcp 65001 >nul
 title Store Metric CLI v0.01
 pushd "%~dp0"
@@ -16,7 +16,7 @@ if errorlevel 1 (
   pause
   exit /b 1
 )
-start "" /max /D "%~dp0" node.exe "%~dp0src\cli\startCli.js"
+node.exe "%~dp0src\cli\startCli.js"
 set "START_CODE=%ERRORLEVEL%"
 popd
 endlocal & exit /b %START_CODE%

@@ -22,8 +22,8 @@ if errorlevel 1 (
   )
 )
 
-rem Match project 1: create one independent maximized console window.
-start "" /max /D "%~dp0" python.exe -B boss_tui.py
+rem Runs the TUI inside the caller window (Windows Terminal shell), same as project 1.
+python.exe -B boss_tui.py
 set "START_CODE=%ERRORLEVEL%"
 if not "%START_CODE%"=="0" (
   echo [ERROR] failed to start TUI. Exit code: %START_CODE%.
