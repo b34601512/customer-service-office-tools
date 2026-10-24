@@ -111,24 +111,59 @@ async function dismissLoginPopupIfPresent(page) {
   }
 }
 
-async function waitForWorkbookReady(page, sheetName, timeoutMs) {
-  // 等金山表格运行时和目标工作表对象真正就绪；用毫秒轮询，避免后台页 rAF 停摆。
-  await page.waitForFunction(
-    (targetSheetName) => {
+const WAIT_READY_MS = 90000; // 单次等待上限（2026-10-24 王语嫣：60s→90s；13:56 曾连续两次 60s 超时）
+
+async function 诊断未就绪原因(page, sheetName) {
+  // 返回「还缺哪个条件」——超时的时候靠它说清是页面没加载、还是页面结构变了。
+  // 2026-10-24 加：原来的 waitForFunction 超时只给一句 Timeout，看不出卡在哪一步。
+  try {
+    return await page.evaluate((targetSheetName) => {
+      const 缺 = [];
       const workbook = window.APP && window.APP.workbook;
-      if (!workbook || typeof workbook.getWorksheets !== 'function') return false;
+      if (!workbook) return { 就绪: false, 缺: ["workbook（页面运行时还没起来）"] };
+      if (typeof workbook.getWorksheets !== "function") return { 就绪: false, 缺: ["getWorksheets 不是函数"] };
       const worksheets = workbook.getWorksheets();
-      if (!worksheets || typeof worksheets.getItemByName !== 'function') return false;
-      const sheet = worksheets.getItemByName(targetSheetName);
-      if (!sheet || typeof sheet.loadSheetData !== 'function' || typeof sheet.getUsedRange !== 'function') {
-        return false;
+      if (!worksheets || typeof worksheets.getItemByName !== "function") {
+        return { 就绪: false, 缺: ["getItemByName 不是函数"] };
       }
-      const usedRange = sheet.getUsedRange();
-      return Boolean(usedRange && typeof usedRange.getRangeContents === 'function');
-    },
-    sheetName,
-    { polling: 250, timeout: timeoutMs }
-  );
+      let sheet = null;
+      try {
+        sheet = worksheets.getItemByName(targetSheetName);
+      } catch (e) {
+        return { 就绪: false, 缺: ["getItemByName 抛错：" + e.message] };
+      }
+      if (!sheet) return { 就绪: false, 缺: ["工作表「" + targetSheetName + "」不存在"] };
+      if (typeof sheet.loadSheetData !== "function") 缺.push("loadSheetData");
+      if (typeof sheet.getUsedRange !== "function") 缺.push("getUsedRange");
+      if (缺.length) return { 就绪: false, 缺 };
+      let usedRange = null;
+      try {
+        usedRange = sheet.getUsedRange();
+      } catch (e) {
+        return { 就绪: false, 缺: ["getUsedRange 抛错：" + e.message] };
+      }
+      if (!usedRange) return { 就绪: false, 缺: ["usedRange 还是 null（表数据没加载完）"] };
+      if (typeof usedRange.getRangeContents !== "function") return { 就绪: false, 缺: ["getRangeContents 不是函数"] };
+      return { 就绪: true, 缺: [] };
+    }, sheetName);
+  } catch (e) {
+    return { 就绪: false, 缺: ["页面不可用：" + String((e && e.message) || e).slice(0, 120)] };
+  }
+}
+
+async function waitForWorkbookReady(page, sheetName, timeoutMs) {
+  // 等金山表格运行时和目标工作表对象真正就绪；自己按 250ms 轮询（后台页 rAF 会停摆，不能用固定 sleep）。
+  const 起 = Date.now();
+  let 最后 = { 就绪: false, 缺: ["未开始"] };
+  while (Date.now() - 起 < timeoutMs) {
+    const 态 = await 诊断未就绪原因(page, sheetName);
+    if (态.就绪) return true;
+    最后 = 态;
+    await page.waitForTimeout(250);
+  }
+  const 错 = new Error(`等表格就绪超时 ${Math.round(timeoutMs / 1000)}s，卡在：${最后.缺.join("、")}`);
+  错.缺 = 最后.缺;
+  throw 错;
 }
 
 async function readScheduleSheet(page, sheetName, debugColors) {
@@ -355,14 +390,45 @@ function matrixToTsv(matrix) {
 
     let userInfo = null;
     let lastError = null;
-    for (let attempt = 0; attempt < 2; attempt += 1) {
+    const 尝试次数 = 3; // 2026-10-24 王语嫣：2→3 次、每次 90s；每次失败留截图+页面状态，别让人再猜
+    for (let attempt = 0; attempt < 尝试次数; attempt += 1) {
+      if (attempt > 0) {
+        console.log(`第 ${attempt} 次重试（上一次：${lastError && lastError.message}）`);
+        await page.waitForTimeout(5000);
+        try {
+          await page.reload({ waitUntil: "domcontentloaded", timeout: 90000 });
+        } catch (_e) {
+          // 重开失败不致命，继续下一轮等待
+        }
+      }
       await dismissLoginPopupIfPresent(page);
       try {
-        await waitForWorkbookReady(page, SHEET_NAME, 60000);
+        await waitForWorkbookReady(page, SHEET_NAME, WAIT_READY_MS);
         lastError = null;
         break;
       } catch (error) {
         lastError = error;
+        try {
+          fs.mkdirSync(OUT_DIR, { recursive: true });
+          const 戳 = new Date().toISOString().replace(/[:.]/g, "-");
+          await page.screenshot({ path: path.join(OUT_DIR, `读表失败-${戳}.png`), fullPage: false }).catch(() => {});
+          const 页面 = await page
+            .evaluate(() => ({
+              标题: document.title,
+              正文前300: ((document.body && document.body.innerText) || "").replace(/s+/g, " ").slice(0, 300),
+              有登录弹窗: Boolean(document.querySelector("#util-popup .wps-login-panel__header__right button")),
+              有APP: Boolean(window.APP),
+              有workbook: Boolean(window.APP && window.APP.workbook)
+            }))
+            .catch(() => ({}));
+          fs.writeFileSync(
+            path.join(OUT_DIR, `读表失败-${戳}.json`),
+            JSON.stringify({ 时间: 戳, 第几次: attempt + 1, 卡在: (error && error.缺) || [], ...页面 }, null, 2),
+            "utf8"
+          );
+        } catch (_e) {
+          // 取证失败不影响主流程
+        }
       }
     }
     if (lastError) throw lastError;
