@@ -1,5 +1,0 @@
-[
- { "name": "京东德达-1008", "endpoint": "/api/im/agent-trace/paginateV2", "method": "POST", "body": { "thirdShopId": "2748947402403971286", "pageIndex": 1, "pageSize": 300, "beginTime": "2026-10-08 10:00:00", "endTime": "2026-10-08 12:00:00" } },
- { "name": "京东DEDAKJ-1008", "endpoint": "/api/im/agent-trace/paginateV2", "method": "POST", "body": { "thirdShopId": "2748944481825915146", "pageIndex": 1, "pageSize": 300, "beginTime": "2026-10-08 10:00:00", "endTime": "2026-10-08 12:00:00" } },
- { "name": "京东自营-1008", "endpoint": "/api/im/agent-trace/paginateV2", "method": "POST", "body": { "thirdShopId": "2748947084576361329", "pageIndex": 1, "pageSize": 300, "beginTime": "2026-10-08 10:00:00", "endTime": "2026-10-08 12:00:00" } }
-]

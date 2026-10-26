@@ -1,3 +1,0 @@
-[
- { "name": "店铺全量", "endpoint": "/api/copilot/product-learning/config/page?pageIndex=1&pageSize=100", "method": "GET" }
-]
