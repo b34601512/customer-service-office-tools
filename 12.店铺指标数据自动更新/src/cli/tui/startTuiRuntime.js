@@ -8,12 +8,11 @@ const { createOverviewPage } = require("./pages/overview");
 const { createTasksPage } = require("./pages/tasks");
 const { createStoresPage } = require("./pages/stores");
 const { createSettingsPage } = require("./pages/settings");
-const { createKdocsPage } = require("./pages/kdocs");
 const { createHelpPage } = require("./pages/help");
 const { createTuiServices } = require("./tuiServices");
 const { CLI_VERSION } = require("../cliConstants");
 const { getStoreCompletionSummary } = require("../cliDashboard");
-const { 最大化当前控制台窗口 } = require("../../../../共享CLI/最大化控制台窗口");
+const { 最大化当前控制台窗口 } = require("../../../共享CLI/最大化控制台窗口") // 2026-10-26 修：原来指到项目外的 ........共享CLI（那目录不存在，TUI 直接 require 崩）;
 
 const STATUS_MAP = {
   idle: { text: "[空闲]", color: "gray" },
@@ -73,7 +72,6 @@ async function startTuiRuntime(dependencies = {}) {
     createTasksPage(),
     createStoresPage(),
     createSettingsPage(),
-    createKdocsPage(),
     createHelpPage()
   ];
   const ctx = { services };

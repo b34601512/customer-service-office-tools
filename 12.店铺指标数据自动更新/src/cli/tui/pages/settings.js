@@ -3,7 +3,6 @@ const ansi = require("../ansi");
 const { fit } = require("../width");
 const { titleBanner } = require("../gameUi");
 const { formatDateSelection } = require("../../cliDashboard");
-const { editKdocsSyncSettings } = require("../kdocsSettingsEditor");
 
 function getSettingsActions(app, page) {
   const services = app.ctx.services;
@@ -73,8 +72,7 @@ function getSettingsActions(app, page) {
         }
         app.requestRender();
       }
-    },
-    { label: "修改金山同步设置", run: (app) => editKdocsSyncSettings(app, page) }
+    }
   ];
 }
 
@@ -91,7 +89,6 @@ function createSettingsPage() {
       lines.push(...titleBanner("◆ 设置 ◆", columns - 2));
       lines.push(` 日期方式  ${formatDateSelection(config.dateSelection)}`);
       lines.push(` 汇总表    ${config.workbook.path || "未设置"}`);
-      lines.push(` 金山同步  ${services.isKdocsSyncConfigured(config) ? ansi.colorize("[已配置]", "brightGreen") : ansi.colorize("[未配置]", "yellow")}`);
       lines.push("");
       lines.push(ansi.colorize("── 操作 ──", "brightCyan"));
       getSettingsActions(app, this).forEach((action, index) => {

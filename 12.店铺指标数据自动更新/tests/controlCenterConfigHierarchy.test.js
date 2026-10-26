@@ -5,7 +5,11 @@ const path = require("node:path");
 
 const projectRoot = path.join(__dirname, "..");
 const packageJson = JSON.parse(fs.readFileSync(path.join(projectRoot, "package.json"), "utf8"));
-const launchBatch = fs.readFileSync(path.join(projectRoot, "启动控制台.bat"), "utf8");
+// 外层 bat 是 GBK 编码（cmd 里写的），按 utf8 读会把中文读成乱码，断言就对不上。
+// 用 TextDecoder('gbk') 正确解码，才能直接断言文件名。
+const launchBatch = new TextDecoder("gbk").decode(fs.readFileSync(path.join(projectRoot, "启动控制台.bat")));
+// 2026-10-23 起：外层 bat 只负责用 wt.exe 拉起内层 bat，真正的 node 启动在内层。
+const launchBatchInner = fs.readFileSync(path.join(projectRoot, "启动控制台-内部.bat"), "utf8");
 const cliRuntime = fs.readFileSync(path.join(projectRoot, "src", "cli", "cliRuntime.js"), "utf8");
 const cliDashboard = fs.readFileSync(path.join(projectRoot, "src", "cli", "cliDashboard.js"), "utf8");
 const cliConfigMenus = fs.readFileSync(path.join(projectRoot, "src", "cli", "cliConfigMenus.js"), "utf8");
@@ -13,8 +17,11 @@ const cliConfigMenus = fs.readFileSync(path.join(projectRoot, "src", "cli", "cli
 test("双击入口和npm入口只启动CLI", () => {
   assert.equal(packageJson.main, "src/cli/startCli.js");
   assert.equal(packageJson.scripts.start, "node src/cli/startCli.js");
-  assert.match(launchBatch, /src\\cli\\startCli\.js/);
-  assert.doesNotMatch(launchBatch, /controlCenter\\startControlCenter\.js/);
+  // 2026-10-23 起：外层 bat 只负责用 wt.exe 拉起内层 bat，真正 node 启动在内层。
+  assert.match(launchBatch, /wt\.exe/);
+  assert.match(launchBatch, /启动控制台-内部\.bat/);
+  assert.match(launchBatchInner, /src\\cli\\startCli\.js/);
+  assert.doesNotMatch(launchBatch + launchBatchInner, /controlCenter\\startControlCenter\.js/);
   assert.doesNotMatch(cliRuntime, /startControlCenterServer|launchControlCenterBrowser|127\.0\.0\.1/);
 });
 

@@ -13,7 +13,7 @@ async function showCliHelp(terminal) {
   terminal.writeLine("6. 店铺管理可修改编号；新增店铺可直接填6，允许跳过中间编号。");
   terminal.writeLine("7. 店铺指标只保留平台考核最终数值，不保存客服个人或业务明细。");
   terminal.writeLine("8. 本程序固定使用 Google Chrome；可用 npm run cli:headed 或 cli:headless 指定模式。");
-  terminal.writeLine("9. 本程序运行不需要AI；首页[A]可把本地“数据源”一次同步到金山文档，并回读数量确认结果。");
+  terminal.writeLine("9. 本程序运行不需要AI；写入目标＝企业微信《店铺指标数据》子表「数据源」（金山链 2026-10-26 已按老板令删除）。跑法：node scripts/写企微数据源.js --提交");
   await terminal.pause();
 }
 

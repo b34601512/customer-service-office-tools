@@ -6,7 +6,6 @@ const { createOverviewPage } = require("../src/cli/tui/pages/overview");
 const { createTasksPage, formatStoreResultLine } = require("../src/cli/tui/pages/tasks");
 const { createStoresPage, findStore } = require("../src/cli/tui/pages/stores");
 const { createSettingsPage } = require("../src/cli/tui/pages/settings");
-const { createKdocsPage } = require("../src/cli/tui/pages/kdocs");
 const { createHelpPage } = require("../src/cli/tui/pages/help");
 const { createTuiServices } = require("../src/cli/tui/tuiServices");
 const { buildStatusLines } = require("../src/cli/tui/startTuiRuntime");
@@ -56,7 +55,6 @@ async function main() {
   const mockConfig = {
     workbook: { path: "C:/mock/汇总表.xlsx" },
     dateSelection: { mode: "automatic" },
-    kdocsDataSourceSync: { documentUrl: "", webhookUrl: "", apiToken: "" },
     jd: {
       stores: [{ key: "jd1", displayName: "京东一号", enabled: true, username: "u", password: "p", sources: {} }]
     },
@@ -97,12 +95,8 @@ async function main() {
       patchState: () => {},
       subscribeState: () => () => {},
       runTask: async () => ({ detail: "mock" }),
-      runKdocsDataSourceSync: async () => ({ remoteDataRowCount: 10 }),
-      isKdocsSyncConfigured: () => false,
       openRecentEvidenceFolder: async () => {},
       openWorkbookDirectory: async () => {},
-      openKdocsScript: async () => {},
-      openKdocsDocument: async () => {},
       shutdown: async () => {}
     }
   });
@@ -112,7 +106,6 @@ async function main() {
     createTasksPage(),
     createStoresPage(),
     createSettingsPage(),
-    createKdocsPage(),
     createHelpPage()
   ];
   const ctx = { services };
@@ -212,10 +205,13 @@ async function main() {
 
   // 菜单循环：顶部按上直达底部（退出控制台），底部按下回到顶部。
   const overviewPage = pages[0];
+  // 2026-10-26：金山入口删掉后首页动作少了一条，这里别再写死 6，按实际动作数取"最后一个"
+  const 首页动作数 = overviewPage.getActions(app).length;
+  const 最后一个 = 首页动作数 - 1;
   app.switchPage(0);
   overviewPage.state.selection = 0;
   app.dispatchKey("up");
-  assert.strictEqual(overviewPage.state.selection, 6);
+  assert.strictEqual(overviewPage.state.selection, 最后一个);
   app.dispatchKey("down");
   assert.strictEqual(overviewPage.state.selection, 0);
 
@@ -223,7 +219,7 @@ async function main() {
   app.switchPage(0);
   app.dispatchKey("0");
   assert.strictEqual(exitRequestCount, 1);
-  overviewPage.state.selection = 6;
+  overviewPage.state.selection = 最后一个;
   app.dispatchKey("enter");
   assert.strictEqual(exitRequestCount, 2);
   assert.strictEqual(app.exitConfirmPending, false);

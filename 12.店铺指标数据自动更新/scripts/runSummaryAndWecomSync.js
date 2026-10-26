@@ -1,6 +1,7 @@
-// 12号项目一键执行：等价 TUI「2 开始汇总」+「5 金山文档 → 1 一键同步数据源」。
+// 12号项目一键执行：等价 TUI「2 开始汇总」+「写企业微信《店铺指标数据》子表「数据源」」。
 // 说明：直接调用与界面完全相同的 services 真源，不做任何界面模拟。
-// 用法：node scripts/runSummaryAndKdocsSync.js
+// 金山链 2026-10-26 已按老板 17:28 令整个删除（无逃生口、无失败回落）。
+// 用法：node scripts/runSummaryAndWecomSync.js [--不写表]
 const fs = require('fs');
 const path = require('path');
 
@@ -9,7 +10,7 @@ process.chdir(projectRoot);
 
 const logDir = path.join(projectRoot, 'runtime', 'logs');
 fs.mkdirSync(logDir, { recursive: true });
-const logFile = path.join(logDir, 'p5-summary-kdocs.log');
+const logFile = path.join(logDir, 'p5-summary-wecom.log');
 fs.writeFileSync(logFile, `===== 开始 ${new Date().toISOString()} =====\n`);
 
 const originalLog = console.log.bind(console);
@@ -28,7 +29,7 @@ console.error = tee(originalError);
 const { createControlCenterStateStore } = require('../src/controlCenter/controlCenterState');
 const { runConfiguredStoresTask } = require('../src/controlCenter/controlCenterTask');
 const { readStoreMetricConfig } = require('../src/config/storeMetricConfig');
-const { syncDataSourceToKdocs } = require('../src/kdocsSync/syncDataSourceToKdocs');
+const { syncDataSourceToWecom } = require('./写企微数据源');
 
 function 输出(标题, 内容) {
   console.log(`\n---------- ${标题} ----------`);
@@ -75,18 +76,18 @@ async function main() {
     失败: 店铺结果.filter((s) => s.状态 === 'error').length,
   });
 
-  // 第二步：菜单5 → 1「一键同步数据源」（在线全量替换为本地数据源并回读核对）。
-  输出('步骤2/2 金山文档·一键同步数据源');
-  const syncResult = await syncDataSourceToKdocs({ projectConfig: readStoreMetricConfig() });
-  输出('步骤2 结束', {
-    在线行数: syncResult?.remoteDataRowCount,
-    本地行数: syncResult?.localDataRowCount,
-    列数: syncResult?.localColumnCount,
-  });
+  // 第二步：写企业微信《店铺指标数据》子表「数据源」（先删同批次旧行 → 写 → 回读两层）。
+  if (process.argv.includes('--不写表')) {
+    输出('步骤2/2 跳过写企微（--不写表）');
+  } else {
+    输出('步骤2/2 写企业微信·数据源');
+    const syncResult = await syncDataSourceToWecom({ submit: true });
+    输出('步骤2 结束', syncResult);
+  }
 
   输出('全部完成', { 总耗时秒: Math.round((Date.now() - started) / 1000) });
   if (汇总错误) {
-    console.log('P5_RESULT=PARTIAL（汇总阶段有异常：' + 汇总错误 + '）');
+    console.log('P5_RESULT=PARTIAL（汇总阶段有异常，表照写：' + 汇总错误 + '）');
     process.exit(1);
   }
 }

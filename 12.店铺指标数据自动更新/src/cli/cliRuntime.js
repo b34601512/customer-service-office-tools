@@ -17,7 +17,6 @@ const { openRecentEvidenceFolder } = require("./cliEvidenceMenu");
 const { runBatchTaskFromCli } = require("./cliTaskRunner");
 const { showForceCollectionScopeMenu } = require("./cliCollectionScopeMenu");
 const { showCliHelp } = require("./cliHelp");
-const { showKdocsSyncMenu } = require("./cliKdocsSyncMenu");
 
 async function handleCliMenuSelection({ selection, terminal, stateStore }) {
   if (selection === "1") await runBatchTaskFromCli({ terminal, stateStore });
@@ -33,7 +32,6 @@ async function handleCliMenuSelection({ selection, terminal, stateStore }) {
   if (selection === "6") await openRecentEvidenceFolder();
   if (selection === "7") await revealLocalPath(readStoreMetricConfig().workbook.path);
   if (selection === "8") await showCliHelp(terminal);
-  if (selection === "a") await showKdocsSyncMenu(terminal);
 }
 
 async function startCliRuntime(dependencies = {}) {

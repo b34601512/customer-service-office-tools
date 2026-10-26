@@ -50,7 +50,6 @@ function createOverviewPage() {
           }
         },
         { label: "店铺管理", run: (app) => app.switchPage(findPageIndex(app, "3")) },
-        { label: "金山文档同步", run: (app) => app.switchPage(findPageIndex(app, "5")) },
         {
           label: "打开凭证文件夹",
           run: runOpenAction(app, page, "openRecentEvidenceFolder", "凭证文件夹")

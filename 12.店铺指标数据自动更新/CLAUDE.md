@@ -8,7 +8,7 @@
 
 - Node.js CommonJS 命令行程序，不启动网页服务。
 - `playwright-core` 连接程序拉起的 Google Chrome，并复用隔离的长期登录资料。
-- `xlsx`、`jszip`、`@xmldom/xmldom` 原子更新 `.xlsx`；HTTPS webhook 调用金山 AirScript。
+- `xlsx`、`jszip`、`@xmldom/xmldom` 原子更新 `.xlsx`；在线表走企业微信智能表格 CLI（`@wecom/cli`）。
 
 ## 3. 模块结构
 
@@ -17,7 +17,7 @@
 - `src/platforms/`：四个平台的登录、切店、页面读取、解析和指标映射。
 - `src/engine/`、`shared/`：浏览器、进程、弹窗、凭证、文件和任务历史。
 - `src/metrics/`、`summaryData/`：生成记录键并读写 18 列“数据源”。
-- `src/kdocsSync/`：全量替换在线数据源并回读数量；`tests/` 覆盖各主链路。
+- `src/tools/wecomDataSourceClient.js`：企微智能表格传输层（字段校验/分页/切块/回读归一）；`scripts/写企微数据源.js`：编排（批次键=采集日期+店铺编号、删旧行→写→回读两层）。**金山 AirScript 链 2026-10-26 已整体删除**。
 
 ## 4. 数据流
 

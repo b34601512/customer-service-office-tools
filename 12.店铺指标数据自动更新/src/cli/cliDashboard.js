@@ -3,7 +3,6 @@ const {
   createStoreMetricRunScope,
   doesStoreMetricRunMatchScope
 } = require("../shared/taskHistoryParts/storeMetricRunHistory");
-const { isKdocsSyncConfigured } = require("../kdocsSync/kdocsSyncSettings");
 const { PLATFORM_SCOPE_DEFINITIONS } = require("../shared/storeCollectionScope");
 const { CLI_VERSION } = require("./cliConstants");
 
@@ -126,7 +125,6 @@ function renderDashboard({ terminal, config, state, taskHistory, now = new Date(
   terminal.writeLine(`平台分布  ${formatEnabledPlatformCounts(config)}`);
   terminal.writeLine(`日期方式  ${formatDateSelection(config?.dateSelection)}`);
   terminal.writeLine(`汇总文件  ${workbookName}`);
-  terminal.writeLine(`金山同步  ${isKdocsSyncConfigured(config?.kdocsDataSourceSync) ? "已配置" : "未配置"}`);
   terminal.writeLine(`最近结果  ${formatRecentResult(terminal, state, taskHistory)}`);
   terminal.writeLine(terminal.theme.muted(DIVIDER));
   terminal.writeLine(terminal.theme.heading("操作"));

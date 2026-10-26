@@ -188,11 +188,6 @@ function createDefaultStoreMetricConfig(baseDate = new Date()) {
       mode: "automatic",
       manual: createDefaultManualDateConfig(baseDate)
     },
-    kdocsDataSourceSync: {
-      documentUrl: "",
-      webhookUrl: "",
-      apiToken: ""
-    },
     jd: {
       stores: [
         createJdStoreConfig({
@@ -243,20 +238,6 @@ function createDefaultStoreMetricConfig(baseDate = new Date()) {
         })
       ]
     }
-  };
-}
-
-function normalizeKdocsDataSourceSync(kdocsDataSourceSync, fallbackKdocsDataSourceSync = {}) {
-  return {
-    documentUrl: String(
-      kdocsDataSourceSync?.documentUrl ?? fallbackKdocsDataSourceSync.documentUrl ?? ""
-    ).trim(),
-    webhookUrl: String(
-      kdocsDataSourceSync?.webhookUrl ?? fallbackKdocsDataSourceSync.webhookUrl ?? ""
-    ).trim(),
-    apiToken: String(
-      kdocsDataSourceSync?.apiToken ?? fallbackKdocsDataSourceSync.apiToken ?? ""
-    ).trim()
   };
 }
 
@@ -432,10 +413,6 @@ function normalizeStoreMetricConfig(config, baseDate = new Date()) {
       path: String(config?.workbook?.path || defaults.workbook.path).trim()
     },
     dateSelection: normalizeDateSelection(config?.dateSelection, defaults.dateSelection),
-    kdocsDataSourceSync: normalizeKdocsDataSourceSync(
-      config?.kdocsDataSourceSync,
-      defaults.kdocsDataSourceSync
-    ),
     jd: {
       stores: jdStoreToolkit.normalizeStores(config?.jd?.stores, defaults.jd.stores)
     },
@@ -500,22 +477,6 @@ function saveStoreMetricConfig(nextConfig, currentConfig = readStoreMetricConfig
         ...(nextConfig?.dateSelection?.manual || {})
       }
     },
-    kdocsDataSourceSync: {
-      ...currentConfig.kdocsDataSourceSync,
-      ...(nextConfig?.kdocsDataSourceSync || {})
-    },
-    jd: {
-      stores: mergeJdStorePatches(currentConfig.jd.stores, nextConfig?.jd?.stores)
-    },
-    tmall: {
-      stores: mergeTmallStorePatches(currentConfig.tmall.stores, nextConfig?.tmall?.stores)
-    },
-    pdd: {
-      stores: mergePddStorePatches(currentConfig.pdd.stores, nextConfig?.pdd?.stores)
-    },
-    douyin: {
-      stores: mergeDouyinStorePatches(currentConfig.douyin.stores, nextConfig?.douyin?.stores)
-    }
   };
   const normalizedConfig = normalizeStoreMetricConfig(mergedConfig);
   writeJsonFileAtomic(appConfig.projectConfigPath, normalizedConfig);
@@ -595,17 +556,9 @@ function listEnabledStoreTasks(config) {
 }
 
 function createPublicConfig(config) {
-  const kdocsDataSourceSync = config.kdocsDataSourceSync || {};
   return {
     workbook: config.workbook,
     dateSelection: config.dateSelection,
-    kdocsDataSourceSync: {
-      documentUrl: kdocsDataSourceSync.documentUrl || "",
-      webhookUrl: "",
-      webhookConfigured: Boolean(kdocsDataSourceSync.webhookUrl),
-      apiToken: "",
-      apiTokenConfigured: Boolean(kdocsDataSourceSync.apiToken)
-    },
     jd: {
       stores: config.jd.stores.map((store) => {
         const { downloadDir: _internalDownloadDirectory, ...publicStore } = store;
@@ -680,6 +633,5 @@ module.exports = {
   createNextDouyinStore,
   createDefaultStoreMetricConfig,
   normalizeStoreMetricConfig,
-  normalizeKdocsDataSourceSync,
   resolvePlatformConfigPath
 };

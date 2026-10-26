@@ -1,7 +1,6 @@
 // TUI 服务层：页面唯一数据入口，把 #12 业务模块收口成页面可消费的快照 API。
 // 每个 TUI 实例持有自己的 stateStore（createControlCenterStateStore 是每实例 store，
 // 与 #9 的模块级单例不同），runTask 把同一实例交给 runConfiguredStoresTask。
-const fs = require("fs");
 const { createControlCenterStateStore } = require("../../controlCenter/controlCenterState");
 const { runConfiguredStoresTask } = require("../../controlCenter/controlCenterTask");
 const {
@@ -11,12 +10,6 @@ const {
   normalizeStoreKeyInput
 } = require("../../config/storeMetricConfig");
 const { readTaskHistory } = require("../../shared/taskHistoryParts/taskHistoryStore");
-const { syncDataSourceToKdocs } = require("../../kdocsSync/syncDataSourceToKdocs");
-const {
-  isKdocsSyncConfigured,
-  requireValidKdocsDocumentUrl,
-  requireValidKdocsWebhookUrl
-} = require("../../kdocsSync/kdocsSyncSettings");
 const {
   getPlatformMenuDefinition,
   isValidCalendarDate,
@@ -24,10 +17,8 @@ const {
   validateWorkbookPath
 } = require("../cliConfigMenus");
 const { openRecentEvidenceFolder } = require("../cliEvidenceMenu");
-const { airScriptTemplatePath } = require("../cliKdocsSyncMenu");
 const {
   revealLocalPath,
-  openLocalFile,
   openExternalUrl,
   resolveWorkbookFolder
 } = require("../../controlCenter/localFileApiParts/windowsLocalFileActions");
@@ -47,13 +38,6 @@ function createTuiServices({ stateStore, options = {} } = {}) {
     runTask: ({ forceRecollect = false, collectionScope } = {}) =>
       runConfiguredStoresTask(store, { forceRecollect, collectionScope }),
 
-    isKdocsSyncConfigured: (config) => isKdocsSyncConfigured(config?.kdocsDataSourceSync),
-    runKdocsDataSourceSync: () => syncDataSourceToKdocs({ projectConfig: readStoreMetricConfig() }),
-    saveKdocsSyncSettings: (nextSettings) =>
-      saveStoreMetricConfig({ kdocsDataSourceSync: nextSettings }),
-    validateKdocsDocumentUrl: (url) => requireValidKdocsDocumentUrl(url),
-    validateKdocsWebhookUrl: (url) => requireValidKdocsWebhookUrl(url),
-
     getPlatformMenuDefinition: (platformKey) => getPlatformMenuDefinition(platformKey),
     saveStorePatch: (platformKey, storePatch) =>
       getPlatformMenuDefinition(platformKey).saveStorePatch(storePatch),
@@ -72,18 +56,6 @@ function createTuiServices({ stateStore, options = {} } = {}) {
     openWorkbookDirectory: () => {
       const config = readStoreMetricConfig();
       return revealLocalPath(resolveWorkbookFolder(config.workbook.path));
-    },
-    openKdocsScript: () => {
-      if (!fs.existsSync(airScriptTemplatePath)) {
-        throw new Error(`找不到 AirScript 脚本文件：${airScriptTemplatePath}`);
-      }
-      return openLocalFile(airScriptTemplatePath);
-    },
-    openKdocsDocument: () => {
-      const documentUrl = requireValidKdocsDocumentUrl(
-        readStoreMetricConfig().kdocsDataSourceSync?.documentUrl
-      );
-      return openExternalUrl(documentUrl);
     },
     openUrl: (targetUrl) => openExternalUrl(targetUrl),
 
