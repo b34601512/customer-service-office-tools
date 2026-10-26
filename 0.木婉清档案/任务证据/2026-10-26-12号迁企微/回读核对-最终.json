@@ -1,0 +1,10 @@
+{
+ "target": "wecom",
+ "targetConfig": "12.店铺指标数据自动更新/project-config/wecom-target.local.json",
+ "expectedWriteCount": 226,
+ "writtenCount": 0,
+ "readBackCount": 226,
+ "comparedFieldCount": 2712,
+ "mismatchCount": 0,
+ "mismatches": []
+}
