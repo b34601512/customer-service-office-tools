@@ -139,9 +139,9 @@ wecom-robot.json
 **/历史资料备份/
 
 # 本地 kdocs 敏感字段恢复库（不入库，供 git smudge 过滤器恢复 token）
-tools/git-secret-store.json
+工具/tools/git-secret-store.json
 # store 重建时的旧备份也不入库
-tools/git-secret-store.json.bak
+工具/tools/git-secret-store.json.bak
 
 # 运行真值配置彻底不入库：仓库只保留 *.example.* 模板，复制改名后填值即可
 **/project-config/platform-config.json
