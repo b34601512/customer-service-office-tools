@@ -1,8 +1,0 @@
-{
-  "cdp": {
-    "port": 9222,
-    "pageTitleMatch": "京东客服管家",
-    "apiBase": "https://kf.jd.com/chatLog/queryList.action",
-    "pageSize": 50
-  }
-}
