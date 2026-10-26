@@ -1,0 +1,181 @@
+{
+ "sheets": [
+  {
+   "title": "数据明细",
+   "type": "smartsheet",
+   "records": 90,
+   "fields": 24
+  },
+  {
+   "title": "仪表盘1",
+   "type": "dashboard",
+   "fields": 0
+  },
+  {
+   "title": "总趋势",
+   "type": "smartsheet",
+   "records": 105,
+   "fields": 24
+  },
+  {
+   "title": "访客数量",
+   "type": "smartsheet",
+   "records": 13,
+   "fields": 9
+  },
+  {
+   "title": "线上接待量",
+   "type": "smartsheet",
+   "records": 11,
+   "fields": 5
+  },
+  {
+   "title": "出勤统计",
+   "type": "smartsheet",
+   "records": 2,
+   "fields": 5
+  },
+  {
+   "title": "统计日期",
+   "type": "smartsheet",
+   "records": 1,
+   "fields": 1
+  },
+  {
+   "title": "店铺汇总",
+   "type": "smartsheet",
+   "records": 18,
+   "fields": 7
+  },
+  {
+   "title": "客服汇总",
+   "type": "smartsheet",
+   "records": 10,
+   "fields": 6
+  },
+  {
+   "title": "售前汇总",
+   "type": "smartsheet",
+   "records": 5,
+   "fields": 8
+  },
+  {
+   "title": "售后汇总",
+   "type": "smartsheet",
+   "records": 5,
+   "fields": 8
+  },
+  {
+   "title": "图-售前转化率",
+   "type": "smartsheet",
+   "records": 5,
+   "fields": 2
+  },
+  {
+   "title": "图-售前业绩",
+   "type": "smartsheet",
+   "records": 5,
+   "fields": 2
+  },
+  {
+   "title": "图-售前平均响应时长",
+   "type": "smartsheet",
+   "records": 5,
+   "fields": 2
+  },
+  {
+   "title": "图-售前满意率",
+   "type": "smartsheet",
+   "records": 5,
+   "fields": 2
+  },
+  {
+   "title": "图-售前3分钟响应率",
+   "type": "smartsheet",
+   "records": 5,
+   "fields": 2
+  },
+  {
+   "title": "图-售前接待量",
+   "type": "smartsheet",
+   "records": 5,
+   "fields": 2
+  },
+  {
+   "title": "图-售后平均响应时长",
+   "type": "smartsheet",
+   "records": 5,
+   "fields": 2
+  },
+  {
+   "title": "图-售后满意率",
+   "type": "smartsheet",
+   "records": 5,
+   "fields": 2
+  },
+  {
+   "title": "图-售后3分钟响应率",
+   "type": "smartsheet",
+   "records": 5,
+   "fields": 2
+  },
+  {
+   "title": "图-售后接待量",
+   "type": "smartsheet",
+   "records": 5,
+   "fields": 2
+  }
+ ],
+ "charts": [
+  {
+   "title": "售后平均响应时长",
+   "type": "bar",
+   "datasource": "PIrod9"
+  },
+  {
+   "title": "售前满意率",
+   "type": "bar",
+   "datasource": "lENDIR"
+  },
+  {
+   "title": "售后满意率",
+   "type": "bar",
+   "datasource": "hqJLlw"
+  },
+  {
+   "title": "售前转化率",
+   "type": "bar",
+   "datasource": "qg7gTX"
+  },
+  {
+   "title": "售前接待量",
+   "type": "bar",
+   "datasource": "dmahcb"
+  },
+  {
+   "title": "售后3分钟响应率",
+   "type": "bar",
+   "datasource": "koXYGJ"
+  },
+  {
+   "title": "售前业绩",
+   "type": "bar",
+   "datasource": "QRtKAF"
+  },
+  {
+   "title": "售前平均响应时长",
+   "type": "bar",
+   "datasource": "e8rSKf"
+  },
+  {
+   "title": "售后接待量",
+   "type": "bar",
+   "datasource": "D1zQCY"
+  },
+  {
+   "title": "售前3分钟响应率",
+   "type": "bar",
+   "datasource": "GCnxnA"
+  }
+ ]
+}
