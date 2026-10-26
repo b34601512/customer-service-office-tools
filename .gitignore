@@ -192,3 +192,7 @@ wecom-robot.json
 *.token
 *.pid
 *.port
+
+# 本机真值配置的 .bak 也不许入库（阿朱 2026-10-26 发现会带 docid/scode 链接）
+**/*.local.json.bak
+**/*.local.bak
