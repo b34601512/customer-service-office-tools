@@ -8,7 +8,7 @@
  * 匿名可访问的排班链接直接读，需要登录的链接请用本机已登录的浏览器画像。
  *
  * 用法（Windows PowerShell）：
- *   $env:NODE_PATH = "D:\桌面\木婉清\12.店铺指标数据自动更新\node_modules"
+ *   $env:NODE_PATH = "D:\硅基公司\员工\03.巡检员·霍青桐\专项\1.客服超时督办\node_modules"
  *   node .\金山在线表格排班表读取.cjs --url https://www.kdocs.cn/l/分享ID --date 2026-09-13 --out 输出目录
  *
  * 参数：
@@ -75,7 +75,7 @@ try {
   ({ chromium } = require('playwright-core'));
 } catch (error) {
   console.error('找不到 playwright-core。请设置 NODE_PATH 指向已有依赖，例如：');
-  console.error('  $env:NODE_PATH = "D:\\桌面\\木婉清\\12.店铺指标数据自动更新\\node_modules"');
+  console.error('  $env:NODE_PATH = "D:\\硅基公司\\员工\\03.巡检员·霍青桐\\专项\\1.客服超时督办\\node_modules"');
   process.exit(2);
 }
 
