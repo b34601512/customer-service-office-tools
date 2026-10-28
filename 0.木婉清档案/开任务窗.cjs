@@ -57,9 +57,25 @@ if (!fs.existsSync(pi)) {
   process.exit(1);
 }
 
-// 单引号 PowerShell 字符串：这些路径不含单引号，安全。
-// 注意：PowerShell 输出在中文控制台是 GBK，中文标签会被 execFileSync 读成乱码 → **只回数字**。
-const ps = `$p = Start-Process -FilePath '${pi}' -ArgumentList '@${任务文件}' -WorkingDirectory '${工作目录}' -PassThru -ErrorAction Stop; $p.Id`;
+// 唯一模型来源：共享清单按本家绝对路径选择；清单异常时不开任务窗。
+const { 解析开窗模型, 模型参数 } = require('D:/硅基公司/共享/企微工具/解析开窗模型.cjs');
+let 模型选择;
+try {
+  模型选择 = 解析开窗模型(path.resolve(本目录, '..'));
+} catch (error) {
+  console.error('✗ 开窗模型清单读取失败：' + String((error && error.message) || error));
+  process.exit(2);
+}
+console.log(`窗口模型：${模型选择.provider}/${模型选择.model}（thinking=${模型选择.thinking}）`);
+
+// Start-Process 会把参数数组拼成命令行；仅含空格的任务路径需要保留双引号。
+function psQuote(value) { return "'" + String(value).replace(/'/g, "''") + "'"; }
+function winArg(value) {
+  const text = String(value);
+  return /[\s"]/.test(text) ? '"' + text.replace(/"/g, '\\"') + '"' : text;
+}
+const 参数字面量 = [`@${任务文件}`, ...模型参数(模型选择)].map(winArg).map(psQuote).join(',');
+const ps = `$p = Start-Process -FilePath ${psQuote(pi)} -ArgumentList @(${参数字面量}) -WorkingDirectory ${psQuote(工作目录)} -PassThru -ErrorAction Stop; $p.Id`;
 let pid = 0;
 try {
   const 输出 = execFileSync('powershell', ['-NoProfile', '-Command', ps], { encoding: 'utf8' });
