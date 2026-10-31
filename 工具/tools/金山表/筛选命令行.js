@@ -43,8 +43,55 @@ async function 跑筛选命令行({ argv = [], 项目根 = process.cwd(), log = 
   if (args.okStatusText) options.okStatusText = args.okStatusText;
 
   log("未退款筛选", "开始", options.sheetName || "退货退款表", `状态列 ${options.statusColumnIndex === undefined ? 22 : options.statusColumnIndex}`);
-  const result = await runAirScript(options, { script: "filterPendingRefund" });
-  const summary = result.summary || {};
+
+  // 2026-10-30 加：**翻页扫全表**。
+  //   起因：0.1 版云端脚本把 maxRows 既当「扫多少行」又当「绝对末行」，表一大就停在上限附近，
+  //   而调用方看到的只是「扫了 50000 行」，分不清是表到底了还是被截断 → 结果不可信。
+  //   现在：脚本回 bounds{lastRow, scannedTo, hasMore, nextStartRow}，这里按 nextStartRow 一段段扫到底，
+  //   扫完用「各页 scannedRows 之和 == lastRow-1」对账，不等直接报错（不静默给半张表）。
+  //   旧脚本（没有 bounds）照旧单次调用，行为不变。
+  const 各页 = [];
+  const 合并计数 = (目标, 源) => {
+    for (const key of Object.keys(源 || {})) 目标[key] = (目标[key] || 0) + 源[key];
+    return 目标;
+  };
+  let 页码 = 0;
+  let 本次 = { ...options };
+  for (;;) {
+    页码 += 1;
+    if (页码 > 60) throw new Error("翻页超过 60 段仍未到底，停下查原因（别拿半张表当结论）");
+    const 段 = await runAirScript(本次, { script: "filterPendingRefund" });
+    各页.push(段);
+    const 界 = 段.bounds;
+    if (!界 || typeof 界.hasMore !== "boolean") break; // 旧脚本：没有分页信息，单次为准
+    if (!界.hasMore) break;
+    本次 = { ...本次, startRow: 界.nextStartRow, endRow: 0, limit: 0 };
+  }
+
+  const result = 各页[0];
+  let summary = result.summary || {};
+  if (各页.length > 1) {
+    const 合并 = { scannedRows: 0, rowsWithOrder: 0, pendingCount: 0, statusCounts: {} };
+    const 样例 = [];
+    for (const 段 of 各页) {
+      const 段汇总 = 段.summary || {};
+      合并.scannedRows += 段汇总.scannedRows || 0;
+      合并.rowsWithOrder += 段汇总.rowsWithOrder || 0;
+      合并.pendingCount += 段汇总.pendingCount || 0;
+      合并计数(合并.statusCounts, 段汇总.statusCounts);
+      for (const item of 段.samples || []) 样例.push(item);
+    }
+    summary = 合并;
+    result.samples = 样例.slice(0, options.limit);
+    const 界 = 各页[0].bounds;
+    if (界 && 界.lastRow) {
+      const 应为 = 界.lastRow - 1;
+      if (合并.scannedRows !== 应为) {
+        throw new Error(`翻页对账失败：各页合计扫了 ${合并.scannedRows} 行，但表末行是 ${界.lastRow}（应为 ${应为} 行）。不拿这张表下结论，先查为什么有缺口。`);
+      }
+      log("未退款筛选", "翻页完成", `共 ${各页.length} 页 / 表末行 ${界.lastRow}`, `扫 ${合并.scannedRows} 行（已对账）`);
+    }
+  }
   log("未退款筛选", "完成", `扫 ${summary.scannedRows} 行 / 有记录 ${summary.rowsWithOrder} 行`, `未退款 ${summary.pendingCount} 行`);
 
   console.log(`\n  脚本版本：${result.scriptVersion}｜表：${result.sheetName}｜列索引：${JSON.stringify(result.columnIndexes)}`);
