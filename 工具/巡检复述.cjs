@@ -74,7 +74,7 @@ if (!要发) {
 const 临时 = path.join(企微, `_复述-${process.pid}.txt`);
 fs.writeFileSync(临时, 正文, 'utf8');
 try {
-  const 出 = execFileSync(process.execPath, ['直连.mjs', '--to', '2', '--file', 临时, '--send'], {
+  const 出 = execFileSync(process.execPath, ['发企微.cjs', '--人', '黎路遥', '--file', 临时, '--send'], {
     cwd: 企微,
     encoding: 'utf8',
   });

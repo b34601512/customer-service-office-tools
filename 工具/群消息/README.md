@@ -29,7 +29,7 @@ node 发群消息.js --text "内容" --mention-user <userid> --send             
 
 ## 别搞混
 
-日常收发消息**不走这个 webhook**，走 `工具/企微/`：`读收件箱.mjs`（收）/ `直连.mjs --to N|--到人`（发）。
+日常收发消息**不走这个 webhook**，走 `工具/企微/`：`读收件箱.mjs`（收）/ `发企微.cjs --回|--人|--群`（发）。
 webhook 只用于「必须在群里真 @ 到人」这一种场景。
 
 ## 红线：要人回话的，一律别用 webhook（黎路遥 2026-10-23 16:47）
@@ -54,7 +54,7 @@ webhook 只用于「必须在群里真 @ 到人」这一种场景。
 
 分工（定死）：
 - **需要点人**（派活、让某人确认、催某人）→ 群机器人 webhook，`mentioned_list:[<userid>]`
-- **不需要点人**的通报 → 仍走 `工具/企微/直连.mjs --to <群编号>`（aibot），免得每条都从「售后组提醒机器人」发出、看着乱
+- **不需要点人**的通报 → 走 `工具/企微/发企微.cjs --群 "精确群名" --理由 "全组都要知道：…"`（aibot）；不用动态群编号
 
 最小用法（实战验证 2026-10-21，errcode 0）：
 
@@ -63,7 +63,7 @@ cd "D:/桌面/木婉清/工具/群消息"
 node -e "
 const fs=require('fs');
 const j=JSON.parse(fs.readFileSync('群机器人.local.json','utf8'));
-const body=JSON.stringify({msgtype:'text',text:{content:'@陈某某 …正文…',mentioned_list:['woFqtuEQAAAavuSNo5VTWAf2TXPRLOWQ']}});
+const body=JSON.stringify({msgtype:'text',text:{content:'@陈某某 …正文…',mentioned_list:['wo******************************']}});
 fetch(j.webhookUrl,{method:'POST',headers:{'content-type':'application/json'},body}).then(r=>r.text()).then(console.log);
 "
 ```
