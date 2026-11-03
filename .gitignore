@@ -196,3 +196,6 @@ wecom-robot.json
 # 本机真值配置的 .bak 也不许入库（阿朱 2026-10-26 发现会带 docid/scode 链接）
 **/*.local.json.bak
 **/*.local.bak
+
+# 通知发送日志（运行态，不入库）
+通知与理解确认/**/发送日志.jsonl
