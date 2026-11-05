@@ -4,10 +4,12 @@
  * 用户 2026-09-29 明确：售后的待办事项就是这张子表；对应的是新出的「售前待办清单」。
  *
  * 用法：
- *   node scripts/写售后待办.cjs --content "要售后做什么" [--owner <企微userid>] [--deadline "2026-09-30 00:00:00"] [--priority 一般] [--dry-run]
+ *   node scripts/写售后待办.cjs --content "要售后做什么" [--deadline "2026-09-30 00:00:00"] [--priority 一般] [--dry-run]
  * 说明：
- *   - 只做「新增一行」，不删不改；写完会回读确认（关键词=待办正文前 20 字）。
- *   - 负责人默认李某某（售后组长）；优先级默认「一般」（选项 id 取自表格既有行）。
+ *   - 只做「新增一行」，不删不改；写完会回读确认（优先认新增返回的 record_id，拿不到才用正文前 20 字）。
+ *   - **负责人默认由工具自己查**（28号 排班表「此刻在班」的售后值班人）；查不到就报错不写。
+ *     要派给定人：--owner <userid> --owner-name <名字>（两个必须一起给）。
+ *   - 2026-11-05 黎路遥问「李某某今天没上班，为何写的是他」→ 拆掉旧的「不传就默默给组长」兜底。
  */
 const { execFileSync } = require('child_process');
 const fs = require('fs');
@@ -38,7 +40,9 @@ function 读表配置(env, 配置路径) {
 const DOCID = (() => { try { return 读表配置().docid; } catch (e) { return null; } })();
 const SHEET = '售后待办清单';
 const WECOM = 'C:/Users/b3460/AppData/Roaming/npm/node_modules/@wecom/cli/bin/wecom.js';
-const 默认负责人 = { userId: 'wo******************************', userName: '李某某（售后组长）' };
+const 组长 = { userId: 'wo******************************', userName: '李某某（售后组长）' };
+// 组长**不再是默认负责人**（2026-11-05：他不一定在岗，默默派给他 = 派给不在岗的人）；
+// 只有调用方显式传 --owner/--owner-name 才会用到这组 id（在 README 里给他看）。
 const 优先级选项 = { 一般: { id: 'oonpZv', text: '一般' } };
 
 /**
@@ -87,9 +91,12 @@ function 构造记录({ content, ownerId, ownerName, deadline, 优先级 }) {
   if (ownerId && !ownerName) {
     throw new Error('传了 --owner 就必须同时传 --owner-name（否则负责人会显示成「售后」这种假名，不是真人）；不知道名字就改用 --owner auto');
   }
-  const 负责人 = ownerId
-    ? [{ userId: ownerId, userName: ownerName }]
-    : [默认负责人];
+  // 2026-11-05 黎路遥问：李某某今天没上班，为什么待办里写的是他。
+  // 根因就是这一行旧的「没传 owner 就默默给组长 李某某」——**静默兜底**：
+  // 组长可能休息/请假，派给他等于派给一个不在岗的人，14 号工单提醒还会白 @ 他。
+  // 所以默认改成「查 28号 排班表的此刻值班人」；挑不到就硬报错，不给任何人发。
+  if (!ownerId || !ownerName) throw new Error('内部错误：没定下负责人，不许写表（不猜、不兜底）');
+  const 负责人 = [{ userId: ownerId, userName: ownerName }];
   return {
     values: {
       优先级: [优先级选项[优先级] || 优先级选项['一般']],
@@ -101,22 +108,42 @@ function 构造记录({ content, ownerId, ownerName, deadline, 优先级 }) {
   };
 }
 
-function 写({ content, ownerId, ownerName, ownerAuto, deadline, 优先级, dryRun }) {
-  if (ownerAuto) {
+function 写({ content, ownerId: 入参Id, ownerName: 入参名, deadline, 优先级, dryRun }) {
+  if (!入参Id && 入参名) throw new Error('只给 --owner-name 不给 --owner（userid）派不了人；不知道 userid 就什么 owner 都别传，工具自己查值班');
+  // **默认就是查值班**（黎路遥 2026-11-05 定：一个命令调完，人由工具自己定）：
+  // 不传 --owner 与传 --owner auto 完全等价；以前那种「不传就默默给组长李某某」已拆。
+  let ownerId = 入参Id;
+  let ownerName = 入参名;
+  let 来源 = '显式指定';
+  if (!ownerId) {
     const 值班 = 挑选值班负责人(读此刻值班());
-    if (!值班) throw new Error('排班表挑不到（此刻）在班的值班人，请显式传 --owner <userid>（不猜）');
+    if (!值班) throw new Error('排班表挑不到（此刻）在班的值班人：不写、不猜。真得派给定人，就显式传 --owner <userid> --owner-name <名字>');
     ownerId = 值班.userId;
     ownerName = 值班.userName;
+    来源 = '值班（排班表此刻在班）';
   }
   const rec = 构造记录({ content, ownerId, ownerName, deadline, 优先级 });
   const { docid } = 读表配置();
   const args = ['smartsheet', 'records', 'add', '--docid', docid, '--sheet-title', SHEET, '--records', JSON.stringify([rec])];
-  if (dryRun) return { dryRun: true, args, rec };
+  if (dryRun) return { dryRun: true, 负责人: ownerName, 负责人来源: 来源, args, rec };
   const out = execFileSync(process.execPath, [WECOM, ...args], { encoding: 'utf8', maxBuffer: 20 * 1024 * 1024 });
   const key = content.slice(0, 20);
-  const back = execFileSync(process.execPath, [WECOM, 'smartsheet', 'records', 'list', '--docid', docid, '--sheet-title', SHEET, '--limit', '300'], { encoding: 'utf8', maxBuffer: 40 * 1024 * 1024 });
-  const hit = back.includes(key);
-  return { ok: true, 回读命中: hit, 关键词: key, 原始响应长度: out.length };
+  const 新行id = (out.match(/"record_id"\s*:\s*"([^"]+)"/) || [])[1] || null;
+
+  // 回读：1000 条一页往后翻，优先认「新行 id」、拿不到 id 才用正文前 20 字兜底。
+  // 为什么不再写死 limit 300：2026-11-05 这张表长到 301 行，回读扫不到就误报「未命中」，
+  // 而记录其实建成了（李沅茁当天撞上，白查一轮）。翻页 + 双凭据后，表长到几千行也不会假报。
+  let hit = false;
+  let 方式 = null;
+  let 扫了 = 0;
+  for (let 页 = 0; 页 < 5 && !hit; 页++) {
+    const back = execFileSync(process.execPath, [WECOM, 'smartsheet', 'records', 'list', '--docid', docid, '--sheet-title', SHEET, '--limit', '1000', '--start', String(页 * 1000)], { encoding: 'utf8', maxBuffer: 60 * 1024 * 1024 });
+    const 行数 = (back.match(/"record_id"/g) || []).length;
+    扫了 += 行数;
+    if (新行id ? back.includes(新行id) : back.includes(key)) { hit = true; 方式 = 新行id ? '记录id' : '正文前20字'; }
+    if (行数 < 1000) break; // 最后一页
+  }
+  return { ok: true, 负责人: ownerName, 负责人来源: 来源, 回读命中: hit, 命中方式: 方式, 扫了行数: 扫了, 新行id, 关键词: key, 原始响应长度: out.length };
 }
 
 if (require.main === module) {
