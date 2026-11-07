@@ -13,6 +13,18 @@ const 取参 = (名, 默认) => {
 };
 const 根 = 取参('--根', 'D:/硅基公司/员工');
 const 每处上限 = Number(取参('--行数', '5'));
+// 白名单：各家判定过「保留」的处，记下文件＋类型＋行内特征，下一轮不再报。
+// 为什么不用关键词过滤指令句：指令句长得不固定，扩关键词会把真遗留一起盖掉；白名单只盖判过的那几处。
+const 白名单路径 = 取参('--白名单', path.join(__dirname, '../../.state/文档体检/保留白名单.json'));
+let 白名单 = [];
+try { 白名单 = JSON.parse(fs.readFileSync(白名单路径, 'utf8')); } catch { 白名单 = []; }
+const 规整 = (s) => String(s).replace(/\\/g, '/');
+// 全量跑时相对路径带员工目录；单家跑（--根 指到某人）时只到子目录——两头都对得上才算命中。
+const 白名单命中 = (白, 相对) => {
+  const p = 规整(白.文件);
+  return p === 相对 || 相对.endsWith('/' + p) || p.endsWith('/' + 相对);
+};
+let 白名单跳过 = 0;
 
 const 跳过目录 = new Set(['node_modules', '.pi', '.state', '.git', '回执', '历史档案', '归档', '备份']);
 const 命中规则 = [
@@ -45,6 +57,8 @@ for (const 文件 of 遍历(根)) {
       if (!规.正则.test(行)) continue;
       // 规则本身就在讲「不许留 ~~删除线~~」，这类句子不算遗留（否则每家 boot-prompt 都会被误报）
       if (/不留|六条之第 2 条|查自己家|删除线清理/.test(行)) continue;
+      const 相对 = 规整(path.relative(根, 文件));
+      if (白名单.some((w) => 白名单命中(w, 相对) && w.类型 === 规.名 && (!w.含 || 行.includes(w.含)))) { 白名单跳过++; break; }
       const 家 = path.relative(根, 文件).split(path.sep)[0];
       if (!各家.has(家)) 各家.set(家, []);
       各家.get(家).push({ 文件: path.relative(根, 文件), 行号: i + 1, 类型: 规.名, 内容: 行.trim().slice(0, 110) });
@@ -55,7 +69,7 @@ for (const 文件 of 遍历(根)) {
 
 const 排序 = [...各家.entries()].sort((a, b) => b[1].length - a[1].length);
 if (!排序.length) {
-  console.log('✓ 遗留扫描：活文档里没有删除线/作废标记');
+  console.log(`✓ 遗留扫描：活文档里没有删除线/作废标记${白名单跳过 ? `（有 ${白名单跳过} 处按白名单保留，不重复报）` : ''}`);
   process.exit(0);
 }
 let 总 = 0;
@@ -66,3 +80,4 @@ for (const [家, 处们] of 排序) {
   if (处们.length > 每处上限) console.log(`  …还有 ${处们.length - 每处上限} 处`);
 }
 console.log(`\n合计 ${总} 处，涉及 ${排序.length} 位员工。**删由本人一个一个删**（删前备份）；「被否的方案/错→对」那种留着，因为它说明规则为什么被否。`);
+if (白名单跳过) console.log(`（另有 ${白名单跳过} 处按白名单保留——各家判过「错→对」案例或规则句误报，不重复报；增删白名单：${规整(白名单路径)}）`);
