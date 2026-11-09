@@ -68,6 +68,54 @@ if (!fs.existsSync(工作目录)) {
   console.log('工作目录不存在：' + 工作目录);
   process.exit(1);
 }
+// 2026-11-06 防呆（黎路遥：「工具层面要防呆设计，只能叫一个窗口」）
+// 同一个家目录已经有活着的 pi 会话时拒绝开窗：第二扇会复用同一个会话文件、把原窗的唤醒环顶掉，
+// 原窗从此不响应，但「看窗」还显示在跑（2026-11-06 一天踩两次：素素家把老板要的验收窗顶没了、巡检家多出第二扇）。
+// 只对别人的家目录硬拦；本仓的监听窗＋任务窗本来就要共存，只提醒不拦。
+// 2026-11-06 二次修（真因）：窗口进程的命令行里**没有家目录名**，只有任务书路径——
+// 实测 pid 36900 的命令行是 `node cli.js @D:\...\任务6-11-06-探域每日优化.md --provider ...`。
+// 所以按「命令行含目录名」判活窗，既漏判真窗（该拦不拦），又会把自己算进去（每次报不同 pid）。
+// 现改成两条判据：
+//   ① 全局任务窗：命令行里带 `0.木婉清档案\任务\<某任务书>.md` 的 pi 主进程 = 已有一扇任务窗在跑。
+//      这正好对上本仓规矩「一次只拉一个任务窗」，不管它开在谁家。
+//   ② 同目录：命令行里带该家目录（`pi` 从该目录起的窗、或带 boot-prompt 绝对路径的窗）。
+function 列进程() {
+  const ps = `[Console]::OutputEncoding=[Text.Encoding]::UTF8; Get-CimInstance Win32_Process -Filter "Name='node.exe'" | Where-Object { $_.CommandLine -and $_.CommandLine -like "*-coding-agent*" -and $_.CommandLine -notlike "*开任务窗.cjs*" -and $_.CommandLine -notlike "*心跳*" -and $_.CommandLine -notlike "*叫醒器*" -and $_.CommandLine -notlike "*守护*" -and $_.CommandLine -notlike "*跟读*" } | ForEach-Object { "$($_.ProcessId)|$($_.CommandLine)" }`;
+  try {
+    const 出 = execFileSync('powershell', ['-NoProfile', '-Command', ps], { encoding: 'utf8', timeout: 20000 });
+    return 出.split(String.fromCharCode(13)).join('').split(String.fromCharCode(10))
+      .map((x) => x.trim()).filter(Boolean)
+      .map((x) => { const k = x.indexOf('|'); return { pid: k > 0 ? x.slice(0, k) : '', cmd: k > 0 ? x.slice(k + 1) : x }; })
+      .filter((o) => /^\d+$/.test(o.pid) && Number(o.pid) !== process.pid);
+  } catch {
+    return []; // 查不到就放行：宁可多开一扇，也不要把派活堵死
+  }
+}
+
+function 同目录活窗(目录) {
+  const 家 = String(目录).toLowerCase();
+  const 任务目录标记 = path.join(本目录, '任务').toLowerCase();
+  const 命中 = [];
+  for (const p of 列进程()) {
+    const cl = p.cmd.toLowerCase();
+    if (cl.includes(家)) { 命中.push(p.pid + '（同家目录的窗）'); continue; }
+    if (cl.includes(任务目录标记)) {
+      const m = p.cmd.match(/任务[\/]([^\/\s"]+\.md)/);
+      命中.push(p.pid + (m ? '（任务窗：' + m[1] + '）' : '（任务窗）'));
+    }
+  }
+  return 命中;
+}
+const 是自己的家 = 工作目录.toLowerCase() === 本仓.toLowerCase();
+const 活窗 = 是自己的家 ? [] : 同目录活窗(工作目录);
+if (process.argv.includes('--只查窗')) { console.log('同目录活窗：' + (活窗.length ? 活窗.join('、') : '无')); process.exit(0); } // 自检用：只报不派
+if (活窗.length && !process.argv.includes('--强开')) {
+  console.log('✗ 拒开：' + path.basename(工作目录) + ' 家里已经有窗在跑（pid ' + 活窗.join('、') + '）。');
+  console.log('  同一目录只能有一扇窗：第二扇会复用同一个会话文件、把原窗的唤醒环顶掉，原窗从此不响应（但看着还是在跑）。');
+  console.log('  正解：把那件事私信给她，让她自己那扇窗干；或者等她那扇窗退了再派。');
+  console.log('  确认要多开就加 --强开。');
+  process.exit(3);
+}
 // 开窗前把「这个窗到底会加载哪份 AGENTS」写在脸上，防止窗名跟真身不匹配。
 const 窗AGENTS = path.join(工作目录, 'AGENTS.md');
 const 是不是本仓 = 工作目录.toLowerCase() === 本仓.toLowerCase();
@@ -119,18 +167,28 @@ try {
   process.exit(1);
 }
 
+// 2026-11-09（#720）：--回执 <绝对路径> —— 派活工具知道对方家的真实回执路径，显式传进来，
+//   不用从任务书正文里猜。不传则走 关任务窗.回执路径()（默认＋任务书里写明的路径）。
+const 取参数 = (名) => {
+  const i = process.argv.indexOf(名);
+  return i >= 0 ? String(process.argv[i + 1] || '').trim() : '';
+};
+const 指定回执 = 取参数('--回执');
+
 // 登记 + 挂守卫（回执落地就关窗）——「干完就关，别攒窗口」
 const 关窗工具 = path.join(本目录, '关任务窗.cjs');
 const 开窗时间 = new Date().toISOString();
 if (pid > 0) {
   const { 加登记, 回执路径 } = require(关窗工具);
+  const 回执 = 指定回执 || 回执路径(任务文件);
   // --不收窗：黎路遥 2026-11-05 10:4x「探域那边处理完你让他别收窗，今天还有很多事情要做」
   // 为什么要有这个开关：默认「回执落地就关窗」对一次性活是对的，但同一家今天还要接着派活时，
   // 关了就得重开一扇、上下文（已读的代码/已查的证据）全丢，重烧一遍 token。
   const 不收窗 = process.argv.includes('--不收窗');
-  加登记({ 任务: 任务文件, 回执: 回执路径(任务文件), pid, 开窗时间, 守卫最久: 不收窗 ? '不自动关' : '4h' });
+  加登记({ 任务: 任务文件, 回执, pid, 开窗时间, 守卫最久: 不收窗 ? '不自动关' : '4h' });
   if (!不收窗) {
     const 守卫参数 = [关窗工具, '--守', '--任务', 任务文件, '--pid', String(pid), '--最久', '4h', '--开窗时间', 开窗时间];
+    if (指定回执) 守卫参数.push('--回执', 指定回执);
     const 参数字面量 = 守卫参数.map((x) => `'${x}'`).join(',');
     const 挂守卫 = `Start-Process -FilePath '${process.execPath}' -ArgumentList ${参数字面量} -WorkingDirectory '${本目录}' -WindowStyle Hidden`;
     try {

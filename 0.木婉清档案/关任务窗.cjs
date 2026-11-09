@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // 关任务窗：把「干完就关，别攒窗口」做成工具（黎路遥 2026-10-01 企微定：照赵敏方式）。
-// 任务窗的契约：干完 → 写 `任务回执/<同名>.md` → 窗口就该关。本工具负责"该关就关"。
+// 任务窗的契约：干完 → 写回执（路径以任务书里写明的为准，缺省 `任务回执/<同名>.md`）→ 窗口就该关。本工具负责"该关就关"。
 // 用法：
 //   node 关任务窗.cjs --看                     列出登记的任务窗（任务 / pid / 还活着吗 / 开了多久）
 //   node 关任务窗.cjs --关 <pid|任务名>         关掉一个任务窗（连子进程）+ 摘掉登记
@@ -18,9 +18,43 @@ const 档案目录 = __dirname;
 const 登记文件 = path.join(档案目录, 'runtime', '任务窗.json');
 const 日志文件 = path.join(档案目录, 'runtime', '关窗日志.log');
 
-/** 任务文件 → 它该写的回执路径（同文件名，放 任务回执/） */
+/**
+ * 任务文件 → 它该写的回执路径。
+ * 2026-11-06 修：以前只会找 `任务回执/<同名>.md`，但任务书里实际指定的是各岗位自己的
+ * 回执目录（例：03.巡检员·霍青桐/回执/2026-11-06-日常巡检.md）。两边不一致的后果是：
+ * 回执 10:37 就落了，工具一直报「回执未落」，任务窗白开 4 小时，我还据此误判人家没交。
+ * 现在判据：先看任务书里写明的路径（找 ``回执写 <路径>.md`` 或 `回执：<路径>`），
+ * 再退回 `任务回执/<同名>.md`。为什么以任务书为准：任务书是派活时定的契约，
+ * 工具自定义一个目录就会和契约对不上。
+ */
+function 回执候选(任务文件) {
+  const 名 = path.basename(String(任务文件));
+  const 候选 = [path.join(档案目录, '任务回执', 名)];
+  // 扫机器拿到的只有文件名，先按 任务/ 目录补全，否则读不到任务书里的路径
+  let 任务书 = String(任务文件);
+  if (!fs.existsSync(任务书)) {
+    const 猜 = path.join(档案目录, '任务', path.basename(任务书));
+    if (fs.existsSync(猜)) 任务书 = 猜;
+  }
+  try {
+    const 正文 = fs.readFileSync(任务书, 'utf8');
+    const 正 = /回执[写：:]\s*`?([A-Za-z]:[^`\s|，。）)]+\.md)/g;
+    let m;
+    while ((m = 正.exec(正文))) 候选.unshift(m[1].replace(/\\/g, '/'));
+  } catch {}
+  return 候选;
+}
+
 function 回执路径(任务文件) {
-  return path.join(档案目录, '任务回执', path.basename(String(任务文件)));
+  const 候选 = 回执候选(任务文件);
+  // 还没落时取「任务书写明的路径」（unshift 到最前），别退回我这边的 任务回执/：
+  // 派别人家的窗时，回执落在对方家；退到本地会让守卫永远判「未落」，窗白开。
+  return 候选.find((p) => fs.existsSync(p)) || 候选[0];
+}
+
+function 回执已落(任务文件) {
+  if (!任务文件) return false;
+  return 回执候选(任务文件).some((p) => fs.existsSync(p));
 }
 
 function 读登记(文件 = 登记文件) {
@@ -144,7 +178,7 @@ function 看(输出 = console.log) {
   } else {
     for (const x of 窗口) {
       const 活 = 进程在(x.pid);
-      const 回执 = fs.existsSync(x.回执 || 回执路径(x.任务)) ? '回执已落' : '回执未落';
+      const 回执 = (x.回执 && fs.existsSync(x.回执)) || 回执已落(x.任务) ? '回执已落' : '回执未落';
       const 时长 = x.开窗时间 ? 多久(Date.now() - Date.parse(x.开窗时间)) : '?';
       输出(`${活 ? '●开' : '○关'} pid=${x.pid} ${回执} 开了${时长} ${path.basename(String(x.任务))}`);
     }
@@ -154,7 +188,7 @@ function 看(输出 = console.log) {
   if (机器.length > 0) {
     输出(`—— 机器上在跑的任务窗 ${机器.length} 扇（回执落了就该关）：`);
     for (const x of 机器) {
-      const 回执 = x.任务 ? fs.existsSync(path.join(档案目录, '任务回执', path.basename(x.任务))) : false;
+      const 回执 = x.任务 ? 回执已落(x.任务) : false;
       输出(`  ${回执 ? '✔回执已落' : '…回执未落'} pid=${x.pid} ${x.开窗} ${x.内存MB}MB ${x.任务 ? path.basename(x.任务) : ''}`);
     }
     输出('  关：node 关任务窗.cjs --关 <pid>');
@@ -279,9 +313,10 @@ if (require.main === module) {
     const 任务 = 取('--任务');
     const pid = 取('--pid');
     if (!任务 || !pid) {
-      console.log('用法：node 关任务窗.cjs --守 --任务 <任务文件> --pid <pid> [--最久 4h] [--间隔 20] [--宽限 10]');
+      console.log('用法：node 关任务窗.cjs --守 --任务 <任务文件> --pid <pid> [--最久 4h] [--间隔 20] [--宽限 10] [--回执 <绝对路径>]');
       process.exit(1);
     }
+    const 回执文件 = 取('--回执', '');
     守卫({
       任务,
       pid: Number(pid),
@@ -289,6 +324,9 @@ if (require.main === module) {
       间隔: 解析时长(取('--间隔'), 20000),
       宽限: 解析时长(取('--宽限'), 10000),
       开窗时间: 取('--开窗时间', ''),
+      // 2026-11-09 加：派活工具知道对方家的真实回执路径，显式传进来就不用从任务书正文里猜。
+      //   不传＝走 回执候选()（默认＋任务书里写明的绝对路径），手动派窗的场景照旧。
+      回执文件,
     });
   } else {
     console.log(`用法：

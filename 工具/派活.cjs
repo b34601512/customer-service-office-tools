@@ -18,6 +18,8 @@
  *   --正文      必填，私信正文；给的是已存在文件路径时按文件发（长文/反引号/换行用这个）
  *   --工作目录  窗不在时**必填**（没有它不许开窗——正是 11-05 那次事故的坑）
  *   --不收窗    透传给 开任务窗（同一家今天还要接着派活时用）
+ *   --回执      显式指定回执路径；不给就按「<工作目录>/回执/<任务书名>」推（自己家是 任务回执/）
+ *   --理由/--连发 透传给 私信.cjs 的配额闸：同人同日第 3 封起必须 --理由（≥8 字），工具不自动重试
  *   --等        只用于打印「等回执」命令，默认 120 分钟
  *   --干        只查窗＋打印计划，不开窗、不发信
  *
@@ -53,20 +55,37 @@ function 用法() {
 }
 
 function 解析(argv) {
-  const o = { 干: false, 不收窗: false, 等: 120 };
+  const o = { 干: false, 不收窗: false, 连发: false, 等: 120, 理由: "" };
   for (let i = 0; i < argv.length; i += 1) {
     const a = String(argv[i] || "");
     if (a === "--help" || a === "-h") o.help = true;
     else if (a === "--干") o.干 = true;
     else if (a === "--不收窗") o.不收窗 = true;
+    else if (a === "--连发") o.连发 = true;
     else if (a === "--人") o.人 = String(argv[++i] || "").trim();
     else if (a === "--任务书") o.任务书 = String(argv[++i] || "").trim();
     else if (a === "--正文") o.正文 = String(argv[++i] || "");
     else if (a === "--工作目录") o.工作目录 = String(argv[++i] || "").trim();
+    else if (a === "--回执") o.回执 = String(argv[++i] || "").trim();
+    else if (a === "--理由") o.理由 = String(argv[++i] || "").trim();
     else if (a === "--等") o.等 = Number(argv[++i]) || 120;
     else throw new Error(`不认识的参数：${a}（不认识的开关一律拒收，免得被当成任务内容）`);
   }
   return o;
+}
+
+/**
+ * 回执路径（守卫盯的就是它、尾注写的也是它——两处必须同一个字串，否则窗口写一处、守卫盯另一处）：
+ *   显式 --回执 > <工作目录>/回执/<任务书名>（对方家）／<木婉清档案>/任务回执/<任务书名>（自己家）
+ * 为什么不再从任务书正文里猜：实际任务书写法五花八门（「写到 `…`」「回执/xxx.md 存在」），
+ *   霍青桐那扇就是这么被判成「未落」、白开 4 小时的。约定算得出来的，就不去猜。
+ */
+function 定回执(任务文件, 工作目录, 显式) {
+  if (显式) return path.resolve(仓根, 显式);
+  const 名 = path.basename(任务文件);
+  if (!工作目录) return "";
+  if (path.resolve(工作目录).toLowerCase() === 仓根.toLowerCase()) return path.join(档, "任务回执", 名);
+  return path.join(工作目录, "回执", 名);
 }
 
 /** 查对方那扇监听窗在不在（查对端窗的退出码：0 全在 / 1 有不在 / 2 名字解析不到） */
@@ -101,7 +120,7 @@ async function 主() {
     o.工作目录 = path.resolve(仓根, o.工作目录);
     if (!fs.existsSync(o.工作目录)) throw new Error(`工作目录不存在：${o.工作目录}（不许默默兜底成某个家，那才是 11-05 那次的坑）`);
   }
-  const 回执 = require(关任务窗).回执路径(任务文件);
+  const 回执 = 定回执(任务文件, o.工作目录, o.回执);
 
   // ── ① 查窗（只读，干跑也做）──
   const 窗 = 查窗(o.人);
@@ -116,12 +135,14 @@ async function 主() {
     "",
     "——",
     `任务书：${path.relative(仓根, 任务文件) || 任务文件}`,
-    `回执写：${path.relative(仓根, 回执)}（落地会自动关任务窗；回执里写清干了什么、证据在哪、没干成卡在哪）`,
+    回执
+      ? `回执写：${回执.startsWith(仓根) ? path.relative(仓根, 回执) : 回执}（落地会自动关任务窗；回执里写清干了什么、证据在哪、没干成卡在哪）`
+      : "回执：这次没法定回执路径（窗已在跑，又没给 --工作目录/--回执）——写完回执私信木婉清一句就行",
     "不用发企微，回执落地就行。",
   ].join("\n");
   const 要发 = 正文.replace(/\s+$/, "") + "\n" + 尾注 + "\n";
 
-  const 等回执命令 = `node "0.木婉清档案/等回执.cjs" "${path.relative(档, 回执)}" ${o.等}`;
+  const 等回执命令 = 回执 ? `node "0.木婉清档案/等回执.cjs" "${回执}" ${o.等}` : "（无回执路径：别挂等回执，等对方私信你）";
 
   // ── 打印计划（干跑只看这一屏） ──
   console.log("── 派活计划 ──");
@@ -129,7 +150,7 @@ async function 主() {
   else console.log(`① 查窗：「${o.人}」不在 → 需要开任务窗${o.工作目录 ? `（${o.工作目录}）` : "（⚠ 还没给 --工作目录）"}`);
   console.log(`② 私信给「${o.人}」，正文：`);
   for (const 行 of 要发.trimEnd().split("\n")) console.log(`   | ${行}`);
-  console.log(`③ 回执：${回执}`);
+  console.log(`③ 回执：${回执 || "（无：窗已在跑且没给 --工作目录/--回执）"}`);
   console.log(`   等回执：${等回执命令}`);
   if (o.干) { console.log("\n（--干：只查了窗，没开窗、没发信）"); return 0; }
 
@@ -138,6 +159,7 @@ async function 主() {
   if (!窗.在) {
     if (!o.工作目录) throw new Error("对方窗不在，要开任务窗就必须给 --工作目录（对方家的绝对路径）；不给就不派——不许兜底开在谁家");
     const 参 = [开任务窗, 任务文件, o.工作目录];
+    if (回执) 参.push("--回执", 回执);   // 守卫盯的路径由派活定，不从任务书正文里猜
     if (o.不收窗) 参.push("--不收窗");
     const r = spawnSync(process.execPath, 参, { cwd: 档, encoding: "utf8", timeout: 180000 });
     const 出 = `${r.stdout || ""}${r.stderr || ""}`.trim();
@@ -165,12 +187,18 @@ async function 主() {
   fs.mkdirSync(临时目录, { recursive: true });
   正文文件 = path.join(临时目录, `派活-${Date.now()}.txt`);
   fs.writeFileSync(正文文件, 要发, "utf8");
-  const r2 = spawnSync(process.execPath, [私信, o.人, "--从文件", 正文文件], { cwd: 仓根, encoding: "utf8", timeout: 180000 });
+  const 私信参 = [私信, o.人, "--从文件", 正文文件];
+  if (o.连发) 私信参.push("--连发");
+  if (o.理由) 私信参.push("--理由", o.理由);   // 配额闸不另写：拒了就退 4，原话照打
+  const r2 = spawnSync(process.execPath, 私信参, { cwd: 仓根, encoding: "utf8", timeout: 180000 });
   const 出2 = `${r2.stdout || ""}${r2.stderr || ""}`.trim();
   console.log("\n" + 出2);
   if (r2.status !== 0) {
     console.error(`\n✗ 私信没发出去（退出码 ${r2.status}）：不重试、不换人。`);
-    if (r2.status === 6) console.error("  6＝配额闸：同人同日第 3 封起必须 --连发 --理由。确实是新一轮活，就按提示补理由重发一次。");
+    if (r2.status === 6) {
+      console.error("  6＝配额闸（同人同日第 3 封）：没有 --理由 就发不了。这确实是新一轮活，就把理由补上重跑一次（不会自动重试）：");
+      console.error(`    node 工具/派活.cjs --人 "${o.人}" --任务书 "${o.任务书}" --正文 "…"${o.工作目录 ? ` --工作目录 "${o.工作目录}"` : ""} --理由 "<≥ 8 字：这一轮为什么要再发一封>"`);
+    }
     if (r2.status === 2) console.error("  2＝收件人解析不到：名字要跟通讯录一致。");
     return 4;
   }
