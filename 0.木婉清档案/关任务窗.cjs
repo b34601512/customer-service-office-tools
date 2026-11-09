@@ -236,7 +236,13 @@ function 解析时长(文本, 默认毫秒 = 4 * 3600 * 1000, 裸数字单位 = 
   const m = String(文本 || '').trim().match(/^(\d+(?:\.\d+)?)\s*([hms]?)$/i);
   if (!m) return 默认毫秒;
   const n = Number(m[1]);
-  const 单位 = (m[2] || 裸数字单位).toLowerCase();
+  // 裸数字单位只可能是调用方传的：先 String 再校，传数字/写错单位时**报错而不是静静当秒**。
+  // （只加 String 不校验的话，传个 1000 会被当成「秒」默默算下去，错得更隐蔽。）
+  const 裸 = String(裸数字单位 || 'h').toLowerCase();
+  if (!['h', 'm', 's'].includes(裸)) {
+    throw new Error(`解析时长：裸数字单位只能是 h/m/s，收到 ${JSON.stringify(裸数字单位)}`);
+  }
+  const 单位 = m[2] ? m[2].toLowerCase() : 裸;
   return n * (单位 === 'h' ? 3600000 : 单位 === 'm' ? 60000 : 1000);
 }
 
