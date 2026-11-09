@@ -39,8 +39,11 @@ function 回执候选(任务文件) {
   try {
     const 正文 = fs.readFileSync(任务书, 'utf8');
     const 正 = /回执[写：:]\s*`?([A-Za-z]:[^`\s|，。）)]+\.md)/g;
+    const 找到 = [];
     let m;
-    while ((m = 正.exec(正文))) 候选.unshift(m[1].replace(/\\/g, '/'));
+    while ((m = 正.exec(正文))) 找到.push(m[1].replace(/\\/g, '/'));
+    // 用 push 再 reverse：在循环里 unshift 会把多处命中的顺序倒过来（后出现的排最前）
+    候选.unshift(...找到.reverse());
   } catch {}
   return 候选;
 }
@@ -52,9 +55,21 @@ function 回执路径(任务文件) {
   return 候选.find((p) => fs.existsSync(p)) || 候选[0];
 }
 
-function 回执已落(任务文件) {
+/**
+ * 回执落没落。
+ * 给了 起（开窗时间）就按 mtime 过滤——同名旧回执不算数。
+ * 为什么：回执候选 现在可能有好几个路径，只看存在会把去年同名的回执当成「已落」。
+ */
+function 回执已落(任务文件, 起) {
   if (!任务文件) return false;
-  return 回执候选(任务文件).some((p) => fs.existsSync(p));
+  const 下限 = 起 ? (Date.parse(起) || 0) - 60000 : 0;
+  return 回执候选(任务文件).some((p) => {
+    try {
+      return fs.existsSync(p) && (!下限 || fs.statSync(p).mtimeMs >= 下限);
+    } catch {
+      return false;
+    }
+  });
 }
 
 function 读登记(文件 = 登记文件) {
@@ -178,7 +193,7 @@ function 看(输出 = console.log) {
   } else {
     for (const x of 窗口) {
       const 活 = 进程在(x.pid);
-      const 回执 = (x.回执 && fs.existsSync(x.回执)) || 回执已落(x.任务) ? '回执已落' : '回执未落';
+      const 回执 = (x.回执 && fs.existsSync(x.回执)) || 回执已落(x.任务, x.开窗) ? '回执已落' : '回执未落';
       const 时长 = x.开窗时间 ? 多久(Date.now() - Date.parse(x.开窗时间)) : '?';
       输出(`${活 ? '●开' : '○关'} pid=${x.pid} ${回执} 开了${时长} ${path.basename(String(x.任务))}`);
     }
@@ -188,7 +203,7 @@ function 看(输出 = console.log) {
   if (机器.length > 0) {
     输出(`—— 机器上在跑的任务窗 ${机器.length} 扇（回执落了就该关）：`);
     for (const x of 机器) {
-      const 回执 = x.任务 ? 回执已落(x.任务) : false;
+      const 回执 = x.任务 ? 回执已落(x.任务, x.开窗) : false;
       输出(`  ${回执 ? '✔回执已落' : '…回执未落'} pid=${x.pid} ${x.开窗} ${x.内存MB}MB ${x.任务 ? path.basename(x.任务) : ''}`);
     }
     输出('  关：node 关任务窗.cjs --关 <pid>');

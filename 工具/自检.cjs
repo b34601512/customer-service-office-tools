@@ -26,7 +26,6 @@ const MUST_READ = [
   'AGENTS.md',
   '记录/断点记录.md',
   '0.木婉清档案/索引.md',
-  '0.木婉清档案/职责.md',
   '0.木婉清档案/规矩与红线.md',
   '工具/企微/boot-prompt.md',
 ];

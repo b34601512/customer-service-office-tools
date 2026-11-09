@@ -94,15 +94,28 @@ function 列进程() {
 
 function 同目录活窗(目录) {
   const 家 = String(目录).toLowerCase();
-  const 任务目录标记 = path.join(本目录, '任务').toLowerCase();
   const 命中 = [];
+  const 已计 = new Set();
+  // ① 本工具登记过的任务窗：**按登记里的工作目录比**。命令行里看不见 cwd（pi 启动时参数是 @任务/xxx.md），
+  //    所以任务窗是“哪家的”只能靠登记说。
+  //    2026-11-09 修：以前只要命令行里出现「0.木婉清档案\任务」就算命中，
+  //    结果我自己的文档优化任务窗（43440）把派给霍青桐的窗给堵了——一个全公司范围的误报。
+  let 登 = [];
+  try {
+    const { 读登记, 进程在 } = require(path.join(本目录, '关任务窗.cjs'));
+    const 活 = (pid) => { try { return 进程在(pid); } catch { return false; } };
+    for (const x of 读登记()) {
+      if (!x || !x.工作目录) continue; // 旧登记没记工作目录：认不出是哪家，不硬猜（下次开窗会补上）
+      if (String(x.工作目录).toLowerCase() !== 家) continue;
+      if (!活(Number(x.pid))) continue;
+      命中.push(x.pid + '（任务窗：' + path.basename(String(x.任务 || '')) + '）');
+      已计.add(String(x.pid));
+    }
+  } catch {}
+  // ② 命令行里就带着这家路径的窗（监听窗／boot-prompt 窗）
   for (const p of 列进程()) {
     const cl = p.cmd.toLowerCase();
-    if (cl.includes(家)) { 命中.push(p.pid + '（同家目录的窗）'); continue; }
-    if (cl.includes(任务目录标记)) {
-      const m = p.cmd.match(/任务[\/]([^\/\s"]+\.md)/);
-      命中.push(p.pid + (m ? '（任务窗：' + m[1] + '）' : '（任务窗）'));
-    }
+    if (cl.includes(家) && !已计.has(String(p.pid))) 命中.push(p.pid + '（同家目录的窗）');
   }
   return 命中;
 }
@@ -185,7 +198,7 @@ if (pid > 0) {
   // 为什么要有这个开关：默认「回执落地就关窗」对一次性活是对的，但同一家今天还要接着派活时，
   // 关了就得重开一扇、上下文（已读的代码/已查的证据）全丢，重烧一遍 token。
   const 不收窗 = process.argv.includes('--不收窗');
-  加登记({ 任务: 任务文件, 回执, pid, 开窗时间, 守卫最久: 不收窗 ? '不自动关' : '4h' });
+  加登记({ 任务: 任务文件, 工作目录, 回执, pid, 开窗时间, 守卫最久: 不收窗 ? '不自动关' : '4h' });
   if (!不收窗) {
     const 守卫参数 = [关窗工具, '--守', '--任务', 任务文件, '--pid', String(pid), '--最久', '4h', '--开窗时间', 开窗时间];
     if (指定回执) 守卫参数.push('--回执', 指定回执);

@@ -4,12 +4,14 @@
  * 用户 2026-09-29 明确：售后的待办事项就是这张子表；对应的是新出的「售前待办清单」。
  *
  * 用法：
- *   node scripts/写售后待办.cjs --content "要售后做什么" [--deadline "2026-09-30 00:00:00"] [--priority 一般] [--dry-run]
+ *   node 工具/售后待办/写售后待办.cjs --content "要售后做什么" [--deadline "2026-09-30 00:00:00"] [--priority 一般] [--dry-run] [--at HH:MM]
  * 说明：
  *   - 只做「新增一行」，不删不改；写完会回读确认（优先认新增返回的 record_id，拿不到才用正文前 20 字）。
  *   - **负责人默认由工具自己查**（28号 排班表「此刻在班」的售后值班人）；查不到就报错不写。
  *     要派给定人：--owner <userid> --owner-name <名字>（两个必须一起给）。
  *   - 2026-11-05 黎路遥问「李某某今天没上班，为何写的是他」→ 拆掉旧的「不传就默默给组长」兜底。
+ *   - 2026-11-08 #779：组长在班（底色 null）不再被「二次判定」拒掉；派单原因写进工单正文。
+ *     --at HH:MM 只用于复跑核对（判定口径仍是 28 号那一套），不给就按现在判。
  */
 const { execFileSync } = require('child_process');
 const fs = require('fs');
@@ -37,35 +39,37 @@ function 读表配置(env, 配置路径) {
   if (!j.docid) throw new Error(p + ' 里没有 docid');
   return { docid: j.docid, sheet: j.sheet || '售后待办清单' };
 }
-const DOCID = (() => { try { return 读表配置().docid; } catch (e) { return null; } })();
 const SHEET = '售后待办清单';
 const WECOM = 'C:/Users/b3460/AppData/Roaming/npm/node_modules/@wecom/cli/bin/wecom.js';
-const 组长 = { userId: 'wo******************************', userName: '李某某（售后组长）' };
-// 组长**不再是默认负责人**（2026-11-05：他不一定在岗，默默派给他 = 派给不在岗的人）；
-// 只有调用方显式传 --owner/--owner-name 才会用到这组 id（在 README 里给他看）。
+// 组长**不是默认负责人**（2026-11-05：他不一定在岗，默默派给他 = 派给不在岗的人）；
+// 组长是谁、userid 是什么，只在 28号 名单里有一份；本工具不再抄。
 const 优先级选项 = { 一般: { id: 'oonpZv', text: '一般' } };
 
 /**
- * 兼容旧名：从「当日有色人员」里挑售后值班（口径与名单在 28号）。
- * **不猜**：没带底色 / 同分组多人带底色 / **带底色但此刻不在其班次时段** / 配置里没 userid ⇒ 返回 null，由调用方停下来问人。
- * @param {Array<string|{姓名:string,底色?:string,班次?:string}>} names
- * @param {object} [配置] 不传则读 28号 的 project-config/排班值班配置.json
- * @param {{当前时间?:Date}} [选项] 判定时刻（默认=现在；单测传固定时刻）
+ * 读「此刻售后谁值班」：由 28号 读排班表底色 + 名单判定（本项目不再自带一份）。
+ * **只判一次**：把 28号 的结论（userId / userName / 底色 / 理由）原样交出去。
+ * 2026-11-08 #779（05号实测）：以前这里把结论退化成 [{姓名,底色,班次}]，再交给 挑选值班负责人() 重判一次。
+ * 组长值班时底色是 null、他又不在「当日有色人员」里 → 班次跟着丢 → 第二次必然 found=false，
+ * 于是「组长在班」被报成「挑不到此刻在班的值班人」。同一份数据判两次＝第一次的证据被丢掉；
+ * 这种「二次判定」的路已整条删除，不保留兼容壳。
+ * @param {{配置?:object, 报告?:object, 当前时间?:Date}} [选项] 复跑/单测可传桩（默认：28号配置 + 现读排班表 + 现在）
  */
-function 挑选值班负责人(names, 配置, 选项) {
-  const 人 = (names || []).map((n) => (typeof n === 'string' ? { 姓名: n, 底色: '' } : n));
-  const 结果 = 值班库.挑值班(人, '售后', 配置 || 排班库.读配置(), 选项);
-  return 结果.found ? { userId: 结果.userId, userName: 结果.userName } : null;
+function 读此刻值班(选项) {
+  const o = 选项 || {};
+  const 用配置 = o.配置 || 排班库.读配置();
+  const 报告 = o.报告 || 排班库.读排班(undefined, 用配置);
+  const 结果 = 值班库.从报告挑值班(报告, '售后', 用配置, o);
+  if (!结果.found || !结果.userId) {
+    throw new Error('按「底色＋此时此刻在班次」挑不到唯一售后值班人：' + (结果.理由 || '无理由') + '（口径与名单在 28.排班与派活）');
+  }
+  return 结果;
 }
 
-/** 读「此刻售后谁值班」：由 28号 读排班表底色 + 名单判定（本项目不再自带一份） */
-function 读此刻值班(配置) {
-  const 用配置 = 配置 || 排班库.读配置();
-  const 报告 = 排班库.读排班(undefined, 用配置);
-  const 结果 = 值班库.从报告挑值班(报告, '售后', 用配置);
-  if (!结果.found) throw new Error('按「底色＋此时此刻在班次」挑不到唯一售后值班人：' + 结果.理由 + '（口径与名单在 28.排班与派活；不猜，停下问人）');
-  const 人 = (报告['当日有色人员'] || []).find((x) => x.姓名 === 结果.姓名) || {};
-  return [{ 姓名: 结果.姓名, 底色: 结果.底色, 班次: 人.班次 }];
+/** 不传 --owner 时，工单正文要说清「为什么是他」——读表的人看到组长没底色，得知道这是排班判的，不是人手挑的 */
+function 派单说明(ownerName, 来源) {
+  return 来源 === '值班（组长在班）'
+    ? `（负责人由工具按 28 号排班判定为组长值班：${ownerName}）`
+    : `（负责人由工具按 28 号排班判定为此刻在岗值班：${ownerName}）`;
 }
 
 function 解析参数(argv) {
@@ -79,8 +83,10 @@ function 解析参数(argv) {
     else if (a === '--deadline') out.deadline = argv[++i];
     else if (a === '--priority') out.优先级 = argv[++i];
     else if (a === '--dry-run') out.dryRun = true;
+    else if (a === '--at') out.at = String(argv[++i] || '').trim();
   }
   if (!out.content) throw new Error('缺少 --content');
+  if (out.at && !/^\d{1,2}:\d{2}$/.test(out.at)) throw new Error(`--at 格式要 HH:MM（拿到「${out.at}」）`);
   return out;
 }
 
@@ -108,26 +114,30 @@ function 构造记录({ content, ownerId, ownerName, deadline, 优先级 }) {
   };
 }
 
-function 写({ content, ownerId: 入参Id, ownerName: 入参名, deadline, 优先级, dryRun }) {
+function 写({ content, ownerId: 入参Id, ownerName: 入参名, deadline, 优先级, dryRun, at }) {
   if (!入参Id && 入参名) throw new Error('只给 --owner-name 不给 --owner（userid）派不了人；不知道 userid 就什么 owner 都别传，工具自己查值班');
   // **默认就是查值班**（黎路遥 2026-11-05 定：一个命令调完，人由工具自己定）：
   // 不传 --owner 与传 --owner auto 完全等价；以前那种「不传就默默给组长李某某」已拆。
+  const 选项 = at ? { 当前时间: new Date(`${排班库.今天()}T${at}:00`) } : {};
   let ownerId = 入参Id;
   let ownerName = 入参名;
   let 来源 = '显式指定';
+  let 判定理由 = '';
   if (!ownerId) {
-    const 值班 = 挑选值班负责人(读此刻值班());
-    if (!值班) throw new Error('排班表挑不到（此刻）在班的值班人：不写、不猜。真得派给定人，就显式传 --owner <userid> --owner-name <名字>');
+    // #779：一次判定。组长在班（底色 null）也在这里拿到 userId，不再被第二步拒掉。
+    const 值班 = 读此刻值班(选项);
     ownerId = 值班.userId;
     ownerName = 值班.userName;
-    来源 = '值班（排班表此刻在班）';
+    来源 = 值班.底色 ? '值班（排班表此刻在班）' : '值班（组长在班）';
+    判定理由 = 值班.理由 || '';
   }
-  const rec = 构造记录({ content, ownerId, ownerName, deadline, 优先级 });
+  const 正文 = 来源 === '显式指定' ? content : content + 派单说明(ownerName, 来源);
+  const rec = 构造记录({ content: 正文, ownerId, ownerName, deadline, 优先级 });
   const { docid } = 读表配置();
   const args = ['smartsheet', 'records', 'add', '--docid', docid, '--sheet-title', SHEET, '--records', JSON.stringify([rec])];
-  if (dryRun) return { dryRun: true, 负责人: ownerName, 负责人来源: 来源, args, rec };
+  if (dryRun) return { dryRun: true, 负责人: ownerName, 负责人来源: 来源, 判定理由, 判定时刻: at || '现在', 正文, args, rec };
   const out = execFileSync(process.execPath, [WECOM, ...args], { encoding: 'utf8', maxBuffer: 20 * 1024 * 1024 });
-  const key = content.slice(0, 20);
+  const key = 正文.slice(0, 20);
   const 新行id = (out.match(/"record_id"\s*:\s*"([^"]+)"/) || [])[1] || null;
 
   // 回读：1000 条一页往后翻，优先认「新行 id」、拿不到 id 才用正文前 20 字兜底。
@@ -143,7 +153,7 @@ function 写({ content, ownerId: 入参Id, ownerName: 入参名, deadline, 优�
     if (新行id ? back.includes(新行id) : back.includes(key)) { hit = true; 方式 = 新行id ? '记录id' : '正文前20字'; }
     if (行数 < 1000) break; // 最后一页
   }
-  return { ok: true, 负责人: ownerName, 负责人来源: 来源, 回读命中: hit, 命中方式: 方式, 扫了行数: 扫了, 新行id, 关键词: key, 原始响应长度: out.length };
+  return { ok: true, 负责人: ownerName, 负责人来源: 来源, 判定理由, 判定时刻: at || '现在', 回读命中: hit, 命中方式: 方式, 扫了行数: 扫了, 新行id, 关键词: key, 原始响应长度: out.length };
 }
 
 if (require.main === module) {
@@ -156,4 +166,4 @@ if (require.main === module) {
     process.exitCode = 2;
   }
 }
-module.exports = { 解析参数, 构造记录, 挑选值班负责人, 读此刻值班, 读表配置, 值班库, 排班库, DOCID, SHEET };
+module.exports = { 解析参数, 构造记录, 派单说明, 读此刻值班, 读表配置, 值班库, 排班库, SHEET };
