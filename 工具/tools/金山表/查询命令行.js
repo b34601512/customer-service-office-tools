@@ -17,8 +17,10 @@
 const fs = require("fs");
 const path = require("path");
 
+// 2026-11-11：默认 maxRows 5 万 → 10 万（湖南《退货退款表》已到 50088 行，5 万会静默漏掉后面的退回记录）。
+// 同时加护栏：扫到上限还没到底就抛错，不拿半张表下结论。
 function parseArgs(argv) {
-  const args = { keywords: [], maxRows: 50000, batchSize: 3 };
+  const args = { keywords: [], maxRows: 100000, batchSize: 3 };
   for (let index = 0; index < argv.length; index += 1) {
     const token = argv[index];
     if (token === "--sheets") { args.sheets = String(argv[index + 1] || "").split(",").map((name) => name.trim()).filter(Boolean); index += 1; continue; }
@@ -29,6 +31,25 @@ function parseArgs(argv) {
     args.keywords.push(token);
   }
   return args;
+}
+
+// 扫到上限仍没到底 = 不能证明扫完了。抛错，不静默截断（2026-11-11 木婉清报：50000 行把 2237/2238 判成「未退回」）。
+// 返回最深扫到第几行（sheetDetails[].rows 是「扫到的末行」，不是行数）。
+function 最深处(结果) {
+  let 最深 = 0;
+  for (const item of (结果 && 结果.sheetDetails) || []) 最深 = Math.max(最深, Number(item.rows) || 0);
+  return 最深;
+}
+
+function 检查截断(结果, maxRows) {
+  const 上限 = Number(maxRows);
+  if (!Number.isFinite(上限) || 上限 < 1) throw new Error(`--max-rows 必须是正数（收到 ${maxRows}）`);
+  const 到顶 = ((结果 && 结果.sheetDetails) || []).filter((item) => Number(item.rows) >= 上限);
+  if (到顶.length) {
+    const 明细 = 到顶.map((item) => `${item.sheet || "（未知表）"} 扫到第 ${item.rows} 行`).join("；");
+    throw new Error(`扫描到上限 ${上限} 行还没到底（${明细}）——表可能还有数据，不能拿半张表下结论。请把 --max-rows 调大（如 ${上限 * 2}）再查。`);
+  }
+  return 最深处(结果);
 }
 
 // 金山脚本有执行时长上限（实测 ~30 秒后接口返回 HTTP 500），关键词越多匹配越慢，
@@ -68,10 +89,13 @@ async function 跑查询命令行({ argv = [], 项目根 = process.cwd(), log = 
     if (batchIndex + 1 < batches.length) await new Promise((resolve) => setTimeout(resolve, 800));
   }
   merged.matchCount = merged.matches.length;
+  // 护栏放在落盘/打印之前：截断时不产出任何「结论」文件。
+  merged.扫描到行 = 检查截断(merged, args.maxRows);
   const result = merged;   // 下面的打印逻辑按合并后的结果走
-  log("金山查询", "完成", `扫描 ${result.scannedRows} 行 / ${result.checkedSheets} 个表，命中 ${result.matchCount} 行`);
+  log("金山查询", "完成", `扫到第 ${result.扫描到行} 行 / ${result.checkedSheets} 个表，命中 ${result.matchCount} 行`);
 
-  console.log(`\n  扫描：${result.checkedSheets} 个工作表 / ${result.scannedRows} 行`);
+  // scannedRows 是各批相加（同一张表扫几批就乘几），不能当「表有多长」；表长看扫到第几行。
+  console.log(`\n  扫描：${result.checkedSheets} 个工作表 / 扫到第 ${result.扫描到行} 行（${result.batches} 批，各批合计 ${result.scannedRows} 行）`);
   console.log("  各表命中：");
   for (const item of result.sheetDetails || []) {
     if (item.hits) console.log(`    · ${item.sheet}：${item.hits} 行（扫 ${item.rows} 行）`);
@@ -90,4 +114,4 @@ async function 跑查询命令行({ argv = [], 项目根 = process.cwd(), log = 
   return { exitCode: 0 };
 }
 
-module.exports = { 跑查询命令行, parseArgs, splitBatches };
+module.exports = { 跑查询命令行, parseArgs, splitBatches, 检查截断, 最深处 };
