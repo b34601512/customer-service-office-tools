@@ -9,7 +9,7 @@
  * 用法：node 工具/链条体检.cjs
  * 退出码：0＝HEALTHY；1＝BROKEN（明细打出来，并给三行重挂步骤）
  *
- * 看四段（判据都落在可复查的文件/进程上，不猜）：
+ * 看五段（判据都落在可复查的文件/进程上，不猜）：
  *   ① 跟读进程：.state/跟读收件箱.pid 里的 pid 还活着吗（process.kill(pid, 0)）
  *   ② 跟读心跳：.state/收件箱跟读.json 的 mtime 距今多少秒（>120 秒算可疑）
  *      —— 这个文件只在「有新消息、游标前进」时写；空闲时 mtime 不动是正常的。
@@ -17,6 +17,10 @@
  *   ③ 未读滞期：收件箱/inbox.jsonl 总条数 vs 收件箱/已读位置.json 的行数；
  *      最老一条未读距今多少分钟（只报数，链路在跑就不据此判坏——处理滞后看这个数）。
  *   ④ 现役定时：node 环.cjs 列 解析条数与名字，跟白名单比对，多的少的都报。
+ *   ⑤ 发送口（守护）：能收 ≠ 能发。走发消息同一条路探活（curl GET + x-zhaomin 令牌，回 {认证:true} 才算通）。
+ *      为什么单列（2026-11-13 实测）：守护夜里死了，pid 被 Windows 回收给别的进程（8956 变成 XboxService），
+ *      守护控制.mjs 只看「pid 还活着」→ 状态报在跑，08:05 复述一条都发不出去，事后才发现。
+ *      它不是排期环、也不是跟读进程，①②③④ 都照不到它。
  *
  * 白名单为什么不是任务书里那两个字面名字（2026-11-08 实跑为准）：
  *   · 「监听企微」不是排期环，它是本文件①②③核的 Monitor 跟读进程；
@@ -243,6 +247,46 @@ if (环条 !== null) {
   }
 }
 
+// ── ⑤ 发送口（守护）──────────────────────────────────────────────────────
+// 判据＝真的能发得出去：HTTP GET 带令牌回 {认证:true}。只探端口不够——端口通但连接掉了，发消息照样失败。
+let 发送口通 = null;
+{
+  const 端口文件 = path.join(收件箱目录, '守护.port');
+  const 令牌文件 = path.join(收件箱目录, '守护.token');
+  const 守护pid文件 = path.join(收件箱目录, '守护.pid');
+  let 端口 = 0;
+  let 令牌 = '';
+  let 守护pid = '?';
+  try { 守护pid = fs.readFileSync(守护pid文件, 'utf8').trim() || '?'; } catch { /* 下面照报 */ }
+  try {
+    端口 = Number(fs.readFileSync(端口文件, 'utf8').trim()) || 0;
+    令牌 = fs.readFileSync(令牌文件, 'utf8').trim();
+    if (!端口 || !令牌) throw new Error('守护.port / 守护.token 是空的');
+    let 应答 = '';
+    try {
+      应答 = execFileSync('curl', ['-sS', '--max-time', '3', '-H', `x-zhaomin: ${令牌}`, `http://127.0.0.1:${端口}/`],
+        { encoding: 'utf8', timeout: 8000 });
+    } catch (e) {
+      应答 = String((e && e.stdout) || (e && e.stderr) || (e && e.message) || '').trim();
+    }
+    if (/"认证"\s*:\s*true/.test(应答)) {
+      发送口通 = true;
+      行.push(`发送口守护  ✓ PID ${守护pid} 在听 127.0.0.1:${端口}（认证通）`);
+    } else {
+      发送口通 = false;
+      行.push(`发送口守护  ✗ 127.0.0.1:${端口} 认证不通（pid 文件写 ${守护pid}）`);
+      问题.push(`发送口不通（能收不能发）：${应答.slice(0, 120) || '无应答'}。` +
+        `守护多半已经死了、pid 文件是旧号（PID 会被 Windows 回收给别的程序）。` +
+        `修：node 工具/企微/守护控制.mjs 状态；pid 指向的不是 node，就把 收件箱/守护.pid 挪进 D:/备份文件夹，` +
+        `再 node 工具/企微/守护控制.mjs 启动。别加 --接管——它会 taskkill 掉被回收的那个无关进程。`);
+    }
+  } catch (e) {
+    发送口通 = false;
+    行.push(`发送口守护  ✗ ${e.message}`);
+    问题.push(`发送口判不了：${e.message}（守护没启动过？先 node 工具/企微/守护控制.mjs 启动）`);
+  }
+}
+
 // ── 输出 ──────────────────────────────────────────────────────────────────
 const 结论 = 问题.length ? 'BROKEN' : 'HEALTHY';
 console.log(`木婉清 · 链条体检 ${new Date().toLocaleString('zh-CN', { hour12: false })}`);
@@ -258,6 +302,7 @@ if (问题.length) {
   console.log('');
   for (const x of 问题) console.log('  ✗ ' + x);
   console.log('');
+  if (发送口通 === false) console.log('发送口：按上面「发送口不通」那条修（先 守护控制.mjs 状态，再挪旧 pid、启动）；下面三条只管接收链。');
   console.log('重挂（先 Loop 再 Monitor，顺序别反）：');
   console.log('  1. 先挂事件 Loop：monitor:output（recurring / 30d / maxFires 5000）');
   console.log('  2. 再起 Monitor：cd "D:/桌面/木婉清/工具/企微" && node 跟读收件箱.mjs --接管（timeout=0）');
