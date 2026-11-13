@@ -31,6 +31,7 @@ const 她项目 = "D:/硅基公司/员工/05.发票专员·李沅芷/专项/2.�
 const 抖音项目 = path.join(她项目, "6.抖音发票回传");
 const { 创建抖音账号浏览器上下文 } = require(path.join(抖音项目, "src/browser/douyinBrowserContext"));
 const { 读取店铺配置 } = require(path.join(抖音项目, "src/store/storeConfigService"));
+const { 获取账号浏览器资料目录 } = require(path.join(抖音项目, "src/browser/accountProfilePaths"));
 
 const 参数 = process.argv.slice(2);
 const 取值 = (名, 默认) => {
@@ -166,8 +167,23 @@ async function 发码登录(店铺, 页) {
   说("✓ 登录态正常。");
   if (只查登录) process.exit(0);
 
-  说("→ 调李沅芷的只读同步（两店串行，店3 → 店5）：scripts/只读同步补跑.js douyin");
-  const 同步 = spawnSync(process.execPath, [path.join(她项目, "scripts/只读同步补跑.js"), "douyin"], {
+  // 2026-11-13 改成一店一份资料目录：哪家目录还没建（没登过），就先只跑已登录的那家，
+  // 免得两店串行时卡在「等待扫码」白占时间。
+  const 全部店铺 = 读取店铺配置().stores || [];
+  const 已备好 = 全部店铺.filter((s) => fs.existsSync(获取账号浏览器资料目录(s)));
+  const 待登录 = 全部店铺.filter((s) => !fs.existsSync(获取账号浏览器资料目录(s)));
+  if (待登录.length) {
+    说(`⚠ 这些店还没登录过（目录没建）：${待登录.map((s) => s.id).join("、")} —— 今天只跑已备好的。`);
+  }
+  if (!已备好.length) {
+    说("✗ 没有任何一家店的资料目录，先跑：node 工具/抖音日跑.cjs --店 douyin-store-1（会上窗发码）");
+    process.exit(2);
+  }
+  const 同步参数 = 待登录.length
+    ? ["douyin", 已备好[0].id]
+    : ["douyin"];
+  说(`→ 调李沅芷的只读同步：scripts/只读同步补跑.js ${同步参数.join(" ")}`);
+  const 同步 = spawnSync(process.execPath, [path.join(她项目, "scripts/只读同步补跑.js"), ...同步参数], {
     cwd: 她项目,
     stdio: "inherit",
     timeout: 30 * 60 * 1000,

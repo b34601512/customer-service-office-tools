@@ -31,6 +31,7 @@ const 取值 = (名, 默认) => {
 };
 const 店铺Id = 取值("--店", "douyin-store-1");
 const 只发码 = 参数.includes("--只发码");
+const 保活 = 参数.includes("--保活");
 
 const 答案文件 = path.join(__dirname, ".state", "抖音验证码-答案.txt");
 const 登录页 = "https://fxg.jinritemai.com/login/common";
@@ -45,6 +46,17 @@ const 是登录页 = (u) => {
     return true;
   }
 };
+
+// 2026-11-13：SPA 会在原 URL 上渲染登录页，光看 URL 会误判成「已登录」。
+// 判据改成两条都要：URL 不在 /login，且页面上没有「扫码/验证码登录/请登录」这类字样，且能找到店铺名。
+async function 真的登录了吗(页, 店铺) {
+  if (是登录页(页.url())) return false;
+  const 文本 = (await 页.innerText("body").catch(() => "")).replace(/s+/g, " ");
+  if (/扫码登录|验证码登录|请登录|登录后查看|手机号登录/.test(文本)) return false;
+  const 店名 = 店铺 && 店铺.platformStoreName ? String(店铺.platformStoreName).slice(0, 4) : "";
+  if (店名 && !文本.includes(店名)) return false;
+  return true;
+}
 
 async function 点匹配(page, 模式组, 说明) {
   for (const 模式 of 模式组) {
@@ -81,11 +93,16 @@ async function 点匹配(page, 模式组, 说明) {
   await 等(1500);
   console.log(`店铺=${店铺.name}｜手机=${店铺.phoneNumber || "-"}｜URL=${page.url()}`);
 
-  if (!是登录页(page.url())) {
+  if (await 真的登录了吗(page, 店铺)) {
     console.log("已经是登录态，不用登。");
+    if (保活) {
+      console.log("保活中：窗口不关。");
+      await new Promise(() => {});
+    }
     await context.close().catch(() => {});
     return;
   }
+  console.log("没登录（或落在别的店）：走发码登录。");
 
   await page.goto(登录页, { waitUntil: "domcontentloaded", timeout: 60000 }).catch(() => {});
   await 等(2500);
@@ -132,7 +149,21 @@ async function 点匹配(page, 模式组, 说明) {
   console.log("码已发（注意看手机）");
 
   if (只发码) {
-    console.log("--只发码：窗口留着，等你在窗口里填，本脚本退出。");
+    if (!保活) {
+      console.log("--只发码：窗口留着，等你在窗口里填（不保活，本脚本退出后窗口可能被关）。");
+      return;
+    }
+    console.log("窗口留着等你填码（进程保活，不会关窗）；登进去后我继续留着，直到有人停我。");
+    const 到点 = Date.now() + 20 * 60 * 1000;
+    while (Date.now() < 到点) {
+      await 等(3000);
+      if (!是登录页(page.url())) {
+        console.log(`✓ 发现已登录：URL=${page.url()}`);
+        console.log("保活中：窗口不关，李沅芷可以直接跑同步。");
+        break;
+      }
+    }
+    await new Promise(() => {});
     return;
   }
 
@@ -141,6 +172,15 @@ async function 点匹配(page, 模式组, 说明) {
   const 截止 = Date.now() + 10 * 60 * 1000;
   while (Date.now() < 截止) {
     await 等(2000);
+    if (!是登录页(page.url())) {
+      console.log(`✓ 顺手发现已经登录了（你在窗口里填的）：URL=${page.url()}`);
+      if (保活) {
+        console.log("保活中：窗口不关。");
+        await new Promise(() => {});
+      }
+      await context.close().catch(() => {});
+      return;
+    }
     if (fs.existsSync(答案文件)) {
       const 文 = fs.readFileSync(答案文件, "utf8").trim();
       if (/^\d{4,8}$/.test(文)) {
@@ -169,7 +209,11 @@ async function 点匹配(page, 模式组, 说明) {
     await 等(2000);
     if (!是登录页(page.url())) {
       console.log(`✓ 登录成功，当前 URL=${page.url()}`);
-      console.log("✓ 登录态已落在这个账号的浏览器资料目录里，进程退出不影响。");
+      console.log("✓ 登录态已落在这个账号的浏览器资料目录里。");
+      if (保活) {
+        console.log("保活中：窗口不关，等李沅芷跑完再停我。");
+        await new Promise(() => {});
+      }
       await context.close().catch(() => {});
       return;
     }
