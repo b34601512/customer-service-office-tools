@@ -73,10 +73,19 @@ const 深扫 = (目录, 层级 = 0) => {
 };
 深扫(硅基根);
 
+// 工具类浏览器（抓网页、研究、购物、软talk 客户端）不是「店铺后台登录态」，不进共享层。
+// 归它们自己项目管，但项目 README 要写清「这不是店铺登录态」。2026-11-13 黎路遥口径：店铺后台共享，工具类不掺和。
+const 工具类关键词 = ["企微文档爬取", "研究浏览器", "购物浏览器", "SoftTalk财务", "聊天质检"];
+
 const 违规 = [];
+const 工具类 = [];
 for (const 目录 of 命中) {
   if (目录.toLowerCase().startsWith(共享根.toLowerCase())) continue;
   if (!是登录态目录(目录)) continue; // 空壳目录不算
+  if (工具类关键词.some((k) => 目录.includes(k))) {
+    工具类.push(目录);
+    continue;
+  }
   违规.push(目录);
 }
 
@@ -86,6 +95,11 @@ const 店铺 = 列出店铺();
 console.log(`共享层店铺：${店铺.length} 个（登录态在 ${店铺.filter((s) => s.有登录态).length} 个）`);
 if (process.argv.includes("--详情")) {
   for (const s of 店铺) console.log(`  ${s.平台}/${s.店铺键}  ${s.有登录态 ? "在" : "无"}`);
+}
+
+if (工具类.length) {
+  console.log(`（另有 ${工具类.length} 份工具类浏览器，不算店铺登录态、不进共享层）`);
+  for (const v of 工具类) console.log("  · " + path.relative(硅基根, v));
 }
 
 if (!违规.length) {
