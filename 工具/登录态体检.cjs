@@ -20,6 +20,16 @@ const path = require("path");
 
 const 硅基根 = "D:/硅基公司";
 const 共享根 = path.join(硅基根, "共享", "登录态", "店铺");
+// 已知未迁清单（`共享/登录态/豁免.json`）：项目停着、单一副本、不跟共享层同店打架的，允许暂留。
+// 为什么要有：不留个白纸黑字的地方，体检永远报一条红的，人就习惯性忽略整条体检。
+const 豁免文件 = path.join(硅基根, "共享", "登录态", "豁免.json");
+let 豁免 = [];
+try {
+  豁免 = JSON.parse(fs.readFileSync(豁免文件, "utf8")).map((x) => String(x.路径 || "").replace(/[\\/]+/g, "/").toLowerCase());
+} catch (e) {
+  豁免 = [];
+}
+const 是豁免 = (目录) => 豁免.some((x) => x && String(目录).replace(/[\\/]+/g, "/").toLowerCase() === x);
 const 危险目录名 = new Set(["browser-profiles", "account-profiles", "profiles", "browser_profiles"]);
 const 跳过 = new Set(["node_modules", ".git", "备份文件夹", "历史档案", "$RECYCLE.BIN", "System Volume Information"]);
 
@@ -80,6 +90,7 @@ const 工具类关键词 = ["企微文档爬取", "研究浏览器", "购物浏�
 const 违规 = [];
 const 工具类 = [];
 const 指针 = [];
+const 已豁免 = [];
 for (const 目录 of 命中) {
   if (目录.toLowerCase().startsWith(共享根.toLowerCase())) continue;
   // junction / 符号链接 = 指向共享层的指针。不是「私养」，但黎路遥 2026-11-13 定「迁移后原来的别再留、不要新旧混用」，
@@ -95,6 +106,10 @@ for (const 目录 of 命中) {
   if (!是登录态目录(目录)) continue; // 空壳目录不算
   if (工具类关键词.some((k) => 目录.includes(k))) {
     工具类.push(目录);
+    continue;
+  }
+  if (是豁免(目录)) {
+    已豁免.push(目录);
     continue;
   }
   违规.push(目录);
@@ -116,6 +131,11 @@ if (指针.length) {
 if (工具类.length) {
   console.log(`（另有 ${工具类.length} 份工具类浏览器，不算店铺登录态、不进共享层）`);
   for (const v of 工具类) console.log("  · " + path.relative(硅基根, v));
+}
+
+if (已豁免.length) {
+  console.log(`（已知未迁 ${已豁免.length} 份，见 共享/登录态/豁免.json：项目停着、单一副本、不跟共享层同店打架）`);
+  for (const v of 已豁免) console.log("  ~ " + path.relative(硅基根, v));
 }
 
 if (!违规.length) {
