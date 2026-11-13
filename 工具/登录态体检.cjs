@@ -1,0 +1,77 @@
+#!/usr/bin/env node
+"use strict";
+/**
+ * 登录态体检：找出「绕开共享层、自己在项目里养登录资料」的地方（2026-11-13 木婉清）
+ *
+ * 为什么：黎路遥定「后台都是相同的，那就共享，否则要维护多处」。
+ * 共享层是唯一真源（`共享/登录态/店铺/<平台>/<店铺>/profile`）；项目里再冒出一份，就是又回到每人一套。
+ *
+ * 查什么：
+ *   1) 仓库里任何叫 browser-profiles / account-profiles / profiles 的目录下，含 Default/Network/Cookies 的子目录 → 算一份独立登录态
+ *   2) 这些目录如果不在共享层下，就列出来当「违规/待迁」
+ *   3) 顺便报共享层现有店铺与登录态在不在
+ *
+ * 用法：
+ *   node 工具/登录态体检.cjs            # 只读体检，退出码 0=干净、4=有项目私养登录态
+ *   node 工具/登录态体检.cjs --详情      # 连共享层的店铺清单一起打
+ */
+const fs = require("fs");
+const path = require("path");
+
+const 硅基根 = "D:/硅基公司";
+const 共享根 = path.join(硅基根, "共享", "登录态", "店铺");
+const 危险目录名 = new Set(["browser-profiles", "account-profiles", "profiles", "browser_profiles"]);
+const 跳过 = new Set(["node_modules", ".git", "备份文件夹", "历史档案", "$RECYCLE.BIN", "System Volume Information"]);
+
+function 是登录态目录(目录) {
+  return fs.existsSync(path.join(目录, "Default", "Network", "Cookies"));
+}
+
+function 扫(目录, 命中, 层级 = 0) {
+  if (层级 > 12) return;
+  let 项;
+  try {
+    项 = fs.readdirSync(目录, { withFileTypes: true });
+  } catch (e) {
+    return;
+  }
+  for (const x of 项) {
+    if (!x.isDirectory() || 跳过.has(x.name)) continue;
+    const 全 = path.join(目录, x.name);
+    if (危险目录名.has(x.name)) {
+      // 这一层下面每个子目录可能是一份 profile
+      命中.add(全);
+      for (const 子 of fs.readdirSync(全, { withFileTypes: true })) {
+        if (子.isDirectory()) 命中.add(path.join(全, 子.name));
+      }
+      continue;
+    }
+    扫(全, 命中, 层级 + 1);
+  }
+}
+
+const 命中 = new Set();
+扫(硅基根, 命中);
+
+const 违规 = [];
+for (const 目录 of 命中) {
+  if (目录.toLowerCase().startsWith(共享根.toLowerCase())) continue;
+  if (!是登录态目录(目录)) continue; // 空壳目录不算
+  违规.push(目录);
+}
+
+const { 列出店铺 } = require(path.join(共享根, "..", "目录.cjs"));
+const 店铺 = 列出店铺();
+
+console.log(`共享层店铺：${店铺.length} 个（登录态在 ${店铺.filter((s) => s.有登录态).length} 个）`);
+if (process.argv.includes("--详情")) {
+  for (const s of 店铺) console.log(`  ${s.平台}/${s.店铺键}  ${s.有登录态 ? "在" : "无"}`);
+}
+
+if (!违规.length) {
+  console.log("✓ 没有项目私养登录态，全部在共享层。");
+  process.exit(0);
+}
+console.log(`✗ 发现 ${违规.length} 份项目内登录态（应迁到共享层）：`);
+for (const v of 违规) console.log("  " + path.relative(硅基根, v));
+process.exit(4);
