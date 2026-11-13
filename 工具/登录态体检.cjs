@@ -81,6 +81,12 @@ const 违规 = [];
 const 工具类 = [];
 for (const 目录 of 命中) {
   if (目录.toLowerCase().startsWith(共享根.toLowerCase())) continue;
+  // junction / 符号链接 = 指向共享层的指针，不是私养，跳过（2026-11-13 加）
+  try {
+    if (fs.lstatSync(目录).isSymbolicLink()) continue;
+  } catch (e) {
+    continue;
+  }
   if (!是登录态目录(目录)) continue; // 空壳目录不算
   if (工具类关键词.some((k) => 目录.includes(k))) {
     工具类.push(目录);
