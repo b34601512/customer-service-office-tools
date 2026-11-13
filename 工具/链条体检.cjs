@@ -299,6 +299,25 @@ let 发送口通 = null;
   }
 }
 
+// ── ⑥ 共享登录态：项目里还有没有私养/遗留指针（2026-11-13 黎路遥「全公司一套」） ──
+try {
+  const r = require('child_process').spawnSync(process.execPath, [require('path').join(__dirname, '登录态体检.cjs')], { encoding: 'utf8' });
+  const out = String(r.stdout || '');
+  const 共享 = (out.match(/共享层店铺：(\d+) 个（登录态在 (\d+) 个）/) || []);
+  const 私养 = (out.match(/发现 (\d+) 份项目内登录态/) || []);
+  const 指针行 = (out.match(/另有 (\d+) 处 junction/) || []);
+  const 数字 = 私养[1] ? Number(私养[1]) : 0;
+  const 指针数 = 指针行[1] ? Number(指针行[1]) : 0;
+  if (共享[1]) 行.push(`共享登录态    ✓ ${共享[1]} 店（登录态在 ${共享[2]} 个）`);
+  if (数字) {
+    行.push(`共享登录态    △ 项目里还有 ${数字} 份私养画像`);
+    注意.push(`项目里还有 ${数字} 份自己养的登录态（${指针数} 处 junction 待改代码清）；` +
+      `标准见 共享/登录态/README.md，体检明细：node 工具/登录态体检.cjs`);
+  }
+} catch (e) {
+  注意.push(`共享登录态体检没跑起来：${String(e.message || e).slice(0, 80)}`);
+}
+
 // ── 输出 ──────────────────────────────────────────────────────────────────
 const 结论 = 问题.length ? 'BROKEN' : 'HEALTHY';
 console.log(`木婉清 · 链条体检 ${new Date().toLocaleString('zh-CN', { hour12: false })}`);
