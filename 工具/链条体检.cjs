@@ -42,6 +42,16 @@ const 心跳文件 = path.join(状态目录, '收件箱跟读.json');
 const 收件箱文件 = path.join(收件箱目录, 'inbox.jsonl');
 const 已读文件 = path.join(收件箱目录, '已读位置.json');
 
+// ⑤ 的判据不在这里写第二份：共享套件 公共.mjs 的 守护真相() 是唯一实现
+// （Node ≥22.12 支持 require(ESM)，本机 24.x；载不进来就报出来，不自己再拉一份探针——两份必然分叉）。
+let 公共 = null;
+let 公共载入错 = '';
+try {
+  公共 = require(path.join(企微, '公共.mjs'));
+} catch (e) {
+  公共载入错 = (e && e.message) || String(e);
+}
+
 // 现役排期环白名单：名字必须精确匹配；时间只核对「几点几分」，日期类型不限。
 const 环白名单 = [
   { 名: '复述巡检员-兜底', 时间: '08:05', 因为: '08:00 复述巡检员的兜底' },
@@ -247,43 +257,40 @@ if (环条 !== null) {
   }
 }
 
-// ── ⑤ 发送口（守护）──────────────────────────────────────────────────────
-// 判据＝真的能发得出去：HTTP GET 带令牌回 {认证:true}。只探端口不够——端口通但连接掉了，发消息照样失败。
+// ── ⑤ 发送口（守护）：能收 ≠ 能发 ─────────────────────────────────────────
+// 判据不在本文件里另写一份：共享套件 公共.mjs 的 守护真相() 一处实现——
+//   ① 发送口认证通（GET + x-zhaomin 回 {认证:true}）＝真在跑，pid 取 netstat 的真属主；
+//   ② 发送口不通但进程确是本目录的守护 ＝ 能收不能发（长连接断了）；
+//   ③ 三道都不认 ＝ 没在跑，且不给可杀 pid（旧 pid 被回收也不会误杀别人）。
+// 为什么要这一段（2026-11-13 实测）：守护夜里死掉、pid 8956 被 Windows 回收成 XboxService，
+// 只查接收链的①②③④全绿，08:05 复述却一条发不出去。
 let 发送口通 = null;
 {
-  const 端口文件 = path.join(收件箱目录, '守护.port');
-  const 令牌文件 = path.join(收件箱目录, '守护.token');
-  const 守护pid文件 = path.join(收件箱目录, '守护.pid');
-  let 端口 = 0;
-  let 令牌 = '';
-  let 守护pid = '?';
-  try { 守护pid = fs.readFileSync(守护pid文件, 'utf8').trim() || '?'; } catch { /* 下面照报 */ }
+  let 真 = null;
+  if (!公共) {
+    行.push(`发送口守护  ✗ 载不到共享件 公共.mjs（${公共载入错}）`);
+    问题.push(`发送口判不了：载不到 工具/企微/公共.mjs（${公共载入错}）——找 02 号王语嫣`);
+  }
   try {
-    端口 = Number(fs.readFileSync(端口文件, 'utf8').trim()) || 0;
-    令牌 = fs.readFileSync(令牌文件, 'utf8').trim();
-    if (!端口 || !令牌) throw new Error('守护.port / 守护.token 是空的');
-    let 应答 = '';
-    try {
-      应答 = execFileSync('curl', ['-sS', '--max-time', '3', '-H', `x-zhaomin: ${令牌}`, `http://127.0.0.1:${端口}/`],
-        { encoding: 'utf8', timeout: 8000 });
-    } catch (e) {
-      应答 = String((e && e.stdout) || (e && e.stderr) || (e && e.message) || '').trim();
-    }
-    if (/"认证"\s*:\s*true/.test(应答)) {
-      发送口通 = true;
-      行.push(`发送口守护  ✓ PID ${守护pid} 在听 127.0.0.1:${端口}（认证通）`);
-    } else {
-      发送口通 = false;
-      行.push(`发送口守护  ✗ 127.0.0.1:${端口} 认证不通（pid 文件写 ${守护pid}）`);
-      问题.push(`发送口不通（能收不能发）：${应答.slice(0, 120) || '无应答'}。` +
-        `守护多半已经死了、pid 文件是旧号（PID 会被 Windows 回收给别的程序）。` +
-        `修：node 工具/企微/守护控制.mjs 状态；pid 指向的不是 node，就把 收件箱/守护.pid 挪进 D:/备份文件夹，` +
-        `再 node 工具/企微/守护控制.mjs 启动。别加 --接管——它会 taskkill 掉被回收的那个无关进程。`);
-    }
+    真 = 公共 ? 公共.守护真相() : null;
   } catch (e) {
-    发送口通 = false;
-    行.push(`发送口守护  ✗ ${e.message}`);
-    问题.push(`发送口判不了：${e.message}（守护没启动过？先 node 工具/企微/守护控制.mjs 启动）`);
+    行.push(`发送口守护  ✗ 判不了（${e.message}）`);
+    问题.push(`守护真相() 判不了：${e.message}（公共.mjs 共享件；找 02 号王语嫣）`);
+  }
+  if (真) {
+    发送口通 = 真.发送口 === true;
+    if (发送口通) {
+      行.push(`发送口守护  ✓ PID ${真.pid} 在听 127.0.0.1:${真.端口}（认证通）`);
+    } else if (真.依据 === '进程') {
+      行.push(`发送口守护  ✗ 进程在（PID ${真.记录pid}），但发送口认证不通`);
+      问题.push(`发送口不通（能收不能发）：守护进程还在（PID ${真.记录pid}），${真.端口 ? `端口 ${真.端口}` : '发送口文件缺/旧'} 没回 {认证:true}——长连接断了。` +
+        `修：node 工具/企微/守护控制.mjs 停 → 启动，再重跑体检（连续按 停/启动 一笔算，不自动重试）。`);
+    } else {
+      行.push(`发送口守护  ✗ 没在跑（pid 文件写 ${真.记录pid}，映像 ${真.映像 || '查不到'}）`);
+      问题.push(`发送口不通（能收不能发）：守护没在跑，pid 文件是旧号（${真.记录pid}，映像 ${真.映像 || '查不到'}；` +
+        `PID 会被 Windows 回收给别的程序）。修：node 工具/企微/守护控制.mjs 启动——` +
+        `共享版会自己把认不出的 pid/port/token 挪进 D:/备份文件夹，不 taskkill。`);
+    }
   }
 }
 
@@ -302,7 +309,7 @@ if (问题.length) {
   console.log('');
   for (const x of 问题) console.log('  ✗ ' + x);
   console.log('');
-  if (发送口通 === false) console.log('发送口：按上面「发送口不通」那条修（先 守护控制.mjs 状态，再挪旧 pid、启动）；下面三条只管接收链。');
+  if (发送口通 === false) console.log('发送口：先修上面「发送口不通」那条（启动/重启守护）；下面三条只管接收链。');
   console.log('重挂（先 Loop 再 Monitor，顺序别反）：');
   console.log('  1. 先挂事件 Loop：monitor:output（recurring / 30d / maxFires 5000）');
   console.log('  2. 再起 Monitor：cd "D:/桌面/木婉清/工具/企微" && node 跟读收件箱.mjs --接管（timeout=0）');
