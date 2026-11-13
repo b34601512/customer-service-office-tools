@@ -23,14 +23,14 @@ const path = require("path");
 const { spawnSync } = require("child_process");
 
 const 共享根 = "D:/硅基公司/共享/登录态/店铺";
+const 骆冰根 = "D:/硅基公司/员工/06.电商店铺后台专员·骆冰/专项";
 const 项目表 = {
-  "22号": {
-    配置: "D:/硅基公司/员工/06.电商店铺后台专员·骆冰/专项/22.后台售后服务单分析/project-config/stores.json",
-    根: "D:/硅基公司/员工/06.电商店铺后台专员·骆冰/专项/22.后台售后服务单分析",
-  },
+  "22号": { 配置: 骆冰根 + "/22.后台售后服务单分析/project-config/stores.json", 根: 骆冰根 + "/22.后台售后服务单分析" },
+  "24号": { 配置: 骆冰根 + "/24.平台退款复查/project-config/stores.json", 根: 骆冰根 + "/24.平台退款复查" },
+  "25号": { 配置: 骆冰根 + "/25.京东换货登记核查/project-config/stores.json", 根: 骆冰根 + "/25.京东换货登记核查" },
 };
 
-const 平台中文 = { douyin: "抖店", tmall: "天猫", pdd: "拼多多", jd: "京东", youzan: "有赞" };
+const 平台中文 = { douyin: "抖店", tmall: "天猫", pdd: "拼多多", jd: "京东", jdl: "京东物流", youzan: "有赞", erp: "ERP" };
 
 const 参数 = process.argv.slice(2);
 const 取值 = (名, 默认) => {
@@ -107,17 +107,32 @@ const 备份 = 项目.配置.replace(/\.json$/, `.json.迁移前-${new Date().to
 if (!fs.existsSync(备份)) fs.copyFileSync(项目.配置, 备份);
 
 for (const 项 of 计划) {
+  const 平台 = 配置.platforms[项.平台键];
+  const 店 = (平台.stores || []).find((s) => s.key === 项.店键);
+  // 源已经不在、但共享层有这份（上一轮中途失败/别人迁过）→ 只补配置指向，不搬东西
+  if (!项.已在共享 && !fs.existsSync(项.现路径) && fs.existsSync(项.目标路径)) {
+    店.profileDir = 项.目标路径;
+    console.log(`↻ 源已不在，配置补指共享层：${项.平台名}/${项.店键}`);
+    continue;
+  }
   if (项.已在共享 || !fs.existsSync(项.现路径)) continue;
   if (有浏览器占着(项.现路径)) {
     console.log(`✗ ${项.平台名}/${项.店键} 有浏览器开着，跳过（先关窗再说）`);
     continue;
   }
   fs.mkdirSync(path.dirname(项.目标路径), { recursive: true });
+  if (fs.existsSync(项.目标路径)) {
+    // 目标已有一份（同一店在别的项目已迁过）：源这份就是重复副本，搬备份归档，不动共享层那份。
+    const 归档 = path.join("D:/备份文件夹/登录态归档-20261113", 项.平台名, path.basename(path.dirname(项.目标路径)) + "-来自-" + 项目名);
+    fs.mkdirSync(path.dirname(归档), { recursive: true });
+    fs.renameSync(项.现路径, 归档);
+    店.profileDir = 项.目标路径;
+    console.log(`≈ 共享层已有同名店，源副本归档：${path.relative("D:/硅基公司", 归档)}`);
+    continue;
+  }
   fs.renameSync(项.现路径, 项.目标路径);
   // 改配置：写绝对路径（共享层不在项目里，相对路径容易算错）
-  const 平台 = 配置.platforms[项.平台键];
-  const 店 = (平台.stores || []).find((s) => s.key === 项.店键);
-  店.profileDir = 项.目标路径.replace(/\//g, "/");
+  店.profileDir = 项.目标路径;
   店.note = "登录态在共享层（2026-11-13 黎路遥令）：一店一份，跨项目共用；跑前先取锁 共享/登录态/锁.cjs";
   console.log(`✓ 已迁 ${项.平台名}/${项.店键}`);
 }
