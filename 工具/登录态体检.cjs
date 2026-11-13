@@ -53,6 +53,26 @@ function 扫(目录, 命中, 层级 = 0) {
 const 命中 = new Set();
 扫(硅基根, 命中);
 
+// 2026-11-13 加强：不只认目录名，直接按「有 Default/Network/Cookies」判定——
+// 换个名字（profile/环境/资料）照样能查出来，避免只认名字漏掉。
+const 深扫 = (目录, 层级 = 0) => {
+  if (层级 > 12) return;
+  let 项;
+  try {
+    项 = fs.readdirSync(目录, { withFileTypes: true });
+  } catch (e) {
+    return;
+  }
+  if (项.some((x) => x.isFile() && x.name === "Cookies") && 目录.split(String.fromCharCode(92)).join("/").endsWith("Default/Network")) {
+    命中.add(path.dirname(path.dirname(目录)));
+    return;
+  }
+  for (const x of 项) {
+    if (x.isDirectory() && !跳过.has(x.name)) 深扫(path.join(目录, x.name), 层级 + 1);
+  }
+};
+深扫(硅基根);
+
 const 违规 = [];
 for (const 目录 of 命中) {
   if (目录.toLowerCase().startsWith(共享根.toLowerCase())) continue;
