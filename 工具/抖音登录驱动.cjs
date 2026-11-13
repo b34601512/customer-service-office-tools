@@ -10,9 +10,11 @@
  *      → 点「获取验证码」→ 打印「码已发」→ 等答案文件 → 填码 → 登录 → 等 URL 离开 /login。
  *
  * 用法：
- *   node 工具/抖音登录驱动.cjs                 # 默认抖音店铺3（douyin-store-1）
+ *   node 工具/抖音登录驱动.cjs                 # 默认抖音店铺3（douyin-store-1，05 号发票项目）
  *   node 工具/抖音登录驱动.cjs --店 douyin-store-2
  *   node 工具/抖音登录驱动.cjs --只发码       # 只点发送验证码，不填（人自己在这个窗口里填）
+ *   任意项目用自己的资料目录（2026-11-13 骆冰 22 号提的：各项目各一份 profile，不跨项目共用）：
+ *   node 工具/抖音登录驱动.cjs --资料目录 "D:/…/browser-profiles/douyin/douyin3" --手机号 199****8376 --只发码 --保活
  *
  * 答案文件：`工具/.state/抖音验证码-答案.txt`，内容就 6 位数字（写完我这边等它出现）。
  * 红线：只做登录；不提交发票、不回传、不改店铺设置。撞滑块/风控就停，不重试。
@@ -30,6 +32,8 @@ const 取值 = (名, 默认) => {
   return i > -1 && 参数[i + 1] ? 参数[i + 1] : 默认;
 };
 const 店铺Id = 取值("--店", "douyin-store-1");
+const 指定目录 = 取值("--资料目录", "");
+const 指定手机 = 取值("--手机号", "");
 const 只发码 = 参数.includes("--只发码");
 const 保活 = 参数.includes("--保活");
 
@@ -51,11 +55,24 @@ const 是登录页 = (u) => {
 // 判据改成两条都要：URL 不在 /login，且页面上没有「扫码/验证码登录/请登录」这类字样，且能找到店铺名。
 async function 真的登录了吗(页, 店铺) {
   if (是登录页(页.url())) return false;
-  const 文本 = (await 页.innerText("body").catch(() => "")).replace(/s+/g, " ");
+  const 文本 = (await 页.innerText("body").catch(() => "")).replace(/\s+/g, " ");
   if (/扫码登录|验证码登录|请登录|登录后查看|手机号登录/.test(文本)) return false;
   const 店名 = 店铺 && 店铺.platformStoreName ? String(店铺.platformStoreName).slice(0, 4) : "";
   if (店名 && !文本.includes(店名)) return false;
   return true;
+}
+
+// 2026-11-13 加：任意项目用自己的资料目录也能登（不让各项目共用一个 profile）
+async function 直接开指定目录(目录) {
+  const 中心 = "D:/硅基公司/员工/05.发票专员·李沅芷/专项/2.发票自动化/3.通用发票下载中心";
+  const { chromium } = require(path.join(中心, "node_modules/playwright"));
+  fs.mkdirSync(目录, { recursive: true });
+  return chromium.launchPersistentContext(目录, {
+    channel: "msedge",
+    headless: false,
+    viewport: { width: 1440, height: 960 },
+    locale: "zh-CN",
+  });
 }
 
 async function 点匹配(page, 模式组, 说明) {
@@ -80,13 +97,17 @@ async function 点匹配(page, 模式组, 说明) {
 }
 
 (async () => {
-  const 店铺 = (读取店铺配置().stores || []).find((s) => s.id === 店铺Id);
+  const 店铺 = 指定目录
+    ? { name: `指定目录 ${path.basename(指定目录)}`, phoneNumber: 指定手机, platformStoreName: "" }
+    : (读取店铺配置().stores || []).find((s) => s.id === 店铺Id);
   if (!店铺) throw new Error(`没找到店铺配置：${店铺Id}`);
 
   fs.mkdirSync(path.dirname(答案文件), { recursive: true });
   if (fs.existsSync(答案文件)) fs.unlinkSync(答案文件);
 
-  const context = await 创建抖音账号浏览器上下文(店铺, { headless: false });
+  const context = 指定目录
+    ? await 直接开指定目录(指定目录)
+    : await 创建抖音账号浏览器上下文(店铺, { headless: false });
   const page = context.pages().find((p) => !p.isClosed()) || (await context.newPage());
   await page.goto(目标页, { waitUntil: "domcontentloaded", timeout: 60000 }).catch(() => {});
   await page.bringToFront().catch(() => {});
