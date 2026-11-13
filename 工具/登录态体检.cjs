@@ -79,11 +79,16 @@ const 工具类关键词 = ["企微文档爬取", "研究浏览器", "购物浏�
 
 const 违规 = [];
 const 工具类 = [];
+const 指针 = [];
 for (const 目录 of 命中) {
   if (目录.toLowerCase().startsWith(共享根.toLowerCase())) continue;
-  // junction / 符号链接 = 指向共享层的指针，不是私养，跳过（2026-11-13 加）
+  // junction / 符号链接 = 指向共享层的指针。不是「私养」，但黎路遥 2026-11-13 定「迁移后原来的别再留、不要新旧混用」，
+  // 所以指针也要收：单独列成「待改代码清指针」，不算合格。
   try {
-    if (fs.lstatSync(目录).isSymbolicLink()) continue;
+    if (fs.lstatSync(目录).isSymbolicLink()) {
+      指针.push(目录);
+      continue;
+    }
   } catch (e) {
     continue;
   }
@@ -101,6 +106,11 @@ const 店铺 = 列出店铺();
 console.log(`共享层店铺：${店铺.length} 个（登录态在 ${店铺.filter((s) => s.有登录态).length} 个）`);
 if (process.argv.includes("--详情")) {
   for (const s of 店铺) console.log(`  ${s.平台}/${s.店铺键}  ${s.有登录态 ? "在" : "无"}`);
+}
+
+if (指针.length) {
+  console.log(`（另有 ${指针.length} 处 junction/链接指向共享层：不是私养，但按「不许新旧混用」要改成直连后删掉）`);
+  for (const v of 指针) console.log("  → " + path.relative(硅基根, v));
 }
 
 if (工具类.length) {
