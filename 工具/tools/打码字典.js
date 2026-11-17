@@ -10,7 +10,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const 仓库根 = path.join(__dirname, '..');
+const 仓库根 = path.join(__dirname, '..', '..'); // 2026-11-17 #724：仓库根＝木婉清（工具/tools 往上两级），旧写法把 工具/ 当仓库根
 const 对照文件 = path.join(__dirname, '打码对照.local');
 
 /** 明确不打码的白名单（常见词/占位，防止误伤） */

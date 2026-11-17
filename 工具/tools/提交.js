@@ -20,7 +20,8 @@ const fs = require("fs");
 const path = require("path");
 const { execFileSync } = require("child_process");
 
-const 仓库根 = path.resolve(__dirname, "..");
+const 仓库根 = path.resolve(__dirname, "..", ".."); // 2026-11-17 #724：仓库根＝木婉清（工具/tools 往上两级），旧写法把 工具/ 当仓库根
+const 打码脚本 = path.join(__dirname, "打码.js"); // 2026-11-17 #724：别写死 tools/打码.js（本仓工具在 工具/tools）
 
 /** 从 `--扫描` 输出里读「其中 N 个还没进对照表」 */
 function 解析未学数(text) {
@@ -62,20 +63,20 @@ function main() {
 
   // 1) 扫描：仓库里还有哪些真值、有多少还没进对照表
   let 扫描输出 = "";
-  try { 扫描输出 = 跑("node", ["tools/打码.js", "--扫描"]); }
+  try { 扫描输出 = 跑("node", [打码脚本, "--扫描"]); }
   catch (e) { 扫描输出 = String(e.stdout || ""); }
   const 未学 = 解析未学数(扫描输出);
 
   // 2) 有新的真值 → 先学（否则过滤器不认识它们，明文就会被推上去）
   if (未学 > 0) {
     console.log(`[提交闸门] 有 ${未学} 个真值还没进对照表 → 先 --学`);
-    跑("node", ["tools/打码.js", "--学"]);
+    跑("node", [打码脚本, "--学"]);
   }
 
   // 2b) 学完之后：**已入库但含真值**的文件也要补打码（否则本次提交后 `--核对` 仍会红字）。
   //     安全线：只动「工作区 == HEAD」的文件——有未提交改动的文件一律不碰（那是别的会话正在写的，不能吞）。
   try {
-    const 核对前 = 跑("node", ["tools/打码.js", "--核对"]);
+    const 核对前 = 跑("node", [打码脚本, "--核对"]);
     void 核对前;
   } catch (e) {
     const 脏文件 = 解析含真值文件(String(e.stdout || ""));
@@ -123,7 +124,7 @@ function main() {
 
   // 5) 核对：HEAD 里还有没有真值
   let 核对输出 = "";
-  try { 核对输出 = 跑("node", ["tools/打码.js", "--核对"]); process.exitCode = 0; }
+  try { 核对输出 = 跑("node", [打码脚本, "--核对"]); process.exitCode = 0; }
   catch (e) { 核对输出 = String(e.stdout || ""); process.exitCode = 1; }
   console.log(核对输出.trim().split("\n").slice(-3).join("\n"));
   if (process.exitCode) {
