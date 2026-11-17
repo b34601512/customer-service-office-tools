@@ -84,10 +84,34 @@ function 解析参数(argv) {
     else if (a === '--priority') out.优先级 = argv[++i];
     else if (a === '--dry-run') out.dryRun = true;
     else if (a === '--at') out.at = String(argv[++i] || '').trim();
+    // 黎路遥 2026-11-17 10:06：客服通知要「工单 + 群里 @ 当班人」，不许私聊；
+    // 2026-11-17 10:19：老板不愿再看见「同样功能的多个工具」——不另写脚本，就在本工具加一个开关。
+    else if (a === '--群') out.群 = String(argv[++i] || '').trim();
+    else if (a === '--理由') out.理由 = String(argv[++i] || '').trim();
+    else if (a === '--例外') out.例外 = String(argv[++i] || '').trim();
+    else if (a === '--人' || a === '--私聊') {
+      throw new Error('不给客服私聊：客服通知只走「工单+群里@当班人」（黎路遥 2026-11-17）。要去掉 --人/--私聊 这个入口。');
+    }
   }
   if (!out.content) throw new Error('缺少 --content');
   if (out.at && !/^\d{1,2}:\d{2}$/.test(out.at)) throw new Error(`--at 格式要 HH:MM（拿到「${out.at}」）`);
   return out;
+}
+
+/** 工单写成功后，把「@值班人 + 事项」发到指定群（不加 --群 就只打印这条，不发）。 */
+function 发群提醒({ 群, 负责人, content, deadline, 理由, 例外 }) {
+  const 正文 = `@${负责人} ${content}\n（已开工单，负责人＝今天售后值班人 ${负责人}，截止 ${deadline}；客服通知只走工单+群，不私聊）`;
+  if (!群) return { 发了: false, 正文 };
+  const 发 = path.join(__dirname, '..', '企微', '发企微.cjs');
+  const args = ['--群', 群, '--text', 正文,
+    '--理由', 理由 || '售后值班人要接单，全组都得知道谁在处理',
+    '--例外', 例外 || '客服通知只走工单+群，私聊不留痕', '--send'];
+  try {
+    const 出 = execFileSync(process.execPath, [发, ...args], { encoding: 'utf8', timeout: 180000 });
+    return { 发了: true, ok: /全部发送成功/.test(出), 正文, 尾部: 出.trim().split(/\r?\n/).slice(-2).join(' ｜ ') };
+  } catch (e) {
+    return { 发了: true, ok: false, 正文, 尾部: String((e.stdout || '') + (e.stderr || '')).slice(0, 400) };
+  }
 }
 
 function 构造记录({ content, ownerId, ownerName, deadline, 优先级 }) {
@@ -158,9 +182,22 @@ function 写({ content, ownerId: 入参Id, ownerName: 入参名, deadline, 优�
 
 if (require.main === module) {
   try {
-    const r = 写(解析参数(process.argv.slice(2)));
+    const 参 = 解析参数(process.argv.slice(2));
+    const r = 写(参);
     console.log(JSON.stringify({ ...r, args: undefined, rec: r.rec }, null, 1).slice(0, 900));
     if (r.ok && !r.回读命中) process.exitCode = 3;
+    // 工单落盘后才发群；表没写进就不发（不假装已通知）
+    if (r.ok && !参.dryRun) {
+      const 群 = 发群提醒({
+        群: 参.群, 负责人: r.负责人,
+        content: 参.content,
+        deadline: r.deadline || 参.deadline || '',
+        理由: 参.理由, 例外: 参.例外,
+      });
+      if (!群.发了) console.log('\n（未给 --群，只打印群正文；确认后加 --群 售后群）\n' + 群.正文);
+      else if (群.ok) console.log('\n✓ 已在「' + 参.群 + '」@ ' + r.负责人 + '（工单+群都到位）');
+      else { console.error('\n✗ 群消息没发出去：' + 群.尾部); process.exitCode = 5; }
+    }
   } catch (e) {
     console.error('失败：' + e.message);
     process.exitCode = 2;
