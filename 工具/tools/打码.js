@@ -13,7 +13,7 @@ const path = require('path');
 const { execFileSync } = require('child_process');
 const { 仓库根, 读对照, 写对照, 生成打码值, 不打的词 } = require('./打码字典');
 
-const 文本后缀 = /\.(md|json|js|cjs|py|txt|yml|yaml|ps1|bat)$/i;
+const 文本后缀 = /\.(md|json|jsonl|js|cjs|py|txt|yml|yaml|ps1|bat)$/i;
 
 /** 员工名单：优先读 28号 的**本机**配置（不入库那份），用于识别真实姓名 */
 function 读名单() {

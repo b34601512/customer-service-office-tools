@@ -10,3 +10,4 @@
 *.cjs  filter=打码
 *.py   filter=打码
 *.txt  filter=打码
+*.jsonl filter=打码
