@@ -1,0 +1,113 @@
+#!/usr/bin/env node
+/**
+ * 开窗闸 —— 「开一扇新的 TUI 窗」这件事，从工具层面卡住，不靠文档提醒。
+ *
+ * 为什么要有（黎路遥 2026-11-26 13:2x）：
+ *   他原话「以后没有我的允许都只能跑子代理，这样就不容易中断了」。
+ *   经过：曲非烟那扇任务窗干到一半被他手动关了（他看见窗就关），活直接断、回执没落地。
+ *   所以光写进规矩没用——过几天我一顺手又调 开任务窗.cjs。必须在**工具里**让那条路走不通。
+ *
+ * 两道口子：
+ *   ① 子代理（工具/子代理.cjs）：永远不需要口令，这是默认正路。
+ *   ② 任何新 TUI 窗：
+ *      · 常驻界面（1号/5号/发票验收…，他点名要看的）→ 在 开窗闸.json 的「免口令」里，放行并记账；
+ *      · 任务窗（派给同事干活）→ **必须**带他本人口令，且一次一用（10 分钟内有效、用过即作废）。
+ *      口令校验复用 工具/危险操作确认.cjs 与 0.木婉清档案/project-config/危险操作密码.local.json，
+ *      本文件不存明文、不打明文。
+ *
+ * 用法（给别的工具调用，不是人用的常规命令）：
+ *   node 工具/开窗闸.cjs --查 --用途 "开任务窗给骆冰出图"           # 只判，不消耗许可
+ *   node 工具/开窗闸.cjs --用 --用途 "…" [--密码 6位]               # 消耗一次许可
+ *   node 工具/开窗闸.cjs --发许可 --用途 "…" --密码 6位             # 口令对 → 落一张一次性许可
+ *   node 工具/开窗闸.cjs --台账                                      # 看最近 20 条
+ *
+ * 退出码：0 放行｜2 拦住（没许可/口令错）｜3 参数错
+ */
+const fs = require("node:fs");
+const path = require("node:path");
+const { spawnSync } = require("node:child_process");
+
+const 根 = path.resolve(__dirname, "..");
+const 状态 = path.join(__dirname, ".state");
+const 台账 = path.join(状态, "开窗台账.jsonl");
+const 许可文件 = path.join(状态, "开窗许可.json");
+const 配置 = path.join(__dirname, "开窗闸.json");
+const 危险确认 = path.join(__dirname, "危险操作确认.cjs");
+
+fs.mkdirSync(状态, { recursive: true });
+
+function 参数表(argv) {
+  const o = { _: [] };
+  for (let i = 0; i < argv.length; i++) {
+    if (!argv[i].startsWith("--")) { o._.push(argv[i]); continue; }
+    const k = argv[i].slice(2);
+    const v = argv[i + 1] && !argv[i + 1].startsWith("--") ? argv[++i] : true;
+    o[k] = v;
+  }
+  return o;
+}
+
+function 读配置() {
+  try { return JSON.parse(fs.readFileSync(配置, "utf8")); } catch { return { 免口令: [] }; }
+}
+
+function 记(项) {
+  fs.appendFileSync(台账, JSON.stringify({ 时: new Date().toLocaleString("sv-SE"), ...项 }) + "\n", "utf8");
+}
+
+function 读许可() {
+  try {
+    const j = JSON.parse(fs.readFileSync(许可文件, "utf8"));
+    if (!j.到期 || Date.parse(j.到期) < Date.now()) return null;
+    return j;
+  } catch { return null; }
+}
+
+function 发许可(用途, 密码) {
+  if (!用途) { console.error("✗ 缺 --用途"); process.exit(3); }
+  const r = spawnSync(process.execPath, [危险确认, "--要做", `开一扇 TUI 窗：${用途}`, "--密码", String(密码 || "")], { encoding: "utf8" });
+  if (r.status !== 0) {
+    console.error((r.stdout || "").trim());
+    console.error((r.stderr || "").trim());
+    记({ 动作: "发许可-拒", 用途, 原因: "口令不对或没给" });
+    process.exit(2);
+  }
+  const 到期 = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+  fs.writeFileSync(许可文件, JSON.stringify({ 用途, 到期, 发时: new Date().toLocaleString("sv-SE") }, null, 1), "utf8");
+  记({ 动作: "发许可-放", 用途, 到期 });
+  console.log(`✓ 许可已发（10 分钟内一次有效）：${用途}`);
+}
+
+function 判(用途, 消耗) {
+  const 免 = 读配置().免口令 || [];
+  const 命 = 免.find((x) => String(用途 || "").includes(x));
+  if (命) {
+    记({ 动作: 消耗 ? "放-常驻" : "查-常驻", 用途, 命中: 命 });
+    console.log(`✓ 放行（常驻界面「${命}」在免口令名单）`);
+    return;
+  }
+  const 许 = 读许可();
+  if (许 && (!许.用途 || String(用途).includes(许.用途) || 许.用途.includes(String(用途)))) {
+    记({ 动作: 消耗 ? "放-许可" : "查-许可", 用途, 许可用途: 许.用途 });
+    if (消耗) fs.writeFileSync(许可文件, JSON.stringify({ 用途: "已用", 到期: new Date(0).toISOString() }, null, 1), "utf8");
+    console.log(`✓ 放行（用了他给的许可：${许.用途}）`);
+    return;
+  }
+  记({ 动作: "拦", 用途 });
+  console.error("✗ 拦住：开 TUI 窗需要黎路遥本人许可。");
+  console.error("  默认正路是子代理：node 工具/子代理.cjs --起 --任务 … --目录 …（不需要许可、不占窗）");
+  console.error(`  真要开窗：让他给口令，然后 node 工具/开窗闸.cjs --发许可 --用途 "${用途}" --密码 <口令>`);
+  process.exit(2);
+}
+
+const a = 参数表(process.argv.slice(2));
+if (a.发许可) 发许可(String(a.用途 || ""), a.密码);
+else if (a.用) 判(String(a.用途 || ""), true);
+else if (a.查) 判(String(a.用途 || ""), false);
+else if (a.台账) {
+  const t = fs.existsSync(台账) ? fs.readFileSync(台账, "utf8").trim().split("\n") : [];
+  console.log(t.slice(-20).join("\n") || "（还没有记录）");
+} else {
+  console.log("用法：--查｜--用｜--发许可 --用途 … --密码 …｜--台账");
+  process.exit(3);
+}

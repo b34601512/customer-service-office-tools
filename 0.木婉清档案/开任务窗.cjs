@@ -42,6 +42,27 @@ if (!fs.existsSync(任务文件)) {
   process.exit(1);
 }
 
+// ── 工具层闸门：开新 TUI 窗必须有黎路遥的许可，光靠文档记不住（2026-11-26 13:2x 他令）──
+// 为什么要卡在工具里：曲非烟那扇任务窗被他手动关了，活断在半路、回执没落地。
+// 默认正路是子代理（`node 工具/子代理.cjs --起 …`）：不需要许可、不开窗、不占监听窗。
+// 只有 --只查窗 / --看 这类只读动作放行；真开窗走 工具/开窗闸.cjs 校验口令。
+if (!process.argv.includes('--只查窗') && !process.argv.includes('--看')) {
+  const 闸 = require('child_process').spawnSync(
+    process.execPath,
+    [path.join(__dirname, '..', '工具', '开窗闸.cjs'), '--用', '--严格', '--用途', `开任务窗：${path.basename(任务文件)} → ${目录原文}`],
+    { encoding: 'utf8' }
+  );
+  process.stdout.write(闸.stdout || '');
+  if (闸.status !== 0) {
+    process.stderr.write(闸.stderr || '');
+    console.error('');
+    console.error('✗ 没开窗、没派活。要开这扇窗，让他给口令：');
+    console.error(`  node 工具/开窗闸.cjs --发许可 --用途 "开任务窗：${path.basename(任务文件)} → ${目录原文}" --密码 <口令>`);
+    console.error('  或改走子代理： node 工具/子代理.cjs --起 --任务文件 "' + 任务文件 + '" --目录 "' + 目录原文 + '"');
+    process.exit(3);
+  }
+}
+
 // ── 红线拦截：发票登记不许我开任务窗自己干（黎路遥 2026-10-24 08:40 连问两遍「不是有发票专员吗」）──
 // 为什么做到「派窗」这一层：光写规矩拦不住手，任务书里出现写表工具就根本不能开工。
 // 正解：转发票专员·李沅芷（`node 工具/企微/私信.cjs 发票专员·李沅芷 "…"` + `node "D:/硅基公司/员工/发票专员·李沅芷/工具/企微/开窗.ps1"`）。
@@ -52,7 +73,18 @@ const 禁词 = [
   ['发票登记表', '发票登记'],
 ];
 const 正文 = fs.readFileSync(任务文件, 'utf8');
-const 命中 = 禁词.filter(([词]) => 正文.includes(词));
+// 例外（2026-11-25 踩到）：窗开在李沅芷自己家＝这单就是她干，不是我代登。
+// 那天派「第二段·发票巡检」给她，任务书里写了她的步骤（含「自动登记发票」），被自己的闸拒派——闸只看字不看人。
+// 闸的本意是「我不许开一扇窗自己去写表」，所以按「窗归谁」判，不按字判。
+const 发票专员家 = path.resolve('D:/硅基公司/员工/05.发票专员·李沅芷');
+const 归发票专员 = (() => {
+  try {
+    const w = path.resolve(process.cwd(), 目录原文);
+    return w === 发票专员家 || w.startsWith(发票专员家 + path.sep);
+  } catch { return false; }
+})();
+const 命中 = 归发票专员 ? [] : 禁词.filter(([词]) => 正文.includes(词));
+if (归发票专员) console.log('· 发票登记闸：本窗归发票专员自己家，跳过（这单是她干，不是我代登）');
 if (命中.length) {
   console.log('✗ 拒派：任务书里有「' + 命中.map(([, 名]) => 名 + '（' + 命中.find(([w]) => 正文.includes(w))[0] + '）').join('、') + '」。');
   console.log('  发票登记归发票专员·李沅芷，我不代登（规矩与红线 §三；黎路遥 2026-10-24 定）。');

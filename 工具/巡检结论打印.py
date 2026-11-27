@@ -20,6 +20,13 @@ import sys
 import unicodedata
 from pathlib import Path
 
+# Windows 控制台默认 GBK，遇到 ✔/⏳ 会 UnicodeEncodeError 并打出半截表
+# （2026-11-25 实际撞上，得手动加 PYTHONIOENCODING=utf-8 才能出全）。这里自己抬成 UTF-8，别再让调用方记参数。
+try:
+    sys.stdout.reconfigure(encoding="utf-8")
+except Exception:
+    pass
+
 ROOT = Path(__file__).resolve().parent.parent
 标记 = ("✔", "✘", "⏳")
 断点 = "；，。、：!？ ／/）】」"
